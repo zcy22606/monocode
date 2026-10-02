@@ -13,6 +13,7 @@ mod fs;
 mod gitlab;
 mod harness;
 mod harness_updates;
+mod history_import; // IndieDesk
 mod inbox_media;
 mod jira;
 mod linear;

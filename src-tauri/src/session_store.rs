@@ -260,6 +260,7 @@ pub fn session_list_by_project(
         return Err("cwd is required".into());
     }
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
+    crate::history_import::import_for_project(&conn, &cwd); // IndieDesk
     list_by_project(&conn, &cwd).map_err(|e| e.to_string())
 }
 
@@ -646,7 +647,7 @@ fn ensure_column(conn: &Connection, name: &str, decl: &str) -> rusqlite::Result<
     Ok(())
 }
 
-fn migrate(conn: &Connection) -> rusqlite::Result<()> {
+pub(crate) fn migrate(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS schema_migrations (
            version INTEGER PRIMARY KEY,
@@ -1075,7 +1076,7 @@ fn orchestration_summary(conn: &Connection, id: &str) -> rusqlite::Result<Option
     ))
 }
 
-fn upsert_session(conn: &Connection, session: &SessionUpsert) -> rusqlite::Result<SessionSummary> {
+pub(crate) fn upsert_session(conn: &Connection, session: &SessionUpsert) -> rusqlite::Result<SessionSummary> {
     let now = now_millis();
     let model_settings = serde_json::to_string(&session.model_settings)
         .map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
