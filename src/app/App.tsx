@@ -54,7 +54,8 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { onOpenProjectView, projectViewFile } from "../features/indie/model/projectViews";
+import { onOpenProjectView, projectViewFile } from "../features/soloyard/model/projectViews";
+import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -5657,7 +5658,7 @@ function Workspace({
     [activateTab, insertBesideActive],
   );
 
-  // IndieDesk: the sidebar Project tab opens its views as top-level tabs; reopening focuses the existing one.
+  // Soloyard: the sidebar Project tab opens its views as top-level tabs; reopening focuses the existing one.
   useEffect(
     () =>
       onOpenProjectView((request) => {
@@ -7299,6 +7300,35 @@ function Workspace({
   launchQuickSessionRef.current = launchQuickSession;
   const submitSessionRef = useRef(submitSession);
   submitSessionRef.current = submitSession;
+  // Soloyard: an issue's "Start work" opens a new session with the issue prompt seeded into the composer —
+  // the user picks model / workspace and sends; linked sessions open on click; "Send back" posts the reason.
+  useEffect(
+    () =>
+      onSoloyardAppActions({
+        startWork: (request) => {
+          setSearchViewOpen(false);
+          setInboxViewOpen(false);
+          setNotesViewOpen(false);
+          setAutomationsViewOpen(false);
+          const session = {
+            ...newDefaultSession(request.cwd, sessionDefaults?.runtimeMode),
+            id: request.sessionId,
+            composerSeed: request.prompt,
+          };
+          const tab = newTab(session.id);
+          setSessions((prev) => [...prev, session]);
+          appendTab(tab, request.cwd);
+          setActiveTabId(tab.id);
+          setComposerFocused(true);
+        },
+        openSession: (sessionId) => void onSelectHistorySession(sessionId),
+        sendToSession: ({ sessionId, text }) => {
+          // Open (and hydrate) the session first, then submit into it.
+          void onSelectHistorySession(sessionId).then(() => submitSessionRef.current(sessionId, text, []));
+        },
+      }),
+    [appendTab, onSelectHistorySession, sessionDefaults?.runtimeMode],
+  );
   const saveDraftRef = useRef(onSaveDraft);
   saveDraftRef.current = onSaveDraft;
   const ensureOpenSessionRef = useRef(ensureOpenSession);
@@ -11325,6 +11355,7 @@ function toTitleTab(
     ),
     terminal: hasTerminal && harnesses.length === 0,
     previewFileId: previewWorkspaceFile(tab)?.id,
+    projectView: focusedFile?.projectView?.view, // Soloyard
     groupId: tab.groupId,
   };
 }

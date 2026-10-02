@@ -35,6 +35,8 @@ import {
 import { useTabCloseMotion } from "../../features/workspace/hooks/useTabCloseMotion";
 import { TabWidthMotion } from "./ClosingTab";
 import { FileTypeIcon } from "../../features/files/ui/FileTypeIcon";
+import { ProjectViewIcon } from "../../features/soloyard/ui/ProjectViewIcon";
+import type { ProjectViewId } from "../../features/soloyard/model/projectViews";
 import { HarnessIcon } from "../../features/sessions/ui/HarnessIcon";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { TerminalSpinner } from "../../features/sessions/ui/TerminalSpinner";
@@ -77,6 +79,8 @@ export type Tab = {
   terminal?: boolean;
   /** File id when the whole tab is one preview file; double-click pins it. */
   previewFileId?: string;
+  /** Soloyard: the focused pane is a Project view; show its icon. */
+  projectView?: ProjectViewId;
 };
 
 type Props = {
@@ -345,6 +349,10 @@ function TitleTabItem({
             doneHarnesses={tab.doneHarnesses ?? []}
             dimmed={!active}
           />
+        ) : tab.projectView ? (
+          <span className={active ? "text-content" : "text-content/55"}>
+            <ProjectViewIcon view={tab.projectView} />
+          </span>
         ) : tab.terminal || !fileIcon ? (
           <Terminal
             className={`size-3.5 shrink-0 ${

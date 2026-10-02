@@ -1,5 +1,5 @@
 import type { ReleaseNotesTabSource } from "../../../app/model/releaseNotes";
-import { projectViewKey, type ProjectViewSource } from "../../indie/model/projectViews";
+import { projectViewKey, type ProjectViewSource } from "../../soloyard/model/projectViews";
 import type { GitFileDiffKind } from "../../../platform/tauri/fs";
 import {
   applyTerminalMeta,
@@ -64,7 +64,7 @@ export type FilePaneTab = {
   projectCwd?: string;
   plan?: PlanTabSource;
   releaseNotes?: ReleaseNotesTabSource;
-  /** IndieDesk: a view opened from the sidebar Project tab. */
+  /** Soloyard: a view opened from the sidebar Project tab. */
   projectView?: ProjectViewSource;
   review?: boolean;
   /** Single working-tree review of every changed file (unified diff). */

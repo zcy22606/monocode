@@ -1,26 +1,5 @@
-import {
-  CheckCircle,
-  CircleHelp,
-  DashboardSquare,
-  Eye,
-  File,
-  ListBullet,
-  RefreshCw,
-  SlidersHorizontal,
-  type IconComponent,
-} from "../../../shared/ui/icons";
-import { NAV_VIEWS, openProjectView, type ProjectViewId } from "../model/projectViews";
-
-const ICONS: Partial<Record<ProjectViewId, IconComponent>> = {
-  overview: DashboardSquare,
-  issues: CheckCircle,
-  cycles: RefreshCw,
-  docs: File,
-  decisions: CircleHelp,
-  features: ListBullet,
-  scope: SlidersHorizontal,
-  evidence: Eye,
-};
+import { NAV_VIEWS, openProjectView } from "../model/projectViews";
+import { PROJECT_VIEW_ICONS } from "./ProjectViewIcon";
 
 /** 侧栏「Project」分页：竖排的视图列表，点一项在右边开标签。 */
 export function ProjectNav({ cwd }: { cwd: string }) {
@@ -28,7 +7,7 @@ export function ProjectNav({ cwd }: { cwd: string }) {
     return <p className="px-3 py-2 text-[12px] text-content/50">No project folder</p>;
   }
   const item = (view: (typeof NAV_VIEWS)[number]) => {
-    const Icon = ICONS[view.id]!;
+    const Icon = PROJECT_VIEW_ICONS[view.id];
     return (
       <button
         key={view.id}

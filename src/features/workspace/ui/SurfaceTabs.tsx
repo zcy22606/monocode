@@ -39,6 +39,7 @@ import {
 } from "../../files/ui/ExplorerMenu";
 import { FileActionError } from "../../files/ui/FileActionError";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
+import { ProjectViewIcon } from "../../soloyard/ui/ProjectViewIcon";
 import { HarnessIcon } from "../../sessions/ui/HarnessIcon";
 
 type Props = {
@@ -385,6 +386,8 @@ export function SurfaceTabs({
                     className="size-3.5 shrink-0"
                     strokeWidth={1.75}
                   />
+                ) : isProjectViewTab(file) ? (
+                  <ProjectViewIcon view={file.projectView.view} />
                 ) : (
                   <FileTypeIcon name={iconName} isDir={false} size={14} />
                 )}

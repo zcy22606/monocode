@@ -1,5 +1,5 @@
 /**
- * IndieDesk：侧栏「Project」分页里的竖排视图，点一项在右边开成顶层标签（同一项只开一个）。
+ * Soloyard：侧栏「Project」分页里的竖排视图，点一项在右边开成顶层标签（同一项只开一个）。
  * 现在只有布局和交互，内容是占位，等交互确认后再接数据。
  */
 import type { FilePaneTab } from "../../workspace/model/layout";
@@ -46,7 +46,7 @@ export type OpenProjectViewRequest = ProjectViewSource & {
   title: string;
 };
 
-const OPEN_EVENT = "indiedesk:open-project-view";
+const OPEN_EVENT = "soloyard:open-project-view";
 
 /** 侧栏和标签内容都用它开标签，不用把回调一层层传下去。 */
 export function openProjectView(request: OpenProjectViewRequest) {

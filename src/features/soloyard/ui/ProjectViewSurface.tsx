@@ -1,22 +1,29 @@
 import { basename } from "../../../platform/tauri/fs";
-import {
-  openProjectView,
-  viewLabel,
-  type ProjectViewId,
-  type ProjectViewSource,
-} from "../model/projectViews";
+import { useProjectForPath } from "../data/api";
+import { openProjectView, viewLabel, type ProjectViewId, type ProjectViewSource } from "../model/projectViews";
+import { IssueDetail } from "./issues/IssueDetail";
+import { IssuesView } from "./issues/IssuesView";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
 const SAMPLES: Partial<Record<ProjectViewId, { detail: ProjectViewId; items: [string, string][] }>> = {
-  issues: { detail: "issue", items: [["ISS-1", "Sample issue A"], ["ISS-2", "Sample issue B"], ["ISS-3", "Sample issue C"]] },
   docs: { detail: "doc", items: [["doc-1", "Sample doc A"], ["doc-2", "Sample doc B"]] },
   decisions: { detail: "decision", items: [["D-1", "Sample decision A"], ["D-2", "Sample decision B"]] },
 };
 
-const DETAIL_LABEL: Partial<Record<ProjectViewId, string>> = { issue: "Issue", doc: "Doc", decision: "Decision" };
+const DETAIL_LABEL: Partial<Record<ProjectViewId, string>> = { doc: "Doc", decision: "Decision" };
 
-/** Project 分页打开的标签内容。现在只是占位。 */
+/** Project 分页打开的标签内容：已经做好的视图走真实数据，其余还是占位。 */
 export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
+  const { data: project, error } = useProjectForPath(cwd);
+  if (source.view === "issues" || source.view === "issue") {
+    if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
+    if (!project) return null;
+    return source.view === "issues" ? <IssuesView project={project} cwd={cwd} /> : <IssueDetail issueId={Number(source.itemId)} cwd={cwd} />;
+  }
+  return <Placeholder cwd={cwd} source={source} title={title} />;
+}
+
+function Placeholder({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
   const samples = SAMPLES[source.view];
   const heading = DETAIL_LABEL[source.view] ? title : viewLabel(source.view);
   return (
