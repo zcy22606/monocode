@@ -106,7 +106,7 @@ export type SidebarTabId = "files" | "sessions" | "changes" | "inbox" | "project
 
 const DEFAULT_SIDEBAR_TAB_ORDER: SidebarTabId[] = [
   "sessions",
-  "project", // IndieDesk
+  "project", // Soloyard
   "inbox",
   "files",
   "changes",

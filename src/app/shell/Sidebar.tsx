@@ -27,7 +27,7 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
-import { ProjectNav } from "../../features/indie/ui/ProjectNav";
+import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
 import {
   memo,
   useEffect,
@@ -186,7 +186,7 @@ const REMINDERS_COLOR = "#f59e0b";
 let rememberedWidth = DEFAULT_WIDTH;
 
 type SidebarTab = SidebarTabId;
-/** IndieDesk: icon tabs shown before the rest collapse into a dropdown. */
+/** Soloyard: icon tabs shown before the rest collapse into a dropdown. */
 const MAX_SIDEBAR_TABS = 5;
 
 const TAB_LABELS: Record<SidebarTab, string> = {
@@ -704,7 +704,7 @@ function SidebarComponent({
   const sessionHarnesses = harnessesInSessions(projectSessions);
   const narrowedByUser = searchNarrowed || filtersActive;
   const visibleTabs = tabOrder.filter((itemId) => itemId !== "inbox");
-  // IndieDesk: tabs are icons; past MAX_SIDEBAR_TABS the rest go into a dropdown.
+  // Soloyard: tabs are icons; past MAX_SIDEBAR_TABS the rest go into a dropdown.
   const shownTabs = visibleTabs.slice(0, MAX_SIDEBAR_TABS);
   const overflowTabs = visibleTabs.slice(MAX_SIDEBAR_TABS);
   const [tabOverflowAnchor, setTabOverflowAnchor] = useState<HTMLElement | null>(null);

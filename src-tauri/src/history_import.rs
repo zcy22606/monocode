@@ -1,4 +1,4 @@
-//! IndieDesk：把在终端里跑过的 Claude Code / Codex 会话导进项目侧栏。
+//! Soloyard：把在终端里跑过的 Claude Code / Codex 会话导进项目侧栏。
 //!
 //! 打开项目（列会话）时按项目目录增量导入：只读 agent 的转录文件，转成文本 block 写进 sessions 表，
 //! 带上 provider_session_id，点开后发消息就续接原会话。处理过的文件记在 history_files（按 mtime）。
