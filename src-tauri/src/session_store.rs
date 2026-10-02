@@ -39,7 +39,7 @@ impl SessionStore {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
         let conn = Connection::open(&path).map_err(|e| e.to_string())?;
-        conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")
+        conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;") // Soloyard: busy_timeout for concurrent writers (data process, MCP)
             .map_err(|e| e.to_string())?;
         migrate(&conn).map_err(|e| e.to_string())?;
         crate::worktrees::reconcile_removals(&conn)?;
@@ -260,7 +260,7 @@ pub fn session_list_by_project(
         return Err("cwd is required".into());
     }
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
-    crate::history_import::import_for_project(&conn, &cwd); // IndieDesk
+    crate::history_import::import_for_project(&conn, &cwd); // Soloyard
     list_by_project(&conn, &cwd).map_err(|e| e.to_string())
 }
 

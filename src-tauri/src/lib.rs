@@ -13,7 +13,8 @@ mod fs;
 mod gitlab;
 mod harness;
 mod harness_updates;
-mod history_import; // IndieDesk
+mod history_import; // Soloyard
+mod soloyard_bridge; // Soloyard
 mod inbox_media;
 mod jira;
 mod linear;
@@ -259,6 +260,7 @@ pub fn run() {
             menu::dispatch(app, event.id().as_ref());
         })
         .invoke_handler(tauri::generate_handler![
+            soloyard_bridge::soloyard_call, // Soloyard
             remote::remote_machines,
             remote::remote_connect,
             remote::remote_disconnect,
