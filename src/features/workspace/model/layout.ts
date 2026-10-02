@@ -1,4 +1,5 @@
 import type { ReleaseNotesTabSource } from "../../../app/model/releaseNotes";
+import { projectViewKey, type ProjectViewSource } from "../../indie/model/projectViews";
 import type { GitFileDiffKind } from "../../../platform/tauri/fs";
 import {
   applyTerminalMeta,
@@ -63,6 +64,8 @@ export type FilePaneTab = {
   projectCwd?: string;
   plan?: PlanTabSource;
   releaseNotes?: ReleaseNotesTabSource;
+  /** IndieDesk: a view opened from the sidebar Project tab. */
+  projectView?: ProjectViewSource;
   review?: boolean;
   /** Single working-tree review of every changed file (unified diff). */
   changes?: boolean;
@@ -414,6 +417,12 @@ export function isReleaseNotesTab(
   return !!file.releaseNotes;
 }
 
+export function isProjectViewTab(
+  file: FilePaneTab,
+): file is FilePaneTab & { projectView: ProjectViewSource } {
+  return !!file.projectView;
+}
+
 export function isCommitTab(
   file: FilePaneTab,
 ): file is FilePaneTab & { commit: CommitTabSource } {
@@ -434,6 +443,7 @@ export function isVirtualDocumentTab(file: FilePaneTab): boolean {
   return (
     isPlanTab(file) ||
     isReleaseNotesTab(file) ||
+    isProjectViewTab(file) ||
     isCommitTab(file) ||
     isAgentTab(file)
   );
@@ -516,6 +526,7 @@ export function editorTabKey(file: FilePaneTab): string {
   if (file.agent) return `agent:${file.agent.sessionId}`;
   if (file.plan) return `plan:${file.plan.blockId}`;
   if (file.releaseNotes) return `release-notes:${file.releaseNotes.version}`;
+  if (file.projectView) return projectViewKey(file.cwd, file.projectView);
   if (file.commit) return `commit:${file.cwd}:${file.commit.sha}`;
   if (file.sessionChanges)
     return `session-changes:${file.cwd}:${file.sessionChanges.sessionId}`;
@@ -545,6 +556,7 @@ export function isPreviewableTab(file: FilePaneTab): boolean {
     !file.agent &&
     !file.plan &&
     !file.releaseNotes &&
+    !file.projectView &&
     !file.changes
   );
 }

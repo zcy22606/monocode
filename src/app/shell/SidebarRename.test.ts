@@ -708,7 +708,7 @@ describe("sidebar reorder affordances", () => {
     act(() => render());
 
     const tabs = container.querySelectorAll<HTMLElement>('[role="tab"]');
-    expect(tabs).toHaveLength(3);
+    expect(tabs).toHaveLength(4); // IndieDesk adds the Project tab
     for (const tab of tabs) {
       expect(tab.className).not.toContain("cursor-grab");
       expect(tab.parentElement?.className).not.toContain("cursor-grab");
@@ -1406,6 +1406,7 @@ describe("collapsed rail Inbox actions", () => {
       "Expand projects",
       "Switch project, current project project",
       "Sessions",
+      "Project",
       "Explorer",
       "Changes",
       "Search",
@@ -1422,7 +1423,7 @@ describe("collapsed rail Inbox actions", () => {
       Array.from(workspaceTabs.querySelectorAll('[role="tab"]'), (button) =>
         button.getAttribute("aria-label"),
       ),
-    ).toEqual(["Sessions", "Explorer", "Changes"]);
+    ).toEqual(["Sessions", "Project", "Explorer", "Changes"]);
     const sessionsTab = workspaceTabs.querySelector<HTMLButtonElement>(
       '[aria-label="Sessions"]',
     )!;

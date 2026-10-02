@@ -19,6 +19,7 @@ import {
   isFilesystemTab,
   isPlanTab,
   isReleaseNotesTab,
+  isProjectViewTab,
   isReviewTab,
   isSessionChangesTab,
   isTerminalTab,
@@ -122,6 +123,10 @@ export function surfaceTabPresentation(
       iconName: "CHANGELOG.md",
       tooltip: title,
     };
+  }
+
+  if (isProjectViewTab(file)) {
+    return { name: file.path, label: file.path, iconName: `${file.path}.md`, tooltip: file.path };
   }
 
   if (isChangesTab(file)) {

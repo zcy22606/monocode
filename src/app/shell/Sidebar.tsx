@@ -4,6 +4,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   Archive,
   Chatting,
+  DashboardSquare,
   Check,
   ChevronDown,
   ChevronRight,
@@ -26,6 +27,7 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
+import { ProjectNav } from "../../features/indie/ui/ProjectNav";
 import {
   memo,
   useEffect,
@@ -45,7 +47,6 @@ import {
   saveSidebarTabOrder,
   type SidebarTabId,
 } from "../../features/settings/model/appearance";
-import { formatInteger } from "../../shared/lib/numbers";
 import {
   type GitFileDiffKind,
   type GitHistoryCommit,
@@ -185,12 +186,15 @@ const REMINDERS_COLOR = "#f59e0b";
 let rememberedWidth = DEFAULT_WIDTH;
 
 type SidebarTab = SidebarTabId;
+/** IndieDesk: icon tabs shown before the rest collapse into a dropdown. */
+const MAX_SIDEBAR_TABS = 5;
 
 const TAB_LABELS: Record<SidebarTab, string> = {
   sessions: "Sessions",
   inbox: "Inbox",
   files: "Explorer",
   changes: "Changes",
+  project: "Project",
 };
 
 const COMPACT_TAB_ICONS: Record<SidebarTab, typeof PanelLeft> = {
@@ -198,6 +202,7 @@ const COMPACT_TAB_ICONS: Record<SidebarTab, typeof PanelLeft> = {
   inbox: Inbox,
   files: FileScript,
   changes: GitBranch,
+  project: DashboardSquare,
 };
 
 function projectPathBusy(
@@ -699,10 +704,15 @@ function SidebarComponent({
   const sessionHarnesses = harnessesInSessions(projectSessions);
   const narrowedByUser = searchNarrowed || filtersActive;
   const visibleTabs = tabOrder.filter((itemId) => itemId !== "inbox");
-  const sortable = useAnimatedReorder(visibleTabs, (ids) => {
+  // IndieDesk: tabs are icons; past MAX_SIDEBAR_TABS the rest go into a dropdown.
+  const shownTabs = visibleTabs.slice(0, MAX_SIDEBAR_TABS);
+  const overflowTabs = visibleTabs.slice(MAX_SIDEBAR_TABS);
+  const [tabOverflowAnchor, setTabOverflowAnchor] = useState<HTMLElement | null>(null);
+  const sortable = useAnimatedReorder(shownTabs, (ids) => {
+    const reordered = [...ids, ...overflowTabs];
     let index = 0;
     const next = tabOrder.map((itemId) =>
-      itemId === "inbox" ? itemId : ids[index++],
+      itemId === "inbox" ? itemId : reordered[index++],
     );
     setTabOrder(next);
     saveSidebarTabOrder(next);
@@ -1542,9 +1552,14 @@ function SidebarComponent({
         .join(" ")
     : "Changes";
 
-  const workspaceTabItems = visibleTabs.map((itemId) => {
+  const overflowActive = (overflowTabs as SidebarTabId[]).includes(tab);
+  const OverflowIcon = overflowActive ? COMPACT_TAB_ICONS[tab] : ChevronDown;
+  const workspaceTabItems = [
+    ...shownTabs.map((itemId) => {
     const active = tab === itemId;
     const isChangesTab = itemId === "changes";
+    const Icon = COMPACT_TAB_ICONS[itemId];
+    const label = isChangesTab ? changesLabel : TAB_LABELS[itemId];
     return (
       <div
         key={itemId}
@@ -1559,27 +1574,49 @@ function SidebarComponent({
           type="button"
           role="tab"
           aria-selected={active}
-          aria-label={isChangesTab ? changesLabel : undefined}
+          aria-label={label}
+          title={label}
           data-tauri-drag-region="false"
           onClick={() => {
             if (sortable.consumeClick()) return;
             onTabPick(itemId);
           }}
-          className={`flex h-6 min-w-0 flex-1 items-center justify-center self-center rounded-md px-2 text-[12px] leading-none ${
-            active ? "bg-selection text-content" : "text-content/50"
+          className={`relative flex h-7 min-w-0 flex-1 items-center justify-center gap-1 self-center rounded-md px-2 ${
+            active ? "bg-selection text-content" : "text-content/50 hover:bg-content/10 hover:text-content"
           }`}
         >
-          {isChangesTab && hasChangeStats ? (
-            <DiffStat additions={changeAdditions} deletions={changeDeletions} />
-          ) : (
-            <span className="block truncate leading-label">
-              {TAB_LABELS[itemId]}
-            </span>
-          )}
+          <span className="relative flex">
+            <Icon className="size-4 shrink-0" />
+            {isChangesTab && hasChanges ? (
+              <span aria-hidden className="absolute -right-2.5 -top-1.5 min-w-3.5 rounded-full bg-accent px-1 text-center text-[9px] font-semibold leading-3.5 tabular-nums text-white">
+                {(changeStats?.files ?? 0) > 99 ? "99+" : changeStats?.files}
+              </span>
+            ) : null}
+          </span>
         </button>
       </div>
     );
-  });
+    }),
+    ...(overflowTabs.length
+      ? [
+          <button
+            key="overflow"
+            type="button"
+            aria-label={overflowActive ? `${TAB_LABELS[tab]}, more tabs` : "More tabs"}
+            aria-haspopup="menu"
+            aria-expanded={!!tabOverflowAnchor}
+            title="More tabs"
+            data-tauri-drag-region="false"
+            onClick={(event) => setTabOverflowAnchor(tabOverflowAnchor ? null : event.currentTarget)}
+            className={`flex h-7 min-w-0 flex-1 items-center justify-center rounded-md ${
+              overflowActive ? "bg-selection text-content" : "text-content/50 hover:bg-content/10 hover:text-content"
+            }`}
+          >
+            <OverflowIcon className="size-4" />
+          </button>,
+        ]
+      : []),
+  ];
 
   const sidebarContent = (
     <aside
@@ -1600,7 +1637,7 @@ function SidebarComponent({
           <div
             role="tablist"
             aria-label="Workspace"
-            className="flex h-9 shrink-0 items-center gap-px border-b border-stroke px-2"
+            className="flex h-9 shrink-0 items-center gap-1 border-b border-stroke px-2"
           >
             {workspaceTabItems}
           </div>
@@ -1650,7 +1687,7 @@ function SidebarComponent({
             <div
               role="tablist"
               aria-label="Workspace"
-              className="flex h-9 shrink-0 items-center gap-px overflow-visible border-b border-stroke px-2"
+              className="flex h-9 shrink-0 items-center gap-1 overflow-visible border-b border-stroke px-2"
             >
               {workspaceTabItems}
             </div>
@@ -1690,6 +1727,7 @@ function SidebarComponent({
             </p>
           )}
         </div>
+        {tab === "project" ? <ProjectNav cwd={cwd} /> : null}
         {tab === "sessions" && cwd && cwd !== "~" ? (
           <div className="flex h-9 shrink-0 items-center gap-1 border-b border-stroke px-2">
             <div className="relative flex h-7 min-w-0 flex-1 items-center">
@@ -2042,6 +2080,24 @@ function SidebarComponent({
           </>
         ) : null}
       </>
+      {tabOverflowAnchor ? (
+        <ExplorerMenu
+          anchor={tabOverflowAnchor}
+          items={overflowTabs.map((itemId) => ({
+            kind: "item" as const,
+            id: itemId,
+            label: itemId === "changes" ? changesLabel : TAB_LABELS[itemId],
+            checked: tab === itemId,
+          }))}
+          ariaLabel="More tabs"
+          width={180}
+          onPick={(id) => {
+            setTabOverflowAnchor(null);
+            onTabPick(id as SidebarTab);
+          }}
+          onClose={() => setTabOverflowAnchor(null)}
+        />
+      ) : null}
       {sessionMenu ? (
         <ExplorerMenu
           x={sessionMenu.x}
@@ -3551,56 +3607,6 @@ function SessionRenameRow({
         className="w-full rounded bg-content/10 px-2 py-1 text-[13px] font-semibold leading-snug text-content outline-none ring-1 ring-accent/40"
       />
     </div>
-  );
-}
-
-function DiffStat({
-  additions,
-  deletions,
-}: {
-  additions: number;
-  deletions: number;
-}) {
-  if (additions <= 0 && deletions <= 0) return null;
-
-  const label = [
-    additions > 0 ? `+${formatInteger(additions)}` : "",
-    deletions > 0 ? `-${formatInteger(deletions)}` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return (
-    <span
-      title={`${label} uncommitted`}
-      className="flex shrink-0 items-center gap-1.5 font-sans text-[11px] font-semibold tabular-nums"
-    >
-      {additions > 0 ? (
-        <span className="text-emerald-400">
-          +<TightDiffNumber value={additions} />
-        </span>
-      ) : null}
-      {deletions > 0 ? (
-        <span className="text-red-400">
-          -<TightDiffNumber value={deletions} />
-        </span>
-      ) : null}
-    </span>
-  );
-}
-
-function TightDiffNumber({ value }: { value: number }) {
-  const [first, ...rest] = formatInteger(value).split(",");
-  return (
-    <>
-      {first}
-      {rest.map((part, index) => (
-        <span key={index}>
-          <span className="-mr-px">,</span>
-          {part}
-        </span>
-      ))}
-    </>
   );
 }
 

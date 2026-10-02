@@ -54,6 +54,7 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
+import { onOpenProjectView, projectViewFile } from "../features/indie/model/projectViews";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -5653,6 +5654,27 @@ function Workspace({
         setComposerFocused(false);
       })();
     },
+    [activateTab, insertBesideActive],
+  );
+
+  // IndieDesk: the sidebar Project tab opens its views as top-level tabs; reopening focuses the existing one.
+  useEffect(
+    () =>
+      onOpenProjectView((request) => {
+        const file = projectViewFile(request);
+        const created = newEditorWorkspaceTab(file);
+        let target: { tabId: string; paneId?: string } | undefined;
+        flushSync(() => {
+          setTabs((prev) => {
+            const result = openWorkspaceFile(prev, file, created, (tabs, tab) => insertBesideActive(tabs, tab, request.cwd), true);
+            target = result;
+            return result.tabs;
+          });
+        });
+        if (target?.paneId) activateTab(target.tabId, target.paneId);
+        else if (target) setActiveTabId(target.tabId);
+        setComposerFocused(false);
+      }),
     [activateTab, insertBesideActive],
   );
 

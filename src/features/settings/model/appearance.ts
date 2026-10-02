@@ -102,10 +102,11 @@ export const SHOW_EXCLUDED_FILES_DEFAULT = false;
 export const SHOW_EXCLUDED_FILES_CHANGE_EVENT =
   "monocode:showexcludedfileschange";
 
-export type SidebarTabId = "files" | "sessions" | "changes" | "inbox";
+export type SidebarTabId = "files" | "sessions" | "changes" | "inbox" | "project";
 
 const DEFAULT_SIDEBAR_TAB_ORDER: SidebarTabId[] = [
   "sessions",
+  "project", // IndieDesk
   "inbox",
   "files",
   "changes",
@@ -720,6 +721,7 @@ function isSidebarTabId(value: unknown): value is SidebarTabId {
   return (
     value === "files" ||
     value === "sessions" ||
+    value === "project" ||
     value === "changes" ||
     value === "inbox"
   );
