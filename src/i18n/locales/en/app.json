@@ -1,0 +1,111 @@
+{
+  "releaseNotes": {
+    "title": "What's new in MonoCode {{version}}",
+    "label": "Release notes",
+    "unavailable": "Release notes for this version are not available in this build."
+  },
+  "update": {
+    "latest": "You're on the latest version.",
+    "availableTitle": "Update available",
+    "prompt": "MonoCode {{version}} is available (you have {{current}}).{{detail}}\n\nInstall now?",
+    "notConfigured": "Automatic updates aren't configured for this build.\n\nDownload releases at {{url}}",
+    "checkFailed": "Couldn't check for updates.\n\n{{error}}",
+    "installFailed": "Couldn't install the update.\n\n{{error}}"
+  },
+  "quit": {
+    "ok": "Quit"
+  },
+  "reload": {
+    "confirm": "Reload MonoCode and discard unsaved changes?",
+    "ok": "Reload"
+  },
+  "closeWindow": {
+    "confirm": "Close this window and stop its running chats? Other windows will stay open.",
+    "ok": "Close window"
+  },
+  "close": {
+    "tabUnsaved": "Close this tab with unsaved files?",
+    "tabsUnsaved": "Close these tabs with unsaved files?",
+    "fileUnsaved": "Close {{name}} without saving?",
+    "otherTabsUnsaved": "Close other tabs with unsaved files?",
+    "conversationUnsaved": "Close this conversation with unsaved files?",
+    "allFilesUnsaved": "Close all open files with unsaved changes?",
+    "allTabsUnsaved": "Close all tabs with unsaved files?"
+  },
+  "conversation": {
+    "unavailable": "This conversation is no longer available."
+  },
+  "reminder": {
+    "sendFirst": "Send a message in this conversation before setting a reminder."
+  },
+  "worktree": {
+    "alreadyDeleting": "This worktree is already being deleted.",
+    "selecting": "A session is selecting this worktree. Try deleting it again once selection finishes.",
+    "unavailable": "This worktree is no longer available.",
+    "moveSessionsFirst": "Move or delete the sessions using this worktree first.",
+    "waitForSessions": "Wait for these sessions to finish changing before deleting the worktree."
+  },
+  "removal": {
+    "archiveUnsaved": "Archive this conversation with unsaved files?",
+    "deleteUnsaved": "Delete this conversation with unsaved files?",
+    "worktreeKept": "The session was deleted. Its worktree was kept.\n\n{{error}}\n\nYou can manage it in Settings → Worktrees.",
+    "archiveFailed": "Could not archive this conversation.\n\n{{detail}}",
+    "deleteFailed": "Could not delete this conversation.\n\n{{detail}}",
+    "unarchiveFailed": "Could not unarchive this conversation.\n\n{{error}}"
+  },
+  "githubLinkFailed": "Could not update this conversation's GitHub link.\n\n{{error}}",
+  "deleteSelected_one": "Delete {{count}} selected conversation? This can’t be undone.",
+  "deleteSelected_other": "Delete {{count}} selected conversations? This can’t be undone.",
+  "workingCopy": {
+    "busy": "Wait for this session to finish before changing working copies.",
+    "deleting": "This worktree is being deleted. Select another working copy.",
+    "clearQueue": "Clear queued messages before changing working copies.",
+    "stopRun": "Stop this orchestration run before changing working copies.",
+    "unavailable": "This worktree is no longer available. Refresh the picker.",
+    "changed": "The session changed. Try selecting the working copy again."
+  },
+  "orchestration": {
+    "stopCurrentRun": "Stop the current orchestration run before preparing another proposal.",
+    "repairFailed": "The lead could not repair the proposal.",
+    "planningFailed": "The lead could not finish planning.",
+    "planningQueued": "Orchestration planning will start after the current turn finishes.",
+    "waitForProposal": "Wait for the proposal to finish before confirming.",
+    "leadModelChanged": "The lead model has changed. Switch back to the model shown on this card, or generate a new proposal."
+  },
+  "providerAccountRemoved": "This conversation uses a removed provider account. Switch accounts from the usage control to start a new conversation.",
+  "operator": {
+    "outsideRun": "Use /operator from a regular session turn, outside an orchestration run.",
+    "newTurn": "/operator starts a new turn after the current turn finishes."
+  },
+  "followUp": {
+    "cannotSteer": "{{harness}} cannot take a follow-up mid-turn — wait for this turn to finish, or stop it first.",
+    "steerFailed": "{{harness}} could not steer the active turn"
+  },
+  "projectOpenFailed": "The project folder could not be opened.",
+  "harness": {
+    "notConnected": "{{harness}} is not connected yet — install and sign in to that provider, then retry.",
+    "adapterFailed": "{{harness}} adapter failed"
+  },
+  "automation": {
+    "startFailed": "The selected agent session could not start this run."
+  },
+  "sideQuestion": {
+    "noProject": "A project working directory is required for this question.",
+    "codexModelUnavailable": "The selected Codex model is unavailable.",
+    "turnUnavailable": "The completed turn is no longer available.",
+    "emptyAnswer": "{{harness}} returned an empty side answer.",
+    "failed": "{{harness}} could not answer this side question."
+  },
+  "compact": {
+    "unsupported": "{{harness}} does not support manual context compaction.",
+    "compacting": "Compacting context…",
+    "compacted": "Compacted context",
+    "failed": "{{harness}} could not compact this context"
+  },
+  "ciRepair": {
+    "chooseProject": "Choose a local project for this PR first.",
+    "chooseChat": "Choose a chat from this project.",
+    "chatBusy": "This chat is busy. Choose another chat or start a new one.",
+    "sessionTitle": "Fix CI #{{number}}: {{title}}"
+  }
+}

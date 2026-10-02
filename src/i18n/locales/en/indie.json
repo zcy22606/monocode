@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "label": "Project",
+    "noFolder": "No project folder",
+    "planning": "Planning"
+  },
+  "view": {
+    "overview": "Overview",
+    "issues": "Issues",
+    "cycles": "Cycles",
+    "docs": "Docs",
+    "decisions": "Decisions",
+    "features": "Feature Map",
+    "scope": "Scope",
+    "evidence": "Evidence",
+    "issue": "Issue",
+    "doc": "Doc",
+    "decision": "Decision"
+  },
+  "placeholder": {
+    "project": "Project",
+    "note": "Placeholder — layout and interaction preview only",
+    "noteSamples": "Placeholder — layout and interaction preview only; sample rows open a detail tab",
+    "sampleIssue": "Sample issue {{letter}}",
+    "sampleDoc": "Sample doc {{letter}}",
+    "sampleDecision": "Sample decision {{letter}}"
+  }
+}

@@ -1,5 +1,6 @@
 import { basename } from "../../../platform/tauri/fs";
 import type { FilePaneTab } from "../../workspace/model/layout";
+import { t } from "../../../i18n";
 
 export type TerminalMetaPatch = {
   title?: string;
@@ -18,7 +19,7 @@ export type RunningTerminal = {
 /** Default tab label from the working directory. */
 export function defaultTerminalTitle(cwd: string): string {
   const name = basename(cwd);
-  if (!name || name === "/") return "Terminal";
+  if (!name || name === "/") return t("terminal:defaultTitle");
   return name;
 }
 

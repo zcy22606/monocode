@@ -10,6 +10,7 @@ import {
 import { ALT, MOD, SHIFT } from "../../../platform/tauri/platform";
 import { ChevronDown, ChevronUp, X } from "../../../shared/ui/icons";
 import { keybindingPressed } from "../../settings/model/settings";
+import { useTranslation } from "../../../i18n";
 
 const MATCH_CAP = 999;
 const MATCH_HIGHLIGHT = "monocode-file-preview-search-match";
@@ -148,6 +149,7 @@ export function FilePreviewSearch({
   contentVersion: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation("files");
   const rootRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -193,7 +195,7 @@ export function FilePreviewSearch({
     clearHighlights(ownerRef.current);
     requestAnimationFrame(() => {
       rootRef.current
-        ?.querySelector<HTMLElement>('[aria-label="Markdown preview"]')
+        ?.querySelector<HTMLElement>("[data-markdown-preview]") // IndieDesk
         ?.focus();
     });
   }, []);
@@ -333,11 +335,14 @@ export function FilePreviewSearch({
   };
 
   const count = result.invalid
-    ? "Invalid regex"
+    ? t("search.invalidRegex")
     : query && total === 0
-      ? "No results"
+      ? t("search.noResults")
       : total > 0
-        ? `${current + 1} of ${total}${result.capped ? "+" : ""}`
+        ? t("search.count", {
+            current: current + 1,
+            total: `${total}${result.capped ? "+" : ""}`,
+          })
         : "";
 
   return (
@@ -349,7 +354,7 @@ export function FilePreviewSearch({
       {open ? (
         <div
           role="search"
-          aria-label="Find in preview"
+          aria-label={t("search.findInPreview")}
           className="relative z-30 flex h-[35px] shrink-0 items-center gap-1 border-b border-stroke px-2 py-1 text-content"
           onKeyDown={onKeyDown}
         >
@@ -364,8 +369,8 @@ export function FilePreviewSearch({
               ref={inputRef}
               type="text"
               value={query}
-              aria-label="Find"
-              placeholder="Find"
+              aria-label={t("search.find")}
+              placeholder={t("search.find")}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -386,41 +391,44 @@ export function FilePreviewSearch({
           </div>
           <FindToggle
             label="Aa"
-            title={`Match Case (${ALT}C)`}
+            name={t("search.matchCase")}
+            title={t("search.withShortcut", { label: t("search.matchCase"), shortcut: `${ALT}C` })}
             pressed={caseSensitive}
             onClick={() => toggle(setCaseSensitive)}
           />
           <FindToggle
             label="ab"
-            title={`Match Whole Word (${ALT}W)`}
+            name={t("search.wholeWord")}
+            title={t("search.withShortcut", { label: t("search.wholeWord"), shortcut: `${ALT}W` })}
             pressed={wholeWord}
             onClick={() => toggle(setWholeWord)}
           />
           <FindToggle
             label=".*"
-            title={`Use Regular Expression (${ALT}R)`}
+            name={t("search.regex")}
+            title={t("search.withShortcut", { label: t("search.regex"), shortcut: `${ALT}R` })}
             pressed={regexp}
             onClick={() => toggle(setRegexp)}
           />
           <FindButton
-            label="Previous Match"
-            title={`Previous Match (${MOD}${SHIFT}G)`}
+            label={t("search.previous")}
+            title={t("search.withShortcut", { label: t("search.previous"), shortcut: `${MOD}${SHIFT}G` })}
             disabled={total === 0}
             onClick={() => step(-1)}
           >
             <ChevronUp className="size-3.5" strokeWidth={1.75} />
           </FindButton>
           <FindButton
-            label="Next Match"
-            title={`Next Match (${MOD}G)`}
+            label={t("search.next")}
+            title={t("search.withShortcut", { label: t("search.next"), shortcut: `${MOD}G` })}
             disabled={total === 0}
             onClick={() => step(1)}
           >
             <ChevronDown className="size-3.5" strokeWidth={1.75} />
           </FindButton>
           <FindButton
-            label="Close"
-            title="Close (Escape)"
+            label={t("search.close")}
+            title={t("search.withShortcut", { label: t("search.close"), shortcut: "Escape" })}
             onClick={closeSearch}
           >
             <X className="size-3.5" strokeWidth={1.75} />
@@ -436,11 +444,13 @@ export function FilePreviewSearch({
 
 function FindToggle({
   label,
+  name,
   title,
   pressed,
   onClick,
 }: {
   label: string;
+  name: string;
   title: string;
   pressed: boolean;
   onClick: () => void;
@@ -449,7 +459,7 @@ function FindToggle({
     <button
       type="button"
       title={title}
-      aria-label={title.slice(0, title.lastIndexOf(" ("))}
+      aria-label={name}
       aria-pressed={pressed}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}

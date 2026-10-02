@@ -48,6 +48,7 @@ import { isNoteImagePath } from "../../notes";
 import { IS_MAC, IS_WIN } from "../../../platform/tauri/platform";
 import { InboxMedia } from "../../inbox/ui/InboxMedia";
 import { rehypeHardBreaks } from "./hardBreaks";
+import { t as translate, useTranslation } from "../../../i18n";
 import { rehypeWordFade, usePacedText, useWordFading } from "./wordFade";
 
 const MERMAID_BASE_CONFIG = {
@@ -126,11 +127,13 @@ const FileOpenContext = createContext<{
 
 const RemoteMediaContext = createContext(false);
 
-const REVEAL_LABEL = IS_MAC
-  ? "Reveal in Finder"
-  : IS_WIN
-    ? "Reveal in File Explorer"
-    : "Open Containing Folder";
+function revealLabel(): string {
+  return IS_MAC
+    ? translate("sessions:fileLink.revealFinder")
+    : IS_WIN
+      ? translate("sessions:fileLink.revealExplorer")
+      : translate("sessions:fileLink.openFolder");
+}
 
 function fileLinkMenuItems(
   canOpenInMonoCode: boolean,
@@ -140,19 +143,27 @@ function fileLinkMenuItems(
     {
       kind: "item",
       id: "open-monocode",
-      label: "Open in MonoCode",
+      label: translate("sessions:fileLink.openInMonoCode"),
       disabled: !canOpenInMonoCode,
     },
-    { kind: "item", id: "open-default", label: "Open in Default App" },
-    { kind: "item", id: "reveal", label: REVEAL_LABEL },
+    {
+      kind: "item",
+      id: "open-default",
+      label: translate("sessions:fileLink.openDefault"),
+    },
+    { kind: "item", id: "reveal", label: revealLabel() },
     { kind: "sep" },
-    { kind: "item", id: "copy-path", label: "Copy Path" },
+    {
+      kind: "item",
+      id: "copy-path",
+      label: translate("sessions:fileLink.copyPath"),
+    },
     ...(canCopyRelativePath
       ? [
           {
             kind: "item" as const,
             id: "copy-relative-path",
-            label: "Copy Relative Path",
+            label: translate("sessions:fileLink.copyRelativePath"),
           },
         ]
       : []),
@@ -380,6 +391,7 @@ function MarkdownCode({
 }
 
 function CodeCopyButton({ code }: { code: string }) {
+  const { t } = useTranslation("sessions");
   const [copied, setCopied] = useState(false);
   const timer = useRef<number | null>(null);
 
@@ -393,8 +405,8 @@ function CodeCopyButton({ code }: { code: string }) {
   return (
     <button
       type="button"
-      title={copied ? "Copied" : "Copy code"}
-      aria-label={copied ? "Copied" : "Copy code"}
+      title={copied ? t("markdown.copied") : t("markdown.copyCode")}
+      aria-label={copied ? t("markdown.copied") : t("markdown.copyCode")}
       className={`markdown-code-copy ${copied ? "is-copied" : ""}`}
       onClick={() => {
         void copyText(code.replace(/\r?\n$/, "")).then(
@@ -520,6 +532,7 @@ export const AgentMarkdown = memo(function AgentMarkdown({
   /** Show a newline inside a block as a line break, as a document does (#591). */
   hardBreaks?: boolean;
 }) {
+  const { t } = useTranslation("sessions");
   const [fileMenu, setFileMenu] = useState<FileLinkMenu | null>(null);
   const [fileActionError, setFileActionError] = useState<string | null>(null);
   const onFileContextMenu = useCallback(
@@ -595,7 +608,12 @@ export const AgentMarkdown = memo(function AgentMarkdown({
     void action.catch((error) => {
       console.error(`Failed to run file-link action ${id}:`, error);
       setFileActionError(
-        `Could not ${id === "open-default" ? "open the file in its default app" : "complete the file action"}: ${String(error)}`,
+        translate(
+          id === "open-default"
+            ? "sessions:fileLink.openDefaultFailed"
+            : "sessions:fileLink.actionFailed",
+          { error: String(error) },
+        ),
       );
     });
   };
@@ -625,7 +643,7 @@ export const AgentMarkdown = memo(function AgentMarkdown({
               x={fileMenu.x}
               y={fileMenu.y}
               items={fileLinkMenuItems(!!onOpenFile, !!cwd)}
-              ariaLabel="File link actions"
+              ariaLabel={t("fileLink.menuLabel")}
               onPick={onFileMenuPick}
               onClose={() => setFileMenu(null)}
             />
@@ -657,6 +675,7 @@ export const MarkdownPreview = memo(function MarkdownPreview({
   header?: ReactNode;
   hardBreaks?: boolean;
 }) {
+  const { t } = useTranslation("sessions");
   const lockOverscroll = useLockOverscroll<HTMLDivElement>();
 
   return (
@@ -664,7 +683,8 @@ export const MarkdownPreview = memo(function MarkdownPreview({
       ref={lockOverscroll}
       tabIndex={0}
       role="region"
-      aria-label="Markdown preview"
+      aria-label={t("markdown.preview")}
+      data-markdown-preview // IndieDesk: stable hook for FilePreviewSearch; the label is translated
       className="markdown-preview h-full overflow-y-auto overscroll-none [overflow-anchor:none]"
     >
       <div className="px-6 py-8">
@@ -686,6 +706,7 @@ export const MarkdownSource = memo(function MarkdownSource({
 }: {
   text: string;
 }) {
+  const { t } = useTranslation("sessions");
   const lockOverscroll = useLockOverscroll<HTMLDivElement>();
 
   return (
@@ -693,7 +714,7 @@ export const MarkdownSource = memo(function MarkdownSource({
       ref={lockOverscroll}
       tabIndex={0}
       role="region"
-      aria-label="Markdown source"
+      aria-label={t("markdown.source")}
       className="markdown-preview h-full overflow-y-auto overscroll-none [overflow-anchor:none]"
     >
       <pre className="min-h-full min-w-0 whitespace-pre-wrap wrap-break-word px-4 py-3 font-mono text-[13px] leading-5 text-content/85">

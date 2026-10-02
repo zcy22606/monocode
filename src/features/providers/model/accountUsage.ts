@@ -17,6 +17,7 @@ import {
   type ProviderAccountProvider,
 } from "./providerAccounts";
 import { identityKey } from "./providerAccountIdentity";
+import { t } from "../../../i18n";
 
 const CLOCK_MS = 30_000;
 /** At or below this much headroom an account reads as "Running low". */
@@ -64,39 +65,49 @@ export function accountStatus(
   const headroom = accountHeadroom(limits, now);
   if (!limits || headroom == null) {
     if (!limits || limits.status === "idle" || limits.status === "fetching") {
-      return { tone: "checking", label: "Checking…", detail: null };
+      return { tone: "checking", label: t("status.checking", { ns: "providers" }), detail: null };
     }
     return {
       tone: "unknown",
       label:
         limits.status === "unavailable"
-          ? limits.error || "Not signed in"
-          : limits.error || "Usage unavailable",
+          ? limits.error || t("status.notSignedIn", { ns: "providers" })
+          : limits.error || t("status.usageUnavailable", { ns: "providers" }),
       detail: null,
     };
   }
   if (headroom <= 0) {
     return {
       tone: "exhausted",
-      label: "Exhausted",
+      label: t("status.exhausted", { ns: "providers" }),
       detail: backIn(limits, now),
     };
   }
   if (headroom <= LOW_HEADROOM_PERCENT) {
     return {
       tone: "low",
-      label: "Running low",
-      detail: `${Math.round(headroom)}% left`,
+      label: t("status.runningLow", { ns: "providers" }),
+      detail: t("usage.left", {
+        ns: "providers",
+        percent: `${Math.round(headroom)}%`,
+      }),
     };
   }
-  return { tone: "ready", label: "Ready", detail: null };
+  return {
+    tone: "ready",
+    label: t("status.ready", { ns: "providers" }),
+    detail: null,
+  };
 }
 
 /** "back in 31m" for the used-up window that stays blocked longest. */
 function backIn(limits: ProviderRateLimits, now: number): string | null {
   const resetAt = exhaustedWindowResetAt(limits);
   if (resetAt == null || resetAt <= now) return null;
-  return `back in ${formatResetDuration(resetAt - now)}`;
+  return t("status.backIn", {
+    ns: "providers",
+    duration: formatResetDuration(resetAt - now),
+  });
 }
 
 /** The account with the most headroom, if it is comfortably above "low". */

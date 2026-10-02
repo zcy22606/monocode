@@ -9,6 +9,7 @@ import { ChevronDown, ChevronUp, Search, X } from "../../../shared/ui/icons";
 import type { Block } from "../model/session";
 import { findTranscriptBlocks } from "../model/transcriptFind";
 import { keybindingPressed } from "../../settings/model/settings";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   blocks: Block[];
@@ -25,6 +26,7 @@ export function TranscriptFind({
   onNavigate,
   side = "right",
 }: Props) {
+  const { t } = useTranslation("sessions");
   const input = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -107,7 +109,7 @@ export function TranscriptFind({
     >
       <div
         role="search"
-        aria-label="Find in conversation"
+        aria-label={t("find.label")}
         className="pointer-events-auto flex w-[min(360px,calc(100cqw-24px))] items-center gap-1 rounded-lg border border-content/10 bg-content/5 p-1 shadow-lg backdrop-blur-xl"
       >
         <Search
@@ -118,8 +120,8 @@ export function TranscriptFind({
           ref={input}
           type="text"
           value={query}
-          aria-label="Find in conversation"
-          placeholder="Find in conversation"
+          aria-label={t("find.label")}
+          placeholder={t("find.label")}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
@@ -142,25 +144,28 @@ export function TranscriptFind({
         >
           {query.trim()
             ? matches.length
-              ? `${Math.min(active, matches.length - 1) + 1} of ${matches.length}`
-              : "No results"
+              ? t("find.position", {
+                  index: Math.min(active, matches.length - 1) + 1,
+                  total: matches.length,
+                })
+              : t("find.noResults")
             : ""}
         </span>
         <FindButton
-          label="Previous match"
+          label={t("find.previous")}
           onClick={() => step(-1)}
           disabled={!matches.length}
         >
           <ChevronUp className="size-3.5" strokeWidth={1.75} />
         </FindButton>
         <FindButton
-          label="Next match"
+          label={t("find.next")}
           onClick={() => step(1)}
           disabled={!matches.length}
         >
           <ChevronDown className="size-3.5" strokeWidth={1.75} />
         </FindButton>
-        <FindButton label="Close find" onClick={closeFind}>
+        <FindButton label={t("find.close")} onClick={closeFind}>
           <X className="size-3.5" strokeWidth={1.75} />
         </FindButton>
       </div>

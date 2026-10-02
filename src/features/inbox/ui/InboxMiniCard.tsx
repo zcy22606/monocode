@@ -2,6 +2,7 @@ import { CircleDot, GitPullRequest, X } from "../../../shared/ui/icons";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { GithubLabel, InboxComposerCard } from "../model/githubTasks";
 import { InboxProviderMark } from "./InboxProviderMark";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   card: InboxComposerCard;
@@ -9,13 +10,14 @@ type Props = {
 };
 
 export function InboxMiniCard({ card, onDismiss }: Props) {
+  const { t } = useTranslation("inbox");
   const KindIcon = card.kind === "pr" ? GitPullRequest : CircleDot;
   const kindLabel =
     card.kind === "pr"
       ? card.provider === "gitlab"
-        ? "Merge request"
-        : "Pull request"
-      : "Issue";
+        ? t("kind.mr")
+        : t("kind.pr")
+      : t("kind.issue");
   const providerLabel =
     card.provider === "linear"
       ? "Linear"
@@ -32,8 +34,12 @@ export function InboxMiniCard({ card, onDismiss }: Props) {
       <div className="relative rounded-md border border-content/10 bg-content/6 px-2.5 py-2 pr-8">
         <button
           type="button"
-          title={`Open in ${providerLabel}`}
-          aria-label={`Open ${kindLabel} ${card.identifier} in ${providerLabel}`}
+          title={t("open.openIn", { provider: providerLabel })}
+          aria-label={t("miniCard.open", {
+            kind: kindLabel,
+            id: card.identifier,
+            provider: providerLabel,
+          })}
           disabled={!card.url}
           onClick={() => {
             if (card.url) void openUrl(card.url);
@@ -76,8 +82,11 @@ export function InboxMiniCard({ card, onDismiss }: Props) {
         {onDismiss ? (
           <button
             type="button"
-            title="Remove"
-            aria-label={`Remove ${kindLabel} ${card.identifier}`}
+            title={t("miniCard.remove")}
+            aria-label={t("miniCard.removeItem", {
+              kind: kindLabel,
+              id: card.identifier,
+            })}
             onClick={onDismiss}
             className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded text-content/40 hover:bg-content/10 hover:text-content"
           >

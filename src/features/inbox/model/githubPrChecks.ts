@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../i18n";
 
 export type GithubPrCheckState =
   "pass" | "fail" | "pending" | "skipping" | "cancel" | "unknown";
@@ -76,18 +77,9 @@ export const CHECK_STATES: readonly GithubPrCheckState[] = [
   "skipping",
 ];
 
-const CHECK_STATE_LABELS: Record<GithubPrCheckState, string> = {
-  pass: "passed",
-  fail: "failed",
-  pending: "in progress",
-  cancel: "cancelled",
-  unknown: "unknown",
-  skipping: "skipped",
-};
-
+// IndieDesk: labels come from the `inbox` namespace; only call these while rendering.
 export function checkStateLabel(state: GithubPrCheckState): string {
-  const label = CHECK_STATE_LABELS[state];
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  return t(`inbox:checks.state.${state}`);
 }
 
 /** Group checks by outcome; the sort is stable so each group keeps its arrival order. */
@@ -117,9 +109,9 @@ export function describeCheckCounts(
   counts: Record<GithubPrCheckState, number>,
 ): string | null {
   const parts = CHECK_STATES.filter((state) => counts[state] > 0).map(
-    (state) => `${counts[state]} ${CHECK_STATE_LABELS[state]}`,
+    (state) => t(`inbox:checks.count.${state}`, { count: counts[state] }),
   );
-  return parts.length > 0 ? parts.join(", ") : null;
+  return parts.length > 0 ? parts.join(t("inbox:checks.countSeparator")) : null;
 }
 
 export type GithubPrChecksOverall =
@@ -142,7 +134,7 @@ export function summarizePrChecks(input: {
   checks: readonly GithubPrCheck[] | null;
 }): GithubPrChecksOverall {
   if (input.loading) {
-    return { kind: "loading", description: "Loading checks" };
+    return { kind: "loading", description: t("inbox:checks.loading") };
   }
   if (input.error) {
     const counts = input.checks ? countChecks(input.checks) : null;
@@ -150,8 +142,8 @@ export function summarizePrChecks(input: {
     return {
       kind: "error",
       description: saved
-        ? `Checks failed to load, showing saved results that may be out of date: ${saved}`
-        : "Checks failed to load",
+        ? t("inbox:checks.loadFailedSaved", { saved })
+        : t("inbox:checks.loadFailed"),
     };
   }
   const checks = input.checks ?? [];
@@ -160,31 +152,31 @@ export function summarizePrChecks(input: {
     return {
       kind: "fail",
       failed: counts.fail,
-      description: describeCheckCounts(counts) ?? "No checks reported",
+      description: describeCheckCounts(counts) ?? t("inbox:checks.noneReported"),
     };
   }
   if (counts.pending > 0) {
     return {
       kind: "pending",
-      description: describeCheckCounts(counts) ?? "No checks reported",
+      description: describeCheckCounts(counts) ?? t("inbox:checks.noneReported"),
     };
   }
   if (counts.cancel > 0 || counts.unknown > 0) {
     return {
       kind: "neutral",
-      description: describeCheckCounts(counts) ?? "No checks reported",
+      description: describeCheckCounts(counts) ?? t("inbox:checks.noneReported"),
     };
   }
   if (counts.pass > 0) {
     return {
       kind: "pass",
-      description: describeCheckCounts(counts) ?? "No checks reported",
+      description: describeCheckCounts(counts) ?? t("inbox:checks.noneReported"),
     };
   }
   // Empty or skipping-only: neutral, but the skipped count still gets said.
   return {
     kind: "neutral",
-    description: describeCheckCounts(counts) ?? "No checks reported",
+    description: describeCheckCounts(counts) ?? t("inbox:checks.noneReported"),
   };
 }
 

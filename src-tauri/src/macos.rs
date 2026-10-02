@@ -509,7 +509,7 @@ pub(crate) fn install_dock_menu(app: &AppHandle) {
     let item = unsafe {
         NSMenuItem::initWithTitle_action_keyEquivalent(
             NSMenuItem::alloc(mtm),
-            &NSString::from_str("New Window"),
+            &NSString::from_str(crate::i18n::tr("New Window")), // IndieDesk
             Some(sel!(newWindow:)),
             &NSString::new(),
         )

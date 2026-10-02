@@ -1,0 +1,16 @@
+{
+  "platform": {
+    "pickFolders": "Open projects",
+    "pickFiles": "Attach files",
+    "clipboard": {
+      "fileUnavailable": "File content is no longer available.",
+      "copyFailed": "Could not copy {{name}}: {{reason}}",
+      "nothingToCopy": "No copyable content is available.",
+      "nothingToAttach_one": "Nothing to attach from that path — the file may have been moved, renamed, or deleted.",
+      "nothingToAttach_other": "Nothing to attach from those paths — the file may have been moved, renamed, or deleted.",
+      "partialAttach": "Attached {{attached}} of {{total}} copied files. A turn carries up to {{max}}.",
+      "unreadable": "The clipboard could not be read.",
+      "noImage": "The clipboard does not contain an image."
+    }
+  }
+}

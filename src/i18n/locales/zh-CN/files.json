@@ -1,0 +1,126 @@
+{
+  "actionError": {
+    "dismissLabel": "关闭文件操作错误",
+    "dismiss": "关闭"
+  },
+  "selectionMenu": {
+    "label": "选中代码操作",
+    "addToChat": "添加到对话"
+  },
+  "preview": {
+    "file": "文件",
+    "lines": "预览行",
+    "empty": "空文件"
+  },
+  "binary": {
+    "opening": "正在打开 {{name}}…",
+    "openFailed": "无法打开 {{name}}",
+    "notImage": "{{size}} · 不是可读取的图片",
+    "copied": "已复制",
+    "copyOriginal": "复制原始文件",
+    "zoomOut": "缩小",
+    "fitToWindow": "适应窗口",
+    "fit": "适应",
+    "zoomIn": "放大",
+    "copyOriginalMenu": "复制原始文件",
+    "imageActions": "图片操作",
+    "retry": "重试",
+    "reveal": "显示位置",
+    "copyPath": "复制路径"
+  },
+  "plan": {
+    "missing": "这个计划已不在会话中。",
+    "building": "正在构建…",
+    "built": "已构建",
+    "build": "构建",
+    "markdown": "计划 Markdown"
+  },
+  "menu": {
+    "fileActions": "文件操作"
+  },
+  "picker": {
+    "reload": "重新加载 MonoCode",
+    "commandPalette": "命令面板",
+    "goToFile": "转到文件",
+    "placeholder": "转到文件（输入 > 查看命令）",
+    "noCommands": "没有匹配的命令",
+    "noProject": "打开一个项目后才能搜索文件",
+    "indexing": "正在索引文件…",
+    "noFiles": "没有找到文件",
+    "noMatches": "没有匹配的文件",
+    "typeToSearch": "输入文件名进行搜索",
+    "commands": "命令",
+    "files": "文件"
+  },
+  "search": {
+    "invalidRegex": "正则表达式无效",
+    "noResults": "无结果",
+    "count": "{{current}} / {{total}}",
+    "findInPreview": "在预览中查找",
+    "find": "查找",
+    "replace": "替换",
+    "replaceAll": "全部",
+    "toggleReplace": "切换替换",
+    "matchCase": "区分大小写",
+    "wholeWord": "全字匹配",
+    "regex": "使用正则表达式",
+    "previous": "上一个匹配",
+    "next": "下一个匹配",
+    "close": "关闭",
+    "withShortcut": "{{label}}（{{shortcut}}）"
+  },
+  "gutter": {
+    "changes": "更改",
+    "comment": "评论这一行",
+    "revert": "还原更改",
+    "stage": "暂存更改"
+  },
+  "lint": {
+    "unexpected": "意外的 {{token}}",
+    "unexpectedEndOfFile": "文件意外结束",
+    "unexpectedEndOfLine": "行意外结束"
+  },
+  "editor": {
+    "cantStage": "无法暂存这个文件",
+    "onlyUnstaged": "只能暂存未暂存的更改",
+    "eolStaged": "暂存的更改只涉及换行符。此视图中的换行符已统一。",
+    "eolUnstaged": "未暂存的更改只涉及换行符。此视图中的换行符已统一。",
+    "properties": "属性",
+    "saving": "正在保存…",
+    "saved": "已保存",
+    "saveFailed": "保存失败：{{message}}",
+    "jumpChanges": "在更改之间跳转",
+    "previousChange": "上一处更改",
+    "nextChange": "下一处更改"
+  },
+  "tree": {
+    "revealFinder": "在访达中显示",
+    "revealExplorer": "在文件资源管理器中显示",
+    "openContainingFolder": "打开所在文件夹",
+    "newFile": "新建文件",
+    "newFolder": "新建文件夹",
+    "cut": "剪切",
+    "copy": "复制",
+    "paste": "粘贴",
+    "duplicate": "创建副本",
+    "copyPath": "复制路径",
+    "copyRelativePath": "复制相对路径",
+    "rename": "重命名",
+    "delete": "删除",
+    "openInTerminal": "在终端中打开",
+    "confirmDeleteFolder": "删除文件夹「{{name}}」及其中的所有内容？",
+    "confirmDelete": "删除「{{name}}」？",
+    "pasteIntoSelf": "不能把文件夹粘贴到它自身里面。",
+    "collapseAll": "全部折叠",
+    "searchInFiles": "在文件中搜索（{{shortcut}}）",
+    "label": "{{name}} 中的文件",
+    "nameInput": "输入文件名。按 Enter 确认，按 Escape 取消。",
+    "issue": {
+      "empty": "必须提供文件或文件夹名称。",
+      "slash": "文件或文件夹名称不能以斜杠开头。",
+      "exists": "此位置已存在文件或文件夹 <b>{{name}}</b>，请换一个名称。",
+      "invalid": "名称 <b>{{name}}</b> 不是有效的文件或文件夹名称，请换一个名称。",
+      "whitespace": "文件或文件夹名称的开头或结尾有空格。"
+    }
+  }
+}

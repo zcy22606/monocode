@@ -2,6 +2,7 @@ import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { hslToRgb, isHexColor, type Rgb } from "../../../shared/lib/colorUtils";
 import { IS_LINUX, IS_MAC } from "../../../platform/tauri/platform";
 import { readFlag, writeFlag } from "./storageFlags";
+import { t } from "../../../i18n"; // IndieDesk
 import { applyUiScale, loadUiScale } from "./uiScale";
 import {
   applyPreparedNewThreadBackground,
@@ -53,29 +54,27 @@ export const NEW_THREAD_BACKGROUND_EFFECTS: readonly NewThreadBackgroundEffect[]
 export const NEW_THREAD_BACKGROUND_EFFECT_DEFAULT: NewThreadBackgroundEffect =
   "none";
 
-export const NEW_THREAD_BACKGROUND_EFFECT_LABELS: Record<
-  NewThreadBackgroundEffect,
-  string
-> = {
-  none: "None",
-  dither: "Dither",
-  ascii: "ASCII",
-  halftone: "Halftone",
-  scanlines: "Scanlines",
-  "gradient-blur": "Haze",
-};
+/**
+ * IndieDesk: text lives in locales/<lang>/settings.json (`backgroundEffect.*`);
+ * each property translates when read, so read these at render time.
+ */
+function backgroundEffectText(
+  field: "label" | "description",
+): Record<NewThreadBackgroundEffect, string> {
+  const record = {} as Record<NewThreadBackgroundEffect, string>;
+  for (const effect of NEW_THREAD_BACKGROUND_EFFECTS) {
+    Object.defineProperty(record, effect, {
+      enumerable: true,
+      get: () => t(`settings:backgroundEffect.${effect}.${field}`),
+    });
+  }
+  return record;
+}
 
-export const NEW_THREAD_BACKGROUND_EFFECT_DESCRIPTIONS: Record<
-  NewThreadBackgroundEffect,
-  string
-> = {
-  none: "Shows the original artwork.",
-  dither: "Rebuilds the artwork with a dithered color palette.",
-  ascii: "Recreates the artwork with colored characters on black.",
-  halftone: "Recreates the artwork with colored print dots on black.",
-  scanlines: "Adds a pronounced horizontal display-line texture.",
-  "gradient-blur": "Blurs and fades the artwork into the background below.",
-};
+export const NEW_THREAD_BACKGROUND_EFFECT_LABELS = backgroundEffectText("label");
+
+export const NEW_THREAD_BACKGROUND_EFFECT_DESCRIPTIONS =
+  backgroundEffectText("description");
 
 export const THEME_PREFERENCE_DEFAULT: ThemePreference = "dark";
 

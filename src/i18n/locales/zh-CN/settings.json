@@ -1,0 +1,560 @@
+{
+  "language": {
+    "title": "语言",
+    "label": "界面语言",
+    "description": "「跟随系统」使用操作系统的语言；中文统一显示为简体中文。",
+    "system": "跟随系统"
+  },
+  "groups": {
+    "app": "应用",
+    "agents": "Agent",
+    "workspace": "工作区"
+  },
+  "sections": {
+    "general": {
+      "label": "通用",
+      "description": "当前运行的版本、MonoCode 如何提醒你，以及显示哪些面板。"
+    },
+    "connections": {
+      "label": "连接",
+      "description": "连接你的机器，通过 SSH 远程运行 Agent。"
+    },
+    "appearance": {
+      "label": "外观",
+      "description": "主题、色调、半透明、工作区布局和对话背景。"
+    },
+    "keybindings": {
+      "label": "快捷键",
+      "description": "工作区处理的所有快捷键，包括应用菜单和按键处理器里的。"
+    },
+    "chat": {
+      "label": "聊天",
+      "description": "对话记录怎么显示、输入框如何处理追加消息、文件如何保存，以及差异如何打开。"
+    },
+    "providers": {
+      "label": "提供方",
+      "description": "提供方账号、MonoCode 可以驱动的 Agent CLI，以及新会话默认使用的模型。"
+    },
+    "mcp": {
+      "label": "MCP",
+      "description": "查找各提供方的 MCP 服务器并管理它们的连接。"
+    },
+    "skills": {
+      "label": "技能",
+      "description": "发现并管理来自项目、个人和 harness 文件夹的文件技能。"
+    },
+    "inbox": {
+      "label": "收件箱",
+      "description": "管理收件箱服务，以及每个项目的通知偏好。"
+    },
+    "archive": {
+      "label": "归档",
+      "description": "你归档过的项目和对话。"
+    },
+    "worktrees": {
+      "label": "工作树",
+      "description": "管理每个项目的额外工作树。"
+    }
+  },
+  "index": {
+    "remote-machines": "你的机器",
+    "mcp-servers": "MCP 服务器",
+    "project-worktrees": "项目工作树",
+    "language": "语言",
+    "update": "版本",
+    "sounds": "声音",
+    "notifications": "通知",
+    "notes": "笔记",
+    "quick-composer": "快速输入",
+    "working-agents": "运行中的 Agent",
+    "file-tabs": "文件标签页",
+    "tab-animations": "标签页动画",
+    "close-to-tray": "关闭到托盘",
+    "theme": "主题",
+    "accent-color": "强调色",
+    "hue": "色相",
+    "saturation": "饱和度",
+    "dark-lightness": "深色模式亮度",
+    "sidebar-opacity": "侧栏不透明度",
+    "blur": "模糊半径",
+    "main-pane-glass": "主窗格玻璃效果",
+    "interface-scale": "界面缩放",
+    "collapsed-project-rail": "收起后的项目栏",
+    "show-excluded-files": "显示被排除的文件",
+    "chat-background": "聊天背景",
+    "transcript-layout": "对话记录布局",
+    "anchor-prompts": "提示词固定在顶部",
+    "follow-up": "追加消息行为",
+    "model-controls": "模型控件",
+    "composer-mascot": "输入框吉祥物",
+    "format-on-save": "保存时格式化",
+    "diff-view": "差异视图",
+    "empty-session-games": "空会话小游戏",
+    "agent-clis": "Agent CLI",
+    "provider-accounts": "提供方账号",
+    "claude-hooks": "Claude Code hooks",
+    "project-notifications": "项目通知",
+    "github": "GitHub",
+    "gitlab": "GitLab",
+    "azuredevops": "ADO",
+    "jira": "Jira",
+    "linear": "Linear",
+    "show-archived": "在侧栏显示已归档"
+  },
+  "keybindings": {
+    "command": {
+      "AppSettings": "应用：设置",
+      "AppSearch": "应用：搜索",
+      "AppGotoFile": "应用：转到文件",
+      "AppCommandPalette": "应用：命令面板",
+      "AppFindinFiles": "应用：在文件中查找",
+      "AppOpenProject": "应用：打开项目",
+      "AppNewWindow": "应用：新建窗口",
+      "AppQuickComposer": "应用：快速输入",
+      "AppToggleSidebar": "应用：切换侧栏",
+      "AppToggleSessionSidebar": "应用：切换会话侧栏",
+      "AppSwitchModel": "应用：切换模型",
+      "ComposerToggleWorkspace": "输入框：切换工作区",
+      "ViewReload": "视图：重新加载",
+      "ViewZoomIn": "视图：放大",
+      "ViewZoomOut": "视图：缩小",
+      "ViewResetZoom": "视图：重置缩放",
+      "TabNew": "标签页：新建",
+      "TabCloseOthers": "标签页：关闭其他",
+      "TabCloseAll": "标签页：全部关闭",
+      "TabNext": "标签页：下一个",
+      "TabPrevious": "标签页：上一个",
+      "TabCycleNext": "标签页：循环到下一个",
+      "TabCyclePrevious": "标签页：循环到上一个",
+      "TabBack": "标签页：后退",
+      "TabForward": "标签页：前进",
+      "TabActivate18": "标签页：激活第 1–8 个",
+      "TabActivateLast": "标签页：激活最后一个",
+      "SessionArchive": "会话：归档",
+      "SessionPrevious": "会话：上一个",
+      "SessionNext": "会话：下一个",
+      "SessionPreviousinCurrentTab": "会话：当前标签页中的上一个",
+      "SessionNextinCurrentTab": "会话：当前标签页中的下一个",
+      "ProjectPrevious": "项目：上一个",
+      "ProjectNext": "项目：下一个",
+      "PaneClose": "窗格：关闭",
+      "PaneSplitRight": "窗格：向右拆分",
+      "PaneSplitDown": "窗格：向下拆分",
+      "PaneFocusLeft": "窗格：聚焦左侧",
+      "PaneFocusRight": "窗格：聚焦右侧",
+      "PaneFocusUp": "窗格：聚焦上方",
+      "PaneFocusDown": "窗格：聚焦下方",
+      "TerminalNew": "终端：新建",
+      "TerminalNewTab": "终端：新建标签页",
+      "TerminalToggleDock": "终端：切换停靠",
+      "EditorFind": "编辑器：查找",
+      "EditorReplace": "编辑器：替换"
+    },
+    "when": {
+      "Always": "始终",
+      "Anywhere": "任何地方",
+      "Draftsessioncomposer": "草稿会话输入框"
+    },
+    "disabled": "已停用",
+    "errors": {
+      "invalid": "这个组合不是有效的快捷键",
+      "activateRange": "「{{command}}」需要 1 到 8 的数字键",
+      "alreadyUsed": "已被「{{command}}」占用",
+      "saveFailed": "无法保存快捷键",
+      "quickComposerGlobal": "快速输入的全局快捷键需要包含 ⌘ 或 Ctrl"
+    },
+    "change": "修改「{{name}}」快捷键",
+    "record": "录制…",
+    "reset": "重置「{{name}}」快捷键",
+    "recordingHint": "Del 停用 · Esc 取消",
+    "quickComposerName": "快速输入",
+    "title": "快捷键",
+    "description": "点击快捷键可录制新按键；录制时按 Delete 可停用它。",
+    "count_other": "{{count}} 个快捷键",
+    "filter": "筛选",
+    "filterLabel": "筛选快捷键",
+    "columns": {
+      "command": "命令",
+      "keybinding": "快捷键",
+      "when": "生效条件"
+    },
+    "noResults": "没有匹配的快捷键"
+  },
+  "view": {
+    "settings": "设置",
+    "restoreDefaults": "恢复默认"
+  },
+  "search": {
+    "placeholder": "搜索设置",
+    "clear": "清除设置搜索",
+    "results": "设置搜索结果",
+    "noResults": "没有匹配的设置",
+    "page": "页面"
+  },
+  "general": {
+    "alerts": {
+      "title": "提醒",
+      "description": "你在看别处时，MonoCode 如何提醒你。"
+    },
+    "sounds": "项目动态、一轮完成和有可用更新时播放简短提示音。项目通知的类别在收件箱设置里选择。切换开关和复制已完成的回复时也会播放。",
+    "notifications": "提醒到期，或者 Agent 在其他会话里、在 MonoCode 处于后台时完成或需要输入，都会发出通知。点击通知会打开对应会话。",
+    "notificationsUnsupported": "此平台不支持",
+    "workspace": {
+      "description": "项目导航和工作区标签页的行为。",
+      "title": "工作区"
+    },
+    "file-tabs": "在当前聊天旁打开文件，或者在顶栏给每个文件一个普通标签页。顶栏里的文件仍然可以组合成拆分窗格。",
+    "fileTabs": {
+      "pane": "聊天旁",
+      "workspace": "顶栏"
+    },
+    "tab-animations": "标签页打开和关闭时播放动画。关闭后切换标签页即时生效。",
+    "notes": "项目栏上的全局 Markdown 笔记本。可以把对话记录里已完成的回复存进来，之后用 @note 引用或加到聊天里。",
+    "quick-composer": "在任何应用里按 {{shortcut}}，就会浮出一个提示词输入框，不用切回 MonoCode 就能开始会话。快捷键可以在「快捷键」里修改。按 Return 在后台开始；按 ⌘Return 开始并把会话切到前台。",
+    "working-agents": "有两个或更多聊天在运行时，项目栏上会出现一张卡片列出它们，方便跨项目跳转。已完成的回合会一直保留，直到你打开那个会话。",
+    "close-to-tray": "关闭窗口时把它藏到系统托盘而不是退出，正在运行的 Agent 会继续工作。从托盘图标重新打开，从托盘菜单真正退出。关掉这个选项后，关闭即结束窗口。",
+    "about": "关于",
+    "notificationsBlocked": {
+      "permission": "需要授权",
+      "openSettings": "打开系统设置"
+    }
+  },
+  "chat": {
+    "transcript": {
+      "title": "对话记录",
+      "description": "对话变长时怎么显示。"
+    },
+    "transcript-layout": "「全宽」把用户提示词显示为通栏卡片；「聊天」像即时通讯应用一样把它们靠右对齐，并限制最大宽度。",
+    "transcriptLayout": {
+      "full": "全宽",
+      "chat": "聊天"
+    },
+    "anchor-prompts": "发送后，新提示词停在对话记录顶部，回复在下方展开。关掉后使用经典布局，最新消息贴着输入框。",
+    "composer": {
+      "title": "输入框",
+      "description": "输入框如何处理你输入的内容。"
+    },
+    "follow-up": "把追加消息排队到当前回合结束，或者立即引导当前回合。",
+    "followUp": {
+      "queue": "排队",
+      "steer": "引导"
+    },
+    "model-controls": "把模型选项显示在选择器旁边，而不是放在模型菜单里。",
+    "modelControls": {
+      "menu": "菜单",
+      "beside": "旁边"
+    },
+    "editor": {
+      "title": "编辑器",
+      "description": "在工作区编辑器里保存文件时会发生什么。"
+    },
+    "format-on-save": "写入前用 Prettier 格式化支持的文件。关闭后保留你输入的原文，包括引号风格。",
+    "codeReview": {
+      "title": "代码审查",
+      "description": "查看某一轮的更改时，在哪里打开。"
+    },
+    "diff-view": "「编辑器」在文件里显示工作树更改；「统一」把所有更改的文件叠在一个审查视图里，带吸顶标题并折叠未更改的行。",
+    "diffView": {
+      "editor": "编辑器",
+      "unified": "统一"
+    },
+    "extras": {
+      "title": "彩蛋",
+      "description": "只是闲置动画，别无他用。两个都关掉，工作区就是静止的。"
+    },
+    "composer-mascot": "回合运行时，项目吉祥物会沿着输入框奔跑，第一次撞到「滚动到最新」按钮，之后会跳过去，偶尔还会捡到金币。",
+    "empty-session-games": "吃豆人和贪吃蛇会在空会话的网格上自己玩。鼠标悬停在那条区域上，就能接管屏幕上正在玩的那个。关掉后窗格保持静止。"
+  },
+  "inbox": {
+    "github": {
+      "description": "通过 GitHub CLI 读取 PR、评审和 issue。",
+      "connected": "GitHub CLI 已安装并完成认证，MonoCode 用它获取 GitHub 收件箱条目。",
+      "signInHint": "在终端运行 gh auth login，完成登录流程后再检查一次。",
+      "installHint": "从 cli.github.com 安装 GitHub CLI，在终端运行 gh auth login，然后再检查一次。",
+      "signInRequired": "需要登录"
+    },
+    "gitlab": {
+      "description": "来自 GitLab.com 或自托管实例的合并请求。",
+      "connection": "连接 GitLab.com 或自托管的 GitLab 实例。使用带 API 权限的个人访问令牌；令牌保存在本机，断开连接会删除它。",
+      "url": "GitLab 地址",
+      "token": "GitLab 访问令牌"
+    },
+    "azuredevops": {
+      "description": "来自你的 ADO 组织的 PR 和 Boards 工作项。",
+      "connection": "用个人访问令牌连接你的 ADO 组织（Boards + Repos 读写权限，用于评论）。令牌保存在本机，断开连接会删除它。",
+      "url": "Azure DevOps 组织地址",
+      "token": "Azure DevOps 个人访问令牌"
+    },
+    "jira": {
+      "description": "来自你所选项目的 Jira Cloud issue。",
+      "checking": "正在检查 Jira 连接…",
+      "connectHint": "用你的 Atlassian 邮箱和一个不带权限范围的 API 令牌连接 Jira Cloud 站点。断开连接会删除保存的凭证。",
+      "site": "Jira 站点",
+      "email": "Atlassian 邮箱",
+      "token": "Jira API 令牌",
+      "tokenPlaceholder": "API 令牌",
+      "createToken": "创建 API 令牌",
+      "projects": "项目",
+      "refresh": "刷新项目",
+      "projectsHint": "未勾选的项目不会进入收件箱。"
+    },
+    "linear": {
+      "description": "分配给你的 issue，来自你所选的团队。",
+      "apiKey": "API 密钥",
+      "apiKeyDescription": "在 Linear → Settings → Security & Access 里创建个人 API 密钥。断开连接会删除它。",
+      "apiKeyInput": "Linear API 密钥",
+      "teams": "团队",
+      "teamsHint": "未勾选的团队不会进入收件箱。"
+    }
+  },
+  "common": {
+    "checking": "检查中",
+    "connected": "已连接",
+    "notInstalled": "未安装",
+    "connection": "连接",
+    "installationGuide": "安装指南",
+    "checkAgain": "重新检查",
+    "disconnect": "断开连接",
+    "saving": "保存中",
+    "connect": "连接",
+    "change": "更换",
+    "remove": "移除",
+    "cancel": "取消",
+    "default": "默认",
+    "save": "保存",
+    "delete": "删除",
+    "selectValue": "{{label}}：{{value}}",
+    "disconnecting": "正在断开",
+    "connecting": "连接中"
+  },
+  "update": {
+    "available": "版本 {{version}} 可用。",
+    "downloadingProgress": "正在下载 {{progress}}%",
+    "downloading": "正在下载…",
+    "checking": "正在检查更新…",
+    "current": "已是最新版本。",
+    "failed": "检查更新失败。",
+    "idle": "MonoCode 会从发布源自动更新。",
+    "version": "版本",
+    "whatsNew": "新功能",
+    "download": "下载",
+    "check": "检查更新"
+  },
+  "backgroundEffect": {
+    "none": {
+      "label": "无",
+      "description": "显示原图。"
+    },
+    "dither": {
+      "label": "抖动",
+      "description": "用抖动调色板重绘图片。"
+    },
+    "ascii": {
+      "label": "ASCII",
+      "description": "在黑底上用彩色字符重绘图片。"
+    },
+    "halftone": {
+      "label": "半色调",
+      "description": "在黑底上用彩色印刷网点重绘图片。"
+    },
+    "scanlines": {
+      "label": "扫描线",
+      "description": "加上明显的水平扫描线纹理。"
+    },
+    "gradient-blur": {
+      "label": "朦胧",
+      "description": "把图片模糊并渐隐到下方背景中。"
+    }
+  },
+  "appearance": {
+    "themeGroup": {
+      "title": "主题",
+      "description": "深色和浅色共用同一套色调，下面的颜色设置对两者都生效。"
+    },
+    "theme": "「跟随系统」使用操作系统的外观。",
+    "themes": {
+      "system": "跟随系统",
+      "dark": "深色",
+      "light": "浅色"
+    },
+    "accent-color": "用于输入框的发送按钮和你的消息气泡。",
+    "color": {
+      "title": "颜色",
+      "description": "色相和饱和度会给所有界面着色；亮度只影响深色主题。"
+    },
+    "hue": "强调色和着色界面的基础色相。",
+    "saturation": "色相给界面着色的强度。为零时保持中性。",
+    "darkLightnessLight": "这个设置只影响深色模式，你在深色模式下的值会保留。",
+    "dark-lightness": "深色主题的基础亮度。数值越低越暗，为零时是纯黑。",
+    "translucency": {
+      "title": "半透明",
+      "light": "浅色模式下窗口始终不透明，所以这些设置不可用。你在深色模式下的值会保留。",
+      "description": "MonoCode 透出多少桌面。模糊越强，合成开销越大。"
+    },
+    "sidebar-opacity": "作用于项目栏和其他玻璃窗格。",
+    "blur": "窗口背后的背景模糊。",
+    "main-pane-glass": "把半透明效果延伸到会话和编辑器背后的主窗格。",
+    "layout": {
+      "title": "布局"
+    },
+    "collapsed-project-rail": "收起后保留一条紧凑的图标栏用于项目导航，或者完全隐藏。",
+    "rail": {
+      "compact": "图标栏",
+      "hidden": "隐藏"
+    },
+    "interface-scale": "缩放整个界面。也可以用 Ctrl+=、Ctrl+- 和 Ctrl+0（macOS 上用 Cmd）。",
+    "show-excluded-files": "在资源管理器里显示 Git 排除的文件和文件夹，比如构建产物和依赖。",
+    "chatBackground": {
+      "description": "聊天窗格背后的图片，只保存在这台设备上。",
+      "preview": "空聊天预览，可见度 {{percent}}%",
+      "choose": "选择图片",
+      "effect": "背景效果",
+      "showOn": "显示范围",
+      "showOnDescription": "只在空会话中显示，或在所有对话中显示。",
+      "showOnLabel": "背景显示范围",
+      "emptyOnly": "仅空会话",
+      "allSessions": "所有会话",
+      "emptyVisibility": "空聊天可见度",
+      "emptyVisibilityDescription": "聊天还没有消息时的背景强度。",
+      "emptyVisibilityLabel": "空聊天背景可见度",
+      "sessionVisibility": "会话可见度",
+      "sessionVisibilityDescription": "对话有消息之后的背景强度。",
+      "sessionVisibilityLabel": "会话背景可见度"
+    },
+    "accentColors": {
+      "blue": "蓝色",
+      "violet": "紫色",
+      "pink": "粉色",
+      "red": "红色",
+      "orange": "橙色",
+      "green": "绿色"
+    }
+  },
+  "providers": {
+    "cli": {
+      "invalidVersion": "{{title}} CLI 返回了无效的版本号。",
+      "tooOld": "OpenCode v{{version}} 版本过旧，请升级到 v{{minimum}} 或更新版本。",
+      "saveFailed": "无法保存可执行文件路径。",
+      "showRestart": "显示 {{title}} CLI 详情，需要重启",
+      "show": "显示 {{title}} CLI 详情",
+      "pathTitle": "{{title}} CLI 路径",
+      "pathTitleRestart": "{{title}} CLI 路径 — 需要重启",
+      "details": "{{title}} CLI 详情",
+      "globalPath": "全局路径",
+      "needsAttention": "需要处理",
+      "restartRequired": "需要重启",
+      "configured": "已配置",
+      "autoDetected": "自动检测",
+      "path": "CLI 路径",
+      "autoDetectedPath": "自动检测的路径",
+      "pathHint": "输入 CLI 可执行文件的绝对路径。重启 MonoCode 后生效。",
+      "useAuto": "使用自动检测的路径",
+      "savePath": "保存路径",
+      "unresolved": "无法解析 CLI",
+      "checkingPath": "正在检查所选 CLI…",
+      "retryHint": "重试以检查这个 CLI",
+      "checkingVersion": "正在检查版本…",
+      "revealFailed": "无法打开 CLI 所在位置：{{error}}",
+      "retryConfiguredLabel": "重试 {{title}} 已配置的路径",
+      "retryAutoLabel": "重试 {{title}} 自动检测",
+      "retryConfigured": "重试已配置的路径",
+      "retryAuto": "重试自动检测",
+      "openLocationLabel": "打开 {{title}} CLI 所在位置",
+      "openLocation": "打开所在位置",
+      "editPathLabel": "编辑 {{title}} CLI 路径",
+      "editPath": "编辑路径"
+    },
+    "scopeGlobal": "全局",
+    "scopeLabel": "提供方默认设置的范围",
+    "agentClis": {
+      "project": "这些默认设置只对 {{project}} 生效。关闭了「在选择器中显示」的提供方，也不会用于这个项目里新开的对话。CLI 路径对 MonoCode 仍是全局的。",
+      "global": "在 PATH 上找到 CLI 后，该提供方就会显示为已安装。未安装的 CLI 仍会列出，但不会出现在模型选择器里；已安装但关闭了「在选择器中显示」的也一样。提供方旁边的模型是它新对话的默认模型；「设为默认」选择的是提供方本身。CLI 路径对 MonoCode 是全局的，适用于所有项目。"
+    },
+    "advanced": "高级",
+    "claude-hooks": "像 Claude Code CLI 一样运行你在 settings.json 里配置的 hooks——PreToolUse 命令改写、拦截、通知等等。如果某个 hook 出了问题、你需要让会话恢复，可以关掉它。下一轮生效。",
+    "accounts": {
+      "saveFailed": "无法保存这个账号",
+      "removeFailed": "无法移除这个账号",
+      "removeConfirm": "移除「{{name}}」？它保存的凭证会被删除，这个账号正在运行的回合会停止。已有对话会保留在历史中，但切换账号之前无法继续。",
+      "removeTitle": "移除 {{provider}} 账号",
+      "removeAccount": "移除账号",
+      "title": "账号",
+      "description": "为支持账号配置的提供方创建相互隔离的登录。仍可以通过底栏的用量控件切换账号。",
+      "count_other": "{{count}} 个账号",
+      "add": "添加账号",
+      "cliProfile": "提供方 CLI 配置",
+      "isolatedProfile": "隔离配置",
+      "renameLabel": "重命名 {{name}}",
+      "rename": "重命名账号",
+      "removeLabel": "移除 {{name}}",
+      "name": "账号名称",
+      "namePlaceholder": "工作或个人",
+      "newLabel": "新建 {{provider}} 账号",
+      "renameProviderLabel": "重命名 {{provider}} 账号",
+      "waiting": "正在等待浏览器…",
+      "signInAndAdd": "登录并添加"
+    },
+    "modelsAvailable_other": "{{count}} 个模型可用。",
+    "modelLabel": "{{provider}} 模型",
+    "useByDefault": "设为默认",
+    "hiddenGlobally": "已全局隐藏",
+    "showInPicker": "在选择器中显示",
+    "showInPickerLabel": "在模型选择器中显示 {{provider}}"
+  },
+  "archive": {
+    "projects": {
+      "title": "已归档的项目",
+      "description": "在项目栏归档一个项目，可以保留它的聊天，但不在侧栏中列出。",
+      "empty": "没有已归档的项目。"
+    },
+    "restore": "恢复",
+    "sessions": {
+      "inProject": "{{project}} 中的归档",
+      "title": "已归档的对话",
+      "noProject": "打开一个项目以查看它已归档的对话。",
+      "empty": "这个项目里没有已归档的对话。"
+    },
+    "show-archived": "已归档的对话和活跃对话一起列出。",
+    "unarchive": "取消归档"
+  },
+  "mcp": {
+    "add": {
+      "notObject": "配置必须是一个 JSON 对象",
+      "title": "添加 MCP 服务器",
+      "description": "粘贴服务器配置，并选择添加到哪里。",
+      "provider": "提供方",
+      "name": "名称",
+      "nameHint": "（使用 mcpServers 块时可选）",
+      "config": "JSON 配置",
+      "configHint": "粘贴 mcpServers 块中的一项，或者单个服务器对象并在上面填写名称。",
+      "adding": "添加中…",
+      "submit": "添加服务器"
+    },
+    "scope": "范围",
+    "scopes": {
+      "local": "本地",
+      "project": "项目",
+      "user": "用户"
+    },
+    "remove": {
+      "confirm": "从 {{scope}} 范围移除 {{name}}？",
+      "title": "移除 MCP 服务器"
+    },
+    "title": "MCP 连接",
+    "description": "所选项目和你的提供方账号中已配置的服务器。",
+    "refresh": "刷新",
+    "showAvailable": "显示可用的提供方",
+    "showAll": "显示全部提供方",
+    "showingAll": "正在显示全部提供方",
+    "showingAvailable": "正在显示可用的提供方",
+    "filterLabel": "按提供方筛选 MCP 服务器",
+    "all": "全部",
+    "claudeStatusUnavailable": "无法获取 Claude 连接状态：{{error}}",
+    "checking": "正在检查服务器…",
+    "empty": "这个提供方没有配置 MCP 服务器。",
+    "signIn": "登录",
+    "removeScopeLabel": "要从哪个范围移除 {{name}}",
+    "showConfig": "显示配置",
+    "footer": "Claude Code 的状态来自它的 CLI，其他提供方显示已配置的条目。支持的话，「登录」会打开浏览器。"
+  }
+}

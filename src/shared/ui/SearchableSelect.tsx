@@ -11,6 +11,7 @@ import { Check, ChevronDown, Search } from "./icons";
 import { LAYER } from "../lib/layers";
 import type { PopoverAlign } from "../lib/popover";
 import { Popover } from "./Popover";
+import { useTranslation } from "../../i18n";
 
 export type SearchableSelectOption = {
   value: string;
@@ -23,9 +24,9 @@ export function SearchableSelect({
   value,
   options,
   onChange,
-  placeholder = "Choose an option…",
-  searchPlaceholder = "Search options…",
-  emptyLabel = "No matching options",
+  placeholder: placeholderProp,
+  searchPlaceholder: searchPlaceholderProp,
+  emptyLabel: emptyLabelProp,
   disabled = false,
   layer,
   variant = "field",
@@ -45,6 +46,11 @@ export function SearchableSelect({
   searchable?: boolean;
   align?: PopoverAlign;
 }) {
+  const { t } = useTranslation("shared");
+  const placeholder = placeholderProp ?? t("searchableSelect.placeholder");
+  const searchPlaceholder =
+    searchPlaceholderProp ?? t("searchableSelect.searchPlaceholder");
+  const emptyLabel = emptyLabelProp ?? t("searchableSelect.empty");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);

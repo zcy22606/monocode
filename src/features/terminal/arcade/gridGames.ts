@@ -6,9 +6,8 @@ import { createSnakeArcade } from "./snakeArcade";
 export const SLIDE_HOLD_MS = 16_000;
 
 export type GridGame = {
-  id: string;
-  label: string;
-  playLabel: string;
+  /** Also the i18n key under `terminal:arcade.game.<id>`. */
+  id: "pacman" | "snake";
   /**
    * Idle-band brightness vs a full game. Maze games fill the grid, so they
    * run quieter than a sparse one like snake.
@@ -26,16 +25,12 @@ export type GridGame = {
 export const GRID_GAMES: readonly GridGame[] = [
   {
     id: "pacman",
-    label: "pac-man",
-    playLabel: "Pac-man. Arrow keys or WASD to move. Escape to release.",
     idleDim: 0.2,
     lives: true,
     create: createPacmanArcade,
   },
   {
     id: "snake",
-    label: "snake",
-    playLabel: "Snake. Arrow keys or WASD to move. Escape to release.",
     idleDim: 0.65,
     lives: false,
     create: createSnakeArcade,

@@ -1,3 +1,4 @@
+import { useTranslation } from "../../../i18n";
 import { basename } from "../../../platform/tauri/fs";
 import {
   openProjectView,
@@ -7,30 +8,34 @@ import {
 } from "../model/projectViews";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
-const SAMPLES: Partial<Record<ProjectViewId, { detail: ProjectViewId; items: [string, string][] }>> = {
-  issues: { detail: "issue", items: [["ISS-1", "Sample issue A"], ["ISS-2", "Sample issue B"], ["ISS-3", "Sample issue C"]] },
-  docs: { detail: "doc", items: [["doc-1", "Sample doc A"], ["doc-2", "Sample doc B"]] },
-  decisions: { detail: "decision", items: [["D-1", "Sample decision A"], ["D-2", "Sample decision B"]] },
-};
+const SAMPLES = {
+  issues: { detail: "issue", name: "sampleIssue", items: [["ISS-1", "A"], ["ISS-2", "B"], ["ISS-3", "C"]] },
+  docs: { detail: "doc", name: "sampleDoc", items: [["doc-1", "A"], ["doc-2", "B"]] },
+  decisions: { detail: "decision", name: "sampleDecision", items: [["D-1", "A"], ["D-2", "B"]] },
+} as const satisfies Partial<Record<ProjectViewId, { detail: ProjectViewId; name: string; items: readonly (readonly [string, string])[] }>>;
 
-const DETAIL_LABEL: Partial<Record<ProjectViewId, string>> = { issue: "Issue", doc: "Doc", decision: "Decision" };
+const DETAIL_VIEWS: ProjectViewId[] = ["issue", "doc", "decision"];
 
 /** Project 分页打开的标签内容。现在只是占位。 */
 export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
-  const samples = SAMPLES[source.view];
-  const heading = DETAIL_LABEL[source.view] ? title : viewLabel(source.view);
+  const { t } = useTranslation("indie");
+  const samples = SAMPLES[source.view as keyof typeof SAMPLES] as (typeof SAMPLES)[keyof typeof SAMPLES] | undefined;
+  const isDetail = DETAIL_VIEWS.includes(source.view);
+  const heading = isDetail ? title : viewLabel(source.view);
   return (
     <div className="h-full overflow-y-auto overscroll-none">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-8 py-8">
         <header className="flex flex-col gap-1">
           <div className="text-[11px] uppercase tracking-wide text-content/40">
-            {basename(cwd)} · {DETAIL_LABEL[source.view] ?? "Project"}
+            {basename(cwd)} · {isDetail ? viewLabel(source.view) : t("placeholder.project")}
           </div>
           <h1 className="text-[18px] font-medium text-content">{heading}</h1>
         </header>
         {samples ? (
           <ul className="flex flex-col border-t border-stroke">
-            {samples.items.map(([id, name]) => (
+            {samples.items.map(([id, letter]) => {
+              const name = t(`placeholder.${samples.name}`, { letter });
+              return (
               <li key={id}>
                 <button
                   type="button"
@@ -41,11 +46,12 @@ export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source
                   <span className="truncate">{name}</span>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : null}
         <p className="text-[12px] text-content/40">
-          Placeholder — layout and interaction preview only{samples ? "; sample rows open a detail tab" : ""}.
+          {t(samples ? "placeholder.noteSamples" : "placeholder.note")}
         </p>
       </div>
     </div>

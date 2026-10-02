@@ -1,4 +1,5 @@
 import type { Block } from "./session";
+import { t } from "../../../i18n";
 
 /** A vertical span in viewport coordinates. */
 export type OutlineBand = { top: number; bottom: number };
@@ -54,9 +55,11 @@ export function promptLabel(block: Block): string {
   const text = textShown ? firstLine(block.text) : "";
   if (text) return text;
   if (card) {
-    if (card.kind === "handoff") return "Handoff";
+    if (card.kind === "handoff") return t("sessions:handoff.label");
     const request = firstLine(card.request ?? "");
-    return request ? `Second opinion: ${request}` : "Second opinion";
+    return request
+      ? t("sessions:secondOpinion.withRequest", { request })
+      : t("sessions:secondOpinion.label");
   }
   if (block.noteCard?.title) return block.noteCard.title;
   const files = block.attachments ?? [];
@@ -64,7 +67,7 @@ export function promptLabel(block: Block): string {
     const [first] = files;
     return files.length > 1 ? `${first.name} +${files.length - 1}` : first.name;
   }
-  return "Empty message";
+  return t("sessions:outline.emptyMessage");
 }
 
 function firstLine(text: string): string {

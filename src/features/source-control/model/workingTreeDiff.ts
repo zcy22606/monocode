@@ -1,4 +1,5 @@
 import type { GitChangedFile, GitFileDiffKind } from "../../../platform/tauri/fs";
+import { t } from "../../../i18n";
 
 export type WorkingTreeDiffEntry = {
   id: string;
@@ -39,7 +40,9 @@ export function workingTreeDiffEntries(
 
 export function workingTreeDiffEntryLabel(entry: WorkingTreeDiffEntry): string {
   if (!entry.file.staged || !entry.file.unstaged) return entry.file.relative;
-  return `${entry.file.relative} (${entry.kind === "staged" ? "Staged" : "Unstaged"})`;
+  return entry.kind === "staged"
+    ? t("sourceControl:diff.stagedLabel", { path: entry.file.relative })
+    : t("sourceControl:diff.unstagedLabel", { path: entry.file.relative });
 }
 
 export function workingTreeDiffFocusId(

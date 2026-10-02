@@ -1,5 +1,6 @@
 import type { CiRepairRequest } from "./ciRepair";
 import { sameProjectPath } from "../../projects/model/recents";
+import { t } from "../../../i18n";
 
 export type CiRepairOutcome = "completed" | "failed" | "cancelled";
 export type TrackedCiRepair = CiRepairRequest["target"] & {
@@ -195,9 +196,7 @@ export function trackCiRepair(
       save({ ...current, phase });
     });
     if (!accepted)
-      throw new Error(
-        "Could not start this fix. Choose another chat and try again.",
-      );
+      throw new Error(t("inbox:repair.startFailed"));
   } catch (error) {
     save(repair, true);
     throw error;

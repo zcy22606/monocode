@@ -1,0 +1,249 @@
+{
+  "title": "自动化",
+  "filter": "筛选自动化",
+  "new": "新建自动化",
+  "noMatches": "没有匹配的自动化",
+  "empty": "还没有自动化",
+  "deleteConfirm": "删除「{{name}}」及其运行记录？",
+  "card": {
+    "open": "打开 {{name}}",
+    "pause": "暂停 {{name}}",
+    "enable": "启用 {{name}}"
+  },
+  "picker": {
+    "subtitle": "选一个示例，或者从头开始。",
+    "scratch": "从头开始",
+    "scratchHint": "自己写指令，再选一个触发器。"
+  },
+  "categories": {
+    "popular": "热门",
+    "review": "代码审查",
+    "security": "安全",
+    "incidents": "故障与分诊",
+    "research": "数据与调研",
+    "environment": "环境"
+  },
+  "templates": {
+    "find-critical-bugs": {
+      "name": "查找严重 bug",
+      "description": "分析最近的提交，找出高严重度的正确性 bug，并提交安全的修复",
+      "trigger": "工作日 09:00"
+    },
+    "scan-vulnerabilities": {
+      "name": "扫描代码库漏洞",
+      "description": "定期审查整个仓库，对已确认的高影响安全问题发出提醒",
+      "trigger": "星期一 10:00"
+    },
+    "generate-docs": {
+      "name": "生成文档",
+      "description": "为最近改动或文档不足的代码创建、更新开发者文档",
+      "trigger": "星期一 09:00"
+    },
+    "add-test-coverage": {
+      "name": "补充测试覆盖",
+      "description": "审查最近的更改，为缺少测试的高风险逻辑补充测试",
+      "trigger": "工作日 11:00"
+    },
+    "review-pull-requests": {
+      "name": "审查 PR",
+      "description": "有 PR 打开时，审查差异中的 bug、回归和缺失的测试",
+      "trigger": "PR 已打开"
+    },
+    "review-draft-prs": {
+      "name": "审查草稿 PR",
+      "description": "草稿 PR 打开时尽早给出反馈，在正式审查前发现问题",
+      "trigger": "草稿已打开"
+    },
+    "dependency-audit": {
+      "name": "审计依赖",
+      "description": "检查 lockfile 和清单文件中有漏洞、已废弃或被意外升级的包",
+      "trigger": "星期一 09:30"
+    },
+    "secret-scan": {
+      "name": "扫描密钥",
+      "description": "在工作区和最近的历史中查找被提交的凭证、token 和密钥",
+      "trigger": "星期一 09:30"
+    },
+    "triage-github-issues": {
+      "name": "分诊 GitHub issue",
+      "description": "有 GitHub issue 打开时，检查仓库并补充具体的复现步骤或下一步",
+      "trigger": "Issue 已打开"
+    },
+    "triage-new-issues": {
+      "name": "分诊新 issue",
+      "description": "有 Linear issue 创建时，检查仓库并补充具体的复现步骤或下一步",
+      "trigger": "Issue 已创建"
+    },
+    "failing-ci-watch": {
+      "name": "盯住失败的检查",
+      "description": "工作日早上运行项目测试，诊断已经失败的部分",
+      "trigger": "工作日 08:30"
+    },
+    "weekly-changelog": {
+      "name": "每周更新日志",
+      "description": "把一周的提交整理成真正能读的更新日志",
+      "trigger": "星期五 16:00"
+    },
+    "repo-health": {
+      "name": "仓库健康检查",
+      "description": "定期检查工作区、过时分支和明显的项目配置漂移",
+      "trigger": "星期一 09:00"
+    },
+    "install-doctor": {
+      "name": "环境体检",
+      "description": "确认项目在干净的工作副本中仍能安装和启动",
+      "trigger": "星期一 10:00"
+    }
+  },
+  "run": {
+    "openSession": "打开会话",
+    "noSession": "这次运行还没有会话",
+    "testRun": "试运行",
+    "scheduled": "定时",
+    "scheduledAt": "定时 · {{schedule}}",
+    "at": "{{month}}{{day}}日 {{time}}"
+  },
+  "runStatus": {
+    "pending": "等待中",
+    "running": "运行中",
+    "succeeded": "成功",
+    "failed": "失败",
+    "skipped": "已跳过",
+    "cancelled": "已取消"
+  },
+  "duration": {
+    "lessThanMinute": "< 1 分钟",
+    "minutes": "{{minutes}} 分钟",
+    "hours": "{{hours}} 小时",
+    "hoursMinutes": "{{hours}} 小时 {{minutes}} 分钟"
+  },
+  "editor": {
+    "name": "自动化名称",
+    "untitled": "未命名",
+    "reset": "还原",
+    "cancel": "取消",
+    "runNow": "立即运行",
+    "save": "保存",
+    "create": "创建",
+    "pause": "暂停自动化",
+    "enable": "启用自动化",
+    "active": "已启用",
+    "inactive": "已停用",
+    "actions": "自动化操作",
+    "delete": "删除自动化",
+    "view": "自动化视图",
+    "settings": "设置",
+    "history": "运行记录"
+  },
+  "triggers": {
+    "title": "触发器",
+    "add": "添加触发器",
+    "choose": "选择自动化触发器",
+    "search": "搜索触发器",
+    "connect": "在设置中连接 {{provider}}",
+    "notConnected": "未连接",
+    "noMatches": "没有匹配的触发器",
+    "events": "{{provider}} 事件",
+    "remove": "移除触发器",
+    "none": "没有触发器",
+    "scheduled": "定时"
+  },
+  "events": {
+    "time": {
+      "hourly": "每小时",
+      "daily": "每天",
+      "weekdays": "工作日",
+      "weekly": "每周"
+    },
+    "github": {
+      "draft_opened": "草稿已打开",
+      "pull_request_opened": "PR 已打开",
+      "issue_opened": "Issue 已打开"
+    },
+    "linear": {
+      "issue_created": "Issue 已创建"
+    },
+    "jira": {
+      "issue_created": "Issue 出现"
+    },
+    "gitlab": {
+      "merge_request_opened": "合并请求已打开",
+      "issue_opened": "Issue 已打开"
+    },
+    "azuredevops": {
+      "pull_request_appeared": "PR 出现",
+      "work_item_appeared": "工作项出现"
+    }
+  },
+  "schedule": {
+    "hourly": "每小时 :{{minute}}",
+    "daily": "每天 {{time}}",
+    "weekdays": "工作日 {{time}}",
+    "weekly": "{{day}} {{time}}",
+    "nextRun": "下次运行：{{day}} {{time}} {{zone}}"
+  },
+  "sentence": {
+    "everyHour": "每小时的",
+    "everyDay": "每天",
+    "everyWeekday": "每个工作日",
+    "everyWeek": "每周",
+    "at": "的",
+    "day": "星期",
+    "minute": "分钟",
+    "time": "时间",
+    "push": "推送",
+    "on": "到",
+    "branch": "分支",
+    "selectBranch": "选择分支",
+    "noBranches": "没有找到分支",
+    "chooseProject": "请先选择项目",
+    "by": "触发者",
+    "actor": "触发者",
+    "anyone": "任何人"
+  },
+  "instructions": {
+    "title": "指令",
+    "hint": "这里可以用技能、@文件引用和内置命令。"
+  },
+  "session": {
+    "title": "会话",
+    "workingCopy": "工作副本",
+    "workingCopyHint": "当前仓库，或新的工作树",
+    "conversation": "对话",
+    "conversationHint": "新开对话，或接着上次运行继续",
+    "folder": "会话文件夹",
+    "folderHint": "运行记录在侧栏中出现的位置",
+    "folderNone": "无",
+    "folderRemoved": "已删除的文件夹"
+  },
+  "advanced": {
+    "title": "高级",
+    "hint": "错过运行时的补跑时间窗",
+    "grace": "错过运行的宽限期",
+    "graceHint": "定时运行被错过时补跑"
+  },
+  "options": {
+    "workspace": {
+      "current": "当前",
+      "worktree": "新工作树"
+    },
+    "conversation": {
+      "fresh": "重新开始",
+      "reuse": "继续上次"
+    },
+    "grace": {
+      "0": "不补跑",
+      "30": "30 分钟",
+      "120": "2 小时",
+      "720": "12 小时",
+      "1440": "24 小时"
+    }
+  },
+  "history": {
+    "trigger": "触发器",
+    "triggered": "触发时间",
+    "status": "状态",
+    "duration": "耗时",
+    "empty": "这个自动化还没有运行过。"
+  }
+}

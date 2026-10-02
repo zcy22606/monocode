@@ -1,5 +1,6 @@
 import { formatResetDuration } from "../../providers/model/rateLimits";
 import type { Session } from "./session";
+import { t } from "../../../i18n";
 
 /** Providers can still refuse right at the reset; give them a moment. */
 export const USAGE_LIMIT_RESUME_GRACE_MS = 30_000;
@@ -13,7 +14,10 @@ export function formatUsageLimitReset(resetsAt: number, now: number): string {
     hour: "numeric",
     minute: "2-digit",
   });
-  return `${when} · in ${formatResetDuration(resetsAt - now)}`;
+  return t("sessions:usageLimit.resetAt", {
+    when,
+    duration: formatResetDuration(resetsAt - now),
+  });
 }
 
 /** Idle, armed, and past its reset: time to send the continue turn. */

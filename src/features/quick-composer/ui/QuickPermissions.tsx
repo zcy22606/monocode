@@ -12,6 +12,7 @@ import {
   RUNTIME_MODE_LABEL,
   type RuntimeMode,
 } from "../../sessions/model/session";
+import { useTranslation } from "../../../i18n"; // IndieDesk
 
 const ICONS = {
   supervised: Lock,
@@ -47,6 +48,7 @@ export function QuickPermissions({
   onClose: () => void;
   embedded?: boolean;
 }) {
+  const { t } = useTranslation("quickComposer");
   const root = useRef<HTMLDivElement>(null);
   const id = useId();
   const [active, setActive] = useState(RUNTIME_MODES.indexOf(value));
@@ -62,7 +64,7 @@ export function QuickPermissions({
     <div
       ref={root}
       role="listbox"
-      aria-label="Permissions"
+      aria-label={t("model.permissions")}
       aria-activedescendant={`${id}-${active}`}
       tabIndex={embedded ? 0 : -1}
       className={`min-h-0 overflow-y-auto overscroll-none p-2 outline-none ${embedded ? "" : "border-t border-stroke"}`}

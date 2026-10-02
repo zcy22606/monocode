@@ -12,6 +12,7 @@ import type {
   AccountUsage,
 } from "../model/accountUsage";
 import { RefreshCw } from "../../../shared/ui/icons";
+import { i18n, t, useTranslation } from "../../../i18n";
 
 const STATUS_DOT: Record<AccountStatusTone, string> = {
   ready: "bg-emerald-400",
@@ -61,13 +62,14 @@ export function AccountStatusLabel({
 }
 
 export function AccountUsageRefresh({ usage }: { usage: AccountUsage }) {
+  const { t } = useTranslation("providers");
   return (
     <button
       type="button"
       disabled={usage.refreshing}
       onClick={usage.refresh}
-      aria-label="Refresh usage limits"
-      title="Refresh usage limits"
+      aria-label={t("usage.refresh")}
+      title={t("usage.refresh")}
       className="grid size-7 place-items-center rounded-md text-content/40 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.96] disabled:opacity-40"
     >
       <RefreshCw
@@ -84,8 +86,12 @@ export function meterWindows(
 ): { title: string; window: RateLimitWindow }[] {
   return [
     limits?.session ? { title: "5h", window: limits.session } : null,
-    limits?.weekly ? { title: "Weekly", window: limits.weekly } : null,
-    limits?.monthly ? { title: "Monthly", window: limits.monthly } : null,
+    limits?.weekly
+      ? { title: t("usage.weekly", { ns: "providers" }), window: limits.weekly }
+      : null,
+    limits?.monthly
+      ? { title: t("usage.monthly", { ns: "providers" }), window: limits.monthly }
+      : null,
   ].filter((entry) => entry != null);
 }
 
@@ -142,6 +148,7 @@ export function UsageMeter({
   now: number;
   className?: string;
 }) {
+  const { t } = useTranslation("providers");
   const pct = clampUsedPercent(window.usedPercent);
   const remaining = 100 - pct;
   const full = pct >= 100 && (window.resetsAt == null || window.resetsAt > now);
@@ -149,7 +156,7 @@ export function UsageMeter({
     window.resetsAt == null
       ? formatWindowLabel(window.windowMinutes)
       : window.resetsAt <= now
-        ? "reset due"
+        ? t("usage.resetDue")
         : formatResetDuration(window.resetsAt - now);
   return (
     <div
@@ -157,7 +164,9 @@ export function UsageMeter({
       title={
         window.resetsAt == null
           ? undefined
-          : `Resets ${new Date(window.resetsAt).toLocaleString()}`
+          : t("usage.resetsAt", {
+              date: new Date(window.resetsAt).toLocaleString(i18n.language),
+            })
       }
     >
       <div className="flex items-baseline justify-between gap-2 text-[10px] leading-3">
@@ -167,13 +176,13 @@ export function UsageMeter({
         <span
           className={`shrink-0 tabular-nums ${full ? "font-medium text-red-400" : "text-content/60"}`}
         >
-          {formatUsagePercent(remaining)} left
+          {t("usage.left", { percent: formatUsagePercent(remaining) })}
         </span>
       </div>
       <div
         className="mt-1.5 h-1 overflow-hidden rounded-full bg-content/10"
         role="progressbar"
-        aria-label={`${title} limit remaining`}
+        aria-label={t("usage.limitRemaining", { title })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(remaining)}

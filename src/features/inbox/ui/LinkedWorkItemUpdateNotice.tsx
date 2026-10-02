@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   linkedWorkItemActivityPrompt,
   linkedWorkItemTerminalState,
-  linkedWorkItemUpdateSummary,
   type LinkedWorkItemActivityEntry,
   type LinkedWorkItemUpdateCard,
 } from "../model/linkedWorkItemActivity";
@@ -23,6 +22,8 @@ import {
   Trash2,
   X,
 } from "../../../shared/ui/icons";
+import type { TFunction } from "i18next";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   sessionId: string;
@@ -35,17 +36,41 @@ type Props = {
   onDeleteSession?: () => Promise<boolean>;
 };
 
-function entryKindLabel(entry: LinkedWorkItemActivityEntry): string {
+function entryKindLabel(
+  entry: LinkedWorkItemActivityEntry,
+  t: TFunction<"inbox">,
+): string {
   switch (entry.kind) {
     case "commit":
-      return `Commit ${entry.id.slice(0, 7)}`;
+      return t("notice.commit", { sha: entry.id.slice(0, 7) });
     case "review":
-      return "Review";
+      return t("notice.review");
     case "review_comment":
-      return "Review comment";
+      return t("notice.reviewComment");
     default:
-      return "Comment";
+      return t("notice.comment");
   }
+}
+
+/** IndieDesk: translated twin of linkedWorkItemUpdateSummary (that one feeds agent prompts). */
+function updateSummary(
+  card: LinkedWorkItemUpdateCard,
+  t: TFunction<"inbox">,
+): string {
+  const parts = [
+    card.counts.commits
+      ? t("notice.newCommits", { count: card.counts.commits })
+      : "",
+    card.counts.reviews
+      ? t("notice.newReviews", { count: card.counts.reviews })
+      : "",
+    card.counts.comments
+      ? t("notice.newComments", { count: card.counts.comments })
+      : "",
+  ].filter(Boolean);
+  if (parts.length > 0) return parts.join(" · ");
+  if (card.status === "error") return t("notice.detailsUnavailable");
+  return t("notice.metadataChanged");
 }
 
 function ActivityIcon({ entry }: { entry: LinkedWorkItemActivityEntry }) {
@@ -68,6 +93,7 @@ export function LinkedWorkItemUpdateNotice({
   onArchiveSession,
   onDeleteSession,
 }: Props) {
+  const { t } = useTranslation("inbox");
   const [cleanupAction, setCleanupAction] = useState<
     "archive" | "delete" | undefined
   >();
@@ -77,7 +103,7 @@ export function LinkedWorkItemUpdateNotice({
   if (!card || card.status === "loading") return null;
 
   const KindIcon = card.kind === "pr" ? GitPullRequest : CircleDot;
-  const kindLabel = card.kind === "pr" ? "Pull request" : "Issue";
+  const kindLabel = card.kind === "pr" ? t("kind.pr") : t("kind.issue");
   const latest = card.entries[0];
   const discussion =
     latest?.kind === "comment" ||
@@ -85,21 +111,23 @@ export function LinkedWorkItemUpdateNotice({
     latest?.kind === "review_comment";
   const openLabel =
     latest?.kind === "commit"
-      ? "Open commit"
-      : `Open ${card.kind === "pr" ? "PR" : "issue"}`;
+      ? t("notice.openCommit")
+      : card.kind === "pr"
+        ? t("notice.openPr")
+        : t("notice.openIssue");
   const agentLabel = discussion
-    ? "Address with agent"
+    ? t("notice.addressWithAgent")
     : latest?.kind === "commit"
-      ? "Review with agent"
-      : "Continue with agent";
+      ? t("notice.reviewWithAgent")
+      : t("notice.continueWithAgent");
   const terminalState = linkedWorkItemTerminalState(card);
   const terminalLabel =
     terminalState === "pr_merged"
-      ? "Pull request merged"
+      ? t("notice.prMerged")
       : terminalState === "pr_closed"
-        ? "Pull request closed"
+        ? t("notice.prClosed")
         : terminalState === "issue_closed"
-          ? "Issue closed"
+          ? t("notice.issueClosed")
           : "";
   const TerminalIcon =
     terminalState === "pr_merged"
@@ -135,7 +163,7 @@ export function LinkedWorkItemUpdateNotice({
 
   return (
     <section
-      aria-label={`New activity on ${kindLabel} ${card.number}`}
+      aria-label={t("notice.label", { kind: kindLabel, number: card.number })}
       aria-live="polite"
       className="pointer-events-auto absolute top-3 right-3 z-40 isolate w-[min(320px,calc(100%_-_24px))] overflow-hidden rounded-xl border border-content/10 text-content shadow-xl"
     >
@@ -146,13 +174,16 @@ export function LinkedWorkItemUpdateNotice({
             <span className="size-2 shrink-0 rounded-full bg-accent" />
             <KindIcon className="size-3.5 text-content/55" strokeWidth={1.75} />
             <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
-              GitHub activity
+              {t("notice.heading")}
             </span>
           </div>
           <button
             type="button"
-            title="Dismiss"
-            aria-label={`Dismiss updates for ${kindLabel} ${card.number}`}
+            title={t("notice.dismiss")}
+            aria-label={t("notice.dismissLabel", {
+              kind: kindLabel,
+              number: card.number,
+            })}
             onClick={dismiss}
             className="grid size-6 shrink-0 place-items-center rounded-md text-content/40 hover:bg-content/10 hover:text-content"
           >
@@ -177,7 +208,7 @@ export function LinkedWorkItemUpdateNotice({
             </span>
           </button>
           <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-content/55">
-            <span>{linkedWorkItemUpdateSummary(card)}</span>
+            <span>{updateSummary(card, t)}</span>
           </div>
         </div>
 
@@ -202,7 +233,7 @@ export function LinkedWorkItemUpdateNotice({
                 <span className="min-w-0 flex-1">
                   <span className="flex min-w-0 items-center gap-1.5 text-[11px]">
                     <span className="font-medium text-content/70">
-                      {entryKindLabel(entry)}
+                      {entryKindLabel(entry, t)}
                     </span>
                     {entry.author ? (
                       <span className="min-w-0 truncate text-content/45">
@@ -214,7 +245,7 @@ export function LinkedWorkItemUpdateNotice({
                     </span>
                   </span>
                   <span className="mt-0.5 line-clamp-2 block text-[12px] leading-relaxed text-content/65">
-                    {entry.text || "No message"}
+                    {entry.text || t("notice.noMessage")}
                   </span>
                 </span>
               </button>
@@ -236,12 +267,12 @@ export function LinkedWorkItemUpdateNotice({
               <span className="font-medium text-content/75">
                 {terminalLabel}
               </span>
-              <span className="text-content/45">Clean up this session</span>
+              <span className="text-content/45">{t("notice.cleanUp")}</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5">
               <button
                 type="button"
-                title="Archive session"
+                title={t("notice.archive")}
                 disabled={Boolean(cleanupAction) || !onArchiveSession}
                 onClick={() => void runCleanup("archive", onArchiveSession)}
                 className="inline-flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md bg-content/10 px-2 py-1 text-[11px] font-medium hover:bg-content/15 disabled:opacity-40"
@@ -252,12 +283,12 @@ export function LinkedWorkItemUpdateNotice({
                   <Archive className="size-3 shrink-0" strokeWidth={1.75} />
                 )}
                 <span className="min-w-0 truncate whitespace-nowrap">
-                  Archive session
+                  {t("notice.archive")}
                 </span>
               </button>
               <button
                 type="button"
-                title="Delete session"
+                title={t("notice.delete")}
                 disabled={Boolean(cleanupAction) || !onDeleteSession}
                 onClick={() => void runCleanup("delete", onDeleteSession)}
                 className="inline-flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md px-2 py-1 text-[11px] text-red-300/90 hover:bg-red-500/15 disabled:opacity-40"
@@ -268,7 +299,7 @@ export function LinkedWorkItemUpdateNotice({
                   <Trash2 className="size-3 shrink-0" strokeWidth={1.75} />
                 )}
                 <span className="min-w-0 truncate whitespace-nowrap">
-                  Delete…
+                  {t("notice.deleteShort")}
                 </span>
               </button>
             </div>

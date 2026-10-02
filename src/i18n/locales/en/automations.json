@@ -1,0 +1,249 @@
+{
+  "title": "Automations",
+  "filter": "Filter automations",
+  "new": "New automation",
+  "noMatches": "No matching automations",
+  "empty": "No automations yet",
+  "deleteConfirm": "Delete “{{name}}” and its run history?",
+  "card": {
+    "open": "Open {{name}}",
+    "pause": "Pause {{name}}",
+    "enable": "Enable {{name}}"
+  },
+  "picker": {
+    "subtitle": "Pick an example or start from scratch.",
+    "scratch": "Start from scratch",
+    "scratchHint": "Write your own instructions and choose a trigger."
+  },
+  "categories": {
+    "popular": "Popular",
+    "review": "Code Review",
+    "security": "Security",
+    "incidents": "Incidents & Triage",
+    "research": "Data & Research",
+    "environment": "Environment"
+  },
+  "templates": {
+    "find-critical-bugs": {
+      "name": "Find critical bugs",
+      "description": "Analyze recent commits for high-severity correctness bugs and submit safe fixes",
+      "trigger": "Weekdays at 09:00"
+    },
+    "scan-vulnerabilities": {
+      "name": "Scan codebase for vulnerabilities",
+      "description": "Review the full repository on a schedule and alert on validated high-impact security issues",
+      "trigger": "Monday at 10:00"
+    },
+    "generate-docs": {
+      "name": "Generate docs",
+      "description": "Create and update developer documentation for recently changed or under-documented code",
+      "trigger": "Monday at 09:00"
+    },
+    "add-test-coverage": {
+      "name": "Add test coverage",
+      "description": "Review recent changes and add tests for high-risk logic that lacks adequate coverage",
+      "trigger": "Weekdays at 11:00"
+    },
+    "review-pull-requests": {
+      "name": "Review pull requests",
+      "description": "When a pull request is opened, review the diff for bugs, regressions, and missing tests",
+      "trigger": "Pull request opened"
+    },
+    "review-draft-prs": {
+      "name": "Review draft PRs",
+      "description": "Give early feedback when a draft pull request is opened so issues are caught before review",
+      "trigger": "Draft opened"
+    },
+    "dependency-audit": {
+      "name": "Audit dependencies",
+      "description": "Check lockfiles and manifests for vulnerable, abandoned, or unexpectedly upgraded packages",
+      "trigger": "Monday at 09:30"
+    },
+    "secret-scan": {
+      "name": "Scan for secrets",
+      "description": "Search the working tree and recent history for committed credentials, tokens, and keys",
+      "trigger": "Monday at 09:30"
+    },
+    "triage-github-issues": {
+      "name": "Triage GitHub issues",
+      "description": "When a GitHub issue is opened, inspect the repo and add a concrete reproduction or next step",
+      "trigger": "Issue opened"
+    },
+    "triage-new-issues": {
+      "name": "Triage new issues",
+      "description": "When a Linear issue is created, inspect the repo and add a concrete reproduction or next step",
+      "trigger": "Issue created"
+    },
+    "failing-ci-watch": {
+      "name": "Watch failing checks",
+      "description": "On a weekday morning, run the project's tests and diagnose anything that is already red",
+      "trigger": "Weekdays at 08:30"
+    },
+    "weekly-changelog": {
+      "name": "Weekly changelog",
+      "description": "Summarize the week's commits into a changelog humans can actually read",
+      "trigger": "Friday at 16:00"
+    },
+    "repo-health": {
+      "name": "Repo health check",
+      "description": "Inspect the working tree, stale branches, and obvious project-setup drift on a schedule",
+      "trigger": "Monday at 09:00"
+    },
+    "install-doctor": {
+      "name": "Environment doctor",
+      "description": "Verify the project still installs and boots from a clean working copy",
+      "trigger": "Monday at 10:00"
+    }
+  },
+  "run": {
+    "openSession": "Open session",
+    "noSession": "This run has no session yet",
+    "testRun": "Test run",
+    "scheduled": "Scheduled",
+    "scheduledAt": "Scheduled · {{schedule}}",
+    "at": "{{day}} {{month}}, {{time}}"
+  },
+  "runStatus": {
+    "pending": "Pending",
+    "running": "Running",
+    "succeeded": "Succeeded",
+    "failed": "Failed",
+    "skipped": "Skipped",
+    "cancelled": "Cancelled"
+  },
+  "duration": {
+    "lessThanMinute": "< 1m",
+    "minutes": "{{minutes}}m",
+    "hours": "{{hours}}h",
+    "hoursMinutes": "{{hours}}h {{minutes}}m"
+  },
+  "editor": {
+    "name": "Automation name",
+    "untitled": "Untitled",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "runNow": "Run now",
+    "save": "Save",
+    "create": "Create",
+    "pause": "Pause automation",
+    "enable": "Enable automation",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Automation actions",
+    "delete": "Delete automation",
+    "view": "Automation view",
+    "settings": "Settings",
+    "history": "Run history"
+  },
+  "triggers": {
+    "title": "Triggers",
+    "add": "Add Trigger",
+    "choose": "Choose automation trigger",
+    "search": "Search triggers",
+    "connect": "Connect {{provider}} in Settings",
+    "notConnected": "Not connected",
+    "noMatches": "No matching triggers",
+    "events": "{{provider}} events",
+    "remove": "Remove trigger",
+    "none": "No trigger",
+    "scheduled": "Scheduled"
+  },
+  "events": {
+    "time": {
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekdays": "Weekdays",
+      "weekly": "Weekly"
+    },
+    "github": {
+      "draft_opened": "Draft opened",
+      "pull_request_opened": "Pull request opened",
+      "issue_opened": "Issue opened"
+    },
+    "linear": {
+      "issue_created": "Issue created"
+    },
+    "jira": {
+      "issue_created": "Issue appeared"
+    },
+    "gitlab": {
+      "merge_request_opened": "Merge request opened",
+      "issue_opened": "Issue opened"
+    },
+    "azuredevops": {
+      "pull_request_appeared": "Pull request appeared",
+      "work_item_appeared": "Work item appeared"
+    }
+  },
+  "schedule": {
+    "hourly": "Hourly at :{{minute}}",
+    "daily": "Daily at {{time}}",
+    "weekdays": "Weekdays at {{time}}",
+    "weekly": "{{day}} at {{time}}",
+    "nextRun": "Next run {{day}}, {{time}} {{zone}}"
+  },
+  "sentence": {
+    "everyHour": "Every hour at",
+    "everyDay": "Every day at",
+    "everyWeekday": "Every weekday at",
+    "everyWeek": "Every week on",
+    "at": "at",
+    "day": "Day",
+    "minute": "Minute",
+    "time": "Time",
+    "push": "Push",
+    "on": "on",
+    "branch": "Branch",
+    "selectBranch": "Select a branch",
+    "noBranches": "No branches found",
+    "chooseProject": "Choose a project first",
+    "by": "by",
+    "actor": "Actor",
+    "anyone": "Anyone"
+  },
+  "instructions": {
+    "title": "Instructions",
+    "hint": "Skills, @file references, and built-in commands work here."
+  },
+  "session": {
+    "title": "Session",
+    "workingCopy": "Working copy",
+    "workingCopyHint": "This repo, or a fresh worktree",
+    "conversation": "Conversation",
+    "conversationHint": "New chat, or continue the last run",
+    "folder": "Session folder",
+    "folderHint": "Where runs appear in the sidebar",
+    "folderNone": "None",
+    "folderRemoved": "Removed folder"
+  },
+  "advanced": {
+    "title": "Advanced",
+    "hint": "Catch-up window for missed runs",
+    "grace": "Missed-run grace",
+    "graceHint": "Catch up if a scheduled run was missed"
+  },
+  "options": {
+    "workspace": {
+      "current": "Current",
+      "worktree": "Fresh worktree"
+    },
+    "conversation": {
+      "fresh": "Start fresh",
+      "reuse": "Continue last"
+    },
+    "grace": {
+      "0": "Do not catch up",
+      "30": "30 minutes",
+      "120": "2 hours",
+      "720": "12 hours",
+      "1440": "24 hours"
+    }
+  },
+  "history": {
+    "trigger": "Trigger",
+    "triggered": "Triggered",
+    "status": "Status",
+    "duration": "Duration",
+    "empty": "This automation has not run yet."
+  }
+}

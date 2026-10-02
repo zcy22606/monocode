@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "label": "项目",
+    "noFolder": "没有项目文件夹",
+    "planning": "规划"
+  },
+  "view": {
+    "overview": "概览",
+    "issues": "Issues",
+    "cycles": "迭代",
+    "docs": "文档",
+    "decisions": "决策",
+    "features": "功能全景",
+    "scope": "范围",
+    "evidence": "证据",
+    "issue": "Issue",
+    "doc": "文档",
+    "decision": "决策"
+  },
+  "placeholder": {
+    "project": "项目",
+    "note": "占位内容，仅用于预览布局和交互",
+    "noteSamples": "占位内容，仅用于预览布局和交互；点示例条目会打开详情标签",
+    "sampleIssue": "示例 issue {{letter}}",
+    "sampleDoc": "示例文档 {{letter}}",
+    "sampleDecision": "示例决策 {{letter}}"
+  }
+}

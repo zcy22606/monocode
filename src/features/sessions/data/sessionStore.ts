@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import { invoke } from "@tauri-apps/api/core";
 import {
   isWeakToolTitle,
@@ -848,8 +849,7 @@ function sanitizeBtwThreads(
         ...(interrupted
           ? {
               error:
-                error ||
-                "This by-the-way request was interrupted before reload.",
+                error || t("sessions:btw.interruptedBeforeReload"),
             }
           : error
             ? { error }
@@ -1027,7 +1027,7 @@ function sanitizeAgentRun(value: unknown): AgentRunMeta | null {
   const name = typeof record.name === "string" ? record.name.trim() : "";
   if (!name && steps.length === 0) return null;
   return {
-    name: name || "Subagent",
+    name: name || t("sessions:subagent.fallbackName"),
     ...(typeof record.model === "string" && record.model.trim()
       ? { model: record.model.trim() }
       : {}),

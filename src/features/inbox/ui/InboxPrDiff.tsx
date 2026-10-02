@@ -3,6 +3,7 @@ import type { GithubPrDiff } from "../model/githubTasks";
 import { mergePrDiff, parsePrPatch, type PrDiffFile } from "../../source-control/model/prDiff";
 import { blocksFromLines, type UnifiedLine } from "../../source-control/model/unifiedDiff";
 import { UnifiedDiffView, type UnifiedDiffFileModel } from "../../source-control/ui/UnifiedDiffView";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   diff: GithubPrDiff;
@@ -11,11 +12,17 @@ type Props = {
 };
 
 export function InboxPrDiff({ diff, fullFile = false }: Props) {
+  const { t } = useTranslation("inbox");
   const files = useMemo(() => {
     const parsed = mergePrDiff(diff.files, parsePrPatch(diff.patch));
     const context = fullFile ? Number.POSITIVE_INFINITY : undefined;
-    return parsed.map((file) => toModel(file, diff.truncated, context));
-  }, [diff, fullFile]);
+    return parsed.map((file) =>
+      toModel(file, diff.truncated, context, {
+        tooLarge: t("diff.tooLarge"),
+        noTextual: t("diff.noTextual"),
+      }),
+    );
+  }, [diff, fullFile, t]);
 
   return (
     <UnifiedDiffView
@@ -32,7 +39,8 @@ export function InboxPrDiff({ diff, fullFile = false }: Props) {
 function toModel(
   file: PrDiffFile,
   truncated: boolean,
-  context?: number,
+  context: number | undefined,
+  messages: { tooLarge: string; noTextual: string },
 ): UnifiedDiffFileModel {
   const lines = file.lines.map(toUnifiedLine);
   return {
@@ -46,8 +54,8 @@ function toModel(
     emptyMessage:
       !file.binary && file.lines.length === 0
         ? truncated
-          ? "Patch unavailable because this change is too large"
-          : "No textual diff"
+          ? messages.tooLarge
+          : messages.noTextual
         : undefined,
     additions: file.additions,
     deletions: file.deletions,

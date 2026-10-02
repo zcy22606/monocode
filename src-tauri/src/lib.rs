@@ -14,6 +14,7 @@ mod gitlab;
 mod harness;
 mod harness_updates;
 mod history_import; // IndieDesk
+mod i18n; // IndieDesk
 mod inbox_media;
 mod jira;
 mod linear;
@@ -494,6 +495,7 @@ pub fn run() {
             set_traffic_lights_visible,
             set_window_background_blur,
             set_dock_badge,
+            i18n::i18n_set_language, // IndieDesk
             #[cfg(target_os = "macos")]
             menu::keybindings_set_overrides,
             #[cfg(target_os = "macos")]

@@ -1,0 +1,78 @@
+{
+  "mode": {
+    "current": "当前检出",
+    "newWorktree": "新建工作树",
+    "worktree": "工作树"
+  },
+  "picker": {
+    "title": "工作区",
+    "label": "工作区：{{label}}",
+    "tooltip": "工作区：{{label}}",
+    "tooltipShortcut": "工作区：{{label}}（{{shortcut}}）",
+    "existingWorktree": "已有工作树…",
+    "openSettings": "打开工作树设置",
+    "settings": "工作树设置",
+    "existingWorktrees": "已有工作树",
+    "loadingWorktrees": "正在加载工作树…",
+    "detached": "游离 {{sha}}",
+    "noWorktrees": "没有已有的工作树"
+  },
+  "base": {
+    "title": "从 {{branch}} 创建",
+    "label": "从 {{branch}} 创建工作树",
+    "from": "基于 {{branch}}",
+    "dialog": "工作树基准分支",
+    "searchPlaceholder": "搜索基准分支…",
+    "searchLabel": "搜索基准分支",
+    "list": "基准分支",
+    "noMatches": "没有匹配的分支"
+  },
+  "tabMenu": {
+    "label": "文件标签页操作",
+    "close": "关闭",
+    "closeOthers": "关闭其他",
+    "openDefault": "用默认应用打开",
+    "revealFinder": "在访达中显示",
+    "revealExplorer": "在文件资源管理器中显示",
+    "openContainingFolder": "打开所在文件夹",
+    "copyPath": "复制路径",
+    "copyRelativePath": "复制相对路径",
+    "copyName": "复制文件名"
+  },
+  "tab": {
+    "changes": "更改",
+    "stagedChanges": "暂存的更改",
+    "stagedChangesTooltip": "暂存的更改",
+    "workingTreeChangesTooltip": "工作树中的更改",
+    "sessionChanges": "会话更改",
+    "sessionChangesTooltip": "只包含这个会话产生的更改",
+    "agentTooltip": "{{name}} — 编排 Agent",
+    "plan": "计划",
+    "workingTree": "{{name}}（工作树）",
+    "problems_other": "{{title}} — {{count}} 个问题",
+    "openFiles": "打开的文件",
+    "openDefaultError": "无法用默认应用打开文件：{{error}}",
+    "actionError": "无法完成文件操作：{{error}}",
+    "dragPane": "拖动以调整窗格顺序",
+    "unsaved": "有未保存的更改",
+    "close": "关闭 {{label}}"
+  },
+  "groupMenu": {
+    "label": "标签页分组操作",
+    "newTab": "在分组中新建标签页",
+    "newWindow": "将分组移到新窗口",
+    "closeGroup": "关闭分组",
+    "ungroup": "取消分组",
+    "deleteGroup": "删除分组",
+    "name": "分组名称",
+    "changeLogo": "更换项目图标",
+    "addLogo": "添加项目图标",
+    "logo": "项目图标",
+    "logoShown": "显示在标签页和输入框中",
+    "logoOptional": "可选，替换文件夹图标",
+    "removeLogo": "移除项目图标",
+    "mascot": "吉祥物",
+    "mascotLabel": "吉祥物 {{name}}"
+  },
+  "groupFallback": "分组"
+}

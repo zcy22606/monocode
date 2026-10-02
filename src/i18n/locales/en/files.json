@@ -1,0 +1,126 @@
+{
+  "actionError": {
+    "dismissLabel": "Dismiss file action error",
+    "dismiss": "Dismiss"
+  },
+  "selectionMenu": {
+    "label": "Selected code actions",
+    "addToChat": "Add to chat"
+  },
+  "preview": {
+    "file": "File",
+    "lines": "Preview lines",
+    "empty": "Empty file"
+  },
+  "binary": {
+    "opening": "Opening {{name}}…",
+    "openFailed": "Couldn’t open {{name}}",
+    "notImage": "{{size}} · not a readable image",
+    "copied": "Copied",
+    "copyOriginal": "Copy original file",
+    "zoomOut": "Zoom out",
+    "fitToWindow": "Fit to window",
+    "fit": "Fit",
+    "zoomIn": "Zoom in",
+    "copyOriginalMenu": "Copy Original File",
+    "imageActions": "Image actions",
+    "retry": "Retry",
+    "reveal": "Reveal",
+    "copyPath": "Copy path"
+  },
+  "plan": {
+    "missing": "This plan is no longer in the session.",
+    "building": "Building…",
+    "built": "Built",
+    "build": "Build",
+    "markdown": "Plan markdown"
+  },
+  "menu": {
+    "fileActions": "File actions"
+  },
+  "picker": {
+    "reload": "Reload MonoCode",
+    "commandPalette": "Command Palette",
+    "goToFile": "Go to File",
+    "placeholder": "Go to File (type > for commands)",
+    "noCommands": "No matching commands",
+    "noProject": "Open a project to search files",
+    "indexing": "Indexing files…",
+    "noFiles": "No files found",
+    "noMatches": "No matching files",
+    "typeToSearch": "Type a file name to search",
+    "commands": "Commands",
+    "files": "Files"
+  },
+  "search": {
+    "invalidRegex": "Invalid regex",
+    "noResults": "No results",
+    "count": "{{current}} of {{total}}",
+    "findInPreview": "Find in preview",
+    "find": "Find",
+    "replace": "Replace",
+    "replaceAll": "All",
+    "toggleReplace": "Toggle Replace",
+    "matchCase": "Match Case",
+    "wholeWord": "Match Whole Word",
+    "regex": "Use Regular Expression",
+    "previous": "Previous Match",
+    "next": "Next Match",
+    "close": "Close",
+    "withShortcut": "{{label}} ({{shortcut}})"
+  },
+  "gutter": {
+    "changes": "Changes",
+    "comment": "Comment on line",
+    "revert": "Revert change",
+    "stage": "Stage change"
+  },
+  "lint": {
+    "unexpected": "Unexpected {{token}}",
+    "unexpectedEndOfFile": "Unexpected end of file",
+    "unexpectedEndOfLine": "Unexpected end of line"
+  },
+  "editor": {
+    "cantStage": "Can't stage this file",
+    "onlyUnstaged": "Only unstaged changes can be staged",
+    "eolStaged": "Staged line-ending changes. Line breaks are normalized in this view.",
+    "eolUnstaged": "Unstaged line-ending changes. Line breaks are normalized in this view.",
+    "properties": "Properties",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveFailed": "Save failed: {{message}}",
+    "jumpChanges": "Jump between changes",
+    "previousChange": "Previous change",
+    "nextChange": "Next change"
+  },
+  "tree": {
+    "revealFinder": "Reveal in Finder",
+    "revealExplorer": "Reveal in File Explorer",
+    "openContainingFolder": "Open Containing Folder",
+    "newFile": "New File",
+    "newFolder": "New Folder",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "duplicate": "Duplicate",
+    "copyPath": "Copy Path",
+    "copyRelativePath": "Copy Relative Path",
+    "rename": "Rename",
+    "delete": "Delete",
+    "openInTerminal": "Open in Terminal",
+    "confirmDeleteFolder": "Delete folder “{{name}}” and everything inside it?",
+    "confirmDelete": "Delete “{{name}}”?",
+    "pasteIntoSelf": "Cannot paste a folder into itself.",
+    "collapseAll": "Collapse All",
+    "searchInFiles": "Search in files ({{shortcut}})",
+    "label": "{{name}} files",
+    "nameInput": "Type file name. Press Enter to confirm or Escape to cancel.",
+    "issue": {
+      "empty": "A file or folder name must be provided.",
+      "slash": "A file or folder name cannot start with a slash.",
+      "exists": "A file or folder <b>{{name}}</b> already exists at this location. Please choose a different name.",
+      "invalid": "The name <b>{{name}}</b> is not valid as a file or folder name. Please choose a different name.",
+      "whitespace": "Leading or trailing whitespace detected in file or folder name."
+    }
+  }
+}

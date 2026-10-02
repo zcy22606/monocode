@@ -1,0 +1,63 @@
+{
+  "scope": {
+    "personal": "个人",
+    "project": "项目"
+  },
+  "page": {
+    "count_other": "{{count}} 个技能",
+    "filter": "筛选",
+    "filterLabel": "筛选技能",
+    "refresh": "刷新技能",
+    "rescan": "重新扫描技能文件夹",
+    "add": "添加技能",
+    "addHint": "创建一个可编辑的 SKILL.md 模板",
+    "close": "关闭",
+    "closeForm": "关闭技能表单",
+    "loading": "正在加载技能…",
+    "empty": "还没有技能。点「添加技能」会创建一个 SKILL.md 模板。",
+    "noMatches": "没有匹配的技能",
+    "previewName": "预览 {{name}}",
+    "include": "将 {{name}} 加入 MonoCode 目录",
+    "previewSkill": "预览技能",
+    "previewSkillName": "预览技能 {{name}}",
+    "copyPath": "复制路径",
+    "copyPathOf": "复制 {{name}} 的路径",
+    "reveal": "在文件管理器中显示",
+    "revealName": "在文件管理器中显示 {{name}}",
+    "readError": "无法读取 SKILL.md。{{error}}",
+    "toggleError": "无法保存技能偏好，请重试。",
+    "revealError": "无法打开文件夹：{{error}}",
+    "copyError": "无法把路径复制到剪贴板。",
+    "footer": "隐藏的技能仍保留在磁盘上，只是不进入 MonoCode 的文件技能目录。提供方管理的技能和原生命令不受影响。本项目的技能放在 <path>.agents/skills</path>，个人技能放在 <path>~/.agents/skills</path>；各 harness 的文件夹也会被识别。"
+  },
+  "preview": {
+    "label": "技能预览",
+    "close": "关闭技能预览",
+    "closeHint": "关闭预览（Esc）",
+    "loading": "正在加载技能…",
+    "metadata": "技能元数据"
+  },
+  "picker": {
+    "new": "新建技能",
+    "noMatches": "没有匹配的命令或技能",
+    "empty": "还没有命令",
+    "label": "命令和技能",
+    "scope": {
+      "personal": "个人",
+      "project": "项目"
+    }
+  },
+  "form": {
+    "hint": "会写入一个可编辑的 SKILL.md 模板。",
+    "nameLabel": "技能名称",
+    "invalidName": "只能使用小写字母、数字和连字符。",
+    "invalidNameError": "名称只能使用小写字母、数字和连字符。",
+    "cancel": "取消",
+    "create": "创建",
+    "creating": "正在创建…"
+  },
+  "promptField": {
+    "label": "指令",
+    "placeholder": "告诉 Agent 这个自动化运行时要做什么…"
+  }
+}

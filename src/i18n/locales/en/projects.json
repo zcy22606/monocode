@@ -1,0 +1,82 @@
+{
+  "backgroundDialog": {
+    "title": "Background Image",
+    "description": "Choose a background image for {{name}}",
+    "noBackground": "No background selected",
+    "changeImage": "Change image",
+    "chooseImage": "Choose image",
+    "overridesGlobal": "This image overrides the global background for this project.",
+    "followsGlobal": "This project currently follows the global Appearance setting.",
+    "effect": "Background effect",
+    "effectLabel": "Project background effect",
+    "showOn": "Show on",
+    "showOnLabel": "Show project background on",
+    "scope": {
+      "empty": "Empty only",
+      "all": "All sessions"
+    },
+    "emptyVisibility": "Empty chat visibility",
+    "emptyVisibilityLabel": "Project background visibility in empty chats",
+    "sessionVisibility": "Session visibility",
+    "sessionVisibilityLabel": "Project background visibility in sessions",
+    "removeImage": "Remove background image"
+  },
+  "fileDialog": {
+    "chatBackground": "Choose chat background",
+    "projectChatBackground": "Choose project chat background",
+    "projectLogo": "Choose project logo",
+    "images": "Images"
+  },
+  "removeDialog": {
+    "label": "Delete {{name}}",
+    "title": "Delete “{{name}}”?",
+    "body": "All conversations for this project will be deleted. It also leaves the sidebar. The folder on disk stays put, and opening it again brings the project back empty.",
+    "sessions_one": "{{count}} saved conversation will be removed.",
+    "sessions_other": "{{count}} saved conversations will be removed.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "picker": {
+    "label": "Project picker",
+    "projectLabel": "Project {{label}}",
+    "current": "Current project",
+    "moveTo": "Move to project",
+    "recent": "Recent projects",
+    "noOther": "No other projects",
+    "more": "More Projects",
+    "moreLabel": "More projects",
+    "newTerminal": "New terminal",
+    "chooseProject": "Choose project",
+    "switchProject": "Switch project",
+    "moveNote": "Move note to project",
+    "currentLabel": "{{action}}, current project {{label}}",
+    "chooseForNote": "Choose project for note",
+    "search": "Search projects",
+    "searchPlaceholder": "Search projects...",
+    "noResults": "No projects found",
+    "newProject": "New project"
+  },
+  "search": {
+    "noFolder": "No project folder",
+    "back": "Back to files",
+    "title": "Search in files",
+    "placeholder": "Search",
+    "matchCase": "Match case",
+    "wholeWord": "Match whole word",
+    "regex": "Use regular expression",
+    "include": "files to include",
+    "exclude": "files to exclude",
+    "searching": "Searching…",
+    "noResults": "No results",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files",
+    "summary": "{{results}} in {{files}}",
+    "limited": " (limited)",
+    "hint": "Type to search across the project"
+  },
+  "errors": {
+    "folderNotFound": "Project folder not found: {{path}}. Reopen the folder to reconnect it."
+  }
+}

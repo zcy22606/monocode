@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import type { HarnessId } from "./session";
 import {
   MCP_PROVIDER_LABELS,
@@ -114,12 +115,12 @@ export function mcpPickerServers(
               ? ("authentication" as const)
               : ("available" as const),
         detail: !matches
-          ? "Different provider"
+          ? t("sessions:mcpPicker.differentProvider")
           : disabled
-            ? "Disabled in provider configuration"
+            ? t("sessions:mcpPicker.disabled")
             : failed
-              ? "Connection unavailable"
-              : "Configured for this provider",
+              ? t("sessions:mcpPicker.connectionUnavailable")
+              : t("sessions:mcpPicker.configured"),
       };
     })
     .sort(

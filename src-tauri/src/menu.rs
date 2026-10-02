@@ -10,6 +10,11 @@ use tauri::menu::{
 };
 #[cfg(target_os = "macos")]
 use tauri::Wry;
+// IndieDesk: menu text follows the app language.
+#[cfg(target_os = "macos")]
+use crate::i18n::tr;
+#[cfg(target_os = "macos")]
+use std::sync::Mutex;
 use tauri::{AppHandle, Emitter};
 
 #[cfg(target_os = "macos")]
@@ -21,6 +26,19 @@ pub struct KeybindingOverride {
 
 #[cfg(target_os = "macos")]
 static AUTOSAVE_ENABLED: AtomicBool = AtomicBool::new(false);
+
+// IndieDesk: the last overrides, so a language change can rebuild the menu.
+#[cfg(target_os = "macos")]
+static OVERRIDES: Mutex<Option<HashMap<String, KeybindingOverride>>> = Mutex::new(None);
+
+// IndieDesk
+#[cfg(target_os = "macos")]
+pub fn rebuild(app: &AppHandle) {
+    let overrides = OVERRIDES.lock().unwrap_or_else(|error| error.into_inner());
+    if let Ok(menu) = build(app, overrides.as_ref().unwrap_or(&HashMap::new())) {
+        let _ = app.set_menu(menu);
+    }
+}
 
 #[cfg(target_os = "macos")]
 fn set_autosave_menu_checked(app: &AppHandle, enabled: bool) {
@@ -82,8 +100,9 @@ pub fn keybindings_set_overrides(
     overrides: HashMap<String, KeybindingOverride>,
 ) -> Result<(), String> {
     let menu = build(&app, &overrides).map_err(|error| error.to_string())?;
-    // set_menu hands back the previous menu; this command only needs to know
-    // whether it succeeded.
+    *OVERRIDES.lock().unwrap_or_else(|error| error.into_inner()) = Some(overrides); // IndieDesk
+                                                                                    // set_menu hands back the previous menu; this command only needs to know
+                                                                                    // whether it succeeded.
     app.set_menu(menu)
         .map(|_| ())
         .map_err(|error| error.to_string())
@@ -197,17 +216,17 @@ fn build(
     let open_settings = menu_item(
         app,
         "open_settings",
-        "Settings…",
+        tr("Settings…"),
         "CmdOrCtrl+,",
         "App: Settings",
         overrides,
     )?;
     let check_for_updates =
-        MenuItemBuilder::with_id("check_for_updates", "Check for Updates…").build(app)?;
+        MenuItemBuilder::with_id("check_for_updates", tr("Check for Updates…")).build(app)?;
     let new_window = menu_item(
         app,
         "new_window",
-        "New Window",
+        tr("New Window"),
         "CmdOrCtrl+Shift+N",
         "App: New Window",
         overrides,
@@ -215,7 +234,7 @@ fn build(
     let open_project = menu_item(
         app,
         "open_project",
-        "Open Project…",
+        tr("Open Project…"),
         "CmdOrCtrl+O",
         "App: Open Project",
         overrides,
@@ -223,7 +242,7 @@ fn build(
     let go_to_file = menu_item(
         app,
         "go_to_file",
-        "Go to File…",
+        tr("Go to File…"),
         "CmdOrCtrl+P",
         "App: Go to File",
         overrides,
@@ -231,7 +250,7 @@ fn build(
     let command_palette = menu_item(
         app,
         "open_command_palette",
-        "Command Palette…",
+        tr("Command Palette…"),
         "CmdOrCtrl+Shift+P",
         "App: Command Palette",
         overrides,
@@ -239,17 +258,17 @@ fn build(
     let open_search = menu_item(
         app,
         "open_search",
-        "Search…",
+        tr("Search…"),
         "CmdOrCtrl+K",
         "App: Search",
         overrides,
     )?;
-    let open_inbox = MenuItemBuilder::with_id("open_inbox", "Inbox").build(app)?;
-    let open_notes = MenuItemBuilder::with_id("open_notes", "Notes").build(app)?;
+    let open_inbox = MenuItemBuilder::with_id("open_inbox", tr("Inbox")).build(app)?;
+    let open_notes = MenuItemBuilder::with_id("open_notes", tr("Notes")).build(app)?;
     let new_tab = menu_item(
         app,
         "new_tab",
-        "New Tab",
+        tr("New Tab"),
         "CmdOrCtrl+T",
         "Tab: New",
         overrides,
@@ -257,7 +276,7 @@ fn build(
     let new_terminal = menu_item(
         app,
         "new_terminal",
-        "New Terminal",
+        tr("New Terminal"),
         "CmdOrCtrl+`",
         "Terminal: New",
         overrides,
@@ -265,7 +284,7 @@ fn build(
     let new_terminal_tab = menu_item(
         app,
         "new_terminal_tab",
-        "New Terminal Tab",
+        tr("New Terminal Tab"),
         "CmdOrCtrl+Shift+`",
         "Terminal: New Tab",
         overrides,
@@ -273,7 +292,7 @@ fn build(
     let toggle_terminal = menu_item(
         app,
         "toggle_terminal",
-        "Toggle Terminal",
+        tr("Toggle Terminal"),
         "CmdOrCtrl+J",
         "Terminal: Toggle Dock",
         overrides,
@@ -281,7 +300,7 @@ fn build(
     let split_right = menu_item(
         app,
         "split_right",
-        "Split Pane Right",
+        tr("Split Pane Right"),
         "CmdOrCtrl+D",
         "Pane: Split Right",
         overrides,
@@ -289,7 +308,7 @@ fn build(
     let split_down = menu_item(
         app,
         "split_down",
-        "Split Pane Down",
+        tr("Split Pane Down"),
         "CmdOrCtrl+Shift+D",
         "Pane: Split Down",
         overrides,
@@ -297,7 +316,7 @@ fn build(
     let close_tab = menu_item(
         app,
         "close_tab",
-        "Close Pane",
+        tr("Close Pane"),
         "CmdOrCtrl+W",
         "Pane: Close",
         overrides,
@@ -305,7 +324,7 @@ fn build(
     let close_other_tabs = menu_item(
         app,
         "close_other_tabs",
-        "Close Other Tabs",
+        tr("Close Other Tabs"),
         "CmdOrCtrl+Alt+T",
         "Tab: Close Others",
         overrides,
@@ -313,7 +332,7 @@ fn build(
     let close_all_tabs = menu_item(
         app,
         "close_all_tabs",
-        "Close All Tabs",
+        tr("Close All Tabs"),
         "CmdOrCtrl+Shift+W",
         "Tab: Close All",
         overrides,
@@ -321,7 +340,7 @@ fn build(
     let next_tab = menu_item(
         app,
         "next_tab",
-        "Next Tab",
+        tr("Next Tab"),
         "CmdOrCtrl+Shift+]",
         "Tab: Next",
         overrides,
@@ -329,7 +348,7 @@ fn build(
     let prev_tab = menu_item(
         app,
         "prev_tab",
-        "Previous Tab",
+        tr("Previous Tab"),
         "CmdOrCtrl+Shift+[",
         "Tab: Previous",
         overrides,
@@ -337,7 +356,7 @@ fn build(
     let back_tab = menu_item(
         app,
         "back_tab",
-        "Go Back",
+        tr("Go Back"),
         "CmdOrCtrl+[",
         "Tab: Back",
         overrides,
@@ -345,7 +364,7 @@ fn build(
     let forward_tab = menu_item(
         app,
         "forward_tab",
-        "Go Forward",
+        tr("Go Forward"),
         "CmdOrCtrl+]",
         "Tab: Forward",
         overrides,
@@ -354,7 +373,7 @@ fn build(
     let focus_left = menu_item(
         app,
         "focus_left",
-        "Focus Pane Left",
+        tr("Focus Pane Left"),
         "CmdOrCtrl+Alt+Left",
         "Pane: Focus Left",
         overrides,
@@ -362,7 +381,7 @@ fn build(
     let focus_right = menu_item(
         app,
         "focus_right",
-        "Focus Pane Right",
+        tr("Focus Pane Right"),
         "CmdOrCtrl+Alt+Right",
         "Pane: Focus Right",
         overrides,
@@ -370,7 +389,7 @@ fn build(
     let focus_up = menu_item(
         app,
         "focus_up",
-        "Focus Pane Up",
+        tr("Focus Pane Up"),
         "CmdOrCtrl+Alt+Up",
         "Pane: Focus Up",
         overrides,
@@ -378,7 +397,7 @@ fn build(
     let focus_down = menu_item(
         app,
         "focus_down",
-        "Focus Pane Down",
+        tr("Focus Pane Down"),
         "CmdOrCtrl+Alt+Down",
         "Pane: Focus Down",
         overrides,
@@ -387,7 +406,7 @@ fn build(
     let toggle_sidebar = menu_item(
         app,
         "toggle_sidebar",
-        "Toggle Sidebar",
+        tr("Toggle Sidebar"),
         "CmdOrCtrl+B",
         "App: Toggle Sidebar",
         overrides,
@@ -395,7 +414,7 @@ fn build(
     let toggle_session_sidebar = menu_item(
         app,
         "toggle_session_sidebar",
-        "Toggle Session Sidebar",
+        tr("Toggle Session Sidebar"),
         "CmdOrCtrl+Shift+B",
         "App: Toggle Session Sidebar",
         overrides,
@@ -403,23 +422,23 @@ fn build(
     let open_model_picker = menu_item(
         app,
         "open_model_picker",
-        "Switch Model…",
+        tr("Switch Model…"),
         "CmdOrCtrl+.",
         "App: Switch Model",
         overrides,
     )?;
     let sidebar_opacity =
-        MenuItemBuilder::with_id("sidebar_opacity", "Sidebar Appearance…").build(app)?;
+        MenuItemBuilder::with_id("sidebar_opacity", tr("Sidebar Appearance…")).build(app)?;
     // No accelerators here on purpose: the webview key handler owns
     // CmdOrCtrl + - 0, and a menu accelerator would fire the same command
     // a second time on top of it.
-    let zoom_in = MenuItemBuilder::with_id("zoom_in", "Zoom In").build(app)?;
-    let zoom_out = MenuItemBuilder::with_id("zoom_out", "Zoom Out").build(app)?;
-    let zoom_reset = MenuItemBuilder::with_id("zoom_reset", "Reset Zoom").build(app)?;
+    let zoom_in = MenuItemBuilder::with_id("zoom_in", tr("Zoom In")).build(app)?;
+    let zoom_out = MenuItemBuilder::with_id("zoom_out", tr("Zoom Out")).build(app)?;
+    let zoom_reset = MenuItemBuilder::with_id("zoom_reset", tr("Reset Zoom")).build(app)?;
     let reload = menu_item(
         app,
         "reload",
-        "Reload",
+        tr("Reload"),
         "CmdOrCtrl+Shift+R",
         "View: Reload",
         overrides,
@@ -427,7 +446,7 @@ fn build(
     let find = menu_item(
         app,
         "find",
-        "Find",
+        tr("Find"),
         "CmdOrCtrl+F",
         "Editor: Find",
         overrides,
@@ -436,7 +455,7 @@ fn build(
     let find_in_project = menu_item(
         app,
         "find_in_project",
-        "Find in Files…",
+        tr("Find in Files…"),
         "CmdOrCtrl+Shift+F",
         "App: Find in Files",
         overrides,
@@ -444,13 +463,13 @@ fn build(
     let autosave = CheckMenuItem::with_id(
         app,
         "toggle_autosave",
-        "Autosave",
+        tr("Autosave"),
         true,
         AUTOSAVE_ENABLED.load(Ordering::Relaxed),
         None::<&str>,
     )?;
 
-    let file = SubmenuBuilder::with_id(app, "file", "File")
+    let file = SubmenuBuilder::with_id(app, "file", tr("File"))
         .item(&new_window)
         .item(&open_project)
         .item(&open_search)
@@ -475,7 +494,7 @@ fn build(
         .item(&forward_tab)
         .build()?;
 
-    let view = SubmenuBuilder::new(app, "View")
+    let view = SubmenuBuilder::new(app, tr("View"))
         .item(&toggle_sidebar)
         .item(&toggle_session_sidebar)
         .item(&open_inbox)
@@ -496,47 +515,51 @@ fn build(
         .item(&sidebar_opacity)
         .build()?;
 
-    let edit = SubmenuBuilder::new(app, "Edit")
-        .undo()
-        .redo()
+    let edit = SubmenuBuilder::new(app, tr("Edit"))
+        .undo_with_text(tr("Undo"))
+        .redo_with_text(tr("Redo"))
         .separator()
-        .cut()
-        .copy()
-        .paste()
-        .select_all()
+        .cut_with_text(tr("Cut"))
+        .copy_with_text(tr("Copy"))
+        .paste_with_text(tr("Paste"))
+        .select_all_with_text(tr("Select All"))
         .separator()
         .item(&find)
         .build()?;
 
     #[cfg(target_os = "macos")]
     {
-        let quit = MenuItemBuilder::with_id("quit", "Quit MonoCode")
+        let quit = MenuItemBuilder::with_id("quit", tr("Quit MonoCode"))
             .accelerator("CmdOrCtrl+Q")
             .build(app)?;
-        let app_menu = SubmenuBuilder::new(app, "MonoCode")
-            .about(Some(AboutMetadata::default()))
+        let app_menu = SubmenuBuilder::new(app, tr("MonoCode"))
+            .about_with_text(tr("About MonoCode"), Some(AboutMetadata::default()))
             .separator()
             .item(&open_settings)
             .item(&check_for_updates)
             .separator()
-            .hide()
-            .hide_others()
-            .show_all()
+            .hide_with_text(tr("Hide MonoCode"))
+            .hide_others_with_text(tr("Hide Others"))
+            .show_all_with_text(tr("Show All"))
             .separator()
             .item(&quit)
             .build()?;
         // Tauri registers this submenu via NSApp.setWindowsMenu:, which throws
         // on macOS 12 when the menu is empty and aborts the app at launch.
-        let window_menu = SubmenuBuilder::with_id(app, tauri::menu::WINDOW_SUBMENU_ID, "Window")
-            .minimize()
-            .maximize()
-            .build()?;
-        let website = MenuItemBuilder::with_id("help_website", "MonoCode Website").build(app)?;
-        let github = MenuItemBuilder::with_id("help_github", "View on GitHub").build(app)?;
-        let report_bug = MenuItemBuilder::with_id("help_report_bug", "Report a Bug…").build(app)?;
+        let window_menu =
+            SubmenuBuilder::with_id(app, tauri::menu::WINDOW_SUBMENU_ID, tr("Window"))
+                .minimize_with_text(tr("Minimize"))
+                .maximize_with_text(tr("Zoom"))
+                .build()?;
+        let website =
+            MenuItemBuilder::with_id("help_website", tr("MonoCode Website")).build(app)?;
+        let github = MenuItemBuilder::with_id("help_github", tr("View on GitHub")).build(app)?;
+        let report_bug =
+            MenuItemBuilder::with_id("help_report_bug", tr("Report a Bug…")).build(app)?;
         let request_feature =
-            MenuItemBuilder::with_id("help_request_feature", "Request a Feature…").build(app)?;
-        let help = SubmenuBuilder::with_id(app, tauri::menu::HELP_SUBMENU_ID, "Help")
+            MenuItemBuilder::with_id("help_request_feature", tr("Request a Feature…"))
+                .build(app)?;
+        let help = SubmenuBuilder::with_id(app, tauri::menu::HELP_SUBMENU_ID, tr("Help"))
             .item(&website)
             .item(&github)
             .separator()

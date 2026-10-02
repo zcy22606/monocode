@@ -15,6 +15,7 @@ import {
 } from "../../../integrations/harness/providers/opencode/opencodeProtocol";
 import { refreshHarnessCatalogs } from "../../../integrations/harness/core/registry";
 import { LAYER } from "../../../shared/lib/layers";
+import { t, useTranslation } from "../../../i18n";
 import { Check, Loader, X } from "../../../shared/ui/icons";
 import { isPickerProviderVisible } from "../../sessions/model/models";
 import {
@@ -82,7 +83,10 @@ async function runUpdate(update: HarnessUpdate): Promise<RowState> {
     }
     return {
       status: "failed",
-      error: `Still on ${version ?? update.installed} after updating.`,
+      error: t("harnessUpdate.stillOn", {
+        ns: "providers",
+        version: version ?? update.installed,
+      }),
     };
   } catch (error) {
     return {
@@ -100,6 +104,7 @@ export function HarnessUpdateNotice({
   topOffset?: number;
   onHeightChange?: (height: number) => void;
 }) {
+  const { t } = useTranslation("providers");
   const panelRef = useRef<HTMLElement>(null);
   const [updates, setUpdates] = useState<HarnessUpdate[]>([]);
   const [rows, setRows] = useState<Partial<Record<HarnessId, RowState>>>({});
@@ -173,7 +178,7 @@ export function HarnessUpdateNotice({
   return createPortal(
     <section
       ref={panelRef}
-      aria-label="Harness updates"
+      aria-label={t("harnessUpdate.label")}
       role="status"
       style={{ zIndex: LAYER.toast, top: topOffset }}
       className="fixed right-3 isolate w-[min(340px,calc(100vw-24px))] overflow-hidden rounded-xl border border-content/10 text-content shadow-xl"
@@ -182,9 +187,7 @@ export function HarnessUpdateNotice({
       <div className="relative z-[1]">
         <div className="flex items-center gap-2 border-b border-stroke px-3 py-2">
           <span className="min-w-0 flex-1 truncate text-[12px] font-semibold">
-            {updates.length === 1
-              ? "Harness update available"
-              : "Harness updates available"}
+            {t("harnessUpdate.available", { count: updates.length })}
           </span>
           {pending.length > 1 ? (
             <button
@@ -192,12 +195,12 @@ export function HarnessUpdateNotice({
               className="rounded-md px-2 py-1 text-[11px] font-medium text-content/70 hover:bg-content/10 hover:text-content"
               onClick={() => start(pending)}
             >
-              Update all
+              {t("harnessUpdate.updateAll")}
             </button>
           ) : null}
           <button
             type="button"
-            aria-label="Dismiss harness updates"
+            aria-label={t("harnessUpdate.dismiss")}
             disabled={busy}
             className="grid size-6 shrink-0 place-items-center rounded-md text-content/40 hover:bg-content/10 hover:text-content disabled:opacity-40 disabled:hover:bg-transparent"
             onClick={dismiss}
@@ -217,8 +220,8 @@ export function HarnessUpdateNotice({
         </div>
         <p className="border-t border-stroke px-3 py-2 text-[11px] text-content/50">
           {anyUpdated
-            ? "Model picker refreshed with the new version’s models."
-            : "New models often need the latest version."}
+            ? t("harnessUpdate.refreshed")
+            : t("harnessUpdate.hint")}
         </p>
       </div>
     </section>,
@@ -235,6 +238,7 @@ function HarnessUpdateRow({
   state: RowState;
   onUpdate: () => void;
 }) {
+  const { t } = useTranslation("providers");
   return (
     <article className="px-3 py-2.5">
       <div className="flex items-center gap-2">
@@ -245,7 +249,7 @@ function HarnessUpdateRow({
         {state.status === "updated" ? (
           <span className="flex shrink-0 items-center gap-1 text-[11px] text-emerald-400">
             <Check className="size-3.5" />
-            Updated to {state.version}
+            {t("harnessUpdate.updatedTo", { version: state.version })}
           </span>
         ) : (
           <>
@@ -261,12 +265,12 @@ function HarnessUpdateRow({
               {state.status === "updating" ? (
                 <>
                   <Loader className="size-3 animate-spin" />
-                  Updating
+                  {t("harnessUpdate.updating")}
                 </>
               ) : state.status === "failed" ? (
-                "Retry"
+                t("harnessUpdate.retry")
               ) : (
-                "Update"
+                t("harnessUpdate.update")
               )}
             </button>
           </>

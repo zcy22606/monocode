@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { basename, pickFiles as pickFilePaths } from "../../../platform/tauri/fs";
 import type { Attachment, AttachmentKind } from "./session";
@@ -316,7 +317,7 @@ export function promptBlocks(
 export function attachmentPath(file: Attachment): string {
   if (!file.path?.trim()) {
     throw new Error(
-      `Cannot attach ${JSON.stringify(file.name)}: no local file path is available. Attach the file again.`,
+      t("sessions:attachment.noPath", { name: JSON.stringify(file.name) }),
     );
   }
   return file.path;

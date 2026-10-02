@@ -5,6 +5,7 @@ import {
   type Worktree,
 } from "../../source-control/model/worktrees";
 import { pathKey } from "../../../shared/lib/paths";
+import { t } from "../../../i18n"; // IndieDesk
 
 export type QuickWorkspace = {
   cwd: string | null;
@@ -36,9 +37,7 @@ export async function quickWorkspaceLaunch(
         !tree.missing && pathKey(tree.path) === pathKey(choice.tree!.path),
     );
     if (!tree)
-      throw new Error(
-        "This worktree is no longer available. Select another working copy.",
-      );
+      throw new Error(t("quickComposer:composer.worktreeGone"));
     return pathKey(tree.path) === pathKey(choice.cwd)
       ? {}
       : { worktreeCwd: tree.path };

@@ -1,0 +1,110 @@
+{
+  "releaseNotes": {
+    "title": "MonoCode {{version}} 新功能",
+    "label": "更新说明",
+    "unavailable": "当前版本没有附带这个版本的更新说明。"
+  },
+  "update": {
+    "latest": "已经是最新版本。",
+    "availableTitle": "有可用更新",
+    "prompt": "MonoCode {{version}} 已发布（当前版本 {{current}}）。{{detail}}\n\n现在安装吗？",
+    "notConfigured": "当前版本没有配置自动更新。\n\n可以到这里下载新版本：{{url}}",
+    "checkFailed": "检查更新失败。\n\n{{error}}",
+    "installFailed": "安装更新失败。\n\n{{error}}"
+  },
+  "quit": {
+    "ok": "退出"
+  },
+  "reload": {
+    "confirm": "重新加载 MonoCode 并丢弃未保存的更改吗？",
+    "ok": "重新加载"
+  },
+  "closeWindow": {
+    "confirm": "关闭这个窗口并停止其中正在运行的对话吗？其他窗口不受影响。",
+    "ok": "关闭窗口"
+  },
+  "close": {
+    "tabUnsaved": "这个标签页有未保存的文件，仍要关闭吗？",
+    "tabsUnsaved": "这些标签页有未保存的文件，仍要关闭吗？",
+    "fileUnsaved": "不保存就关闭 {{name}} 吗？",
+    "otherTabsUnsaved": "其他标签页有未保存的文件，仍要关闭吗？",
+    "conversationUnsaved": "这个对话有未保存的文件，仍要关闭吗？",
+    "allFilesUnsaved": "有未保存的更改，仍要关闭所有打开的文件吗？",
+    "allTabsUnsaved": "有未保存的文件，仍要关闭所有标签页吗？"
+  },
+  "conversation": {
+    "unavailable": "这个对话已不存在。"
+  },
+  "reminder": {
+    "sendFirst": "先在这个对话里发一条消息，再设置提醒。"
+  },
+  "worktree": {
+    "alreadyDeleting": "这个工作树正在删除。",
+    "selecting": "有会话正在切换到这个工作树，切换完成后再试着删除。",
+    "unavailable": "这个工作树已不存在。",
+    "moveSessionsFirst": "请先移走或删除使用这个工作树的会话。",
+    "waitForSessions": "请等这些会话切换完成后再删除工作树。"
+  },
+  "removal": {
+    "archiveUnsaved": "这个对话有未保存的文件，仍要归档吗？",
+    "deleteUnsaved": "这个对话有未保存的文件，仍要删除吗？",
+    "worktreeKept": "会话已删除，但它的工作树保留了下来。\n\n{{error}}\n\n可以在「设置 → 工作树」里管理它。",
+    "archiveFailed": "无法归档这个对话。\n\n{{detail}}",
+    "deleteFailed": "无法删除这个对话。\n\n{{detail}}",
+    "unarchiveFailed": "无法取消归档这个对话。\n\n{{error}}"
+  },
+  "githubLinkFailed": "无法更新这个对话关联的 GitHub 链接。\n\n{{error}}",
+  "deleteSelected_other": "删除选中的 {{count}} 个对话吗？此操作无法撤销。",
+  "workingCopy": {
+    "busy": "请等这个会话结束后再切换工作副本。",
+    "deleting": "这个工作树正在删除，请选择其他工作副本。",
+    "clearQueue": "切换工作副本前请先清空排队的消息。",
+    "stopRun": "切换工作副本前请先停止这次编排。",
+    "unavailable": "这个工作树已不存在，请刷新列表。",
+    "changed": "会话已变化，请重新选择工作副本。"
+  },
+  "orchestration": {
+    "stopCurrentRun": "请先停止当前的编排，再准备新的方案。",
+    "repairFailed": "主 Agent 没能修复这个方案。",
+    "planningFailed": "主 Agent 没能完成规划。",
+    "planningQueued": "当前这轮结束后会开始编排规划。",
+    "waitForProposal": "请等方案生成完再确认。",
+    "leadModelChanged": "主 Agent 的模型已更换。请切回卡片上显示的模型，或重新生成方案。"
+  },
+  "providerAccountRemoved": "这个对话使用的提供方账号已被移除。请在用量控件里切换账号，再开始新对话。",
+  "operator": {
+    "outsideRun": "请在普通会话里使用 /operator，不要在编排过程中使用。",
+    "newTurn": "/operator 会在当前这轮结束后开始新的一轮。"
+  },
+  "followUp": {
+    "cannotSteer": "{{harness}} 不支持在一轮进行中追加消息，请等这轮结束或先停止它。",
+    "steerFailed": "{{harness}} 无法调整正在进行的这一轮"
+  },
+  "projectOpenFailed": "无法打开项目文件夹。",
+  "harness": {
+    "notConnected": "{{harness}} 还没有连接，请安装并登录该提供方后重试。",
+    "adapterFailed": "{{harness}} 适配器出错"
+  },
+  "automation": {
+    "startFailed": "选中的 Agent 会话无法开始这次运行。"
+  },
+  "sideQuestion": {
+    "noProject": "这个问题需要项目工作目录。",
+    "codexModelUnavailable": "选中的 Codex 模型不可用。",
+    "turnUnavailable": "已完成的这一轮已不存在。",
+    "emptyAnswer": "{{harness}} 对这个附加问题返回了空回答。",
+    "failed": "{{harness}} 无法回答这个附加问题。"
+  },
+  "compact": {
+    "unsupported": "{{harness}} 不支持手动压缩上下文。",
+    "compacting": "正在压缩上下文…",
+    "compacted": "上下文已压缩",
+    "failed": "{{harness}} 无法压缩这段上下文"
+  },
+  "ciRepair": {
+    "chooseProject": "请先为这个 PR 选择一个本地项目。",
+    "chooseChat": "请选择这个项目里的对话。",
+    "chatBusy": "这个对话正忙，请选择其他对话或新建一个。",
+    "sessionTitle": "修复 CI #{{number}}：{{title}}"
+  }
+}

@@ -1,14 +1,15 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { t } from "../../../i18n";
 
 export async function pickAndSaveChatBackground(): Promise<string | null> {
   const sourcePath = await open({
     multiple: false,
     directory: false,
-    title: "Choose chat background",
+    title: t("projects:fileDialog.chatBackground"),
     filters: [
       {
-        name: "Images",
+        name: t("projects:fileDialog.images"),
         extensions: ["png", "jpg", "jpeg", "gif", "webp"],
       },
     ],
@@ -27,10 +28,10 @@ export async function pickAndSaveProjectChatBackground(
   const sourcePath = await open({
     multiple: false,
     directory: false,
-    title: "Choose project chat background",
+    title: t("projects:fileDialog.projectChatBackground"),
     filters: [
       {
-        name: "Images",
+        name: t("projects:fileDialog.images"),
         extensions: ["png", "jpg", "jpeg", "gif", "webp"],
       },
     ],

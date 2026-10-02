@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
+import { t } from "../../../i18n";
 import type {
   ProviderAccount,
   ProviderAccountProvider,
@@ -33,7 +34,9 @@ export function identityOrganizationTag(
 ): string | null {
   const name = identity?.organization?.trim();
   if (!name) return null;
-  return /['’]s Organization$/.test(name) ? "Personal" : name;
+  return /['’]s Organization$/.test(name)
+    ? t("identity.personal", { ns: "providers" })
+    : name;
 }
 
 export function identityKey(account: ProviderAccount): string {

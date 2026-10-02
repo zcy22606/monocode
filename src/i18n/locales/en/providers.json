@@ -1,0 +1,41 @@
+{
+  "status": {
+    "checking": "Checking…",
+    "notSignedIn": "Not signed in",
+    "usageUnavailable": "Usage unavailable",
+    "exhausted": "Exhausted",
+    "runningLow": "Running low",
+    "ready": "Ready",
+    "backIn": "back in {{duration}}"
+  },
+  "usage": {
+    "refresh": "Refresh usage limits",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "resetDue": "reset due",
+    "resetsAt": "Resets {{date}}",
+    "resetsNow": "Resets now",
+    "resetsIn": "Resets in {{duration}}",
+    "left": "{{percent}} left",
+    "used": "{{percent}} used",
+    "window": "{{window}} window",
+    "limitRemaining": "{{title}} limit remaining"
+  },
+  "identity": {
+    "personal": "Personal"
+  },
+  "harnessUpdate": {
+    "label": "Harness updates",
+    "available_one": "Harness update available",
+    "available_other": "Harness updates available",
+    "updateAll": "Update all",
+    "dismiss": "Dismiss harness updates",
+    "refreshed": "Model picker refreshed with the new version’s models.",
+    "hint": "New models often need the latest version.",
+    "updatedTo": "Updated to {{version}}",
+    "updating": "Updating",
+    "retry": "Retry",
+    "update": "Update",
+    "stillOn": "Still on {{version}} after updating."
+  }
+}

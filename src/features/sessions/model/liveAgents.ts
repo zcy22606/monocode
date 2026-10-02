@@ -1,6 +1,7 @@
 import { composeToolTitle } from "../../../integrations/harness/core/preview";
 import { isInFlightSession } from "./inFlight";
 import { displayPath } from "../../../shared/lib/paths";
+import { t } from "../../../i18n";
 import {
   sessionDisplayTitle,
   type Block,
@@ -59,11 +60,11 @@ function toLiveAgent(session: Session, unseenFinished: boolean): LiveAgent {
     title: sessionDisplayTitle(session.title, session.harness),
     harness: session.harness,
     activity: done
-      ? "Done"
+      ? t("sessions:liveAgents.done")
       : pendingQuestion
         ? pendingQuestion.title ||
           pendingQuestion.questions[0]?.prompt ||
-          "Question"
+          t("sessions:liveAgents.question")
         : activityLabel(activityBlock, session.cwd),
     startedAt: turnStartedAt(session.blocks),
     durationMs: done ? turnDurationMs(session.blocks) : undefined,
@@ -107,9 +108,9 @@ function turnDurationMs(blocks: Block[]): number | undefined {
 }
 
 function activityLabel(block: Block | undefined, cwd: string): string {
-  if (!block) return "Working";
+  if (!block) return t("sessions:liveAgents.working");
   if (block.role === "handoff" && block.handoff?.status === "preparing") {
-    return "Preparing a handoff";
+    return t("sessions:liveAgents.preparingHandoff");
   }
   const preview = block.tool?.preview;
   const path = preview?.path
@@ -123,6 +124,6 @@ function activityLabel(block: Block | undefined, cwd: string): string {
       query: preview?.query,
       previewKind: preview?.kind,
       cwd,
-    }) || "Working"
+    }) || t("sessions:liveAgents.working")
   );
 }
