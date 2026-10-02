@@ -1,0 +1,41 @@
+{
+  "modal": {
+    "close": "关闭"
+  },
+  "privateEmail": {
+    "hide": "隐藏邮箱",
+    "reveal": "显示邮箱"
+  },
+  "imageLightbox": {
+    "label": "图片预览：{{alt}}",
+    "closeLabel": "关闭图片预览",
+    "close": "关闭"
+  },
+  "searchableSelect": {
+    "placeholder": "选择一项…",
+    "searchPlaceholder": "搜索选项…",
+    "empty": "没有匹配的选项"
+  },
+  "colorPicker": {
+    "color": "颜色 {{number}}",
+    "custom": "自定义颜色",
+    "saturation": "饱和度和亮度",
+    "hue": "色相",
+    "hex": "十六进制颜色"
+  },
+  "dateTimePicker": {
+    "previousMonth": "上个月",
+    "nextMonth": "下个月",
+    "weekdays": {
+      "mo": "一",
+      "tu": "二",
+      "we": "三",
+      "th": "四",
+      "fr": "五",
+      "sa": "六",
+      "su": "日"
+    },
+    "time": "时间",
+    "timeHint": "本地时间，24 小时制"
+  }
+}

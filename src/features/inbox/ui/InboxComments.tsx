@@ -9,12 +9,21 @@ import {
 import { LoaderCircle, X } from "../../../shared/ui/icons";
 import {
   formatRelativeTime,
-  githubReviewStateLabel,
   inboxPersonAvatarUrl,
   type InboxProvider,
 } from "../model/githubTasks";
 import { MOD } from "../../../platform/tauri/platform";
 import { AgentMarkdown } from "../../sessions/ui/AgentMarkdown";
+import { useTranslation } from "../../../i18n";
+
+// IndieDesk: render-side twin of githubReviewStateLabel, which stays English
+// because linked-activity prompts reuse it.
+const REVIEW_STATE_KEYS = {
+  APPROVED: "review.approved",
+  CHANGES_REQUESTED: "review.requestedChanges",
+  DISMISSED: "review.dismissed",
+  COMMENTED: "review.commented",
+} as const;
 
 export type InboxReplyTarget = {
   id: string;
@@ -62,6 +71,7 @@ export function InboxComments({
   replyMode,
   onReply,
 }: Props) {
+  const { t } = useTranslation("inbox");
   if (thread && thread.comments.length === 0 && !thread.truncated) {
     if (loading) return <CommentsPending />;
     return null;
@@ -78,7 +88,7 @@ export function InboxComments({
     (total, comment) => total + 1 + comment.replies.length,
     0,
   );
-  const label = count === 1 ? "1 comment" : `${count} comments`;
+  const label = t("comments.count", { count });
   const moreOn =
     provider === "linear"
       ? "Linear"
@@ -95,7 +105,7 @@ export function InboxComments({
       <div className="flex items-center gap-2 text-[12px] text-content/50">
         <h2 className="text-content/70">{label}</h2>
         {thread.truncated ? (
-          <span>Latest comments · more on {moreOn}</span>
+          <span>{t("comments.truncated", { provider: moreOn })}</span>
         ) : null}
         {loading ? (
           <LoaderCircle
@@ -135,6 +145,7 @@ export function InboxCommentForm({
   onCancelReply: () => void;
   onSubmit: (body: string) => Promise<void>;
 }) {
+  const { t } = useTranslation("inbox");
   const [draft, setDraft] = useState("");
   const field = useRef<HTMLTextAreaElement>(null);
   const canPost = draft.trim().length > 0 && !posting;
@@ -181,12 +192,14 @@ export function InboxCommentForm({
       {replyTo ? (
         <div className="flex items-center gap-2 text-[12px] text-content/50">
           <span className="min-w-0 truncate">
-            Replying to {replyTo.author || "comment"}
+            {t("comments.replyingTo", {
+              author: replyTo.author || t("comments.fallbackAuthor"),
+            })}
           </span>
           <button
             type="button"
-            title="Cancel reply"
-            aria-label="Cancel reply"
+            title={t("comments.cancelReply")}
+            aria-label={t("comments.cancelReply")}
             onClick={onCancelReply}
             className="grid size-5 shrink-0 place-items-center rounded-md text-content/45 hover:bg-content/10 hover:text-content"
           >
@@ -201,7 +214,9 @@ export function InboxCommentForm({
           value={draft}
           disabled={posting}
           placeholder={
-            replyTo ? `Write a reply (${MOD}↩)` : `Leave a comment (${MOD}↩)`
+            replyTo
+              ? t("comments.replyPlaceholder", { shortcut: `${MOD}↩` })
+              : t("comments.commentPlaceholder", { shortcut: `${MOD}↩` })
           }
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={onKeyDown}
@@ -213,7 +228,11 @@ export function InboxCommentForm({
             disabled={!canPost}
             className="inline-flex h-7 items-center rounded-md bg-content px-3 text-[12px] text-background-base hover:bg-content/80 disabled:cursor-default disabled:opacity-40"
           >
-            {posting ? "Posting..." : replyTo ? "Reply" : "Comment"}
+            {posting
+              ? t("comments.posting")
+              : replyTo
+                ? t("comments.reply")
+                : t("comments.comment")}
           </button>
         </div>
       </div>
@@ -223,10 +242,11 @@ export function InboxCommentForm({
 }
 
 function CommentsPending() {
+  const { t } = useTranslation("inbox");
   return (
     <div className="flex items-center gap-2 border-t border-stroke pt-5 text-[12px] text-content/45">
       <LoaderCircle className="size-3.5 animate-spin" strokeWidth={1.75} />
-      Loading comments
+      {t("comments.loading")}
     </div>
   );
 }
@@ -246,13 +266,19 @@ function InboxComment({
   replyMode?: "thread" | "parent";
   onReply?: (target: InboxReplyTarget) => void;
 }) {
+  const { t } = useTranslation("inbox");
   const time = formatRelativeTime(comment.createdAt);
-  const review = githubReviewStateLabel(comment.state);
+  const reviewKey =
+    REVIEW_STATE_KEYS[
+      comment.state.trim().toUpperCase() as keyof typeof REVIEW_STATE_KEYS
+    ];
+  const review = reviewKey ? t(reviewKey) : "";
+  const resolvedLabel = t("comments.resolved");
   const location = commentLocation(comment);
   const meta = [
     review,
     location,
-    comment.resolved ? "Resolved" : "",
+    comment.resolved ? resolvedLabel : "",
     time,
   ].filter((part) => part.length > 0);
   const hasBody = comment.body.trim().length > 0;
@@ -288,14 +314,14 @@ function InboxComment({
                 type="button"
                 title={
                   provider === "linear"
-                    ? "Open in Linear"
+                    ? t("open.openIn", { provider: "Linear" })
                     : provider === "jira"
-                      ? "Open in Jira"
+                      ? t("open.openIn", { provider: "Jira" })
                       : provider === "gitlab"
-                        ? "Open on GitLab"
+                        ? t("open.openOn", { provider: "GitLab" })
                         : provider === "azuredevops"
-                          ? "Open on ADO"
-                          : "Open on GitHub"
+                          ? t("open.openOn", { provider: "ADO" })
+                          : t("open.openOn", { provider: "GitHub" })
                 }
                 onClick={() => void openUrl(comment.url)}
                 className="hover:text-content"
@@ -309,7 +335,7 @@ function InboxComment({
                     ? "text-emerald-400/90"
                     : comment.state === "CHANGES_REQUESTED"
                       ? "text-rose-400/90"
-                      : comment.resolved && part === "Resolved"
+                      : comment.resolved && part === resolvedLabel
                         ? "text-emerald-400/80"
                         : "min-w-0 truncate"
                 }
@@ -333,7 +359,7 @@ function InboxComment({
               }
               className="hover:text-content"
             >
-              Reply
+              {t("comments.reply")}
             </button>
           </span>
         ) : null}

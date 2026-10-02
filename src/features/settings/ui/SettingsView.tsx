@@ -322,6 +322,8 @@ import {
   searchSettings,
   settingsSectionDescription,
   settingsSectionLabel,
+  keybindingCommandLabel, // IndieDesk
+  keybindingWhenLabel, // IndieDesk
   COLLAPSED_PROJECT_RAIL_MODE_DEFAULT,
   type CollapsedProjectRailMode,
   type DiffViewer,
@@ -364,6 +366,16 @@ import {
   type RemoveWorktree,
 } from "../../source-control/model/worktrees";
 import type { Session } from "../../sessions/model/session";
+// IndieDesk
+import {
+  LANGUAGE_NAMES,
+  LANGUAGES,
+  loadLanguagePreference,
+  saveLanguagePreference,
+  useTranslation,
+  type LanguagePreference,
+} from "../../../i18n";
+import type { TFunction } from "i18next";
 
 /**
  * The `data-setting-id` Settings should reveal when it opens: one of the ids in
@@ -431,6 +443,7 @@ export function SettingsView({
   collapsedProjectRailMode,
   onCollapsedProjectRailModeChange,
 }: Props) {
+  const { t } = useTranslation("settings");
   const lockOverscroll = useLockOverscroll<HTMLDivElement>();
   const [revealed, setRevealed] = useState<string | null>(anchor);
   const onCloseRef = useRef(onClose);
@@ -479,7 +492,7 @@ export function SettingsView({
   return (
     <div
       role="region"
-      aria-label="Settings"
+      aria-label={t("view.settings")}
       data-app-settings
       className="flex min-h-0 min-w-0 flex-1 flex-col text-content"
     >
@@ -489,7 +502,7 @@ export function SettingsView({
       >
         {IS_MAC && !besideRail ? <div className="w-[78px] shrink-0" /> : null}
         <div className="flex min-w-0 flex-1 items-center gap-2 px-3 text-[13px]">
-          <span className="shrink-0 text-content/45">Settings</span>
+          <span className="shrink-0 text-content/45">{t("view.settings")}</span>
           <span aria-hidden className="shrink-0 text-content/25">
             /
           </span>
@@ -508,7 +521,7 @@ export function SettingsView({
               className="flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-[12px] text-content/50 hover:bg-content/10 hover:text-content"
             >
               <RotateCcw className="size-3.5" strokeWidth={1.75} />
-              Restore defaults
+              {t("view.restoreDefaults")}
             </button>
           ) : null}
           <SettingsSearch onReveal={onReveal} />
@@ -596,12 +609,17 @@ function SettingsSearch({
 }: {
   onReveal: (section: SettingsSectionId, settingId: string | null) => void;
 }) {
+  const { t, i18n } = useTranslation("settings");
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
-  const results = useMemo(() => searchSettings(query), [query]);
+  const results = useMemo(
+    () => searchSettings(query),
+    // IndieDesk: labels are translated, so re-run when the language changes.
+    [query, i18n.language],
+  );
   const open = query.trim().length > 0;
 
   useEffect(() => setActive(0), [query]);
@@ -640,8 +658,8 @@ function SettingsSearch({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="Search settings"
-          aria-label="Search settings"
+          placeholder={t("search.placeholder")}
+          aria-label={t("search.placeholder")}
           aria-expanded={open}
           aria-controls={listId}
           spellCheck={false}
@@ -651,7 +669,7 @@ function SettingsSearch({
         {query ? (
           <button
             type="button"
-            aria-label="Clear settings search"
+            aria-label={t("search.clear")}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
               setQuery("");
@@ -676,12 +694,12 @@ function SettingsSearch({
           }}
           id={listId}
           role="listbox"
-          aria-label="Settings search results"
+          aria-label={t("search.results")}
           className="overflow-y-auto overscroll-contain p-1"
         >
           {results.length === 0 ? (
             <p className="px-2 py-1.5 text-[12px] text-content/45">
-              No matching settings
+              {t("search.noResults")}
             </p>
           ) : (
             results.map((result, index) => (
@@ -701,7 +719,7 @@ function SettingsSearch({
               >
                 <span className="min-w-0 flex-1 truncate">{result.label}</span>
                 <span className="shrink-0 text-[11px] text-content/40">
-                  {result.settingId ? result.sectionLabel : "Page"}
+                  {result.settingId ? result.sectionLabel : t("search.page")}
                 </span>
               </button>
             ))
@@ -738,6 +756,9 @@ function GeneralPage({
   const [quickComposerError, setQuickComposerError] = useState<string | null>(
     null,
   );
+  // IndieDesk
+  const { t } = useTranslation("settings");
+  const [language, setLanguage] = useState(loadLanguagePreference);
 
   // The user may flip the switch in System Settings and come back: re-read
   // the OS state whenever the window regains focus while the toggle is on.
@@ -801,36 +822,60 @@ function GeneralPage({
 
   return (
     <>
+      {/* IndieDesk */}
+      <Group title={t("language.title")}>
+        <Row
+          id="language"
+          label={t("language.label")}
+          description={t("language.description")}
+        >
+          <Segmented<LanguagePreference>
+            label={t("language.label")}
+            value={language}
+            options={[
+              { value: "system", label: t("language.system") },
+              ...LANGUAGES.map((value) => ({
+                value,
+                label: LANGUAGE_NAMES[value],
+              })),
+            ]}
+            onChange={(next) => {
+              saveLanguagePreference(next);
+              setLanguage(next);
+            }}
+          />
+        </Row>
+      </Group>
       <Group
-        title="Alerts"
-        description="How MonoCode reaches you while you are looking somewhere else."
+        title={t("general.alerts.title")}
+        description={t("general.alerts.description")}
       >
         <Row
           id="sounds"
-          label="Sounds"
-          description="Short cues for project activity, finished turns, and available updates. Choose project notification categories in Inbox settings. Switches and Copy on a finished turn also play."
+          label={t("index.sounds")}
+          description={t("general.sounds")}
         >
           <Toggle
-            label="Sounds"
+            label={t("index.sounds")}
             on={soundsEnabled}
             onChange={onSoundsEnabled}
           />
         </Row>
         <Row
           id="notifications"
-          label="Notifications"
-          description="Notify when a reminder is due, or when an agent finishes or needs input in another session or while MonoCode is in the background. Click the notification to open that session."
+          label={t("index.notifications")}
+          description={t("general.notifications")}
         >
           {notificationsEnabled && notificationPermission === "denied" ? (
             <NotificationsBlocked />
           ) : null}
           {notificationsEnabled && notificationPermission === "unsupported" ? (
             <span className="text-[12px] text-content/45">
-              Not available on this platform
+              {t("general.notificationsUnsupported")}
             </span>
           ) : null}
           <Toggle
-            label="Notifications"
+            label={t("index.notifications")}
             on={notificationsEnabled}
             onChange={onNotificationsEnabled}
           />
@@ -838,47 +883,49 @@ function GeneralPage({
       </Group>
 
       <Group
-        title="Workspace"
-        description="How project navigation and workspace tabs behave."
+        title={t("general.workspace.title")}
+        description={t("general.workspace.description")}
       >
         <Row
           id="file-tabs"
-          label="File tabs"
-          description="Open files beside the active chat, or give each file a normal tab in the top bar. Top-bar files can still be combined into split panes."
+          label={t("index.file-tabs")}
+          description={t("general.file-tabs")}
         >
           <Segmented
-            label="File tabs"
+            label={t("index.file-tabs")}
             value={fileTabMode}
             options={[
-              { value: "pane", label: "Beside chat" },
-              { value: "workspace", label: "Top bar" },
+              { value: "pane", label: t("general.fileTabs.pane") },
+              { value: "workspace", label: t("general.fileTabs.workspace") },
             ]}
             onChange={onFileTabMode}
           />
         </Row>
         <Row
           id="tab-animations"
-          label="Tab animations"
-          description="Animate tabs as they open and close. Turn this off for instant tab changes."
+          label={t("index.tab-animations")}
+          description={t("general.tab-animations")}
         >
           <Toggle
-            label="Tab animations"
+            label={t("index.tab-animations")}
             on={tabAnimationsEnabled}
             onChange={onTabAnimationsEnabled}
           />
         </Row>
         <Row
           id="notes"
-          label="Notes"
-          description="A global markdown notebook on the project rail. Save a finished turn from the transcript, then mention it later with @note or add it to chat."
+          label={t("index.notes")}
+          description={t("general.notes")}
         >
-          <Toggle label="Notes" on={notesEnabled} onChange={onNotesEnabled} />
+          <Toggle label={t("index.notes")} on={notesEnabled} onChange={onNotesEnabled} />
         </Row>
         {IS_MAC && (
           <Row
             id="quick-composer"
-            label="Quick composer"
-            description={`Press ${quickComposerShortcutLabel(loadQuickComposerShortcut())} in any app to float a prompt over it and start a session without switching to MonoCode. Change the shortcut in Keybindings. Return starts it in the background; ⌘Return starts it and brings the session forward.`}
+            label={t("index.quick-composer")}
+            description={t("general.quick-composer", {
+              shortcut: quickComposerShortcutLabel(loadQuickComposerShortcut()),
+            })}
           >
             {quickComposerError ? (
               <span className="text-[12px] text-content/45">
@@ -886,7 +933,7 @@ function GeneralPage({
               </span>
             ) : null}
             <Toggle
-              label="Quick composer"
+              label={t("index.quick-composer")}
               on={quickComposerEnabled}
               onChange={onQuickComposerEnabled}
             />
@@ -894,11 +941,11 @@ function GeneralPage({
         )}
         <Row
           id="working-agents"
-          label="Working agents"
-          description="When two or more chats are in flight, a card on the project rail lists them so you can jump across projects. Finished turns stay until you open that session."
+          label={t("index.working-agents")}
+          description={t("general.working-agents")}
         >
           <Toggle
-            label="Working agents"
+            label={t("index.working-agents")}
             on={liveAgentsEnabled}
             onChange={onLiveAgentsEnabled}
           />
@@ -906,11 +953,11 @@ function GeneralPage({
         {IS_WIN && (
           <Row
             id="close-to-tray"
-            label="Close to tray"
-            description="Closing a window hides it to the system tray instead of quitting, so running agents keep going. Reopen from the tray icon, and quit for real from its menu. Turn this off to have close end the window."
+            label={t("index.close-to-tray")}
+            description={t("general.close-to-tray")}
           >
             <Toggle
-              label="Close to tray"
+              label={t("index.close-to-tray")}
               on={closeToTray}
               onChange={onCloseToTray}
             />
@@ -918,7 +965,7 @@ function GeneralPage({
         )}
       </Group>
 
-      <Group title="About">
+      <Group title={t("general.about")}>
         <UpdateRow onOpenWhatsNew={onOpenWhatsNew} />
       </Group>
     </>
@@ -940,6 +987,7 @@ function ChatPage() {
   const [gridArcadeEnabled, setGridArcadeEnabled] = useState(
     loadGridArcadeEnabled,
   );
+  const { t } = useTranslation("settings");
 
   useEffect(() => {
     const onAnchor = (event: Event) => {
@@ -994,31 +1042,31 @@ function ChatPage() {
   return (
     <>
       <Group
-        title="Transcript"
-        description="How a conversation reads as it grows."
+        title={t("chat.transcript.title")}
+        description={t("chat.transcript.description")}
       >
         <Row
           id="transcript-layout"
-          label="Transcript layout"
-          description="Full width keeps user prompts as a spanning card. Chat aligns them to the right with a max width, like a messaging app."
+          label={t("index.transcript-layout")}
+          description={t("chat.transcript-layout")}
         >
           <Segmented
-            label="Transcript layout"
+            label={t("index.transcript-layout")}
             value={transcriptLayout}
             options={[
-              { value: "full", label: "Full width" },
-              { value: "chat", label: "Chat" },
+              { value: "full", label: t("chat.transcriptLayout.full") },
+              { value: "chat", label: t("chat.transcriptLayout.chat") },
             ]}
             onChange={onTranscriptLayout}
           />
         </Row>
         <Row
           id="anchor-prompts"
-          label="Anchor prompts to top"
-          description="When you send, the new prompt sits at the top of the transcript and the reply grows into the space below. Turn this off to keep the classic layout, with the latest message resting on the composer."
+          label={t("index.anchor-prompts")}
+          description={t("chat.anchor-prompts")}
         >
           <Toggle
-            label="Anchor prompts to top"
+            label={t("index.anchor-prompts")}
             on={transcriptAnchor}
             onChange={onTranscriptAnchor}
           />
@@ -1026,35 +1074,35 @@ function ChatPage() {
       </Group>
 
       <Group
-        title="Composer"
-        description="What the composer does with what you type."
+        title={t("chat.composer.title")}
+        description={t("chat.composer.description")}
       >
         <Row
           id="follow-up"
-          label="Follow-up behavior"
-          description="Queue follow-ups until the active turn finishes, or steer the active turn immediately."
+          label={t("index.follow-up")}
+          description={t("chat.follow-up")}
         >
           <Segmented
-            label="Follow-up behavior"
+            label={t("index.follow-up")}
             value={followUpBehavior}
             options={[
-              { value: "queue", label: "Queue" },
-              { value: "steer", label: "Steer" },
+              { value: "queue", label: t("chat.followUp.queue") },
+              { value: "steer", label: t("chat.followUp.steer") },
             ]}
             onChange={onFollowUpBehavior}
           />
         </Row>
         <Row
           id="model-controls"
-          label="Model controls"
-          description="Show model options beside the picker instead of inside the model menu."
+          label={t("index.model-controls")}
+          description={t("chat.model-controls")}
         >
           <Segmented
-            label="Model controls"
+            label={t("index.model-controls")}
             value={modelControls}
             options={[
-              { value: "menu", label: "Menu" },
-              { value: "beside", label: "Beside" },
+              { value: "menu", label: t("chat.modelControls.menu") },
+              { value: "beside", label: t("chat.modelControls.beside") },
             ]}
             onChange={onModelControls}
           />
@@ -1062,16 +1110,16 @@ function ChatPage() {
       </Group>
 
       <Group
-        title="Editor"
-        description="What happens when you save a file in the workspace editor."
+        title={t("chat.editor.title")}
+        description={t("chat.editor.description")}
       >
         <Row
           id="format-on-save"
-          label="Format on save"
-          description="Run Prettier on supported files before writing. Off keeps the text you typed, including quote style."
+          label={t("index.format-on-save")}
+          description={t("chat.format-on-save")}
         >
           <Toggle
-            label="Format on save"
+            label={t("index.format-on-save")}
             on={formatOnSave}
             onChange={onFormatOnSave}
           />
@@ -1079,20 +1127,20 @@ function ChatPage() {
       </Group>
 
       <Group
-        title="Code review"
-        description="Where a turn's changes open when you go to read them."
+        title={t("chat.codeReview.title")}
+        description={t("chat.codeReview.description")}
       >
         <Row
           id="diff-view"
-          label="Diff view"
-          description="Editor keeps working-tree changes in the file. Unified stacks every changed file in one review, with sticky headers and collapsed unchanged lines."
+          label={t("index.diff-view")}
+          description={t("chat.diff-view")}
         >
           <Segmented
-            label="Diff view"
+            label={t("index.diff-view")}
             value={diffViewer}
             options={[
-              { value: "editor", label: "Editor" },
-              { value: "unified", label: "Unified" },
+              { value: "editor", label: t("chat.diffView.editor") },
+              { value: "unified", label: t("chat.diffView.unified") },
             ]}
             onChange={onDiffViewer}
           />
@@ -1100,27 +1148,27 @@ function ChatPage() {
       </Group>
 
       <Group
-        title="Extras"
-        description="Idle animation, and nothing else. Turn both off for a still workspace."
+        title={t("chat.extras.title")}
+        description={t("chat.extras.description")}
       >
         <Row
           id="composer-mascot"
-          label="Composer mascot"
-          description="When a turn is running, the project mascot runs along the composer, bonks the scroll-to-latest button the first time, then jumps it, and sometimes grabs a coin."
+          label={t("index.composer-mascot")}
+          description={t("chat.composer-mascot")}
         >
           <Toggle
-            label="Composer mascot"
+            label={t("index.composer-mascot")}
             on={composerRunner}
             onChange={onComposerRunner}
           />
         </Row>
         <Row
           id="empty-session-games"
-          label="Empty session games"
-          description="Pac-man and snake idle on the empty-session grid. Hover the band to take control of whichever is on screen. Turn this off to keep the pane still."
+          label={t("index.empty-session-games")}
+          description={t("chat.empty-session-games")}
         >
           <Toggle
-            label="Empty session games"
+            label={t("index.empty-session-games")}
             on={gridArcadeEnabled}
             onChange={onGridArcadeEnabled}
           />
@@ -1142,6 +1190,7 @@ function InboxPage({
   notificationSettingsRequest?: number;
 }) {
   const revealed = useContext(RevealedSetting);
+  const { t } = useTranslation("settings");
   return (
     <>
       <div
@@ -1164,7 +1213,7 @@ function InboxPage({
             GitHub
           </span>
         }
-        description="Pull requests, reviews, and issues, read through the GitHub CLI."
+        description={t("inbox.github.description")}
       >
         <GithubSettings />
       </Group>
@@ -1177,7 +1226,7 @@ function InboxPage({
             GitLab
           </span>
         }
-        description="Merge requests from GitLab.com or a self-managed instance."
+        description={t("inbox.gitlab.description")}
       >
         <GitlabSettings />
       </Group>
@@ -1193,7 +1242,7 @@ function InboxPage({
             ADO
           </span>
         }
-        description="Pull requests and Boards work items from your ADO organization."
+        description={t("inbox.azuredevops.description")}
       >
         <AzureDevOpsSettings />
       </Group>
@@ -1206,7 +1255,7 @@ function InboxPage({
             Jira
           </span>
         }
-        description="Jira Cloud issues from the projects you pick."
+        description={t("inbox.jira.description")}
       >
         <JiraSettings />
       </Group>
@@ -1219,7 +1268,7 @@ function InboxPage({
             Linear
           </span>
         }
-        description="Issues assigned to you, from the teams you pick."
+        description={t("inbox.linear.description")}
       >
         <LinearSettings />
       </Group>
@@ -1228,6 +1277,7 @@ function InboxPage({
 }
 
 function GithubSettings() {
+  const { t } = useTranslation("settings");
   const [status, setStatus] = useState<GithubStatus | null>(null);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1257,21 +1307,21 @@ function GithubSettings() {
   }, [checkStatus]);
 
   const description = status?.connected
-    ? "GitHub CLI is installed and authenticated. MonoCode uses it for GitHub inbox items."
+    ? t("inbox.github.connected")
     : status?.installed
-      ? "Run gh auth login in a terminal, complete the sign-in flow, then check again."
-      : "Install GitHub CLI from cli.github.com, run gh auth login in a terminal, then check again.";
+      ? t("inbox.github.signInHint")
+      : t("inbox.github.installHint");
   const label = checking
-    ? "Checking"
+    ? t("common.checking")
     : status?.connected
-      ? "Connected"
+      ? t("common.connected")
       : status?.installed
-        ? "Sign in required"
-        : "Not installed";
+        ? t("inbox.github.signInRequired")
+        : t("common.notInstalled");
 
   return (
     <>
-      <Row label="Connection" description={description}>
+      <Row label={t("common.connection")} description={description}>
         <span className="text-[12px] text-content/50">{label}</span>
         {!checking && !status?.installed ? (
           <SecondaryButton
@@ -1279,11 +1329,11 @@ function GithubSettings() {
               void openUrl("https://cli.github.com/").catch(() => {});
             }}
           >
-            Installation guide
+            {t("common.installationGuide")}
           </SecondaryButton>
         ) : null}
         <SecondaryButton onClick={() => void checkStatus()} disabled={checking}>
-          {checking ? "Checking" : "Check again"}
+          {checking ? t("common.checking") : t("common.checkAgain")}
         </SecondaryButton>
       </Row>
       {error ? (
@@ -1296,6 +1346,7 @@ function GithubSettings() {
 }
 
 function GitlabSettings() {
+  const { t } = useTranslation("settings");
   const [url, setUrl] = useState("https://gitlab.com");
   const [token, setToken] = useState("");
   const [connected, setConnected] = useState(false);
@@ -1356,8 +1407,8 @@ function GitlabSettings() {
   return (
     <>
       <Row
-        label="Connection"
-        description="Connect GitLab.com or a self-managed GitLab instance. Use a personal access token with API access; the token is stored locally and Disconnect deletes it."
+        label={t("common.connection")}
+        description={t("inbox.gitlab.connection")}
       >
         {connected ? (
           <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
@@ -1368,7 +1419,7 @@ function GitlabSettings() {
               onClick={() => void onDisconnect()}
               disabled={busy}
             >
-              Disconnect
+              {t("common.disconnect")}
             </SecondaryButton>
           </div>
         ) : (
@@ -1379,7 +1430,7 @@ function GitlabSettings() {
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
                 placeholder="https://gitlab.com"
-                aria-label="GitLab URL"
+                aria-label={t("inbox.gitlab.url")}
                 autoComplete="url"
                 spellCheck={false}
                 className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -1394,7 +1445,7 @@ function GitlabSettings() {
                   if (event.key === "Enter") void onSave();
                 }}
                 placeholder="glpat-…"
-                aria-label="GitLab access token"
+                aria-label={t("inbox.gitlab.token")}
                 autoComplete="off"
                 spellCheck={false}
                 className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -1404,7 +1455,7 @@ function GitlabSettings() {
               onClick={() => void onSave()}
               disabled={busy || !token.trim()}
             >
-              {busy ? "Saving" : "Connect"}
+              {busy ? t("common.saving") : t("common.connect")}
             </SecondaryButton>
           </div>
         )}
@@ -1419,6 +1470,7 @@ function GitlabSettings() {
 }
 
 function AzureDevOpsSettings() {
+  const { t } = useTranslation("settings");
   const [url, setUrl] = useState("https://dev.azure.com/myorg");
   const [token, setToken] = useState("");
   const [connected, setConnected] = useState(false);
@@ -1479,8 +1531,8 @@ function AzureDevOpsSettings() {
   return (
     <>
       <Row
-        label="Connection"
-        description="Connect your ADO organization with a personal access token (Boards + Repos read & write for comments). The token is stored locally and Disconnect deletes it."
+        label={t("common.connection")}
+        description={t("inbox.azuredevops.connection")}
       >
         {connected ? (
           <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
@@ -1491,7 +1543,7 @@ function AzureDevOpsSettings() {
               onClick={() => void onDisconnect()}
               disabled={busy}
             >
-              Disconnect
+              {t("common.disconnect")}
             </SecondaryButton>
           </div>
         ) : (
@@ -1502,7 +1554,7 @@ function AzureDevOpsSettings() {
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
                 placeholder="https://dev.azure.com/myorg"
-                aria-label="Azure DevOps organization URL"
+                aria-label={t("inbox.azuredevops.url")}
                 autoComplete="url"
                 spellCheck={false}
                 className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -1517,7 +1569,7 @@ function AzureDevOpsSettings() {
                   if (event.key === "Enter") void onSave();
                 }}
                 placeholder="PAT…"
-                aria-label="Azure DevOps personal access token"
+                aria-label={t("inbox.azuredevops.token")}
                 autoComplete="off"
                 spellCheck={false}
                 className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -1527,7 +1579,7 @@ function AzureDevOpsSettings() {
               onClick={() => void onSave()}
               disabled={busy || !token.trim()}
             >
-              {busy ? "Saving" : "Connect"}
+              {busy ? t("common.saving") : t("common.connect")}
             </SecondaryButton>
           </div>
         )}
@@ -1542,6 +1594,7 @@ function AzureDevOpsSettings() {
 }
 
 function LinearSettings() {
+  const { t } = useTranslation("settings");
   const [token, setToken] = useState("");
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -1630,12 +1683,12 @@ function LinearSettings() {
   return (
     <>
       <Row
-        label="API key"
-        description="Create a personal API key in Linear → Settings → Security & Access. Disconnect deletes it."
+        label={t("inbox.linear.apiKey")}
+        description={t("inbox.linear.apiKeyDescription")}
       >
         {connected ? (
           <SecondaryButton onClick={() => void onDisconnect()} disabled={busy}>
-            Disconnect
+            {t("common.disconnect")}
           </SecondaryButton>
         ) : (
           <div className="flex max-w-full flex-wrap items-center gap-2">
@@ -1648,7 +1701,7 @@ function LinearSettings() {
                   if (event.key === "Enter") void onSave();
                 }}
                 placeholder="lin_api_…"
-                aria-label="Linear API key"
+                aria-label={t("inbox.linear.apiKeyInput")}
                 autoComplete="off"
                 spellCheck={false}
                 className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -1658,7 +1711,7 @@ function LinearSettings() {
               onClick={() => void onSave()}
               disabled={busy || !token.trim()}
             >
-              {busy ? "Saving" : "Connect"}
+              {busy ? t("common.saving") : t("common.connect")}
             </SecondaryButton>
           </div>
         )}
@@ -1670,9 +1723,9 @@ function LinearSettings() {
       ) : null}
       {connected && teams.length > 0 ? (
         <div className="border-b border-content/5 px-4 py-3.5 last:border-b-0">
-          <div className="text-[13px] font-medium text-content">Teams</div>
+          <div className="text-[13px] font-medium text-content">{t("inbox.linear.teams")}</div>
           <p className="mt-1 text-[12px] leading-relaxed text-content/45">
-            Unchecked teams stay out of the inbox.
+            {t("inbox.linear.teamsHint")}
           </p>
           <div className="-mx-2 mt-2 flex flex-col gap-0.5">
             {teams.map((team) => {
@@ -1708,6 +1761,7 @@ function UpdateRow({
 }: {
   onOpenWhatsNew: (version: string) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [snapshot, setSnapshot] = useState<UpdaterSnapshot>({
     phase: "idle",
     currentVersion: "…",
@@ -1739,23 +1793,25 @@ function UpdateRow({
 
   const status =
     snapshot.phase === "available"
-      ? `Version ${snapshot.availableVersion} is available.`
+      ? t("update.available", { version: snapshot.availableVersion })
       : snapshot.phase === "downloading"
-        ? `Downloading${snapshot.progress != null ? ` ${snapshot.progress}%` : "…"}`
+        ? snapshot.progress != null
+          ? t("update.downloadingProgress", { progress: snapshot.progress })
+          : t("update.downloading")
         : snapshot.phase === "checking"
-          ? "Checking for updates…"
+          ? t("update.checking")
           : snapshot.phase === "current"
-            ? "You're on the latest version."
+            ? t("update.current")
             : snapshot.phase === "error"
-              ? (snapshot.error ?? "Update check failed.")
-              : "MonoCode updates itself from the release feed.";
+              ? (snapshot.error ?? t("update.failed"))
+              : t("update.idle");
 
   return (
     <Row
       id="update"
       label={
         <span className="flex items-baseline gap-2">
-          Version
+          {t("update.version")}
           <span className="font-mono text-[12px] text-content/45">
             {snapshot.currentVersion}
           </span>
@@ -1768,7 +1824,7 @@ function UpdateRow({
           onClick={() => onOpenWhatsNew(snapshot.currentVersion)}
           disabled={snapshot.currentVersion === "…"}
         >
-          What's new
+          {t("update.whatsNew")}
         </SecondaryButton>
         <SecondaryButton onClick={() => void onClick()} disabled={busy}>
           {busy ? (
@@ -1778,7 +1834,7 @@ function UpdateRow({
           ) : (
             <RefreshCw className="size-3.5" strokeWidth={1.75} aria-hidden />
           )}
-          {hasUpdate ? "Download" : "Check for updates"}
+          {hasUpdate ? t("update.download") : t("update.check")}
         </SecondaryButton>
       </div>
     </Row>
@@ -2036,35 +2092,36 @@ function useAppearanceSettings(
 }
 
 function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
+  const { t } = useTranslation("settings");
   const percent = Math.round(appearance.opacity * 100);
   const glassDisabled = useColorScheme() === "light";
 
   return (
     <>
       <Group
-        title="Theme"
-        description="Dark and light share the same tint, so the color settings below apply to both."
+        title={t("appearance.themeGroup.title")}
+        description={t("appearance.themeGroup.description")}
       >
         <Row
           id="theme"
-          label="Theme"
-          description="System follows the OS appearance."
+          label={t("index.theme")}
+          description={t("appearance.theme")}
         >
           <Segmented
-            label="Theme"
+            label={t("index.theme")}
             value={appearance.themePreference}
             options={[
-              { value: "system", label: "System" },
-              { value: "dark", label: "Dark" },
-              { value: "light", label: "Light" },
+              { value: "system", label: t("appearance.themes.system") },
+              { value: "dark", label: t("appearance.themes.dark") },
+              { value: "light", label: t("appearance.themes.light") },
             ]}
             onChange={appearance.onThemePreference}
           />
         </Row>
         <Row
           id="accent-color"
-          label="Accent color"
-          description="Used for the composer send button and your message bubbles."
+          label={t("index.accent-color")}
+          description={t("appearance.accent-color")}
         >
           <AccentColorPicker
             value={appearance.accentColor}
@@ -2074,16 +2131,16 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
       </Group>
 
       <Group
-        title="Color"
-        description="Hue and saturation tint every surface. Lightness only moves the dark theme."
+        title={t("appearance.color.title")}
+        description={t("appearance.color.description")}
       >
         <Row
           id="hue"
-          label="Hue"
-          description="Base hue for accents and tinted surfaces."
+          label={t("index.hue")}
+          description={t("appearance.hue")}
         >
           <Slider
-            label="Hue"
+            label={t("index.hue")}
             value={appearance.themeHue}
             display={`${appearance.themeHue}°`}
             min={THEME_HUE_MIN}
@@ -2095,11 +2152,11 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
         </Row>
         <Row
           id="saturation"
-          label="Saturation"
-          description="How strongly the hue tints the interface. Zero keeps it neutral."
+          label={t("index.saturation")}
+          description={t("appearance.saturation")}
         >
           <Slider
-            label="Saturation"
+            label={t("index.saturation")}
             value={appearance.themeSaturation}
             display={`${appearance.themeSaturation}%`}
             min={THEME_SATURATION_MIN}
@@ -2109,15 +2166,15 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
         </Row>
         <Row
           id="dark-lightness"
-          label="Dark-mode lightness"
+          label={t("index.dark-lightness")}
           description={
             glassDisabled
-              ? "This only affects dark mode. Your dark-mode value is preserved."
-              : "Base brightness of the dark theme. Lower values are darker; zero is true black."
+              ? t("appearance.darkLightnessLight")
+              : t("appearance.dark-lightness")
           }
         >
           <Slider
-            label="Dark-mode lightness"
+            label={t("index.dark-lightness")}
             value={appearance.themeDarkLightness}
             display={`${appearance.themeDarkLightness}%`}
             min={THEME_DARK_LIGHTNESS_MIN}
@@ -2129,20 +2186,20 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
       </Group>
 
       <Group
-        title="Translucency"
+        title={t("appearance.translucency.title")}
         description={
           glassDisabled
-            ? "Light mode always uses an opaque window, so these are off. Your dark-mode values are preserved."
-            : "How much of the desktop shows through MonoCode. Blur costs more to composite the higher it goes."
+            ? t("appearance.translucency.light")
+            : t("appearance.translucency.description")
         }
       >
         <Row
           id="sidebar-opacity"
-          label="Sidebar opacity"
-          description="Applies to the project rail and the other glass panes."
+          label={t("index.sidebar-opacity")}
+          description={t("appearance.sidebar-opacity")}
         >
           <Slider
-            label="Sidebar opacity"
+            label={t("index.sidebar-opacity")}
             value={percent}
             display={`${percent}%`}
             min={Math.round(SIDEBAR_OPACITY_MIN * 100)}
@@ -2153,11 +2210,11 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
         </Row>
         <Row
           id="blur"
-          label="Blur radius"
-          description="Background blur behind the window."
+          label={t("index.blur")}
+          description={t("appearance.blur")}
         >
           <Slider
-            label="Blur radius"
+            label={t("index.blur")}
             value={appearance.blur}
             display={String(appearance.blur)}
             min={SIDEBAR_BLUR_MIN}
@@ -2168,11 +2225,11 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
         </Row>
         <Row
           id="main-pane-glass"
-          label="Main pane glass"
-          description="Extend the translucent treatment to the main pane behind sessions and editors."
+          label={t("index.main-pane-glass")}
+          description={t("appearance.main-pane-glass")}
         >
           <Toggle
-            label="Main pane glass"
+            label={t("index.main-pane-glass")}
             on={appearance.bodyGlass}
             onChange={appearance.onBodyGlass}
             disabled={glassDisabled}
@@ -2182,29 +2239,29 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
 
       <ChatBackgroundCard appearance={appearance} />
 
-      <Group title="Layout">
+      <Group title={t("appearance.layout.title")}>
         <Row
           id="collapsed-project-rail"
-          label="Collapsed project rail"
-          description="Keep project navigation available as a compact icon rail, or hide the rail completely."
+          label={t("index.collapsed-project-rail")}
+          description={t("appearance.collapsed-project-rail")}
         >
           <Segmented
-            label="Collapsed project rail"
+            label={t("index.collapsed-project-rail")}
             value={appearance.collapsedProjectRailMode}
             options={[
-              { value: "compact", label: "Icon rail" },
-              { value: "hidden", label: "Hidden" },
+              { value: "compact", label: t("appearance.rail.compact") },
+              { value: "hidden", label: t("appearance.rail.hidden") },
             ]}
             onChange={appearance.onCollapsedProjectRailMode}
           />
         </Row>
         <Row
           id="interface-scale"
-          label="Interface scale"
-          description="Zoom the whole interface. You can also use Ctrl+=, Ctrl+-, and Ctrl+0 (Cmd on macOS)."
+          label={t("index.interface-scale")}
+          description={t("appearance.interface-scale")}
         >
           <Select
-            label="Interface scale"
+            label={t("index.interface-scale")}
             value={String(Math.round(appearance.uiScale * 100))}
             options={UI_SCALE_PERCENTS.map((percent) => ({
               value: String(percent),
@@ -2215,11 +2272,11 @@ function AppearancePage({ appearance }: { appearance: AppearanceSettings }) {
         </Row>
         <Row
           id="show-excluded-files"
-          label="Show excluded files"
-          description="Show files and folders Git excludes, such as build output and dependencies, in the explorer."
+          label={t("index.show-excluded-files")}
+          description={t("appearance.show-excluded-files")}
         >
           <Toggle
-            label="Show excluded files"
+            label={t("index.show-excluded-files")}
             on={appearance.showExcludedFiles}
             onChange={appearance.onShowExcludedFiles}
           />
@@ -2234,6 +2291,7 @@ function ChatBackgroundCard({
 }: {
   appearance: AppearanceSettings;
 }) {
+  const { t } = useTranslation("settings");
   const src = chatBackgroundSrc(appearance.chatBackgroundPath);
   const hasImage = Boolean(appearance.chatBackgroundPath && src);
   const emptyVisibility = Math.round(
@@ -2247,8 +2305,8 @@ function ChatBackgroundCard({
   return (
     <Group
       id="chat-background"
-      title="Chat background"
-      description="An image behind your chat panes. It stays on this device."
+      title={t("index.chat-background")}
+      description={t("appearance.chatBackground.description")}
     >
       <div className="border-b border-content/5 p-4 last:border-b-0">
         <div className="overflow-hidden rounded-lg border border-content/10">
@@ -2272,7 +2330,9 @@ function ChatBackgroundCard({
                 />
               )}
               <span className="pointer-events-none absolute bottom-2 left-2 text-[11px] text-content/40">
-                Empty chat preview at {emptyVisibility}%
+                {t("appearance.chatBackground.preview", {
+                  percent: emptyVisibility,
+                })}
               </span>
             </div>
           ) : (
@@ -2287,7 +2347,9 @@ function ChatBackgroundCard({
               ) : (
                 <ImagePlus className="size-5" aria-hidden />
               )}
-              <span className="text-[12px]">Choose an image</span>
+              <span className="text-[12px]">
+                {t("appearance.chatBackground.choose")}
+              </span>
             </button>
           )}
         </div>
@@ -2300,14 +2362,14 @@ function ChatBackgroundCard({
               {busy ? (
                 <Loader className="size-3.5 animate-spin" aria-hidden />
               ) : null}
-              Change
+              {t("common.change")}
             </SecondaryButton>
             <SecondaryButton
               onClick={() => void appearance.onClearChatBackground()}
               disabled={busy}
               danger
             >
-              Remove
+              {t("common.remove")}
             </SecondaryButton>
           </div>
         ) : null}
@@ -2320,7 +2382,7 @@ function ChatBackgroundCard({
       {hasImage ? (
         <>
           <Row
-            label="Background effect"
+            label={t("appearance.chatBackground.effect")}
             description={
               NEW_THREAD_BACKGROUND_EFFECT_DESCRIPTIONS[
                 appearance.newThreadBackgroundEffect
@@ -2328,7 +2390,7 @@ function ChatBackgroundCard({
             }
           >
             <Segmented
-              label="Background effect"
+              label={t("appearance.chatBackground.effect")}
               value={appearance.newThreadBackgroundEffect}
               options={NEW_THREAD_BACKGROUND_EFFECTS.map((effect) => ({
                 value: effect,
@@ -2339,25 +2401,25 @@ function ChatBackgroundCard({
             />
           </Row>
           <Row
-            label="Show on"
-            description="Empty sessions only, or every conversation."
+            label={t("appearance.chatBackground.showOn")}
+            description={t("appearance.chatBackground.showOnDescription")}
           >
             <Segmented
-              label="Show background on"
+              label={t("appearance.chatBackground.showOnLabel")}
               value={appearance.chatBackgroundScope}
               options={[
-                { value: "empty", label: "Empty only" },
-                { value: "all", label: "All sessions" },
+                { value: "empty", label: t("appearance.chatBackground.emptyOnly") },
+                { value: "all", label: t("appearance.chatBackground.allSessions") },
               ]}
               onChange={appearance.onChatBackgroundScope}
             />
           </Row>
           <Row
-            label="Empty chat visibility"
-            description="Background strength before a chat has messages."
+            label={t("appearance.chatBackground.emptyVisibility")}
+            description={t("appearance.chatBackground.emptyVisibilityDescription")}
           >
             <Slider
-              label="Empty chat background visibility"
+              label={t("appearance.chatBackground.emptyVisibilityLabel")}
               value={emptyVisibility}
               display={`${emptyVisibility}%`}
               min={Math.round(CHAT_BACKGROUND_OPACITY_MIN * 100)}
@@ -2366,11 +2428,11 @@ function ChatBackgroundCard({
             />
           </Row>
           <Row
-            label="Session visibility"
-            description="Background strength once the conversation has messages."
+            label={t("appearance.chatBackground.sessionVisibility")}
+            description={t("appearance.chatBackground.sessionVisibilityDescription")}
           >
             <Slider
-              label="Session background visibility"
+              label={t("appearance.chatBackground.sessionVisibilityLabel")}
               value={sessionVisibility}
               display={`${sessionVisibility}%`}
               min={Math.round(CHAT_BACKGROUND_OPACITY_MIN * 100)}
@@ -2411,6 +2473,7 @@ function ShortcutEditor({
   onDisable: () => void | Promise<void>;
   onReset: () => void | Promise<void>;
 }) {
+  const { t } = useTranslation("settings");
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -2517,11 +2580,13 @@ function ShortcutEditor({
         <input
           type="text"
           readOnly
-          aria-label={`Change ${name} shortcut`}
+          aria-label={t("keybindings.change", { name })}
           data-shortcut-recorder-active={recording ? "true" : undefined}
           aria-busy={busy || undefined}
           value={
-            recording || busy ? preview || "Record…" : (display ?? "Disabled")
+            recording || busy
+              ? preview || t("keybindings.record")
+              : (display ?? t("keybindings.disabled"))
           }
           onFocus={beginRecording}
           onClick={beginRecording}
@@ -2537,7 +2602,7 @@ function ShortcutEditor({
         {resetVisible ? (
           <button
             type="button"
-            aria-label={`Reset ${name} shortcut`}
+            aria-label={t("keybindings.reset", { name })}
             disabled={busy}
             onClick={() => void run(onReset)}
             className="rounded-md px-1 py-1 text-content/35 hover:bg-content/10 hover:text-content disabled:opacity-50"
@@ -2551,7 +2616,7 @@ function ShortcutEditor({
           className="pointer-events-none absolute top-1/2 right-full z-40 mr-3 -translate-y-1/2 text-[10px] whitespace-nowrap text-content/50"
           aria-live="polite"
         >
-          Del disables · Esc cancels
+          {t("keybindings.recordingHint")}
         </p>
       ) : null}
       {error ? (
@@ -2567,11 +2632,12 @@ function ShortcutEditor({
 }
 
 function QuickComposerShortcutEditor() {
+  const { t } = useTranslation("settings");
   const [shortcut, setShortcut] = useState(loadQuickComposerShortcut);
   const [enabled, setEnabled] = useState(loadQuickComposerEnabled);
   const apply = async (next: string) => {
     if (!isGlobalShortcut(next))
-      throw new Error("Quick Composer needs ⌘ or Ctrl as a global hotkey");
+      throw new Error(t("keybindings.errors.quickComposerGlobal"));
     // Validate before the native call: a rejected chord must not leave the OS
     // holding a registered global hotkey that settings does not know about.
     validateKeybindingShortcut("App: Quick Composer", next);
@@ -2594,7 +2660,7 @@ function QuickComposerShortcutEditor() {
   };
   return (
     <ShortcutEditor
-      name="quick composer"
+      name={t("keybindings.quickComposerName")}
       display={enabled ? quickComposerShortcutLabel(shortcut) : null}
       resetVisible={
         enabled !== true || shortcut !== QUICK_COMPOSER_DEFAULT_SHORTCUT
@@ -2626,7 +2692,7 @@ function KeybindingShortcutEditor({
 }) {
   return (
     <ShortcutEditor
-      name={command}
+      name={keybindingCommandLabel(command)}
       display={display}
       resetVisible={modified}
       onApply={(shortcut) => onSave(command, { shortcut })}
@@ -2637,6 +2703,7 @@ function KeybindingShortcutEditor({
 }
 
 function KeybindingsPage() {
+  const { t, i18n } = useTranslation("settings");
   const [query, setQuery] = useState("");
   const [overrides, setOverrides] = useState(loadKeybindingOverrides);
   useEffect(
@@ -2645,7 +2712,7 @@ function KeybindingsPage() {
   );
   const rows = useMemo(
     () => filterKeybindings(currentKeybindings(), query),
-    [query, overrides],
+    [query, overrides, i18n.language],
   );
 
   const save = async (command: string, override: KeybindingOverride) => {
@@ -2655,20 +2722,20 @@ function KeybindingsPage() {
 
   return (
     <Group
-      title="Shortcuts"
-      description="Click a shortcut to record new keys. Press Delete while recording to disable it."
+      title={t("keybindings.title")}
+      description={t("keybindings.description")}
       action={
         <div className="flex items-center gap-3">
           <span className="shrink-0 text-[12px] text-content/40 tabular-nums">
-            {rows.length} {rows.length === 1 ? "binding" : "bindings"}
+            {t("keybindings.count", { count: rows.length })}
           </span>
           <label className="flex h-7 w-44 shrink-0 items-center gap-2 rounded-md border border-content/10 px-2 text-content/45 focus-within:border-content/20">
             <Search className="size-3.5 shrink-0" strokeWidth={1.75} />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filter"
-              aria-label="Filter keybindings"
+              placeholder={t("keybindings.filter")}
+              aria-label={t("keybindings.filterLabel")}
               spellCheck={false}
               autoComplete="off"
               className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/35"
@@ -2678,13 +2745,13 @@ function KeybindingsPage() {
       }
     >
       <div className="flex items-center border-b border-stroke bg-content/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-content/40">
-        <span className="min-w-0 flex-1">Command</span>
-        <span className="w-40 shrink-0">Keybinding</span>
-        <span className="w-28 shrink-0">When</span>
+        <span className="min-w-0 flex-1">{t("keybindings.columns.command")}</span>
+        <span className="w-40 shrink-0">{t("keybindings.columns.keybinding")}</span>
+        <span className="w-28 shrink-0">{t("keybindings.columns.when")}</span>
       </div>
       {rows.length === 0 ? (
         <p className="px-4 py-3 text-[12px] text-content/45">
-          No matching bindings
+          {t("keybindings.noResults")}
         </p>
       ) : (
         rows.map((row) => {
@@ -2698,7 +2765,7 @@ function KeybindingsPage() {
               <span
                 className={`min-w-0 flex-1 truncate ${disabled ? "text-content/45" : ""}`}
               >
-                {row.command}
+                {keybindingCommandLabel(row.command)}
               </span>
               {row.command === "App: Quick Composer" ? (
                 <QuickComposerShortcutEditor />
@@ -2711,7 +2778,7 @@ function KeybindingsPage() {
                 />
               )}
               <span className="w-28 shrink-0 font-mono text-[11px] text-content/40">
-                {row.when}
+                {keybindingWhenLabel(row.when)}
               </span>
             </div>
           );
@@ -2726,16 +2793,20 @@ const GLOBAL_PROVIDER_SCOPE = "global";
 function binaryInspectionError(
   provider: ConfigurableBinaryProvider,
   inspection: HarnessBinaryInspection,
+  t: TFunction<"settings">, // IndieDesk
 ): string | null {
   if (inspection.error) return inspection.error;
   if (provider === "codex" && !/^codex-cli\s+\d+\.\d+\.\d+/.test(inspection.version ?? "")) {
-    return "Codex CLI returned an invalid version.";
+    return t("providers.cli.invalidVersion", { title: "Codex" });
   }
   if (provider === "opencode") {
     const version = parseOpenCodeVersion(inspection.version ?? "");
-    if (!version) return "OpenCode CLI returned an invalid version.";
+    if (!version) return t("providers.cli.invalidVersion", { title: "OpenCode" });
     if (compareSemver(version, MINIMUM_OPENCODE_VERSION) < 0) {
-      return `OpenCode v${version} is too old. Upgrade to v${MINIMUM_OPENCODE_VERSION} or newer.`;
+      return t("providers.cli.tooOld", {
+        version,
+        minimum: MINIMUM_OPENCODE_VERSION,
+      });
     }
   }
   return null;
@@ -2746,6 +2817,7 @@ function ProviderBinaryControl({
 }: {
   provider: ConfigurableBinaryProvider;
 }) {
+  const { t } = useTranslation("settings");
   const root = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const editInput = useRef<HTMLInputElement>(null);
@@ -2776,7 +2848,7 @@ function ProviderBinaryControl({
           ...next,
           overridden: Boolean(binaryPath?.trim()),
         });
-        setError(binaryInspectionError(provider, next));
+        setError(binaryInspectionError(provider, next, t));
         return next;
       } catch (cause) {
         const message = cause instanceof Error ? cause.message : String(cause);
@@ -2786,7 +2858,7 @@ function ProviderBinaryControl({
         setWorking(false);
       }
     },
-    [provider],
+    [provider, t],
   );
 
   useEffect(() => {
@@ -2809,14 +2881,14 @@ function ProviderBinaryControl({
     }
     const next = await inspect(value);
     if (!next) return;
-    const validationError = binaryInspectionError(provider, next);
+    const validationError = binaryInspectionError(provider, next, t);
     if (validationError) {
       setError(validationError);
       return;
     }
     if (!saveProviderBinaryPath(provider, value)) {
       setInspection(undefined);
-      setError("Could not save the binary path.");
+      setError(t("providers.cli.saveFailed"));
       return;
     }
     setOverridden(true);
@@ -2826,10 +2898,10 @@ function ProviderBinaryControl({
   const useAuto = async () => {
     if (working) return;
     const next = await inspect(null);
-    if (!next || binaryInspectionError(provider, next)) return;
+    if (!next || binaryInspectionError(provider, next, t)) return;
     if (!saveProviderBinaryPath(provider, null)) {
       setInspection(undefined);
-      setError("Could not save the binary path.");
+      setError(t("providers.cli.saveFailed"));
       return;
     }
     setDraft("");
@@ -2847,13 +2919,17 @@ function ProviderBinaryControl({
         type="button"
         aria-label={
           restartRequired
-            ? `Show ${title} CLI details, restart required`
-            : `Show ${title} CLI details`
+            ? t("providers.cli.showRestart", { title })
+            : t("providers.cli.show", { title })
         }
         aria-expanded={open}
         aria-controls={`${provider}-binary-popover`}
         aria-haspopup="dialog"
-        title={`${title} CLI path${restartRequired ? " — restart required" : ""}`}
+        title={
+          restartRequired
+            ? t("providers.cli.pathTitleRestart", { title })
+            : t("providers.cli.pathTitle", { title })
+        }
         onClick={() => {
           if (!open && !inspection && !working && !error) {
             void inspect(loadProviderBinaryPath(provider));
@@ -2871,7 +2947,7 @@ function ProviderBinaryControl({
         <Popover
           id={`${provider}-binary-popover`}
           role="dialog"
-          aria-label={`${title} CLI details`}
+          aria-label={t("providers.cli.details", { title })}
           aria-busy={working}
           tabIndex={-1}
           anchor={root}
@@ -2906,16 +2982,16 @@ function ProviderBinaryControl({
             </span>
             <div className="flex items-center gap-1.5">
               <span className="rounded-full bg-content/10 px-1.5 py-0.5 text-[10px] text-content/50">
-                Global path
+                {t("providers.cli.globalPath")}
               </span>
               <span className="rounded-full bg-content/10 px-1.5 py-0.5 text-[10px] text-content/50">
                 {error
-                  ? "Needs attention"
+                  ? t("providers.cli.needsAttention")
                   : restartRequired
-                    ? "Restart required"
+                    ? t("providers.cli.restartRequired")
                     : overridden
-                      ? "Configured"
-                      : "Auto-detected"}
+                      ? t("providers.cli.configured")
+                      : t("providers.cli.autoDetected")}
               </span>
             </div>
           </div>
@@ -2925,21 +3001,21 @@ function ProviderBinaryControl({
                 htmlFor={`${provider}-binary-path`}
                 className="text-[11px] text-content/50"
               >
-                CLI path
+                {t("providers.cli.path")}
               </label>
               <input
                 id={`${provider}-binary-path`}
                 ref={editInput}
                 type="text"
                 value={draft}
-                placeholder={inspection?.path ?? "Auto-detected path"}
+                placeholder={inspection?.path ?? t("providers.cli.autoDetectedPath")}
                 disabled={working}
                 autoFocus
                 onChange={(event) => setDraft(event.target.value)}
                 className="mt-1.5 h-8 w-full rounded-md border border-content/10 bg-content/[0.04] px-2 font-mono text-[11px] text-content outline-none placeholder:font-sans placeholder:text-content/35 focus:border-accent/45 disabled:opacity-50"
               />
               <p className="mt-1.5 text-[10px] text-content/40">
-                Enter the absolute path to the CLI executable. Changes apply after restarting MonoCode.
+                {t("providers.cli.pathHint")}
               </p>
               {error ? (
                 <span
@@ -2958,18 +3034,18 @@ function ProviderBinaryControl({
                     queueMicrotask(() => trigger.current?.focus());
                   }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </SecondaryButton>
                 {overridden ? (
                   <SecondaryButton
                     disabled={working}
                     onClick={() => void useAuto()}
                   >
-                    Use auto-detected path
+                    {t("providers.cli.useAuto")}
                   </SecondaryButton>
                 ) : null}
                 <SecondaryButton type="submit" disabled={working}>
-                  Save path
+                  {t("providers.cli.savePath")}
                 </SecondaryButton>
               </div>
             </form>
@@ -2978,11 +3054,15 @@ function ProviderBinaryControl({
               <div className="mt-2 rounded-md border border-content/10 bg-content/[0.03] px-2.5 py-2">
                 <span className="block max-h-12 overflow-y-auto whitespace-pre-wrap break-all font-mono text-[10px] text-content/65">
                   {inspection?.path ??
-                    (error ? "CLI could not be resolved" : "Checking the selected CLI…")}
+                    (error
+                      ? t("providers.cli.unresolved")
+                      : t("providers.cli.checkingPath"))}
                 </span>
                 <span className="mt-1 block max-h-10 overflow-y-auto whitespace-pre-wrap break-words text-[10px] text-content/40">
                   {inspection?.version ??
-                    (error ? "Retry to check this CLI" : "Checking version…")}
+                    (error
+                      ? t("providers.cli.retryHint")
+                      : t("providers.cli.checkingVersion"))}
                 </span>
               </div>
                {error ? (
@@ -2999,26 +3079,30 @@ function ProviderBinaryControl({
                    role="alert"
                    className="mt-1.5 block max-h-20 overflow-y-auto whitespace-pre-wrap break-words text-[10px] leading-4 text-red-400"
                  >
-                   Could not open the CLI location: {revealError}
+                   {t("providers.cli.revealFailed", { error: revealError })}
                  </span>
                ) : null}
                <div className="mt-3 flex justify-end gap-2">
                 {error ? (
                   <SecondaryButton
                     disabled={working}
-                    aria-label={`Retry ${title} ${
-                      overridden ? "configured path" : "auto-detect"
-                    }`}
+                    aria-label={
+                      overridden
+                        ? t("providers.cli.retryConfiguredLabel", { title })
+                        : t("providers.cli.retryAutoLabel", { title })
+                    }
                     onClick={() =>
                       void inspect(overridden ? draft.trim() || null : null)
                     }
                   >
                     <RefreshCw className="size-3.5" strokeWidth={1.75} />
-                    {overridden ? "Retry configured path" : "Retry auto-detect"}
+                    {overridden
+                      ? t("providers.cli.retryConfigured")
+                      : t("providers.cli.retryAuto")}
                   </SecondaryButton>
                 ) : null}
                 <SecondaryButton
-                  aria-label={`Open ${title} CLI location`}
+                  aria-label={t("providers.cli.openLocationLabel", { title })}
                   disabled={!inspection}
                   onClick={() => {
                     if (inspection) {
@@ -3031,15 +3115,15 @@ function ProviderBinaryControl({
                   }}
                 >
                   <ExternalLink className="size-3.5" strokeWidth={1.75} />
-                  Open location
+                  {t("providers.cli.openLocation")}
                 </SecondaryButton>
                 <SecondaryButton
-                  aria-label={`Edit ${title} CLI path`}
+                  aria-label={t("providers.cli.editPathLabel", { title })}
                   disabled={working}
                   onClick={() => setEditing(true)}
                 >
                   <Pencil className="size-3.5" strokeWidth={1.75} />
-                  Edit path
+                  {t("providers.cli.editPath")}
                 </SecondaryButton>
               </div>
             </>
@@ -3057,6 +3141,7 @@ function ProvidersPage({
   cwd?: string;
   recents?: RecentProject[];
 }) {
+  const { t } = useTranslation("settings");
   useSyncExternalStore(subscribeModels, getModelSnapshot, getModelSnapshot);
   useSyncExternalStore(
     subscribeHarnessAvailability,
@@ -3081,7 +3166,7 @@ function ProvidersPage({
     const options: { value: string; label: string; icon?: ReactNode }[] = [
       {
         value: GLOBAL_PROVIDER_SCOPE,
-        label: "Global",
+        label: t("providers.scopeGlobal"),
         icon: (
           <Globe
             className="size-3.5 shrink-0 text-content/60"
@@ -3103,7 +3188,7 @@ function ProvidersPage({
       });
     }
     return options;
-  }, [cwd, recents]);
+  }, [cwd, recents, t]);
 
   const project = scope === GLOBAL_PROVIDER_SCOPE ? null : scope;
   const projectSettings = project ? loadProjectProviderSettings(project) : {};
@@ -3173,10 +3258,10 @@ function ProvidersPage({
 
       <Group
         id="agent-clis"
-        title="Agent CLIs"
+        title={t("index.agent-clis")}
         action={
           <Select
-            label="Provider defaults scope"
+            label={t("providers.scopeLabel")}
             value={scope}
             options={scopeOptions}
             onChange={setScope}
@@ -3184,8 +3269,8 @@ function ProvidersPage({
         }
         description={
           project
-            ? `These defaults apply to ${projectName(project)} only. A provider with Show in picker off is also kept out of new conversations started in this project. CLI paths remain global for MonoCode.`
-            : "A provider is listed as installed once its CLI is found on your PATH. Uninstalled CLIs stay listed but are left out of the model picker, as are installed ones with Show in picker off. The model beside a provider is what its new conversations start with; Use by default picks the provider itself. CLI paths are global for MonoCode and apply to every project."
+            ? t("providers.agentClis.project", { project: projectName(project) })
+            : t("providers.agentClis.global")
         }
       >
         {HARNESSES.map((harness) => {
@@ -3229,14 +3314,14 @@ function ProvidersPage({
         })}
       </Group>
 
-      <Group title="Advanced">
+      <Group title={t("providers.advanced")}>
         <Row
           id="claude-hooks"
-          label="Claude Code hooks"
-          description="Run the hooks configured in your settings.json files — PreToolUse command rewrites, blocks, notifications, and the rest — just as the Claude Code CLI would. Turn this off if a hook is misbehaving and you need the session back. Takes effect on the next turn."
+          label={t("index.claude-hooks")}
+          description={t("providers.claude-hooks")}
         >
           <Toggle
-            label="Claude Code hooks"
+            label={t("index.claude-hooks")}
             on={claudeHooks}
             onChange={onClaudeHooks}
           />
@@ -3253,6 +3338,7 @@ type AccountEditor = {
 };
 
 function ProviderAccountsSettings() {
+  const { t } = useTranslation("settings");
   const [version, setVersion] = useState(0);
   const [editor, setEditor] = useState<AccountEditor | null>(null);
   const [working, setWorking] = useState<string | null>(null);
@@ -3298,7 +3384,7 @@ function ProviderAccountsSettings() {
       setError(
         caught instanceof Error
           ? caught.message
-          : "Could not save this account",
+          : t("providers.accounts.saveFailed"),
       );
     } finally {
       setWorking(null);
@@ -3308,12 +3394,14 @@ function ProviderAccountsSettings() {
   const removeAccount = async (account: ProviderAccount) => {
     if (account.isDefault || working) return;
     const confirmed = await ask(
-      `Remove “${account.label}”? Its stored credentials will be deleted and any running turns for this account will stop. Existing conversations stay in history, but cannot continue until you switch accounts.`,
+      t("providers.accounts.removeConfirm", { name: account.label }),
       {
-        title: `Remove ${HARNESS_TITLE[account.provider]} account`,
+        title: t("providers.accounts.removeTitle", {
+          provider: HARNESS_TITLE[account.provider],
+        }),
         kind: "warning",
-        okLabel: "Remove account",
-        cancelLabel: "Cancel",
+        okLabel: t("providers.accounts.removeAccount"),
+        cancelLabel: t("common.cancel"),
       },
     );
     if (!confirmed) return;
@@ -3334,7 +3422,7 @@ function ProviderAccountsSettings() {
       setError(
         caught instanceof Error
           ? caught.message
-          : "Could not remove this account",
+          : t("providers.accounts.removeFailed"),
       );
     } finally {
       setWorking(null);
@@ -3350,8 +3438,8 @@ function ProviderAccountsSettings() {
   return (
     <Group
       id="provider-accounts"
-      title="Accounts"
-      description="Create isolated sign-ins for providers that support account profiles. Account switching stays available from the usage control in the footer."
+      title={t("providers.accounts.title")}
+      description={t("providers.accounts.description")}
       action={<AccountUsageRefresh usage={usage} />}
     >
       {PROVIDER_ACCOUNT_PROVIDERS.map((provider) => {
@@ -3372,8 +3460,7 @@ function ProviderAccountsSettings() {
                     {HARNESS_TITLE[provider]}
                   </div>
                   <div className="mt-0.5 text-[11px] text-content/40">
-                    {accounts.length}{" "}
-                    {accounts.length === 1 ? "account" : "accounts"}
+                    {t("providers.accounts.count", { count: accounts.length })}
                   </div>
                 </div>
               </div>
@@ -3384,7 +3471,7 @@ function ProviderAccountsSettings() {
                 className="flex shrink-0 items-center gap-1.5 rounded-md border border-content/10 px-2.5 py-1 text-[12px] text-content/70 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.97] disabled:cursor-default disabled:opacity-40"
               >
                 <Plus className="size-3.5" strokeWidth={1.75} aria-hidden />
-                Add account
+                {t("providers.accounts.add")}
               </button>
             </div>
             <div className="border-t border-content/5 bg-content/[0.015] pl-10">
@@ -3434,8 +3521,8 @@ function ProviderAccountsSettings() {
                           identity={identity}
                           fallback={
                             account.isDefault
-                              ? "Provider CLI profile"
-                              : "Isolated profile"
+                              ? t("providers.accounts.cliProfile")
+                              : t("providers.accounts.isolatedProfile")
                           }
                           className="truncate text-content/30"
                         />
@@ -3445,14 +3532,14 @@ function ProviderAccountsSettings() {
                     <div className="flex w-24 shrink-0 items-center justify-end gap-1">
                       {account.isDefault ? (
                         <span className="mr-1 text-[10px] font-medium uppercase tracking-wide text-content/30">
-                          Default
+                          {t("common.default")}
                         </span>
                       ) : null}
                       <button
                         type="button"
                         disabled={Boolean(working)}
-                        aria-label={`Rename ${account.label}`}
-                        title="Rename account"
+                        aria-label={t("providers.accounts.renameLabel", { name: account.label })}
+                        title={t("providers.accounts.rename")}
                         onClick={() => startRename(account)}
                         className="grid size-7 place-items-center rounded-md text-content/40 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.96] disabled:opacity-35"
                       >
@@ -3462,8 +3549,8 @@ function ProviderAccountsSettings() {
                         <button
                           type="button"
                           disabled={Boolean(working)}
-                          aria-label={`Remove ${account.label}`}
-                          title="Remove account"
+                          aria-label={t("providers.accounts.removeLabel", { name: account.label })}
+                          title={t("providers.accounts.removeAccount")}
                           onClick={() => void removeAccount(account)}
                           className="grid size-7 place-items-center rounded-md text-content/35 transition-transform duration-150 hover:bg-red-400/10 hover:text-red-400 active:scale-[0.96] disabled:opacity-35"
                         >
@@ -3520,6 +3607,7 @@ function ProviderAccountEditor({
   onCancel: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const { t } = useTranslation("settings");
   const adding = !editor.accountId;
   return (
     <form
@@ -3531,15 +3619,23 @@ function ProviderAccountEditor({
         className="flex items-center pr-1 h-8 min-w-0 flex-1 overflow-hidden rounded-md border border-content/10 bg-content/[0.04] focus-within:border-accent/45"
       >
         <label className="h-full min-w-0 flex-1">
-          <span className="sr-only">Account name</span>
+          <span className="sr-only">{t("providers.accounts.name")}</span>
           <input
             autoFocus
             type="text"
             maxLength={48}
             value={editor.label}
             disabled={working}
-            placeholder="Work or Personal"
-            aria-label={`${adding ? "New" : "Rename"} ${HARNESS_TITLE[editor.provider]} account`}
+            placeholder={t("providers.accounts.namePlaceholder")}
+            aria-label={
+              adding
+                ? t("providers.accounts.newLabel", {
+                    provider: HARNESS_TITLE[editor.provider],
+                  })
+                : t("providers.accounts.renameProviderLabel", {
+                    provider: HARNESS_TITLE[editor.provider],
+                  })
+            }
             onChange={(event) => onLabel(event.target.value)}
             className="h-full w-full bg-transparent px-2.5 text-[12px] text-content outline-none placeholder:text-content/25 disabled:opacity-50"
           />
@@ -3550,7 +3646,7 @@ function ProviderAccountEditor({
           onClick={onCancel}
           className="flex h-6 shrink-0 items-center rounded-[4.5px] bg-content/[0.05] px-2.5 text-[11px] text-content/45 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.97] disabled:opacity-40"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
         <button
           type="submit"
@@ -3560,9 +3656,9 @@ function ProviderAccountEditor({
           {working ? <Loader className="size-3 animate-spin" /> : null}
           {adding
             ? working
-              ? "Waiting for browser…"
-              : "Sign in and add"
-            : "Save"}
+              ? t("providers.accounts.waiting")
+              : t("providers.accounts.signInAndAdd")
+            : t("common.save")}
         </button>
       </div>
     </form>
@@ -3617,6 +3713,7 @@ function ProviderRow({
   onModelChange: (harness: HarnessId, model: string) => void;
   onPickerVisible: (visible: boolean) => void;
 }) {
+  const { t } = useTranslation("settings");
   const models = modelsFor(harness);
   const available = isHarnessAvailable(harness);
   const current =
@@ -3636,20 +3733,20 @@ function ProviderRow({
           <ProviderBinaryControl provider={harness} />
           {isDefault ? (
             <span className="rounded-full bg-content/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-content/60">
-              Default
+              {t("common.default")}
             </span>
           ) : null}
         </span>
       }
       description={
         available
-          ? `${models.length} ${models.length === 1 ? "model" : "models"} available.`
+          ? t("providers.modelsAvailable", { count: models.length })
           : harnessUnavailableHint(harness)
       }
     >
       {current ? (
         <Select
-          label={`${HARNESS_TITLE[harness]} model`}
+          label={t("providers.modelLabel", { provider: HARNESS_TITLE[harness] })}
           value={current.id}
           onChange={(next) => onModelChange(harness, next)}
           options={models.map((item) => ({
@@ -3662,15 +3759,15 @@ function ProviderRow({
         onClick={() => current && onDefault(harness, current.id)}
         disabled={isDefault || !current}
       >
-        {isDefault ? "Default" : "Use by default"}
+        {isDefault ? t("common.default") : t("providers.useByDefault")}
       </SecondaryButton>
       {available ? (
         <div className="flex items-center gap-2">
           <span className="text-[12px] text-content/50">
-            {pickerLocked ? "Hidden globally" : "Show in picker"}
+            {pickerLocked ? t("providers.hiddenGlobally") : t("providers.showInPicker")}
           </span>
           <Toggle
-            label={`Show ${HARNESS_TITLE[harness]} in the model picker`}
+            label={t("providers.showInPickerLabel", { provider: HARNESS_TITLE[harness] })}
             on={inPicker}
             onChange={onPickerVisible}
             disabled={pickerLocked}
@@ -3715,6 +3812,7 @@ function ArchivePage({
   onRestoreProject?: (path: string) => void;
   onDeleteProject?: (path: string) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [filters, setFilters] = useState(loadSessionSidebarFilters);
   const [deleting, setDeleting] = useState<ArchivedProject | null>(null);
   const archivedProjects = useArchivedProjects();
@@ -3735,12 +3833,12 @@ function ArchivePage({
   return (
     <>
       <Group
-        title="Archived projects"
-        description="Archive a project from the rail to keep its chats without listing it in the sidebar."
+        title={t("archive.projects.title")}
+        description={t("archive.projects.description")}
       >
         {archivedProjects.length === 0 ? (
           <p className="px-4 py-3.5 text-[12px] text-content/45">
-            No archived projects.
+            {t("archive.projects.empty")}
           </p>
         ) : (
           archivedProjects.map((project) => (
@@ -3758,12 +3856,12 @@ function ArchivePage({
               </div>
               {onRestoreProject ? (
                 <SecondaryButton onClick={() => onRestoreProject(project.path)}>
-                  Restore
+                  {t("archive.restore")}
                 </SecondaryButton>
               ) : null}
               {onDeleteProject ? (
                 <SecondaryButton danger onClick={() => setDeleting(project)}>
-                  Delete
+                  {t("common.delete")}
                 </SecondaryButton>
               ) : null}
             </div>
@@ -3774,28 +3872,28 @@ function ArchivePage({
       <Group
         title={
           looksLikeProject(cwd)
-            ? `Archived in ${projectName(cwd)}`
-            : "Archived conversations"
+            ? t("archive.sessions.inProject", { project: projectName(cwd) })
+            : t("archive.sessions.title")
         }
       >
         <Row
           id="show-archived"
-          label="Show archived in the sidebar"
-          description="Keep archived conversations listed alongside the active ones."
+          label={t("index.show-archived")}
+          description={t("archive.show-archived")}
         >
           <Toggle
-            label="Show archived in the sidebar"
+            label={t("index.show-archived")}
             on={filters.showArchived}
             onChange={onShowArchived}
           />
         </Row>
         {!looksLikeProject(cwd) ? (
           <p className="px-4 py-3.5 text-[12px] text-content/45">
-            Open a project to see its archived conversations.
+            {t("archive.sessions.noProject")}
           </p>
         ) : archived.length === 0 ? (
           <p className="px-4 py-3.5 text-[12px] text-content/45">
-            No archived conversations in this project.
+            {t("archive.sessions.empty")}
           </p>
         ) : (
           archived.map((session) => (
@@ -3820,13 +3918,13 @@ function ArchivePage({
               <SecondaryButton
                 onClick={() => onArchiveSession(session.id, false)}
               >
-                Unarchive
+                {t("archive.unarchive")}
               </SecondaryButton>
               <SecondaryButton
                 danger
                 onClick={() => onDeleteSession(session.id)}
               >
-                Delete
+                {t("common.delete")}
               </SecondaryButton>
             </div>
           ))
@@ -4075,6 +4173,7 @@ function AccentColorPicker({
   value: string | null;
   onChange: (value: string | null) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const colorIndex = value
@@ -4088,7 +4187,15 @@ function AccentColorPicker({
     <div ref={root} className="w-48">
       <ColorSwatchRow
         colors={["var(--color-content)", ...ACCENT_COLOR_PRESETS]}
-        labels={["Default", "Blue", "Violet", "Pink", "Red", "Orange", "Green"]}
+        labels={[
+          t("common.default"),
+          t("appearance.accentColors.blue"),
+          t("appearance.accentColors.violet"),
+          t("appearance.accentColors.pink"),
+          t("appearance.accentColors.red"),
+          t("appearance.accentColors.orange"),
+          t("appearance.accentColors.green"),
+        ]}
         colorIndex={presetIndex >= 0 ? presetIndex : undefined}
         customColor={presetIndex < 0 ? (value ?? undefined) : undefined}
         customPickerOpen={open}
@@ -4123,9 +4230,10 @@ function AccentColorPicker({
 
 /** macOS keeps the decision after the first prompt; only System Settings can flip it. Windows toasts are governed by Settings > Notifications. */
 function NotificationsBlocked() {
+  const { t } = useTranslation("settings");
   return (
     <span className="flex items-center gap-2 text-[12px] text-content/45">
-      Permission needed
+      {t("general.notificationsBlocked.permission")}
       {IS_MAC || IS_WIN ? (
         <button
           type="button"
@@ -4134,7 +4242,7 @@ function NotificationsBlocked() {
           }}
           className="rounded-md border border-content/10 px-2 py-1 text-content/70 hover:bg-content/10 hover:text-content"
         >
-          Open System Settings
+          {t("general.notificationsBlocked.openSettings")}
         </button>
       ) : null}
     </span>
@@ -4188,6 +4296,7 @@ function Select({
   options: { value: string; label: string; icon?: ReactNode }[];
   onChange: (value: string) => void;
 }) {
+  const { t } = useTranslation("settings");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(() =>
     Math.max(
@@ -4264,7 +4373,10 @@ function Select({
       <button
         type="button"
         ref={trigger}
-        aria-label={`${label}: ${selected?.label ?? value}`}
+        aria-label={t("common.selectValue", {
+          label,
+          value: selected?.label ?? value,
+        })}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((prev) => !prev)}

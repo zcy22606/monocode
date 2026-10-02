@@ -20,6 +20,7 @@ import { LAYER } from "../../../shared/lib/layers";
 import { Popover } from "../../../shared/ui/Popover";
 import { ProjectLogoIcon } from "./ProjectLogoIcon";
 import { MOD } from "../../../platform/tauri/platform";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   cwd: string;
@@ -73,6 +74,7 @@ export function CwdPicker({
   onNewTerminal,
   onClose,
 }: Props) {
+  const { t } = useTranslation("projects");
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -205,7 +207,7 @@ export function CwdPicker({
       <button
         type="button"
         title={cwd}
-        aria-label={`Project ${label}`}
+        aria-label={t("picker.projectLabel", { label })}
         aria-expanded={open}
         aria-haspopup="menu"
         disabled={!enabled}
@@ -254,7 +256,7 @@ export function CwdPicker({
           ignore={SELF}
           onDismiss={(reason) => dismiss(reason === "escape")}
           role="menu"
-          aria-label="Project picker"
+          aria-label={t("picker.label")}
           data-cwd-picker
           className="flex flex-col overflow-hidden"
         >
@@ -265,7 +267,7 @@ export function CwdPicker({
             {inProject ? (
               <>
                 <p className="px-2.5 pb-1 pt-2 text-[10px] uppercase tracking-widest text-content/50">
-                  Current project
+                  {t("picker.current")}
                 </p>
                 <div className="px-2.5 py-1.5 text-content/50">
                   <p className="truncate text-[13px] text-content">
@@ -280,11 +282,11 @@ export function CwdPicker({
             {previewRecents.length > 0 || mode === "move" ? (
               <>
                 <p className="px-2.5 pb-1 pt-2 text-[10px] uppercase tracking-widest text-content/50">
-                  {mode === "move" ? "Move to project" : "Recent projects"}
+                  {mode === "move" ? t("picker.moveTo") : t("picker.recent")}
                 </p>
                 {mode === "move" && previewRecents.length === 0 ? (
                   <p className="px-2.5 py-2 text-[13px] text-content/50">
-                    No other projects
+                    {t("picker.noOther")}
                   </p>
                 ) : null}
                 {previewRecents.map((item, index) => (
@@ -339,7 +341,7 @@ export function CwdPicker({
                     : "text-content/80 hover:bg-content/5"
                 }`}
               >
-                <span className="text-[13px]">More Projects</span>
+                <span className="text-[13px]">{t("picker.more")}</span>
                 <ChevronRight
                   className="size-3.5 shrink-0"
                   strokeWidth={1.75}
@@ -364,7 +366,7 @@ export function CwdPicker({
                     : "text-content/80 hover:bg-content/5"
                 }`}
               >
-                <span className="text-[13px]">New terminal</span>
+                <span className="text-[13px]">{t("picker.newTerminal")}</span>
                 <span className="shrink-0 font-mono text-[11px] text-content/45">
                   {MOD}`
                 </span>
@@ -382,7 +384,7 @@ export function CwdPicker({
           maxHeight={SUBMENU_MAX_HEIGHT}
           layer={LAYER.submenu}
           role="menu"
-          aria-label="More projects"
+          aria-label={t("picker.moreLabel")}
           data-cwd-submenu
           className="overflow-y-auto overscroll-none py-1"
           onMouseEnter={openMore}

@@ -6,6 +6,7 @@ import {
   ProviderSignInPanel,
   type ProviderSignInState,
 } from "./ProviderSignInPanel";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   harness: HarnessId;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function ProviderSignInDialog({ harness, onClose }: Props) {
+  const { t } = useTranslation("sessions");
   const [state, setState] = useState<ProviderSignInState>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,17 +33,17 @@ export function ProviderSignInDialog({ harness, onClose }: Props) {
         setError(
           reason instanceof Error
             ? reason.message
-            : `Could not sign in to ${HARNESS_TITLE[harness]}.`,
+            : t("signIn.failed", { harness: HARNESS_TITLE[harness] }),
         );
       },
     );
-  }, [harness]);
+  }, [harness, t]);
 
   return (
     <Modal
       onClose={onClose}
-      title="Authentication required"
-      description={`Sign in to continue using ${HARNESS_TITLE[harness]}.`}
+      title={t("signIn.required")}
+      description={t("signIn.continueUsing", { harness: HARNESS_TITLE[harness] })}
       size="sm"
       minimalHeader
     >
@@ -51,7 +53,7 @@ export function ProviderSignInDialog({ harness, onClose }: Props) {
         error={error}
         onSignIn={signIn}
         onComplete={onClose}
-        completeActionLabel="Continue"
+        completeActionLabel={t("signIn.continue")}
         autoFocus
       />
     </Modal>

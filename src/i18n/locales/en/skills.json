@@ -1,0 +1,64 @@
+{
+  "scope": {
+    "personal": "Personal",
+    "project": "Project"
+  },
+  "page": {
+    "count_one": "{{count}} skill",
+    "count_other": "{{count}} skills",
+    "filter": "Filter",
+    "filterLabel": "Filter skills",
+    "refresh": "Refresh skills",
+    "rescan": "Rescan skill folders",
+    "add": "Add skill",
+    "addHint": "Create a starter SKILL.md you can edit",
+    "close": "Close",
+    "closeForm": "Close skill form",
+    "loading": "Loading skills…",
+    "empty": "No skills yet. Add skill creates a starter SKILL.md.",
+    "noMatches": "No matching skills",
+    "previewName": "Preview {{name}}",
+    "include": "Include {{name}} in MonoCode catalog",
+    "previewSkill": "Preview skill",
+    "previewSkillName": "Preview skill {{name}}",
+    "copyPath": "Copy path",
+    "copyPathOf": "Copy path of {{name}}",
+    "reveal": "Reveal in file manager",
+    "revealName": "Reveal {{name}} in file explorer",
+    "readError": "Could not read SKILL.md. {{error}}",
+    "toggleError": "Could not save the skill preference. Try again.",
+    "revealError": "Could not open the folder: {{error}}",
+    "copyError": "Could not copy the path to the clipboard.",
+    "footer": "Hidden skills stay on disk and are excluded from MonoCode's file-skill catalog. Provider-managed skills and native commands are unaffected. Skills live in <path>.agents/skills</path> for this project and <path>~/.agents/skills</path> for you personally; harness folders are also picked up."
+  },
+  "preview": {
+    "label": "Skill preview",
+    "close": "Close skill preview",
+    "closeHint": "Close preview (Escape)",
+    "loading": "Loading skill…",
+    "metadata": "Skill metadata"
+  },
+  "picker": {
+    "new": "New skill",
+    "noMatches": "No matching commands or skills",
+    "empty": "No commands yet",
+    "label": "Commands and skills",
+    "scope": {
+      "personal": "personal",
+      "project": "project"
+    }
+  },
+  "form": {
+    "hint": "Writes a starter SKILL.md you can edit.",
+    "nameLabel": "Skill name",
+    "invalidName": "Use lowercase letters, numbers, and hyphens.",
+    "invalidNameError": "Use a lowercase name with letters, numbers, and hyphens.",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating…"
+  },
+  "promptField": {
+    "label": "Instructions",
+    "placeholder": "Tell the agent what to do when this automation runs…"
+  }
+}

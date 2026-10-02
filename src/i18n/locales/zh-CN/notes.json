@@ -1,0 +1,42 @@
+{
+  "title": "笔记",
+  "untitled": "无标题",
+  "list": {
+    "filter": "筛选笔记",
+    "new": "新建笔记",
+    "noMatches": "没有匹配的笔记",
+    "empty": "还没有笔记。可以从对话记录里保存一轮，或在这里新建。",
+    "resize": "调整笔记列表宽度"
+  },
+  "detail": {
+    "empty": "选择一条笔记",
+    "note": "笔记",
+    "titleLabel": "笔记标题",
+    "updated": "更新于 {{time}}",
+    "addToChat": "添加到对话",
+    "delete": "删除",
+    "saveError": "无法保存笔记：{{error}}",
+    "retry": "重试",
+    "sections": "笔记分区",
+    "preview": "预览",
+    "source": "源码",
+    "noDescription": "没有内容",
+    "writeMarkdown": "用 Markdown 书写…"
+  },
+  "images": {
+    "adding": "正在添加图片…",
+    "drop": "把图片拖到这里",
+    "unsupported": "请拖入 PNG、JPG、GIF、WebP 或 SVG 图片。",
+    "noneAdded": "拖入的图片都没能添加到笔记。"
+  },
+  "tags": {
+    "label": "标签",
+    "remove": "移除 #{{tag}}",
+    "addLabel": "添加笔记标签",
+    "add": "添加标签…"
+  },
+  "card": {
+    "remove": "移除",
+    "removeNote": "移除笔记 {{title}}"
+  }
+}

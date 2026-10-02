@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../i18n";
 import type { Attachment } from "../../sessions/model/session";
 import type { RemoteAttachment } from "./protocol";
 import { remoteRequest } from "./connections";
@@ -11,12 +12,12 @@ export async function uploadRemoteAttachments(
   machineId: string,
   attachments: Attachment[],
 ): Promise<RemoteAttachment[]> {
-  if (attachments.length > 20) throw new Error("Too many attachments");
+  if (attachments.length > 20) throw new Error(t("errors.tooManyAttachments", { ns: "connections" }));
   const uploaded: RemoteAttachment[] = [];
   for (const file of attachments) {
     if (file.size > MAX_BYTES)
       throw new Error(
-        `${file.name} is too large to send to a remote machine (20 MB maximum)`,
+        t("errors.attachmentTooLarge", { ns: "connections", name: file.name }),
       );
     const data =
       file.data ??
@@ -24,7 +25,9 @@ export async function uploadRemoteAttachments(
         ? await invoke<string>("read_file_base64", { path: file.path })
         : undefined);
     if (data === undefined)
-      throw new Error(`Cannot read ${file.name} for remote upload`);
+      throw new Error(
+        t("errors.attachmentUnreadable", { ns: "connections", name: file.name }),
+      );
     let offset = 0;
     if (data.length === 0) {
       await remoteRequest(machineId, "attachments.upload", {
@@ -49,7 +52,9 @@ export async function uploadRemoteAttachments(
       offset = reply.offset;
     }
     if (offset !== file.size)
-      throw new Error(`Could not finish uploading ${file.name}`);
+      throw new Error(
+        t("errors.attachmentUploadFailed", { ns: "connections", name: file.name }),
+      );
     uploaded.push({
       id: file.id,
       name: file.name,

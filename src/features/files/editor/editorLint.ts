@@ -3,6 +3,7 @@ import { diagnosticCount, linter, type Diagnostic } from "@codemirror/lint";
 import type { EditorState, Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { basename } from "../../../platform/tauri/fs";
+import { t } from "../../../i18n";
 
 /**
  * Syntax diagnostics straight off the Lezer parse tree.
@@ -183,14 +184,14 @@ function errorDiagnostic(
 
 function errorMessage(state: EditorState, from: number, to: number): string {
   const skipped = to > from ? state.doc.sliceString(from, to).trim() : "";
-  if (skipped) return `Unexpected ${quote(skipped)}`;
+  if (skipped) return t("files:lint.unexpected", { token: quote(skipped) });
 
   const token = tokenAt(state, from);
-  if (token) return `Unexpected ${quote(token)}`;
+  if (token) return t("files:lint.unexpected", { token: quote(token) });
 
   return from >= state.doc.length
-    ? "Unexpected end of file"
-    : "Unexpected end of line";
+    ? t("files:lint.unexpectedEndOfFile")
+    : t("files:lint.unexpectedEndOfLine");
 }
 
 /** The token the parser choked on: the parse stops just before it. */

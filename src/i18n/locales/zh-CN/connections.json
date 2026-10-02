@@ -1,0 +1,114 @@
+{
+  "common": {
+    "cancel": "取消"
+  },
+  "settings": {
+    "title": "你的机器",
+    "description": "在另一台电脑上运行 Agent，随时从笔记本回来接着用。在这里关掉 MonoCode 后，主机会继续工作。",
+    "addMachine": "添加机器",
+    "empty": "添加一台常开的 Windows、Mac 或 Linux 机器开始使用。",
+    "sshEndpoint": "SSH · {{target}}",
+    "sshEndpointWithPort": "SSH · {{target}} · 端口 {{port}}",
+    "checking": "正在检查连接…",
+    "updateWarning": "更新会重启主机，并中断正在进行的 Agent 回合。",
+    "updateHost": "更新主机",
+    "updateHostTitle": "下载匹配的主机程序包并重启主机；正在进行的 Agent 回合会被中断",
+    "reconnect": "重新连接",
+    "removeLabel": "移除 {{name}}",
+    "removeTitle": "移除连接…",
+    "status": {
+      "connected": "已连接",
+      "noProvider": "已连接 · 请在主机上安装一个受支持的提供方",
+      "needsUpdate": "已连接 · 需要更新主机才能使用资源管理器和更改",
+      "offline": "离线 · 重新连接以检查访问权限"
+    },
+    "notice": {
+      "updated": "{{name}} 已更新并重新连接。",
+      "connected": "{{name}} 已连接。要在上面工作，点项目栏里「项目」旁边的 +，选择「在机器上打开文件夹」。",
+      "connectedByUrl": "{{name}} 已连接。",
+      "removedRevoked": "已移除 {{name}}，并撤销了这台桌面端的访问权限。主机和它的会话会继续运行。",
+      "removed": "已从这台桌面端移除 {{name}}。主机和它的会话会继续运行，并且仍然接受这台桌面端的凭据。"
+    },
+    "revokeFailed": "无法撤销访问权限，因此没有移除 {{name}}：{{reason}}。请重新连接后再试，或者只从这台桌面端移除，再在主机上用 monocode-host devices 和 monocode-host revoke <device-id> 撤销。",
+    "remove": {
+      "groupLabel": "确认移除 {{name}}",
+      "title": "从这台桌面端移除 {{name}}？",
+      "closes": "这会关闭这台桌面端到该机器的连接。它不会停止主机，主机上的会话会继续运行并留在那台机器上。之后可以再添加回来。",
+      "credential": "只移除的话，这台桌面端的凭据在主机上仍然有效。先撤销访问权限可以让它失效；此时机器必须能连上。",
+      "stopHost": "要停止主机并关闭它的后台服务，请在那台机器上运行 <code>{{command}}</code>（Windows 上运行 <code>{{windowsCommand}}</code>）。它的会话和历史会保留。",
+      "revokeAndRemove": "撤销访问权限并移除",
+      "removeOnly": "只从这台桌面端移除"
+    },
+    "ssh": {
+      "title": "通过 SSH 连接",
+      "address": "SSH 地址",
+      "addressPlaceholder": "user@my-mac-mini 或 SSH 别名",
+      "name": "名称",
+      "optional": "（可选）",
+      "namePlaceholder": "可选，例如 Home Mac mini",
+      "advanced": "高级",
+      "port": "SSH 端口",
+      "portPlaceholder": "取自 SSH 配置",
+      "about": "MonoCode 会安装并启动后台主机，然后建立安全连接。会自动使用你的 SSH 密钥和配置。请在主机上启用 SSH，并在那里登录 Codex 或 Claude Code。在 Windows 和 Mac 上，请保持主机的桌面账户处于登录状态、机器不休眠；锁屏没关系。",
+      "linux": "在 Linux 上，安装过程会创建一个 systemd 用户服务，并为你的账户开启 lingering（<code>{{command}}</code>），这样退出登录后主机和你的其他用户服务也会继续运行。主机会一直运行，直到你在那台机器上停止它；在这里移除只会断开这台桌面端。",
+      "connect": "连接",
+      "connecting": "正在连接…"
+    },
+    "progress": {
+      "starting": "正在开始连接…",
+      "password": "SSH 密码或密钥口令",
+      "trust": "信任主机并继续",
+      "continue": "继续",
+      "reject": "拒绝",
+      "cancel": "取消连接"
+    },
+    "url": {
+      "summary": "通过 URL 连接已有主机",
+      "hostUrl": "主机 URL",
+      "token": "设备令牌",
+      "connect": "通过 URL 连接"
+    }
+  },
+  "addProject": {
+    "title": "在机器上打开文件夹",
+    "description": "这个项目里的会话在那台机器上运行，使用它的代码副本和它的 Codex 或 Claude Code 登录。在这里关掉 MonoCode 后，它们会继续运行。",
+    "noMachines": "还没有连接任何机器。先在设置里添加一台，再回到这里打开上面的文件夹。",
+    "addMachine": "添加机器",
+    "machine": "机器",
+    "on": "在 <name>{{name}}</name> 上",
+    "pathLabel": "机器上的文件夹路径",
+    "folders": "文件夹",
+    "noSubfolders": "没有子文件夹",
+    "loading": "正在加载文件夹…",
+    "open": "打开",
+    "opening": "正在打开…"
+  },
+  "session": {
+    "missingProject": "这个项目缺少机器信息。请从项目栏重新添加这个项目。",
+    "notConnected": "这个项目所在的机器没有在这台电脑上连接。",
+    "connecting": "正在连接机器…",
+    "manageMachines": "管理机器",
+    "loadingModels": "正在加载模型…",
+    "waitingForHost": "正在等待主机确认你的请求。",
+    "draftFailed": "无法在 {{name}} 上保存草稿。",
+    "sendFailed": "无法在 {{name}} 上发送消息。",
+    "modelsFailed": "无法从 {{name}} 加载模型。",
+    "retry": "重试",
+    "tryAgain": "再试一次",
+    "dismiss": "关闭",
+    "chooseWorktree": "请选择这台机器上的工作树",
+    "worktreeFixed": "这个会话的工作树已固定。要使用其他工作树，请新建会话。",
+    "selectModelForPlan": "请先在输入框里选择那个模型，再构建这个远程计划。"
+  },
+  "errors": {
+    "saveLocally": "无法在本地保存你的请求。请先释放应用存储空间再发送。",
+    "tooManyAttachments": "附件太多",
+    "attachmentTooLarge": "{{name}} 太大，无法发送到远程机器（最大 20 MB）",
+    "attachmentUnreadable": "无法读取 {{name}} 以上传到远程机器",
+    "attachmentUploadFailed": "无法完成上传 {{name}}",
+    "unavailable": "另一台机器上的项目暂不支持此操作。",
+    "outdated": "请在「连接」设置里更新 MonoCode Host，才能使用这个项目的文件。",
+    "crossMachine": "文件只能在同一台机器内复制或移动。",
+    "notConnected": "这个项目所在的机器没有在这台电脑上连接。"
+  }
+}

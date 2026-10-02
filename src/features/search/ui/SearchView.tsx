@@ -49,13 +49,9 @@ import {
   searchSessions,
   type SessionSummary,
 } from "../../sessions/data/sessionStore";
+import { useTranslation } from "../../../i18n";
 
-const SCOPES: { id: SearchScope; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "conversations", label: "Conversations" },
-  { id: "files", label: "Files" },
-  { id: "projects", label: "Projects" },
-];
+const SCOPES: SearchScope[] = ["all", "conversations", "files", "projects"];
 
 type Props = {
   open: boolean;
@@ -88,6 +84,7 @@ export function SearchView({
   onOpenSession,
   onOpenProject,
 }: Props) {
+  const { t } = useTranslation("search");
   const inputRef = useRef<HTMLInputElement>(null);
   const activeProjectSearchId = useRef<string | null>(null);
   const activeSessionOwner = useRef<string | null>(null);
@@ -373,14 +370,14 @@ export function SearchView({
   const noResults = !empty && hits.length === 0 && !loading;
   const limitNotice = truncated ? (
     <p className="px-2.5 py-1 text-[11px] text-content/45">
-      Results limited to the first matches
+      {t("limitNotice")}
     </p>
   ) : null;
 
   return (
     <div
       role="search"
-      aria-label="Search"
+      aria-label={t("label")}
       data-app-search
       className="flex min-h-0 min-w-0 flex-1 flex-col text-content"
     >
@@ -400,8 +397,8 @@ export function SearchView({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onQueryKeyDown}
-            placeholder="Search everything..."
-            aria-label="Search"
+            placeholder={t("placeholder")}
+            aria-label={t("label")}
             spellCheck={false}
             autoComplete="off"
             autoCorrect="off"
@@ -421,20 +418,20 @@ export function SearchView({
 
       <div className="flex h-9 shrink-0 items-center gap-px border-b border-stroke px-3">
         {SCOPES.map((item) => {
-          const selected = scope === item.id;
+          const selected = scope === item;
           return (
             <button
-              key={item.id}
+              key={item}
               type="button"
               aria-pressed={selected}
-              onClick={() => setScope(item.id)}
+              onClick={() => setScope(item)}
               className={`rounded-md px-2 py-1 text-[12px] ${
                 selected
                   ? "bg-selection text-content"
                   : "text-content/50 hover:bg-content/5 hover:text-content"
               }`}
             >
-              {item.label}
+              {t(`scope.${item}`)}
             </button>
           );
         })}
@@ -454,7 +451,7 @@ export function SearchView({
           <p className="px-2 py-1.5 text-[12px] text-red-400">{error}</p>
         ) : noResults ? (
           <>
-            <p className="px-2 py-1.5 text-[12px] text-content/50">No results</p>
+            <p className="px-2 py-1.5 text-[12px] text-content/50">{t("noResults")}</p>
             {limitNotice}
           </>
         ) : (
@@ -478,6 +475,7 @@ const EMPTY_DOT_COLS = 27;
 const EMPTY_DOT_ROWS = 19;
 
 function EmptyState() {
+  const { t } = useTranslation("search");
   return (
     <div className="flex flex-col items-center justify-center px-6 pb-24">
       <div className="relative mb-2 grid h-48 w-72 place-items-center">
@@ -503,7 +501,7 @@ function EmptyState() {
       </div>
 
       <p className="max-w-xs text-center text-[13px] text-content/45">
-        Find files, conversations, messages, and projects.
+        {t("emptyHint")}
       </p>
     </div>
   );
@@ -522,6 +520,7 @@ function ResultList({
   onActive: (index: number) => void;
   onOpen: (hit: AppSearchHit) => void;
 }) {
+  const { t } = useTranslation("search");
   const activeRef = useRef<HTMLButtonElement>(null);
   const pointer = useRef({ x: Number.NaN, y: Number.NaN, allow: false });
   const fromPointer = useRef(false);
@@ -558,7 +557,7 @@ function ResultList({
   return (
     <div
       role="listbox"
-      aria-label="Search results"
+      aria-label={t("results")}
       onMouseMove={onListMouseMove}
     >
       {hits.map((hit, index) => {

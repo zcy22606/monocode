@@ -1,9 +1,10 @@
+// IndieDesk: labels live in the `notifications` namespace as `categories.<id>`.
 export const NOTIFICATION_CATEGORIES = [
-  { id: "pullRequests", label: "Pull requests / Merge requests" },
-  { id: "issues", label: "Issues and Linear tasks" },
-  { id: "agentFinished", label: "Agent finished" },
-  { id: "agentInput", label: "Agent approvals and questions" },
-  { id: "reminders", label: "Reminders" },
+  { id: "pullRequests" },
+  { id: "issues" },
+  { id: "agentFinished" },
+  { id: "agentInput" },
+  { id: "reminders" },
 ] as const;
 
 export type NotificationCategory =

@@ -1,0 +1,14 @@
+{
+  "label": "Search",
+  "placeholder": "Search everything...",
+  "results": "Search results",
+  "noResults": "No results",
+  "limitNotice": "Results limited to the first matches",
+  "emptyHint": "Find files, conversations, messages, and projects.",
+  "scope": {
+    "all": "All",
+    "conversations": "Conversations",
+    "files": "Files",
+    "projects": "Projects"
+  }
+}

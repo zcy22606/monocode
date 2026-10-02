@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../i18n";
 import { useEffect, useState } from "react";
 import {
   applySessionSync,
@@ -138,9 +139,7 @@ export const savePendingRemoteCommand = (
       } satisfies PendingEntry),
     );
   } catch {
-    throw new Error(
-      "Cannot save your request locally. Free up app storage before sending.",
-    );
+    throw new Error(t("errors.saveLocally", { ns: "connections" }));
   }
 };
 export const clearPendingRemoteCommand = (

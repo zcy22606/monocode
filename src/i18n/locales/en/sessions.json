@@ -1,0 +1,582 @@
+{
+  "folderPicker": {
+    "dialogLabel": "Choose a session folder",
+    "inputLabel": "Session folder",
+    "placeholder": "Choose or name a session folder…",
+    "cancel": "Cancel",
+    "listLabel": "Session folders",
+    "empty": "Type a name to create the first folder",
+    "create": "Create “{{name}}”"
+  },
+  "selectionMenu": {
+    "label": "Selected text actions",
+    "addToChat": "Add to chat",
+    "addToNotes": "Add to notes",
+    "saveFailed": "Could not save note. {{error}}"
+  },
+  "generatedImage": {
+    "loading": "Loading generated image…",
+    "error": "Could not open generated image.",
+    "open": "Open {{name}} full screen"
+  },
+  "agentTab": {
+    "gone": "This agent is no longer running. Its work is summarised in the orchestrator's conversation.",
+    "readOnly": "Run by the orchestrator · read-only"
+  },
+  "mentionPicker": {
+    "indexing": "Indexing files…",
+    "noMatchingNotes": "No matching files or notes",
+    "noMatching": "No matching files or folders",
+    "noneNotes": "No files or notes found",
+    "none": "No files or folders found",
+    "listNotes": "Files and notes",
+    "list": "Files and folders",
+    "note": "Note"
+  },
+  "empty": {
+    "titleInProject": "What should we work on in {{project}}?",
+    "title": "What should we work on?"
+  },
+  "reminders": {
+    "title": "Due reminders",
+    "loadFailed": "Couldn’t load reminders.",
+    "retry": "Retry",
+    "open": "Open session",
+    "snooze": "Snooze",
+    "dismiss": "Dismiss",
+    "alertsOff": "Desktop alerts are off. Enable in Settings.",
+    "snoozeMenu": "Snooze reminder",
+    "preset": {
+      "inHours_one": "In {{count}} hour ({{time}})",
+      "inHours_other": "In {{count}} hours ({{time}})",
+      "evening": "This evening (18:00)",
+      "tomorrow": "Tomorrow (9:00)",
+      "nextWeek": "Next week (Mon 9:00)"
+    }
+  },
+  "approval": {
+    "question": "Question",
+    "approval": "Approval",
+    "allow": "Allow",
+    "deny": "Deny"
+  },
+  "signIn": {
+    "failed": "Could not sign in to {{harness}}.",
+    "required": "Authentication required",
+    "continueUsing": "Sign in to continue using {{harness}}.",
+    "continue": "Continue",
+    "signedInTo": "Signed in to {{harness}}",
+    "retryNow": "You can retry your last message now.",
+    "waiting": "Waiting for browser…",
+    "signedIn": "Signed in",
+    "signInTo": "Sign in to {{harness}}"
+  },
+  "filters": {
+    "label": "Filter sessions",
+    "archived": "Archived",
+    "status": "Status",
+    "working": "Working",
+    "needsApproval": "Needs approval",
+    "done": "Done",
+    "timeLabel": "Time",
+    "provider": "Provider",
+    "clear": "Clear filters",
+    "time": {
+      "all": "All time",
+      "today": "Today",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days"
+    }
+  },
+  "attachment": {
+    "remove": "Remove",
+    "removeNamed": "Remove {{name}}",
+    "noPath": "Cannot attach {{name}}: no local file path is available. Attach the file again."
+  },
+  "find": {
+    "label": "Find in conversation",
+    "position": "{{index}} of {{total}}",
+    "noResults": "No results",
+    "previous": "Previous match",
+    "next": "Next match",
+    "close": "Close find"
+  },
+  "linkWorkItem": {
+    "invalid": "Enter a valid GitHub issue or pull request URL.",
+    "editTitle": "Edit GitHub link",
+    "title": "Link GitHub issue or PR",
+    "urlLabel": "Issue or pull request URL",
+    "urlAria": "GitHub issue or pull request URL",
+    "hint": "Paste the full github.com URL. The linked item will appear on the session card.",
+    "remove": "Remove link",
+    "cancel": "Cancel",
+    "update": "Update link",
+    "link": "Link"
+  },
+  "mcpPicker": {
+    "dialogLabel": "Choose an MCP server",
+    "searchLabel": "Search MCP servers",
+    "searchPlaceholder": "Search MCP servers…",
+    "close": "Close MCP picker",
+    "closeTitle": "Back to the conversation (Esc)",
+    "listLabel": "MCP servers",
+    "loading": "Checking MCP servers…",
+    "noMatching": "No matching MCP servers",
+    "none": "No MCP servers found",
+    "needsAuth": "Needs authentication",
+    "available": "Available",
+    "manage": "Manage MCP Servers…",
+    "differentProvider": "Different provider",
+    "disabled": "Disabled in provider configuration",
+    "connectionUnavailable": "Connection unavailable",
+    "configured": "Configured for this provider"
+  },
+  "handoff": {
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files",
+    "label": "Handoff",
+    "remove": "Remove handoff",
+    "disabled": "Install another provider to hand off",
+    "description": "Hand this session to another agent to continue the work.",
+    "menuLabel": "Hand this session to another agent"
+  },
+  "deleteSession": {
+    "title": "Delete session?",
+    "body": "“{{title}}” will be permanently deleted.",
+    "deleteWorktree": "Also delete the unused worktree",
+    "worktreeHint": "The branch is kept. If files have uncommitted changes, the worktree stays.",
+    "cancel": "Cancel",
+    "confirm": "Delete session"
+  },
+  "runtimeMode": {
+    "supervised": {
+      "label": "Supervised",
+      "hint": "Ask before commands and file changes."
+    },
+    "autoAcceptEdits": {
+      "label": "Auto-accept edits",
+      "hint": "Auto-approve edits, ask before other actions."
+    },
+    "auto": {
+      "label": "Auto",
+      "hint": "An AI reviewer can approve or deny actions."
+    },
+    "fullAccess": {
+      "label": "Full access",
+      "hint": "Allow commands, edits, and supported MCP confirmations in non-plan turns without prompts."
+    },
+    "busy": "Changes apply to the next turn.",
+    "busyNote": "Access changes apply to the next turn. Stop and resend to apply them now.",
+    "label": "Access"
+  },
+  "tasks": {
+    "complete": "Complete",
+    "progress": "{{completed}} of {{total}}",
+    "label": "Task progress",
+    "title": "Tasks",
+    "completed": "Completed",
+    "inProgress": "In progress",
+    "cancelled": "Cancelled",
+    "pending": "Pending"
+  },
+  "context": {
+    "used": "Context used",
+    "usedPercent": "{{percent}}% context used",
+    "tokensOf": "{{used}} / {{window}} tokens",
+    "tokens": "{{used}} tokens",
+    "usage": "Context usage",
+    "openActions": "{{headline}}, {{detail}}. Open context actions",
+    "summary": "{{headline}}, {{detail}}",
+    "compactWait": "Wait for the current operation to finish",
+    "compactTitle": "Compact this conversation's context",
+    "compactNow": "Compact now"
+  },
+  "usageLimit": {
+    "resetAt": "{{when}} · in {{duration}}",
+    "reached": "Usage limit reached",
+    "resets": "Resets {{when}}",
+    "hasReset": "Limit has reset",
+    "resume": "Resume",
+    "cancelAutoResume": "Cancel the automatic resume",
+    "resumingAtReset": "Resuming at reset",
+    "resumeAtResetTitle": "Continue this session once the limit resets",
+    "resumeAtReset": "Resume at reset",
+    "dismiss": "Dismiss",
+    "dismissLabel": "Dismiss usage limit notice"
+  },
+  "liveAgents": {
+    "done": "Done",
+    "question": "Question",
+    "working": "Working",
+    "preparingHandoff": "Preparing a handoff",
+    "label": "Working agents",
+    "count_one": "{{count}} working agents",
+    "count_other": "{{count}} working agents",
+    "showLess": "Show less",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more",
+    "needApproval": "Need approval"
+  },
+  "secondOpinion": {
+    "label": "Second opinion",
+    "withRequest": "Second opinion: {{request}}",
+    "disabled": "No different model available for a second opinion",
+    "description": "Send this turn to another agent to review the work.",
+    "menuLabel": "Send this turn to another agent",
+    "models": "{{harness}} models",
+    "effort": "{{model}} effort"
+  },
+  "markdownMode": {
+    "label": "Markdown view",
+    "preview": "Preview",
+    "source": "Source"
+  },
+  "commands": {
+    "compact": "Summarize older conversation context to free space.",
+    "mcp": "Find an MCP server for this message.",
+    "draft": "Save this message without starting the agent.",
+    "orchestrator": "Plan and coordinate agent work.",
+    "operator": "Give this thread access to MonoCode sessions, folders, and notes.",
+    "addToFolder": "Place this session in an existing or new sidebar folder.",
+    "plan": "Create a reviewable implementation plan before changing files.",
+    "btw": "Ask a read-only side question about the current turn."
+  },
+  "plan": {
+    "fallbackTitle": "Plan",
+    "openInPane": "Open in pane",
+    "openPlanInPane": "Open plan in pane",
+    "open": "Open",
+    "buildTitle": "Build this plan",
+    "building": "Building…",
+    "built": "Built",
+    "build": "Build"
+  },
+  "toolDiff": {
+    "proposed": "Proposed changes",
+    "attempted": "Attempted changes · tool did not complete",
+    "written": "Written content · previous contents unavailable",
+    "preview": "Change preview",
+    "open": "Open {{label}}",
+    "previewWritten": "Preview written content: {{label}}",
+    "previewChanges": "Preview changes: {{label}}",
+    "close": "Close preview"
+  },
+  "review": {
+    "changed_one": "Changed {{count}} file",
+    "changed_other": "Changed {{count}} files",
+    "undoAll": "Undo all session changes",
+    "undoLocked": "Undo is unavailable while another session is running in this project",
+    "undoUnavailable": "Undo is unavailable because a file changed outside this session",
+    "undo": "Undo",
+    "keepTitle": "Keep all session changes and dismiss this card",
+    "keep": "Keep",
+    "reviewTitle": "Review changes",
+    "review": "Review",
+    "showFewer": "Show fewer files",
+    "showMore_one": "Show {{count}} more file",
+    "showMore_other": "Show {{count}} more files",
+    "mixed": "Mixed changes"
+  },
+  "modes": {
+    "turnOff": "Turn off {{mode}}",
+    "plan": {
+      "pill": "Plan",
+      "title": "Plan mode",
+      "description": "Review a plan before building"
+    },
+    "operator": {
+      "pill": "Operator",
+      "title": "Operator",
+      "description": "Give this thread access to MonoCode"
+    },
+    "orchestrator": {
+      "pill": "Orchestrator",
+      "title": "Orchestrator mode",
+      "description": "Plan and coordinate agent work"
+    },
+    "draft": {
+      "pill": "Draft",
+      "title": "Draft mode",
+      "description": "Save this message without starting the agent"
+    }
+  },
+  "question": {
+    "title": "Question",
+    "position": "{{index}} of {{total}}",
+    "skip": "Skip",
+    "keepOpen": "Interact to keep this question open.",
+    "optional": "Optional question",
+    "autoContinue": "Continues without an answer in {{seconds}}s",
+    "continue": "Continue",
+    "selectAll": "Select all that apply",
+    "other": "Other",
+    "typeAnswer": "Type your answer",
+    "numbered": "Question {{number}}"
+  },
+  "outline": {
+    "emptyMessage": "Empty message",
+    "label": "Prompts",
+    "preview": "Prompt preview"
+  },
+  "linkPreview": {
+    "open": "Open {{title}}",
+    "openPr": "Open pull request #{{number}} in {{repo}}",
+    "openIssue": "Open issue #{{number}} in {{repo}}",
+    "openPrTitled": "Open pull request #{{number}} in {{repo}}: {{title}}",
+    "openIssueTitled": "Open issue #{{number}} in {{repo}}: {{title}}",
+    "pr": "Pull request",
+    "issue": "Issue",
+    "unavailable": "Details aren't available here, but the link can still be opened on GitHub.",
+    "updated": "Updated {{time}}",
+    "assigned": "Assigned to {{names}}",
+    "clickToOpen": "Click the chip to open on GitHub",
+    "loading": "Loading GitHub details",
+    "draft": "Draft",
+    "merged": "Merged",
+    "closed": "Closed",
+    "openState": "Open"
+  },
+  "buildTarget": {
+    "title": "Build with another model",
+    "disabled": "No build providers are available",
+    "description": "Choose the model and provider that should build this plan.",
+    "menuLabel": "Build this plan with another model or provider"
+  },
+  "btw": {
+    "turnUnavailable": "The completed turn is no longer available.",
+    "interruptedBeforeReload": "This by-the-way request was interrupted before reload.",
+    "newQuestion": "New question",
+    "conversations": "By-the-way conversations",
+    "sideQuestions": "Side questions",
+    "deleteNamed": "Delete “{{label}}”",
+    "discardNew": "Discard new question",
+    "delete": "Delete",
+    "discard": "Discard",
+    "newSideQuestion": "New side question",
+    "back": "Back to the conversation",
+    "couldNotFinish": "Couldn’t finish",
+    "couldNotAnswer": "{{harness}} could not answer this side question.",
+    "retry": "Retry",
+    "placeholder": "Ask a side question…",
+    "inputLabel": "By-the-way question"
+  },
+  "removal": {
+    "saveFailed": "The conversation could not be saved."
+  },
+  "folders": {
+    "newFolder": "New folder"
+  },
+  "subagent": {
+    "fallbackName": "Subagent"
+  },
+  "quitWhileBusy_one": "{{count}} chat is still running. Quit anyway? It will resume when you reopen MonoCode.",
+  "quitWhileBusy_other": "{{count}} chats are still running. Quit anyway? They will resume when you reopen MonoCode.",
+  "fileLink": {
+    "revealFinder": "Reveal in Finder",
+    "revealExplorer": "Reveal in File Explorer",
+    "openFolder": "Open Containing Folder",
+    "openInMonoCode": "Open in MonoCode",
+    "openDefault": "Open in Default App",
+    "copyPath": "Copy Path",
+    "copyRelativePath": "Copy Relative Path",
+    "menuLabel": "File link actions",
+    "openDefaultFailed": "Could not open the file in its default app: {{error}}",
+    "actionFailed": "Could not complete the file action: {{error}}"
+  },
+  "markdown": {
+    "copied": "Copied",
+    "copyCode": "Copy code",
+    "preview": "Markdown preview",
+    "source": "Markdown source"
+  },
+  "monocodeCall": {
+    "modelsList": "List models",
+    "sessionsList": "List sessions",
+    "sessionsRead": "Read a session",
+    "sessionsSend": "Continue a session",
+    "sessionsDraft": "Save a draft",
+    "sessionsStart": "Start a session",
+    "foldersList": "List folders",
+    "foldersMove": "Move a session",
+    "notesList": "List notes",
+    "notesRead": "Read a note",
+    "notesWrite": "Write a note",
+    "help": "View CLI commands",
+    "using": "Using MonoCode",
+    "used": "Used MonoCode"
+  },
+  "activity": {
+    "subagentsFailed_one": "Subagent failed",
+    "subagentsFailed_other": "{{count}} subagents failed",
+    "files_one": "{{count}} files",
+    "files_other": "{{count}} files",
+    "editing": "Editing {{target}}",
+    "edited": "Edited {{target}}",
+    "reading": "Reading {{target}}",
+    "read": "Read {{target}}",
+    "searching": "Searching the project",
+    "searched": "Searched the project",
+    "exploring": "Exploring the project",
+    "explored": "Explored the project",
+    "runningBackground": "Running in background",
+    "finishedBackground": "Finished in background",
+    "runningCommands_one": "Running a command",
+    "runningCommands_other": "Running {{count}} commands",
+    "ranCommands_one": "Ran a command",
+    "ranCommands_other": "Ran {{count}} commands",
+    "runningSubagents_one": "Running a subagent",
+    "runningSubagents_other": "Running {{count}} subagents",
+    "ranSubagents_one": "Ran a subagent",
+    "ranSubagents_other": "Ran {{count}} subagents",
+    "runningTools_one": "Running a tool",
+    "runningTools_other": "Running {{count}} tools",
+    "ranTools_one": "Ran a tool",
+    "ranTools_other": "Ran {{count}} tools",
+    "notes_one": "{{count}} note",
+    "notes_other": "{{count}} notes",
+    "statusUpdate": "Status update",
+    "thinking": "Thinking",
+    "thought": "Thought"
+  },
+  "pane": {
+    "closeTitle": "Close Pane ({{shortcut}})",
+    "close": "Close pane",
+    "discussionEmpty": "Explore this item with your agent.",
+    "jumpToLatest": "Jump to latest"
+  },
+  "modelPicker": {
+    "effort": "Effort",
+    "triggerTitle": "{{title}} · Recent models: right-click or {{shortcut}}",
+    "effortSuffix": ", effort {{effort}}",
+    "menuLabel": "Model and settings",
+    "recent": "Recently used models",
+    "on": "On",
+    "off": "Off",
+    "and": " and ",
+    "listMany": "{{rest}}, and {{last}}",
+    "listSeparator": ", ",
+    "models": "Models",
+    "providers": "Providers",
+    "favorites": "Favorites",
+    "search": "Search models",
+    "noFavorites": "No favorite models",
+    "loadingCodex": "Loading Codex models…",
+    "noMatching": "No matching models",
+    "removeFavorite": "Remove from favorites",
+    "addFavorite": "Add to favorites",
+    "model": "Model"
+  },
+  "queue": {
+    "paused": "Queue paused because you interrupted",
+    "resume": "Resume",
+    "attachments_one": "{{count}} attachment",
+    "attachments_other": "{{count}} attachments",
+    "edit": "Edit queued message",
+    "save": "Save queued message",
+    "cancelEdit": "Cancel queued message edit",
+    "steer": "Steer",
+    "remove": "Remove queued message"
+  },
+  "composer": {
+    "dropFiles": "Drop files to attach",
+    "placeholder": {
+      "worktreeRemoved": "Select a branch or worktree to continue…",
+      "inbox": "Add a note, or send to start…",
+      "note": "Add a message, or send…",
+      "handoff": "Add context, or send to continue…",
+      "default": "Ask, build, / for commands, @ for references... "
+    },
+    "plus": {
+      "label": "Add files or choose a mode",
+      "heading": "Add to message",
+      "upload": "Upload file",
+      "uploadHint": "Attach files or images",
+      "updateHost": "Update this machine’s host to attach files",
+      "unsupported": "{{harness}} does not support attachments"
+    },
+    "stopEditing": "Stop editing last message",
+    "cancelEdit": "Cancel edit",
+    "saveDraft": "Save draft",
+    "send": "Send",
+    "stop": "Stop"
+  },
+  "transcript": {
+    "loadEarlier": "Load earlier messages",
+    "waitingOrchestrator": "Waiting for orchestrator",
+    "waitingAnswers": "Waiting for answers",
+    "thinking": "Thinking…",
+    "waitingApproval": "Waiting for approval",
+    "background_one": "running in background",
+    "background_other": "{{count}} tasks running in background",
+    "copyResponse": "Copy response",
+    "copyFailed": "Copy failed. {{error}}",
+    "saveAsNote": "Save as note",
+    "savedToNotes": "Saved to Notes",
+    "editResend": "Edit and resend",
+    "showMore": "Show more",
+    "ciContext": "CI context",
+    "ciContextHint": "CI instructions and failure details included with this request.",
+    "removeDraft": "Remove draft",
+    "sendDraft": "Send draft",
+    "copyMessage": "Copy message",
+    "hideWork": "Hide the work",
+    "showWork": "Show the work",
+    "hideSteps": "Hide the steps for {{title}}",
+    "showSteps": "Show the steps for {{title}}",
+    "thinkingSummary": "Thinking",
+    "hideThinking": "Hide thinking",
+    "showThinking": "Show thinking: {{text}}",
+    "agentSaid": "Agent said: {{text}}",
+    "hideFullNote": "Hide the full note",
+    "failedToolCall": "Failed tool call: {{label}}",
+    "toolCall": "Tool call: {{label}}",
+    "hideErrorDetails": "Hide error details for {{label}}",
+    "showErrorDetails": "Show error details for {{label}}",
+    "toolCallAccepted": "Accepted tool call: {{label}}",
+    "toolCallRejected": "Rejected tool call: {{label}}",
+    "toolCallPending": "Pending tool call: {{label}}",
+    "preparingHandoff": "Preparing a handoff",
+    "preparingHandoffTo": "Preparing a handoff to {{name}}",
+    "continuedWith": "Continued with {{name}}",
+    "call": {
+      "run": "Run",
+      "running": "Running",
+      "ran": "Ran"
+    },
+    "work": {
+      "done": "Worked",
+      "doneWho": "{{who}} worked",
+      "doneFor": "Worked for {{elapsed}}",
+      "doneWhoFor": "{{who}} worked for {{elapsed}}",
+      "running": "Working…",
+      "runningWho": "{{who}} working…",
+      "runningFor": "Working for {{elapsed}}",
+      "runningWhoFor": "{{who}} working for {{elapsed}}"
+    },
+    "subagent": "Subagent: {{name}}",
+    "hideAgentWork": "Hide {{name}}'s work",
+    "showAgentWork": "Show {{name}}'s work",
+    "thinkingWith": "Thinking: {{text}}",
+    "interjection": "Interjection: {{label}}"
+  },
+  "interjection": {
+    "note": "{{label}} note",
+    "hideNote": "Hide the {{label}} note",
+    "summary": "{{label}}: {{summary}}",
+    "advisor": "Advisor",
+    "notice": "Notice",
+    "blocker": "Blocker",
+    "concern": "Concern",
+    "nit": "Nit"
+  },
+  "metrics": {
+    "cacheHit": "Cache hit {{percent}}%",
+    "outputRate": "Output {{rate}} tok/s",
+    "turnTokens": "Turn tokens",
+    "input": "{{value}} input",
+    "output": "{{value}} output",
+    "cached": "{{value}} cached",
+    "labelWith": "Turn metrics: {{label}}",
+    "label": "Turn metrics"
+  }
+}

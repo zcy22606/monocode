@@ -1,4 +1,5 @@
 import { asRecord } from "../../../integrations/harness/providers/codex/codexProtocol";
+import { t } from "../../../i18n";
 
 export type RateLimitProvider = "claude" | "codex" | "opencode";
 
@@ -186,7 +187,9 @@ export function formatResetDuration(ms: number): string {
 
 export function formatResetCountdown(ms: number): string {
   const duration = formatResetDuration(ms);
-  return duration === "now" ? "Resets now" : `Resets in ${duration}`;
+  return duration === "now"
+    ? t("usage.resetsNow", { ns: "providers" })
+    : t("usage.resetsIn", { ns: "providers", duration });
 }
 
 /**
@@ -207,9 +210,12 @@ export function rateLimitWindowTooltip(
   window: RateLimitWindow,
   now = Date.now(),
 ): string {
-  const used = `${formatUsagePercent(window.usedPercent)} used`;
+  const used = t("usage.used", {
+    ns: "providers",
+    percent: formatUsagePercent(window.usedPercent),
+  });
   if (window.resetsAt == null) {
-    return `${used} · ${formatWindowLabel(window.windowMinutes)} window`;
+    return `${used} · ${t("usage.window", { ns: "providers", window: formatWindowLabel(window.windowMinutes) })}`;
   }
   return `${used} · ${formatResetCountdown(window.resetsAt - now)}`;
 }

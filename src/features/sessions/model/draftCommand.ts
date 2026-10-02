@@ -1,10 +1,14 @@
 import type { BuiltinSkill } from "../../skills/model/skills";
+import { t } from "../../../i18n";
 
 export const DRAFT_COMMAND: BuiltinSkill = {
   kind: "builtin",
   name: "draft",
   invocation: "draft",
-  description: "Save this message without starting the agent.",
+  // IndieDesk: getter, so the slash menu reads the current language.
+  get description() {
+    return t("sessions:commands.draft");
+  },
   scope: "builtin",
   source: "monocode",
 };

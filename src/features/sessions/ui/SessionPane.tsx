@@ -75,6 +75,7 @@ import { isOpus55Model } from "../model/opusWelcome";
 import { AstraWelcome } from "./AstraWelcome";
 import { OpusWelcome } from "./OpusWelcome";
 import { projectKey } from "../../../shared/lib/paths";
+import { useTranslation } from "../../../i18n";
 import { canEditLastTurn, lastTurnRecall } from "../model/editLastTurn";
 import {
   loadProjectChatBackgroundSettings,
@@ -310,6 +311,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
   onPaneDragStart,
   transcriptPool,
 }: Props) {
+  const { t } = useTranslation("sessions");
   const orchestrationRuns = useSyncExternalStore(
     orchestrator.subscribe,
     orchestrator.snapshot,
@@ -739,8 +741,8 @@ const LocalSessionPane = memo(function LocalSessionPane({
           </span>
           <button
             type="button"
-            title={`Close Pane (${MOD}W)`}
-            aria-label="Close pane"
+            title={t("pane.closeTitle", { shortcut: `${MOD}W` })}
+            aria-label={t("pane.close")}
             data-no-drag
             className="grid size-5 shrink-0 place-items-center rounded text-content/50 hover:bg-content/10 hover:text-content"
             onPointerDown={(e) => e.stopPropagation()}
@@ -789,7 +791,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
           {remoteSessionLoading ? null : isEmpty ? (
             session.inboxAsk ? (
               <div className="scrollbar-none h-full min-h-0 overflow-y-auto">
-                <DiscussionEmpty message="Explore this item with your agent." />
+                <DiscussionEmpty message={t("pane.discussionEmpty")} />
               </div>
             ) : (
               <EmptySession
@@ -938,8 +940,8 @@ const LocalSessionPane = memo(function LocalSessionPane({
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 z-30 flex justify-center">
                   <button
                     type="button"
-                    title="Jump to latest"
-                    aria-label="Jump to latest"
+                    title={t("pane.jumpToLatest")}
+                    aria-label={t("pane.jumpToLatest")}
                     data-jump-to-bottom
                     onClick={() => jumpToBottomRef.current?.()}
                     className="pointer-events-auto grid size-6 place-items-center rounded-md border border-content/15 bg-content/10 text-content shadow-md hover:bg-content/5 backdrop-blur-md"

@@ -1,6 +1,7 @@
 import type { Tab } from "../../../app/shell/TitleBar";
 import { projectKey, projectName } from "../../../shared/lib/paths";
 import { knownProjectPaths, notifyProjectPathsChanged } from "../../projects/model/recents";
+import { t } from "../../../i18n";
 
 /** Chrome-like palette — saturated enough to read on dark glass. */
 export const TAB_GROUP_COLORS = [
@@ -343,7 +344,7 @@ export function resolveTabGroupCustomColor(
 export function resolveTabGroupLabel(
   project: string,
   overrides?: Record<string, string>,
-  fallback = "Group",
+  fallback = t("workspace:groupFallback"),
 ): string {
   return overrides?.[project]?.trim() || fallback;
 }

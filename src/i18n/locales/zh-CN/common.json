@@ -1,0 +1,15 @@
+{
+  "platform": {
+    "pickFolders": "打开项目",
+    "pickFiles": "附加文件",
+    "clipboard": {
+      "fileUnavailable": "文件内容已不可用。",
+      "copyFailed": "无法复制 {{name}}：{{reason}}",
+      "nothingToCopy": "没有可复制的内容。",
+      "nothingToAttach_other": "复制的路径里没有可附加的文件——文件可能已被移动、重命名或删除。",
+      "partialAttach": "已附加复制的 {{total}} 个文件中的 {{attached}} 个。每轮最多附带 {{max}} 个。",
+      "unreadable": "无法读取剪贴板。",
+      "noImage": "剪贴板里没有图片。"
+    }
+  }
+}

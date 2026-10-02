@@ -1,0 +1,41 @@
+{
+  "modal": {
+    "close": "Close"
+  },
+  "privateEmail": {
+    "hide": "Hide email",
+    "reveal": "Reveal email"
+  },
+  "imageLightbox": {
+    "label": "Image preview: {{alt}}",
+    "closeLabel": "Close image preview",
+    "close": "Close"
+  },
+  "searchableSelect": {
+    "placeholder": "Choose an option…",
+    "searchPlaceholder": "Search options…",
+    "empty": "No matching options"
+  },
+  "colorPicker": {
+    "color": "Color {{number}}",
+    "custom": "Custom color",
+    "saturation": "Saturation and brightness",
+    "hue": "Hue",
+    "hex": "Hex color"
+  },
+  "dateTimePicker": {
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekdays": {
+      "mo": "Mo",
+      "tu": "Tu",
+      "we": "We",
+      "th": "Th",
+      "fr": "Fr",
+      "sa": "Sa",
+      "su": "Su"
+    },
+    "time": "Time",
+    "timeHint": "Local time, 24-hour"
+  }
+}

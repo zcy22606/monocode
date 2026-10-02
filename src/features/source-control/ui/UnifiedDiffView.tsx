@@ -25,6 +25,7 @@ import type { ColorScheme } from "../../settings/model/appearance";
 import { basename } from "../../../platform/tauri/fs";
 import { highlightDiffFile, type SyntaxToken } from "../../files/editor/syntaxTokens";
 import { DiffCommentComposer } from "./DiffCommentComposer";
+import { useTranslation } from "../../../i18n";
 import {
   expandFold,
   type FoldReveal,
@@ -95,6 +96,7 @@ export function UnifiedDiffView({
   onDiscardFile,
   onStageHunk,
 }: Props) {
+  const { t } = useTranslation("sourceControl");
   const lockOverscroll = useLockOverscroll<HTMLDivElement>();
   const colorScheme = useColorScheme();
   const [open, setOpen] = useState<Set<string>>(() =>
@@ -180,7 +182,7 @@ export function UnifiedDiffView({
   }
 
   const count = fileCount ?? files.length;
-  const fileLabel = count === 1 ? "1 file" : `${count} files`;
+  const fileLabel = t("diffView.files", { count });
   const additions =
     totals?.additions ?? files.reduce((sum, file) => sum + file.additions, 0);
   const deletions =
@@ -202,8 +204,8 @@ export function UnifiedDiffView({
         <span className="ml-auto flex items-center gap-0.5">
           <button
             type="button"
-            title="Expand all files"
-            aria-label="Expand all files"
+            title={t("diffView.expandAll")}
+            aria-label={t("diffView.expandAll")}
             onClick={() => setOpen(new Set(files.map((file) => file.id)))}
             className="grid size-7 place-items-center rounded-md text-content/45 hover:bg-content/10 hover:text-content"
           >
@@ -211,8 +213,8 @@ export function UnifiedDiffView({
           </button>
           <button
             type="button"
-            title="Collapse all files"
-            aria-label="Collapse all files"
+            title={t("diffView.collapseAll")}
+            aria-label={t("diffView.collapseAll")}
             disabled={open.size === 0}
             onClick={() => setOpen(new Set())}
             className="grid size-7 place-items-center rounded-md text-content/45 hover:bg-content/10 hover:text-content disabled:opacity-40"
@@ -231,8 +233,7 @@ export function UnifiedDiffView({
       >
         {truncated ? (
           <p className="px-3 py-3 text-[12px] text-content/45">
-            Diff is too large to display in full. File list is shown without
-            patches.
+            {t("diffView.truncated")}
           </p>
         ) : null}
         <div
@@ -305,6 +306,7 @@ const FileSection = memo(function FileSection({
   onStageHunk,
   bindRef,
 }: FileSectionProps) {
+  const { t } = useTranslation("sourceControl");
   const Chevron = expanded ? ChevronDown : ChevronRight;
   const name = basename(file.path);
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -395,7 +397,7 @@ const FileSection = memo(function FileSection({
         </button>
         {file.canDiscard && onDiscardFile ? (
           <IconButton
-            title="Discard file"
+            title={t("diffView.discardFile")}
             disabled={busy}
             onClick={() => onDiscardFile(file.id)}
           >
@@ -405,8 +407,8 @@ const FileSection = memo(function FileSection({
         {file.canStage && onStageFile ? (
           <button
             type="button"
-            title="Stage file"
-            aria-label="Stage file"
+            title={t("diffView.stageFile")}
+            aria-label={t("diffView.stageFile")}
             disabled={busy}
             onClick={() => onStageFile(file.id)}
             className="grid size-4 place-items-center rounded-[3px] bg-content text-background-base hover:opacity-80 disabled:opacity-40"
@@ -498,10 +500,11 @@ function FileBody({
   onReveal: (foldId: string, direction: "up" | "down" | "all") => void;
   onStageHunk?: (id: string, pos: number) => void;
 }) {
-  if (file.binary) return <EmptyBody>Binary file changed</EmptyBody>;
-  if (file.tooLarge) return <EmptyBody>Diff is too large to display</EmptyBody>;
+  const { t } = useTranslation("sourceControl");
+  if (file.binary) return <EmptyBody>{t("diffView.binary")}</EmptyBody>;
+  if (file.tooLarge) return <EmptyBody>{t("diffView.tooLarge")}</EmptyBody>;
   if (file.emptyMessage) return <EmptyBody>{file.emptyMessage}</EmptyBody>;
-  if (file.blocks.length === 0) return <EmptyBody>No textual diff</EmptyBody>;
+  if (file.blocks.length === 0) return <EmptyBody>{t("diff.noTextual")}</EmptyBody>;
 
   return (
     <VirtualRows
@@ -854,6 +857,7 @@ function FoldBar({
   hidden: number;
   onReveal: (direction: "up" | "down" | "all") => void;
 }) {
+  const { t } = useTranslation("sourceControl");
   return (
     <div
       className="flex items-center gap-1 bg-content/8 px-2"
@@ -861,8 +865,8 @@ function FoldBar({
     >
       <button
         type="button"
-        title="Expand upward"
-        aria-label="Expand unmodified lines upward"
+        title={t("diffView.expandUp")}
+        aria-label={t("diffView.expandUpLabel")}
         onClick={() => onReveal("up")}
         className="grid size-5 place-items-center rounded text-content/40 hover:bg-content/10 hover:text-content"
       >
@@ -870,8 +874,8 @@ function FoldBar({
       </button>
       <button
         type="button"
-        title="Expand downward"
-        aria-label="Expand unmodified lines downward"
+        title={t("diffView.expandDown")}
+        aria-label={t("diffView.expandDownLabel")}
         onClick={() => onReveal("down")}
         className="grid size-5 place-items-center rounded text-content/40 hover:bg-content/10 hover:text-content"
       >
@@ -882,7 +886,7 @@ function FoldBar({
         onClick={() => onReveal("all")}
         className="min-w-0 flex-1 py-1 text-left font-mono text-[11px] text-content/45 hover:text-content/70"
       >
-        {hidden} unmodified {hidden === 1 ? "line" : "lines"}
+        {t("diffView.unmodified", { count: hidden })}
       </button>
     </div>
   );
@@ -905,6 +909,7 @@ const DiffLineRow = memo(function DiffLineRow({
   onStage?: () => void;
   onComment?: (anchor: DOMRect) => void;
 }) {
+  const { t } = useTranslation("sourceControl");
   if (line.kind === "hunk") {
     return (
       <div
@@ -953,8 +958,16 @@ const DiffLineRow = memo(function DiffLineRow({
         {onComment ? (
           <button
             type="button"
-            title={`Comment on line ${number ?? ""}`.trim()}
-            aria-label={`Comment on line ${number ?? ""}`.trim()}
+            title={
+              number != null
+                ? t("diffView.commentLine", { line: number })
+                : t("diffView.commentLineBare")
+            }
+            aria-label={
+              number != null
+                ? t("diffView.commentLine", { line: number })
+                : t("diffView.commentLineBare")
+            }
             onClick={(event) =>
               onComment(event.currentTarget.getBoundingClientRect())
             }
@@ -970,8 +983,8 @@ const DiffLineRow = memo(function DiffLineRow({
         {onStage ? (
           <button
             type="button"
-            title="Stage hunk"
-            aria-label="Stage hunk"
+            title={t("diffView.stageHunk")}
+            aria-label={t("diffView.stageHunk")}
             onClick={onStage}
             className={`absolute top-0.5 left-full z-10 ml-0.5 grid size-4 place-items-center rounded-[3px] bg-white text-[11px] font-bold text-black ${
               hovered ? "opacity-100" : "pointer-events-none opacity-0"

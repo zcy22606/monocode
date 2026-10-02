@@ -1,0 +1,42 @@
+{
+  "title": "Notes",
+  "untitled": "Untitled",
+  "list": {
+    "filter": "Filter notes",
+    "new": "New note",
+    "noMatches": "No matching notes",
+    "empty": "No notes yet. Save a turn from the transcript, or create one here.",
+    "resize": "Resize notes list"
+  },
+  "detail": {
+    "empty": "Select a note",
+    "note": "Note",
+    "titleLabel": "Note title",
+    "updated": "Updated {{time}}",
+    "addToChat": "Add to chat",
+    "delete": "Delete",
+    "saveError": "Could not save note: {{error}}",
+    "retry": "Retry",
+    "sections": "Note sections",
+    "preview": "Preview",
+    "source": "Source",
+    "noDescription": "No description",
+    "writeMarkdown": "Write markdown…"
+  },
+  "images": {
+    "adding": "Adding images…",
+    "drop": "Drop images here",
+    "unsupported": "Drop a PNG, JPG, GIF, WebP, or SVG image.",
+    "noneAdded": "None of the dropped images could be added to the note."
+  },
+  "tags": {
+    "label": "Tags",
+    "remove": "Remove #{{tag}}",
+    "addLabel": "Add note tag",
+    "add": "Add tag…"
+  },
+  "card": {
+    "remove": "Remove",
+    "removeNote": "Remove note {{title}}"
+  }
+}

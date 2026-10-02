@@ -47,6 +47,7 @@ import { NoteMiniCard } from "../../notes/ui/NoteMiniCard";
 
 import { TerminalSpinner } from "./TerminalSpinner";
 import { Popover } from "../../../shared/ui/Popover";
+import { t as translate, useTranslation } from "../../../i18n";
 import { ProjectMascot } from "../../projects/ui/ProjectMascot";
 import type { ApprovalDecision } from "../../../integrations/harness";
 import {
@@ -240,6 +241,7 @@ function AgentTranscriptComponent({
   onScrollerChange,
   managed = false,
 }: Props) {
+  const { t } = useTranslation("sessions");
   const blocks = useMemo(() => {
     if (!harness || !supportsHarnessLogin(harness)) return sourceBlocks;
     const visibleBlocks = sourceBlocks.filter(
@@ -659,7 +661,7 @@ function AgentTranscriptComponent({
               className="rounded-md bg-content/8 px-2.5 py-1.5 font-sans text-[12px] text-content/60 hover:bg-content/12 hover:text-content"
               onClick={loadEarlier}
             >
-              Load earlier messages
+              {t("transcript.loadEarlier")}
             </button>
           </div>
         ) : null}
@@ -718,9 +720,9 @@ function AgentTranscriptComponent({
               paused={waitingForApproval}
               waitingLabel={
                 managed && waitingForApproval
-                  ? "Waiting for orchestrator"
+                  ? t("transcript.waitingOrchestrator")
                   : pendingQuestion
-                    ? "Waiting for answers"
+                    ? t("transcript.waitingAnswers")
                     : undefined
               }
               background={backgroundTasks}
@@ -1001,11 +1003,16 @@ function InitialThinking({
   live: boolean;
   embedded?: boolean;
 }) {
+  const { t } = useTranslation("sessions");
   return (
     <div
       className={`min-w-0 pt-3 pb-1 font-sans text-sm text-content/50 ${embedded ? "" : "px-4"}`}
     >
-      {live ? <Shimmer duration={1.6}>Thinking…</Shimmer> : "Thinking…"}
+      {live ? (
+        <Shimmer duration={1.6}>{t("transcript.thinking")}</Shimmer>
+      ) : (
+        t("transcript.thinking")
+      )}
     </div>
   );
 }
@@ -1029,11 +1036,12 @@ function LiveFoldTitle({
   background?: string[];
   modelName?: string;
 }) {
+  const { t } = useTranslation("sessions");
   const elapsedMs = useElapsedFrom(startedAt, paused);
   // Yielding with a command still going is not the end of the turn. The clock
   // keeps running and the line says what it is waiting on.
   const text = paused
-    ? (waitingLabel ?? "Waiting for approval")
+    ? (waitingLabel ?? t("transcript.waitingApproval"))
     : background?.length
       ? `${formatWorkingDuration(elapsedMs, modelName)} · ${backgroundLabel(background)}`
       : formatWorkingDuration(elapsedMs, modelName);
@@ -1052,9 +1060,7 @@ function LiveFoldTitle({
 }
 
 function backgroundLabel(tasks: string[]): string {
-  return tasks.length === 1
-    ? "running in background"
-    : `${tasks.length} tasks running in background`;
+  return translate("sessions:transcript.background", { count: tasks.length });
 }
 
 /**
@@ -1160,6 +1166,7 @@ function TurnMetricsBadge({
   metrics?: TurnMetrics;
   elapsedMs: number | null;
 }) {
+  const { t } = useTranslation("sessions");
   const root = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   if (!metrics || !hasTurnMetrics(metrics)) return null;
@@ -1171,23 +1178,25 @@ function TurnMetricsBadge({
   const headline =
     [
       metrics.cacheHitPercent != null
-        ? `Cache hit ${Math.round(metrics.cacheHitPercent)}%`
+        ? t("metrics.cacheHit", {
+            percent: Math.round(metrics.cacheHitPercent),
+          })
         : null,
       outputRate != null
-        ? `Output ${formatMetricCount(outputRate)} tok/s`
+        ? t("metrics.outputRate", { rate: formatMetricCount(outputRate) })
         : null,
     ]
       .filter(Boolean)
-      .join(" · ") || "Turn tokens";
+      .join(" · ") || t("metrics.turnTokens");
   const detail = [
     metrics.inputTokens != null
-      ? `${formatMetricCount(metrics.inputTokens)} input`
+      ? t("metrics.input", { value: formatMetricCount(metrics.inputTokens) })
       : null,
     metrics.outputTokens != null
-      ? `${formatMetricCount(metrics.outputTokens)} output`
+      ? t("metrics.output", { value: formatMetricCount(metrics.outputTokens) })
       : null,
     metrics.cacheReadTokens != null
-      ? `${formatMetricCount(metrics.cacheReadTokens)} cached`
+      ? t("metrics.cached", { value: formatMetricCount(metrics.cacheReadTokens) })
       : null,
   ]
     .filter(Boolean)
@@ -1206,8 +1215,8 @@ function TurnMetricsBadge({
       <span
         role="img"
         tabIndex={0}
-        aria-label={`Turn metrics: ${label}`}
-        title="Turn metrics"
+        aria-label={t("metrics.labelWith", { label })}
+        title={t("metrics.label")}
         className="grid rounded-md p-1 text-content/40 outline-none hover:bg-content/8 hover:text-content/70 focus-visible:ring-1 focus-visible:ring-accent"
       >
         <ChartBreakoutSquare className="size-3.5" strokeWidth={1.75} />
@@ -1259,12 +1268,14 @@ function formatClockTime(epochMs: number): string {
 function CopyTurnButton({
   text,
   attachments,
-  label = "Copy response",
+  label: labelProp,
 }: {
   text: string;
   attachments?: Attachment[];
   label?: string;
 }) {
+  const { t } = useTranslation("sessions");
+  const label = labelProp ?? t("transcript.copyResponse");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -1283,8 +1294,8 @@ function CopyTurnButton({
       <button
         type="button"
         disabled={pending}
-        title={copied ? "Copied" : label}
-        aria-label={copied ? "Copied" : label}
+        title={copied ? t("markdown.copied") : label}
+        aria-label={copied ? t("markdown.copied") : label}
         className="-ml-1 rounded-md p-1 text-content/40 hover:bg-content/8 hover:text-content/70"
         onClick={(event) => {
           event.stopPropagation();
@@ -1314,7 +1325,7 @@ function CopyTurnButton({
       </button>
       {error && (
         <span role="alert" className="max-w-xs text-xs text-content/70">
-          Copy failed. {error}
+          {t("transcript.copyFailed", { error })}
         </span>
       )}
     </>
@@ -1328,6 +1339,7 @@ function SaveNoteButton({
   text: string;
   onSave: (text: string) => void | Promise<void>;
 }) {
+  const { t } = useTranslation("sessions");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1346,8 +1358,8 @@ function SaveNoteButton({
       <button
         type="button"
         disabled={pending}
-        title={saved ? "Saved to Notes" : "Save as note"}
-        aria-label={saved ? "Saved to Notes" : "Save as note"}
+        title={saved ? t("transcript.savedToNotes") : t("transcript.saveAsNote")}
+        aria-label={saved ? t("transcript.savedToNotes") : t("transcript.saveAsNote")}
         className="rounded-md p-1 text-content/40 hover:bg-content/8 hover:text-content/70"
         onClick={async () => {
           setError(null);
@@ -1374,7 +1386,7 @@ function SaveNoteButton({
       </button>
       {error && (
         <span role="alert" className="max-w-xs text-xs text-content/70">
-          Could not save note. {error}
+          {t("selectionMenu.saveFailed", { error })}
         </span>
       )}
     </>
@@ -1388,7 +1400,8 @@ function EditLastTurnButton({
   onEdit: () => void;
   editing?: boolean;
 }) {
-  const label = editing ? "Cancel edit" : "Edit and resend";
+  const { t } = useTranslation("sessions");
+  const label = editing ? t("composer.cancelEdit") : t("transcript.editResend");
   return (
     <button
       type="button"
@@ -1606,6 +1619,7 @@ function UserMessageBlock({
   onSendDraft?: (block: Block) => boolean | void;
   onRemoveDraft?: (block: Block) => boolean | void;
 }) {
+  const { t } = useTranslation("sessions");
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const [singleLine, setSingleLine] = useState(false);
@@ -1753,7 +1767,7 @@ function UserMessageBlock({
               className="mt-1 rounded px-1 py-0.5 text-xs text-content/60 hover:bg-content/8 hover:text-content"
               onClick={toggle}
             >
-              {expanded ? "Show less" : "Show more"}
+              {expanded ? t("liveAgents.showLess") : t("transcript.showMore")}
             </button>
           ) : null}
           {block.ciContext ? (
@@ -1763,10 +1777,10 @@ function UserMessageBlock({
             >
               <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded text-xs text-content/50 transition-colors hover:text-content/80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-content/40 [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="size-3 shrink-0 transition-transform group-open/ci:rotate-90" />
-                <span>CI context</span>
+                <span>{t("transcript.ciContext")}</span>
               </summary>
               <p className="mt-2 text-xs text-content/50">
-                CI instructions and failure details included with this request.
+                {t("transcript.ciContextHint")}
               </p>
               <pre className="mt-2 max-h-72 min-w-0 overflow-auto overscroll-contain rounded-md bg-content/5 p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-words text-content/70">
                 {block.ciContext}
@@ -1777,27 +1791,27 @@ function UserMessageBlock({
             <div className="mt-2 flex items-center justify-between gap-4 border-t border-dashed border-content/20 pt-2">
               <span className="flex items-center gap-1.5 text-xs text-content/50">
                 <CircleDashed className="size-3.5" strokeWidth={1.75} />
-                Draft
+                {t("modes.draft.pill")}
               </span>
               <span className="flex items-center gap-1">
                 <button
                   type="button"
-                  title="Remove draft"
-                  aria-label="Remove draft"
+                  title={t("transcript.removeDraft")}
+                  aria-label={t("transcript.removeDraft")}
                   onClick={() => onRemoveDraft?.(block)}
                   className="flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-content/55 hover:bg-content/10 hover:text-content"
                 >
                   <Trash2 className="size-3.5" strokeWidth={1.75} />
-                  Remove
+                  {t("attachment.remove")}
                 </button>
                 <button
                   type="button"
-                  title="Send draft"
-                  aria-label="Send draft"
+                  title={t("transcript.sendDraft")}
+                  aria-label={t("transcript.sendDraft")}
                   onClick={() => onSendDraft?.(block)}
                   className="primary-action flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-transform duration-150 active:scale-[0.97]"
                 >
-                  Send
+                  {t("composer.send")}
                   <ArrowUp className="size-3.5" strokeWidth={2.25} />
                 </button>
               </span>
@@ -1823,7 +1837,7 @@ function UserMessageBlock({
               <CopyTurnButton
                 text={text}
                 attachments={block.attachments}
-                label="Copy message"
+                label={t("transcript.copyMessage")}
               />
             ) : null}
             {onEdit ? (
@@ -1997,7 +2011,7 @@ function WorkFoldLine({
     <button
       type="button"
       aria-expanded={open}
-      aria-label={open ? "Hide the work" : "Show the work"}
+      aria-label={open ? translate("sessions:transcript.hideWork") : translate("sessions:transcript.showWork")}
       aria-live={live ? "polite" : undefined}
       onClick={onToggle}
       className={`group ${row}`}
@@ -2290,7 +2304,7 @@ function ActivityPhaseGroup({
         type="button"
         aria-expanded={open}
         aria-label={
-          open ? `Hide the steps for ${title}` : `Show the steps for ${title}`
+          open ? translate("sessions:transcript.hideSteps", { title }) : translate("sessions:transcript.showSteps", { title })
         }
         onClick={() => setOverride(!open)}
         className="group flex w-full min-w-0 items-center gap-1.5 py-1 text-left"
@@ -2602,7 +2616,7 @@ function SubagentPanel({
   if (steps.length === 0 && !report) {
     return (
       <div
-        aria-label={`Subagent: ${name}`}
+        aria-label={translate("sessions:transcript.subagent", { name })}
         title={brief}
         className="-mx-1.5 flex min-w-0 items-center gap-2 px-1.5 py-1"
       >
@@ -2618,7 +2632,7 @@ function SubagentPanel({
       <button
         type="button"
         aria-expanded={open}
-        aria-label={open ? `Hide ${name}'s work` : `Show ${name}'s work`}
+        aria-label={translate(open ? "sessions:transcript.hideAgentWork" : "sessions:transcript.showAgentWork", { name })}
         title={brief}
         onClick={onToggle}
         // An open row keeps the wash it lit up under the cursor, so the panel
@@ -2899,7 +2913,7 @@ function ActivityInterjectionRow({ block }: { block: Block }) {
   if (!block.text.trim()) {
     return (
       <div
-        aria-label={`${chrome.label} note`}
+        aria-label={translate("sessions:interjection.note", { label: chrome.label })}
         className="flex min-w-0 items-center gap-1.5 py-1"
       >
         {label}
@@ -2913,7 +2927,7 @@ function ActivityInterjectionRow({ block }: { block: Block }) {
         type="button"
         aria-expanded={open}
         aria-label={
-          open ? `Hide the ${chrome.label} note` : `${chrome.label}: ${summary}`
+          open ? translate("sessions:interjection.hideNote", { label: chrome.label }) : translate("sessions:interjection.summary", { label: chrome.label, summary })
         }
         onClick={() => setOpen((value) => !value)}
         className="group flex min-w-0 items-center gap-1.5 py-1 text-left"
@@ -2948,7 +2962,8 @@ function ActivityThinkingRow({
   onOpenFile?: (path: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const text = proseSummary(block.text) || "Thinking";
+  const { t } = useTranslation("sessions");
+  const text = proseSummary(block.text) || t("transcript.thinkingSummary");
   // In a group the rail is the bullet, so there is nothing to breathe while
   // reasoning streams in — the line itself does.
   const pulse = block.streaming ? "zen-thinking-pulse" : "";
@@ -2971,7 +2986,7 @@ function ActivityThinkingRow({
   if (!expandable) {
     return (
       <div
-        aria-label={`Thinking: ${text}`}
+        aria-label={t("transcript.thinkingWith", { text })}
         className="flex min-w-0 items-center gap-1.5 py-1"
       >
         {icon}
@@ -2985,7 +3000,7 @@ function ActivityThinkingRow({
       <button
         type="button"
         aria-expanded={open}
-        aria-label={open ? "Hide thinking" : `Show thinking: ${text}`}
+        aria-label={open ? t("transcript.hideThinking") : t("transcript.showThinking", { text })}
         onClick={() => setOpen((value) => !value)}
         className="group flex min-w-0 items-center gap-1.5 py-1 text-left"
       >
@@ -3038,7 +3053,7 @@ function ActivityNoteRow({
   if (!expandable) {
     return (
       <div
-        aria-label={`Agent said: ${text}`}
+        aria-label={translate("sessions:transcript.agentSaid", { text })}
         className="flex min-w-0 items-center gap-1.5 py-1"
       >
         {icon}
@@ -3054,7 +3069,7 @@ function ActivityNoteRow({
       <button
         type="button"
         aria-expanded={open}
-        aria-label={open ? "Hide the full note" : `Agent said: ${text}`}
+        aria-label={open ? translate("sessions:transcript.hideFullNote") : translate("sessions:transcript.agentSaid", { text })}
         onClick={() => setOpen((value) => !value)}
         className="group flex min-w-0 items-center gap-1.5 py-1 text-left"
       >
@@ -3122,7 +3137,7 @@ function ActivityToolRow({
     <div className="flex min-w-0 flex-col">
       {errorDetail ? (
         <div
-          aria-label={`Failed tool call: ${label}`}
+          aria-label={translate("sessions:transcript.failedToolCall", { label })}
           className="group flex min-w-0 items-center gap-1.5 py-1"
         >
           {bare ? null : <ActivityToolIcon state={state} live={live} />}
@@ -3136,7 +3151,7 @@ function ActivityToolRow({
           <button
             type="button"
             aria-expanded={errorOpen}
-            aria-label={`${errorOpen ? "Hide" : "Show"} error details for ${label}`}
+            aria-label={translate(errorOpen ? "sessions:transcript.hideErrorDetails" : "sessions:transcript.showErrorDetails", { label })}
             onClick={() => setErrorOpen((value) => !value)}
             className="-m-1 shrink-0 rounded p-1"
           >
@@ -3148,7 +3163,7 @@ function ActivityToolRow({
         </div>
       ) : (
         <div
-          aria-label={`Tool call: ${label}`}
+          aria-label={translate("sessions:transcript.toolCall", { label })}
           className="flex min-w-0 items-center gap-1.5 py-1"
         >
           {bare ? null : <ActivityToolIcon state={state} live={live} />}
@@ -3190,11 +3205,12 @@ function MonoCodeCallRow({
   const hasError = state === "rejected" && !!output;
   const pendingApproval = needsApproval(block);
   const command = `monocode app ${call.action}`;
+  const { t } = useTranslation("sessions");
   const verb = pendingApproval
-    ? "Run"
+    ? t("transcript.call.run")
     : state === "pending"
-      ? "Running"
-      : "Ran";
+      ? t("transcript.call.running")
+      : t("transcript.call.ran");
   const summary = (
     <>
       <span
@@ -3224,7 +3240,7 @@ function MonoCodeCallRow({
         <button
           type="button"
           aria-expanded={errorOpen}
-          aria-label={`${errorOpen ? "Hide" : "Show"} error details for MonoCode: ${call.label}`}
+          aria-label={t(errorOpen ? "transcript.hideErrorDetails" : "transcript.showErrorDetails", { label: `MonoCode: ${call.label}` })}
           onClick={() => setErrorOpen((value) => !value)}
           className="flex w-full min-w-0 items-center gap-1.5 py-1 text-left"
         >
@@ -3327,12 +3343,8 @@ function formatWorkingDuration(
 ): string {
   const who = modelName?.trim();
   const elapsed = formatElapsed(elapsedMs);
-  const verb = done ? (who ? "worked" : "Worked") : who ? "working" : "Working";
-  if (elapsed == null) {
-    if (done) return who ? `${who} ${verb}` : verb;
-    return who ? `${who} ${verb}…` : `${verb}…`;
-  }
-  return who ? `${who} ${verb} for ${elapsed}` : `${verb} for ${elapsed}`;
+  const key = `${done ? "done" : "running"}${who ? "Who" : ""}${elapsed == null ? "" : "For"}` as const;
+  return translate(`sessions:transcript.work.${key}`, { who, elapsed });
 }
 
 function formatElapsed(elapsedMs: number | null): string | null {
@@ -3365,12 +3377,12 @@ function ToolCall({
   const detail = block.tool?.detail?.trim();
   const expanded = detail && detail !== label ? detail : label;
   const state = toolCallState(block);
-  const stateLabel =
+  const stateKey =
     state === "accepted"
-      ? "Accepted"
+      ? "sessions:transcript.toolCallAccepted"
       : state === "rejected"
-        ? "Rejected"
-        : "Pending";
+        ? "sessions:transcript.toolCallRejected"
+        : "sessions:transcript.toolCallPending";
   const editTool = isEditTool(
     block.tool?.kind,
     block.text || block.tool?.title,
@@ -3433,7 +3445,7 @@ function ToolCall({
         <button
           type="button"
           aria-expanded={open}
-          aria-label={`${stateLabel} tool call: ${label}`}
+          aria-label={translate(stateKey, { label })}
           onClick={() => setOpen((value) => !value)}
           className="flex w-full min-w-0 items-center gap-2 rounded-lg py-1.5 text-left"
         >
@@ -3452,7 +3464,7 @@ function ToolCall({
         </button>
       ) : (
         <div
-          aria-label={`${stateLabel} tool call: ${label}`}
+          aria-label={translate(stateKey, { label })}
           className="flex w-full min-w-0 items-center gap-2"
         >
           <ToolCallIcon state={state} />
@@ -3639,11 +3651,12 @@ function ApprovalControls({
 }
 
 function HandoffDivider({ block }: { block: Block }) {
+  const { t } = useTranslation("sessions");
   const meta = block.handoff;
   if (!meta) return null;
 
   const preparing = meta.status === "preparing";
-  const label = preparing ? "Preparing a handoff" : HARNESS_TITLE[meta.to];
+  const label = preparing ? t("transcript.preparingHandoff") : HARNESS_TITLE[meta.to];
 
   return (
     <div className="px-4 py-5">
@@ -3653,8 +3666,8 @@ function HandoffDivider({ block }: { block: Block }) {
           role="separator"
           aria-label={
             preparing
-              ? `Preparing a handoff to ${HARNESS_TITLE[meta.to]}`
-              : `Continued with ${label}`
+              ? t("transcript.preparingHandoffTo", { name: HARNESS_TITLE[meta.to] })
+              : t("transcript.continuedWith", { name: label })
           }
           className="flex max-w-[min(100%,20rem)] items-center gap-1.5 px-1.5 font-sans text-[12px] text-content/55"
         >
@@ -3683,17 +3696,17 @@ function interjectionChrome(meta: InterjectionMeta): {
 } {
   const label =
     meta.customType === "advisor"
-      ? "Advisor"
+      ? translate("sessions:interjection.advisor")
       : meta.customType === "custom"
-        ? "Notice"
+        ? translate("sessions:interjection.notice")
         : meta.customType;
   const severityText =
     meta.severity === "blocker"
-      ? "Blocker"
+      ? translate("sessions:interjection.blocker")
       : meta.severity === "concern"
-        ? "Concern"
+        ? translate("sessions:interjection.concern")
         : meta.severity === "nit"
-          ? "Nit"
+          ? translate("sessions:interjection.nit")
           : undefined;
   const severityClass =
     meta.severity === "blocker"
@@ -3711,6 +3724,7 @@ const INTERJECTION_BODY =
 /** A mid-turn interjection, e.g. OMP advisor notes: a labeled boundary with
  * a collapsible advisory body below it. */
 function InterjectionDivider({ block }: { block: Block }) {
+  const { t } = useTranslation("sessions");
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const textRef = useRef<HTMLPreElement>(null);
@@ -3741,7 +3755,7 @@ function InterjectionDivider({ block }: { block: Block }) {
         <div className="h-px min-w-4 flex-1 bg-content/12" />
         <div
           role="separator"
-          aria-label={`Interjection: ${label}`}
+          aria-label={t("transcript.interjection", { label })}
           className="flex items-center gap-2 px-1.5 font-sans text-[12px] text-content/55"
         >
           <span>{label}</span>
@@ -3768,7 +3782,7 @@ function InterjectionDivider({ block }: { block: Block }) {
               onClick={() => setExpanded((value) => !value)}
               className="mt-1 py-1 font-sans text-xs text-content/55 hover:text-content"
             >
-              {expanded ? "Show less" : "Show more"}
+              {expanded ? t("liveAgents.showLess") : t("transcript.showMore")}
             </button>
           ) : null}
         </div>

@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import {
   composeToolTitle,
   isAgentTool,
@@ -76,7 +77,7 @@ export function toolCallLabel(block: Block, cwd?: string): string {
       query: preview?.query,
       previewKind: preview?.kind,
       cwd,
-    }) || "Working"
+    }) || t("sessions:liveAgents.working")
   );
 }
 
@@ -527,7 +528,7 @@ export function subagentBrief(block: Block): string {
   const stripped = name
     .replace(/^(?:agent|task|subagent)\b[\s:·-]*/i, "")
     .trim();
-  return stripped || "Subagent";
+  return stripped || t("sessions:subagent.fallbackName");
 }
 
 /** Past this a name stops being a name and starts being the brief again. */
@@ -578,7 +579,7 @@ export function subagentFailureSummary(blocks: Block[]): string | undefined {
       toolCallState(block) === "rejected",
   ).length;
   if (failed === 0) return undefined;
-  return failed === 1 ? "Subagent failed" : `${failed} subagents failed`;
+  return t("sessions:activity.subagentsFailed", { count: failed });
 }
 
 /**
@@ -790,7 +791,7 @@ function tallySteps(steps: Block[]): PhaseTally {
 function fileLabel(paths: Set<string>): string {
   const [first] = paths;
   if (paths.size === 1 && first) return leafName(first) || first;
-  return `${paths.size} files`;
+  return t("sessions:activity.files", { count: paths.size });
 }
 
 /** What the calls of one kind add up to: "Edited 2 files", "Ran 3 commands". */
@@ -801,37 +802,40 @@ function workSummary(
 ): string {
   switch (kind) {
     case "edit":
-      return `${live ? "Editing" : "Edited"} ${fileLabel(tally.edits)}`;
+      return live
+        ? t("sessions:activity.editing", { target: fileLabel(tally.edits) })
+        : t("sessions:activity.edited", { target: fileLabel(tally.edits) });
     case "research":
       if (tally.reads.size > 0 && tally.searches === 0) {
-        return `${live ? "Reading" : "Read"} ${fileLabel(tally.reads)}`;
+        return live
+          ? t("sessions:activity.reading", { target: fileLabel(tally.reads) })
+          : t("sessions:activity.read", { target: fileLabel(tally.reads) });
       }
       if (tally.reads.size === 0) {
-        return live ? "Searching the project" : "Searched the project";
+        return live
+          ? t("sessions:activity.searching")
+          : t("sessions:activity.searched");
       }
-      return live ? "Exploring the project" : "Explored the project";
+      return live
+        ? t("sessions:activity.exploring")
+        : t("sessions:activity.explored");
     case "run":
-      if (tally.backgroundLive > 0) return "Running in background";
+      if (tally.backgroundLive > 0)
+        return t("sessions:activity.runningBackground");
       if (tally.runs === 0 && tally.background > 0) {
-        return "Finished in background";
+        return t("sessions:activity.finishedBackground");
       }
-      return tally.runs === 1
-        ? live
-          ? "Running a command"
-          : "Ran a command"
-        : `${live ? "Running" : "Ran"} ${tally.runs} commands`;
+      return live
+        ? t("sessions:activity.runningCommands", { count: tally.runs })
+        : t("sessions:activity.ranCommands", { count: tally.runs });
     case "agent":
-      return tally.agents === 1
-        ? live
-          ? "Running a subagent"
-          : "Ran a subagent"
-        : `${live ? "Running" : "Ran"} ${tally.agents} subagents`;
+      return live
+        ? t("sessions:activity.runningSubagents", { count: tally.agents })
+        : t("sessions:activity.ranSubagents", { count: tally.agents });
     default:
-      return tally.others === 1
-        ? live
-          ? "Running a tool"
-          : "Ran a tool"
-        : `${live ? "Running" : "Ran"} ${tally.others} tools`;
+      return live
+        ? t("sessions:activity.runningTools", { count: tally.others })
+        : t("sessions:activity.ranTools", { count: tally.others });
   }
 }
 
@@ -855,15 +859,12 @@ export function workSummaryLine(steps: Block[], live = false): string {
   if (appSummary) return appSummary;
   const tally = tallySteps(steps);
   const notes =
-    tally.notes === 1
-      ? "1 note"
-      : tally.notes > 1
-        ? `${tally.notes} notes`
-        : "";
+    tally.notes > 0 ? t("sessions:activity.notes", { count: tally.notes }) : "";
   if (tally.order.length === 0) {
     if (notes) return notes;
-    if (steps.length > 0 && steps.every(isStatusStep)) return "Status update";
-    return live ? "Thinking" : "Thought";
+    if (steps.length > 0 && steps.every(isStatusStep))
+      return t("sessions:activity.statusUpdate");
+    return live ? t("sessions:activity.thinking") : t("sessions:activity.thought");
   }
   const running = live ? currentWorkKind(steps) : undefined;
   return [

@@ -1,10 +1,14 @@
 import type { BuiltinSkill } from "../../skills/model/skills";
+import { t } from "../../../i18n";
 
 export const SESSION_FOLDER_COMMAND: BuiltinSkill = {
   kind: "builtin",
   name: "add-to-folder",
   invocation: "add-to-folder",
-  description: "Place this session in an existing or new sidebar folder.",
+  // IndieDesk: getter, so the slash menu reads the current language.
+  get description() {
+    return t("sessions:commands.addToFolder");
+  },
   scope: "builtin",
   source: "monocode",
 };

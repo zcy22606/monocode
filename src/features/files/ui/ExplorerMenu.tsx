@@ -10,6 +10,7 @@ import {
 import { LAYER } from "../../../shared/lib/layers";
 import { Check, ChevronRight } from "../../../shared/ui/icons";
 import { Popover } from "../../../shared/ui/Popover";
+import { useTranslation } from "../../../i18n";
 
 type MenuAction = {
   kind: "item";
@@ -64,7 +65,7 @@ export function ExplorerMenu({
   ownerId,
   onBack,
   items,
-  ariaLabel = "File actions",
+  ariaLabel,
   header,
   width = MENU_WIDTH,
   onPick,
@@ -72,6 +73,8 @@ export function ExplorerMenu({
   onMouseEnter,
   onMouseLeave,
 }: Props) {
+  const { t } = useTranslation("files");
+  ariaLabel ??= t("menu.fileActions");
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
   const submenuRef = useRef<HTMLDivElement>(null);

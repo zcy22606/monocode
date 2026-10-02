@@ -9,6 +9,7 @@
  */
 import { PROJECT_MASCOTS } from "../../projects/model/projectMascots";
 import { HARNESSES, type HarnessId } from "../../sessions/model/session";
+import { t } from "../../../i18n";
 import type {
   ArcadeMode,
   ArcadeSprite,
@@ -652,7 +653,7 @@ export function createPacmanArcade(): GridArcade {
     if (pelletsLeft <= 0) {
       status = "clear";
       statusLeft = CLEAR_MS;
-      say(["LEVEL CLEAR"], { kind: "pac" });
+      say([t("terminal:arcade.levelClear")], { kind: "pac" });
     }
   };
 
@@ -973,7 +974,7 @@ export function createPacmanArcade(): GridArcade {
         } else if (player && lives <= 0) {
           status = "over";
           statusLeft = OVER_MS;
-          say(["GAME OVER"], { kind: "pac" });
+          say([t("terminal:arcade.gameOverBubble")], { kind: "pac" });
         } else {
           respawn();
         }

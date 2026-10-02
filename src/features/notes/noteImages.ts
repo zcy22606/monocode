@@ -5,6 +5,7 @@ import {
   revokeAttachment,
 } from "../sessions/model/attachments";
 import type { Attachment } from "../sessions/model/session";
+import { t } from "../../i18n";
 
 export const NOTE_IMAGE_PREFIX = "/note-assets/";
 
@@ -38,7 +39,7 @@ async function saveNoteImageAttachments(
 ): Promise<NoteImageAsset[]> {
   const images = attachments.filter((file) => file.kind === "image");
   if (images.length === 0) {
-    throw new Error("Drop a PNG, JPG, GIF, WebP, or SVG image.");
+    throw new Error(t("images.unsupported", { ns: "notes" }));
   }
 
   const saved: NoteImageAsset[] = [];
@@ -79,7 +80,7 @@ async function saveNoteImageAttachments(
   if (saved.length === 0) {
     if (failure instanceof Error) throw failure;
     if (failure) throw new Error(String(failure));
-    throw new Error("None of the dropped images could be added to the note.");
+    throw new Error(t("images.noneAdded", { ns: "notes" }));
   }
   return saved;
 }

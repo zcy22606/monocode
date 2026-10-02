@@ -1,0 +1,68 @@
+{
+  "categories": {
+    "pullRequests": "Pull requests / Merge requests",
+    "issues": "Issues and Linear tasks",
+    "agentFinished": "Agent finished",
+    "agentInput": "Agent approvals and questions",
+    "reminders": "Reminders"
+  },
+  "os": {
+    "question": "{{harness}} has a question for you",
+    "approve": "Approve: {{what}}",
+    "needsApproval": "{{harness}} needs your approval",
+    "finished": "{{harness}} finished"
+  },
+  "reminders": {
+    "errorTitle": "Reminder"
+  },
+  "saveError": "Could not save notification preferences. Please try again.",
+  "mute": {
+    "status": {
+      "untilResumed": "Muted until resumed",
+      "until": "Muted until {{date}}",
+      "projects": "{{muted}} of {{total}} projects muted"
+    },
+    "preset": {
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "untilResumed": "Until resumed",
+      "custom": "Choose date and time",
+      "at": "{{label}} ({{time}})",
+      "atTomorrow": "{{label}} (Tomorrow, {{time}})"
+    },
+    "resume": "Resume notifications",
+    "change": "Change mute duration",
+    "mute": "Mute notifications",
+    "tooltip": "Mute pauses all project notifications without changing your category choices.",
+    "muted": "Muted",
+    "button": "Mute",
+    "menuHeader": "Mute all notifications for",
+    "dialog": "Mute project notifications"
+  },
+  "datePicker": {
+    "heading": "Mute all notifications until",
+    "invalid": "Choose a valid date and time.",
+    "past": "Choose a date and time in the future.",
+    "cancel": "Cancel",
+    "submit": "Mute until then"
+  },
+  "settings": {
+    "title": "Project notifications",
+    "description": "Choose sounds, banners and sidebar indicators by category. Mute pauses them without changing your choices. Unread items stay marked in Inbox.",
+    "done": "Done",
+    "selectProjects": "Select projects",
+    "selectAll": "Select all projects",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "muteSelected": "Mute selected projects",
+    "empty": "Open a project or connect an Inbox provider to configure its notifications.",
+    "selectProject": "Select {{name}}",
+    "categoriesFor": "Notification categories for {{name}}",
+    "localProject": "Local project · ",
+    "allPaused": "All notifications paused",
+    "allEnabled": "All categories enabled",
+    "enabledCount": "{{enabled}} of {{total}} enabled",
+    "mutedHint": "Your category choices apply when notifications resume. You can edit them while muted.",
+    "categoryFor": "{{category}} for {{name}}"
+  }
+}

@@ -6,6 +6,7 @@ import {
   type NotificationSubject,
 } from "./notificationPreferences";
 import { knownNotificationProject } from "./notificationProjects";
+import { t } from "../../../i18n";
 
 const KEY = "monocode.notifications";
 
@@ -182,7 +183,9 @@ export function notificationText(
       return {
         title,
         subtitle,
-        body: clip(prompt || `${harness} has a question for you`),
+        body: clip(
+          prompt || t("os.question", { ns: "notifications", harness }),
+        ),
       };
     }
     const pending = session.blocks.find(
@@ -194,7 +197,11 @@ export function notificationText(
     return {
       title,
       subtitle,
-      body: clip(what ? `Approve: ${what}` : `${harness} needs your approval`),
+      body: clip(
+        what
+          ? t("os.approve", { ns: "notifications", what })
+          : t("os.needsApproval", { ns: "notifications", harness }),
+      ),
     };
   }
   const reply = [...session.blocks]
@@ -203,7 +210,9 @@ export function notificationText(
   return {
     title,
     subtitle,
-    body: clip(reply?.text || `${harness} finished`),
+    body: clip(
+      reply?.text || t("os.finished", { ns: "notifications", harness }),
+    ),
   };
 }
 

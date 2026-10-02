@@ -5,6 +5,7 @@ import {
   DEFAULT_INBOX_FILTERS,
   hasActiveInboxFilters,
   isTrackerSource,
+  LINEAR_NO_PROJECT,
   type InboxFilters,
   type InboxSource,
   type InboxTimeFilter,
@@ -14,6 +15,7 @@ import type { JiraProject } from "../model/jira";
 import type { LinearTeam } from "../model/linear";
 import { Popover } from "../../../shared/ui/Popover";
 import { ProjectLogoIcon } from "../../projects/ui/ProjectLogoIcon";
+import { useTranslation } from "../../../i18n";
 
 export const INBOX_FILTER_MENU_WIDTH = 228;
 
@@ -42,26 +44,22 @@ type Props = {
   onClose: () => void;
 };
 
-const TIME_OPTIONS: { id: InboxTimeFilter; label: string }[] = [
-  { id: "all", label: "All time" },
-  { id: "today", label: "Today" },
-  { id: "7d", label: "Last 7 days" },
-  { id: "30d", label: "Last 30 days" },
-];
+// IndieDesk: labels are `inbox:filters.timeOptions.<id>`, translated at render.
+const TIME_OPTIONS: InboxTimeFilter[] = ["all", "today", "7d", "30d"];
 
 const KIND_OPTIONS: {
   id: InboxKind;
-  label: string;
+  label: "filters.issues" | "filters.pullRequests";
   icon: ReactNode;
 }[] = [
   {
     id: "issue",
-    label: "Issues",
+    label: "filters.issues",
     icon: <CircleDot className="size-3.5 shrink-0" strokeWidth={1.75} />,
   },
   {
     id: "pr",
-    label: "Pull requests",
+    label: "filters.pullRequests",
     icon: <GitPullRequest className="size-3.5 shrink-0" strokeWidth={1.75} />,
   },
 ];
@@ -82,6 +80,7 @@ export function InboxFiltersMenu({
   onJiraProjectsChange,
   onClose,
 }: Props) {
+  const { t } = useTranslation("inbox");
   const hiddenProjects = new Set(filters.hiddenProjects);
   const hiddenLinearProjects = new Set(filters.hiddenLinearProjects);
   const hiddenTeams = new Set(hiddenLinearTeamIds);
@@ -150,66 +149,66 @@ export function InboxFiltersMenu({
       maxHeight={480}
       onDismiss={onClose}
       role="menu"
-      aria-label="Filter inbox"
+      aria-label={t("list.filter")}
       onContextMenu={(event) => event.preventDefault()}
       className="overflow-y-auto overscroll-none p-1"
     >
       <FilterItem
         label={
           source === "gitlab" || source === "azuredevops"
-            ? "Needs attention"
-            : "Assigned to me"
+            ? t("filters.needsAttention")
+            : t("filters.assignedToMe")
         }
         checked={filters.assignedToMe}
         onClick={toggleAssigned}
       />
 
-      <SectionLabel>Status</SectionLabel>
+      <SectionLabel>{t("filters.status")}</SectionLabel>
       <FilterItem
-        label="Open"
+        label={t("status.open")}
         checked={filters.status.open}
         onClick={() => toggleStatus("open")}
       />
       {!tracker ? (
         <FilterItem
-          label="Draft"
+          label={t("status.draft")}
           checked={filters.status.draft}
           onClick={() => toggleStatus("draft")}
         />
       ) : null}
       <FilterItem
-        label="Closed"
+        label={t("status.closed")}
         checked={filters.status.closed}
         onClick={() => toggleStatus("closed")}
       />
       {!tracker ? (
         <FilterItem
-          label="Merged"
+          label={t("status.merged")}
           checked={filters.status.merged}
           onClick={() => toggleStatus("merged")}
         />
       ) : null}
 
-      <SectionLabel>Time</SectionLabel>
+      <SectionLabel>{t("filters.time")}</SectionLabel>
       {TIME_OPTIONS.map((option) => (
         <FilterItem
-          key={option.id}
-          label={option.label}
-          checked={filters.time === option.id}
-          onClick={() => setTime(option.id)}
+          key={option}
+          label={t(`filters.timeOptions.${option}`)}
+          checked={filters.time === option}
+          onClick={() => setTime(option)}
         />
       ))}
 
       {!tracker ? (
         <>
-          <SectionLabel>Type</SectionLabel>
+          <SectionLabel>{t("filters.type")}</SectionLabel>
           {KIND_OPTIONS.map((option) => (
             <FilterItem
               key={option.id}
               label={
                 source === "gitlab" && option.id === "pr"
-                  ? "Merge requests"
-                  : option.label
+                  ? t("filters.mergeRequests")
+                  : t(option.label)
               }
               checked={!hiddenKinds.has(option.id)}
               icon={option.icon}
@@ -221,7 +220,7 @@ export function InboxFiltersMenu({
 
       {source === "linear" && linearTeams.length > 0 ? (
         <>
-          <SectionLabel>Teams</SectionLabel>
+          <SectionLabel>{t("filters.teams")}</SectionLabel>
           {linearTeams.map((team) => (
             <FilterItem
               key={team.id}
@@ -235,11 +234,15 @@ export function InboxFiltersMenu({
 
       {source === "linear" && linearProjects.length > 0 ? (
         <>
-          <SectionLabel>Projects</SectionLabel>
+          <SectionLabel>{t("filters.projects")}</SectionLabel>
           {linearProjects.map((project) => (
             <FilterItem
               key={project.id}
-              label={project.name}
+              label={
+                project.id === LINEAR_NO_PROJECT
+                  ? t("filters.noProject")
+                  : project.name
+              }
               checked={!hiddenLinearProjects.has(project.id)}
               onClick={() => toggleLinearProject(project.id)}
             />
@@ -249,7 +252,7 @@ export function InboxFiltersMenu({
 
       {source === "jira" && jiraProjects.length > 0 ? (
         <>
-          <SectionLabel>Projects</SectionLabel>
+          <SectionLabel>{t("filters.projects")}</SectionLabel>
           {jiraProjects.map((project) => (
             <FilterItem
               key={project.id}
@@ -268,7 +271,7 @@ export function InboxFiltersMenu({
       ) &&
       projects.length > 0 ? (
         <>
-          <SectionLabel>Projects</SectionLabel>
+          <SectionLabel>{t("filters.projects")}</SectionLabel>
           {projects.map((project) => (
             <FilterItem
               key={project.path}
@@ -308,7 +311,7 @@ export function InboxFiltersMenu({
             }}
             className="flex h-7 w-full items-center rounded-lg px-2 text-left text-[13px] leading-none text-content/70 hover:bg-content/5 hover:text-content"
           >
-            Clear filters
+            {t("filters.clear")}
           </button>
         </>
       ) : null}

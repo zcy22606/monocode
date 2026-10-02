@@ -22,6 +22,7 @@ import {
 import { stageChunkText } from "../../files/editor/editorGit";
 import { LINE_DIFF_CONFIG } from "../model/lineDiff";
 import { UnifiedDiffView, type UnifiedDiffFileModel } from "./UnifiedDiffView";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   cwd: string;
@@ -41,6 +42,7 @@ type LoadedDiff = {
 const DIFF_LOAD_CONCURRENCY = 4;
 
 export function WorkingTreeDiff({ cwd, focusPath, focusKind }: Props) {
+  const { t } = useTranslation("sourceControl");
   const [files, setFiles] = useState<GitChangedFile[] | null>(null);
   const [diffs, setDiffs] = useState<Map<string, LoadedDiff>>(new Map());
   const [error, setError] = useState<string | null>(null);
@@ -175,13 +177,13 @@ export function WorkingTreeDiff({ cwd, focusPath, focusKind }: Props) {
         tooLarge: loaded?.tooLarge,
         emptyMessage:
           loaded == null
-            ? "Loading…"
+            ? t("diff.loading")
             : loaded.error
-              ? `Couldn’t load diff: ${loaded.error}`
+              ? t("diff.loadFailed", { error: loaded.error })
               : unchanged
                 ? kind === "staged"
-                  ? "No staged changes"
-                  : "No unstaged changes"
+                  ? t("diff.noStaged")
+                  : t("diff.noUnstaged")
                 : undefined,
         additions:
           unified?.additions ?? (canUseIndexCounts ? file.additions : 0),
@@ -194,7 +196,7 @@ export function WorkingTreeDiff({ cwd, focusPath, focusKind }: Props) {
           kind === "unstaged" && !loaded?.binary && !loaded?.tooLarge,
       };
     });
-  }, [diffs, entries, files]);
+  }, [diffs, entries, files, t]);
 
   const totals = useMemo(
     () =>
@@ -272,7 +274,7 @@ export function WorkingTreeDiff({ cwd, focusPath, focusKind }: Props) {
   if (!cwd || cwd === "~") {
     return (
       <p className="grid h-full place-items-center text-[13px] text-content/45">
-        No project folder
+        {t("diff.noProject")}
       </p>
     );
   }
@@ -280,7 +282,7 @@ export function WorkingTreeDiff({ cwd, focusPath, focusKind }: Props) {
     return (
       <div className="grid h-full place-items-center p-6 text-center">
         <AlertCircle className="mx-auto mb-3 size-5 text-red-400" />
-        <p className="text-[13px] text-content">Couldn’t load changes</p>
+        <p className="text-[13px] text-content">{t("diff.changesLoadFailed")}</p>
         <p className="mt-1 text-[12px] text-content/50">{error}</p>
       </div>
     );
