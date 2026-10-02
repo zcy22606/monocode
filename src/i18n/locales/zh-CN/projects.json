@@ -1,0 +1,79 @@
+{
+  "backgroundDialog": {
+    "title": "背景图片",
+    "description": "为 {{name}} 选择背景图片",
+    "noBackground": "未选择背景",
+    "changeImage": "更换图片",
+    "chooseImage": "选择图片",
+    "overridesGlobal": "这张图片会覆盖此项目的全局背景。",
+    "followsGlobal": "此项目目前跟随全局「外观」设置。",
+    "effect": "背景效果",
+    "effectLabel": "项目背景效果",
+    "showOn": "显示位置",
+    "showOnLabel": "项目背景显示位置",
+    "scope": {
+      "empty": "仅空白对话",
+      "all": "所有会话"
+    },
+    "emptyVisibility": "空白对话可见度",
+    "emptyVisibilityLabel": "项目背景在空白对话中的可见度",
+    "sessionVisibility": "会话可见度",
+    "sessionVisibilityLabel": "项目背景在会话中的可见度",
+    "removeImage": "移除背景图片"
+  },
+  "fileDialog": {
+    "chatBackground": "选择对话背景",
+    "projectChatBackground": "选择项目对话背景",
+    "projectLogo": "选择项目图标",
+    "images": "图片"
+  },
+  "removeDialog": {
+    "label": "删除 {{name}}",
+    "title": "删除「{{name}}」？",
+    "body": "此项目的所有对话都会被删除，项目也会从侧栏移除。磁盘上的文件夹保持不动，再次打开它会得到一个空项目。",
+    "sessions_other": "将移除 {{count}} 个已保存的对话。",
+    "cancel": "取消",
+    "delete": "删除"
+  },
+  "picker": {
+    "label": "项目选择器",
+    "projectLabel": "项目 {{label}}",
+    "current": "当前项目",
+    "moveTo": "移动到项目",
+    "recent": "最近项目",
+    "noOther": "没有其他项目",
+    "more": "更多项目",
+    "moreLabel": "更多项目",
+    "newTerminal": "新建终端",
+    "chooseProject": "选择项目",
+    "switchProject": "切换项目",
+    "moveNote": "将笔记移动到项目",
+    "currentLabel": "{{action}}，当前项目 {{label}}",
+    "chooseForNote": "为笔记选择项目",
+    "search": "搜索项目",
+    "searchPlaceholder": "搜索项目…",
+    "noResults": "未找到项目",
+    "newProject": "新建项目"
+  },
+  "search": {
+    "noFolder": "没有项目文件夹",
+    "back": "返回文件",
+    "title": "在文件中搜索",
+    "placeholder": "搜索",
+    "matchCase": "区分大小写",
+    "wholeWord": "全字匹配",
+    "regex": "使用正则表达式",
+    "include": "包含的文件",
+    "exclude": "排除的文件",
+    "searching": "正在搜索…",
+    "noResults": "无结果",
+    "results_other": "{{count}} 个结果",
+    "files_other": "{{count}} 个文件",
+    "summary": "{{files}}中共 {{results}}",
+    "limited": "（已截断）",
+    "hint": "输入内容以在整个项目中搜索"
+  },
+  "errors": {
+    "folderNotFound": "找不到项目文件夹：{{path}}。请重新打开该文件夹以重新连接。"
+  }
+}

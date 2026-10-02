@@ -1,0 +1,85 @@
+{
+  "agents": {
+    "count_one": "{{count}} agent",
+    "count_other": "{{count}} agents",
+    "done": "{{done}}/{{total}} done",
+    "list": "Orchestrated agents",
+    "details": "Agent details: {{title}}",
+    "openBeside": "Open this agent beside the orchestrator",
+    "seeDetails": "See details",
+    "cancelTask": "Cancel task"
+  },
+  "taskStatus": {
+    "needsInput": "Needs input",
+    "saved": "Saved",
+    "paused": "Paused",
+    "queued": "Queued",
+    "running": "Working",
+    "cancelling": "Stopping",
+    "completed": "Done",
+    "failed": "Failed",
+    "blocked": "Needs review",
+    "interrupted": "Interrupted",
+    "cancelled": "Cancelled"
+  },
+  "paused": {
+    "stopping": "Stopping interrupted work before this run can resume.",
+    "leadBusy": "Waiting for the lead's interrupted turn to finish before this run can resume.",
+    "info": "Resume continues interrupted workers from their retained checkouts and starts queued work. Policy-blocked tasks stay stopped for review.",
+    "blocker": "{{title}} is still running in this project.",
+    "anotherConversation": "Another conversation",
+    "otherConversation": "the other conversation",
+    "openBlocker": "Open blocker",
+    "waitStop": "Wait for interrupted agents to stop",
+    "waitLead": "Wait for the lead's interrupted turn to finish",
+    "stopBlocker": "Stop {{title}} before resuming",
+    "continue": "Continue interrupted and queued work",
+    "resume": "Resume"
+  },
+  "assignment": {
+    "modelFor": "Model for {{title}}",
+    "search": "Search assignment models",
+    "searchPlaceholder": "Search models or harnesses…",
+    "models": "Assignment models",
+    "noModels": "No matching models",
+    "effort": "{{name}} effort"
+  },
+  "workers": {
+    "help": "What parallel workers means",
+    "helpTitle": "How many workers run at once",
+    "helpBody": "The rest of the tasks wait their turn, and a task that depends on another waits for it either way. Every worker edits this same project folder, so a lower number means fewer changes landing in it at the same time.",
+    "label": "Parallel workers",
+    "count": "{{count}} parallel"
+  },
+  "proposal": {
+    "label": "Orchestration proposal",
+    "planning": "Planning assignments…",
+    "lead": "Lead · {{name}}",
+    "tasks_one": "{{count}} task",
+    "tasks_other": "{{count}} tasks",
+    "tryAgain": "Try again",
+    "starting": "Starting…",
+    "confirm": "Confirm & start",
+    "viewAgents": "View agents",
+    "choosing": "Your lead is choosing tasks and worker models. Review the assignments here before starting.",
+    "checking": "Checking available harnesses and models…",
+    "detailsFor": "Details for {{title}}",
+    "task": "Task",
+    "instructions": "Instructions",
+    "titleFor": "Title for task {{number}}",
+    "instructionsFor": "Instructions for task {{number}}",
+    "after": "After · {{tasks}}",
+    "showFewer": "Show fewer tasks",
+    "showMore_one": "Show {{count}} more task",
+    "showMore_other": "Show {{count}} more tasks",
+    "approved": "Approved",
+    "awaiting": "Awaiting confirmation",
+    "sharedFolder": "· Shared project folder"
+  },
+  "runStatus": {
+    "active": "active",
+    "paused": "paused",
+    "stopped": "stopped",
+    "finished": "finished"
+  }
+}

@@ -8,6 +8,7 @@ import {
 } from "../../../platform/tauri/fs";
 import { invalidateProjectFiles } from "../../files/model/fileIndex";
 import { joinPath } from "../../../shared/lib/paths";
+import { t } from "../../../i18n";
 import { isLocalProject, normalizeProjectPath } from "../../projects/model/recents";
 import { isMarkdownBlockquotePosition } from "../../sessions/model/quoteDraft";
 import type { HarnessId } from "../../sessions/model/session";
@@ -525,7 +526,7 @@ export async function createBlankSkill(input: {
 }): Promise<string> {
   const name = slugSkillName(input.name);
   if (!isValidSkillName(name)) {
-    throw new Error("Use a lowercase name with letters, numbers, and hyphens.");
+    throw new Error(t("form.invalidNameError", { ns: "skills" }));
   }
   const root =
     input.scope === "user" || !isLocalProject(input.cwd)

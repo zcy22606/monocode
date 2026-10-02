@@ -1,4 +1,5 @@
-/** Soloyard issue 的前端类型和固定枚举。 */
+/** Soloyard issue 的前端类型和固定枚举。显示用的名字在 i18n（soloyard:status.* / soloyard:priority.*），渲染时再翻。 */
+import { t } from "../../../i18n";
 
 export type IssueStatus = "backlog" | "todo" | "in_progress" | "in_review" | "done" | "canceled";
 
@@ -29,23 +30,11 @@ export type IssueDetail = Omit<Issue, "sessions" | "children"> & {
   sessions: { id: string; title?: string; harness?: string; updated_at?: number; missing?: boolean }[];
 };
 
-export const STATUSES: { id: IssueStatus; label: string }[] = [
-  { id: "backlog", label: "Backlog" },
-  { id: "todo", label: "Todo" },
-  { id: "in_progress", label: "In Progress" },
-  { id: "in_review", label: "In Review" },
-  { id: "done", label: "Done" },
-  { id: "canceled", label: "Canceled" },
-];
+/** 工作流顺序。 */
+export const STATUSES: IssueStatus[] = ["backlog", "todo", "in_progress", "in_review", "done", "canceled"];
+/** 紧急在前，「无优先级」排最后。 */
+export const PRIORITIES: number[] = [1, 2, 3, 4, 0];
 
-export const PRIORITIES: { id: number; label: string }[] = [
-  { id: 1, label: "Urgent" },
-  { id: 2, label: "High" },
-  { id: 3, label: "Medium" },
-  { id: 4, label: "Low" },
-  { id: 0, label: "No priority" },
-];
-
-export const statusLabel = (status: string) => STATUSES.find((s) => s.id === status)?.label ?? status;
-export const priorityLabel = (priority: number) => PRIORITIES.find((p) => p.id === priority)?.label ?? String(priority);
+export const statusLabel = (status: IssueStatus) => t(`soloyard:status.${status}`);
+export const priorityLabel = (priority: number) => t(`soloyard:priority.${String(priority) as "0" | "1" | "2" | "3" | "4"}`);
 export const isCompleted = (status: IssueStatus) => status === "done" || status === "canceled";

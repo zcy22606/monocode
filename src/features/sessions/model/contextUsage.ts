@@ -6,6 +6,8 @@
  * keeps compaction free — once the harness compacts, its next report is simply
  * smaller.
  */
+import { t } from "../../../i18n";
+
 export type ContextUsage = {
   /** Tokens in the context window as of the last request. */
   used: number;
@@ -47,10 +49,15 @@ export function contextTooltip(usage: ContextUsage): {
   const percent = contextPercent(usage);
   return {
     headline:
-      percent === null ? "Context used" : `${percent}% context used`,
+      percent === null
+        ? t("sessions:context.used")
+        : t("sessions:context.usedPercent", { percent }),
     detail: usage.window
-      ? `${formatTokens(usage.used)} / ${formatTokens(usage.window)} tokens`
-      : `${formatTokens(usage.used)} tokens`,
+      ? t("sessions:context.tokensOf", {
+          used: formatTokens(usage.used),
+          window: formatTokens(usage.window),
+        })
+      : t("sessions:context.tokens", { used: formatTokens(usage.used) }),
   };
 }
 

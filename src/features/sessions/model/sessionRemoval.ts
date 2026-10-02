@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import { stopStreaming } from "../../../integrations/harness/core/apply";
 import { forgetHarnessSession } from "../../../integrations/harness/core/registry";
 import {
@@ -159,7 +160,7 @@ async function removeSession(
   } else {
     if (stopped && shouldPersistSession(stopped)) {
       const saved = await upsertSession(stopped);
-      if (!saved) throw new Error("The conversation could not be saved.");
+      if (!saved) throw new Error(t("sessions:removal.saveFailed"));
       savedSummary = saved;
     }
     await setSessionArchived(sessionId, true);

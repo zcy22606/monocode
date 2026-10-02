@@ -32,6 +32,7 @@ import {
   handleFilePreviewFindKey,
   openFindInActiveFilePreview,
 } from "../ui/FilePreviewSearch";
+import { t } from "../../../i18n";
 
 const MATCH_CAP = 999;
 const panels = new WeakMap<EditorView, FindPanel>();
@@ -235,22 +236,22 @@ class FindPanel implements Panel {
     this.query = getSearchQuery(view.state);
     panels.set(view, this);
 
-    this.searchField = inputField("Find", {
+    this.searchField = inputField(t("files:search.find"), {
       name: "search",
       "main-field": "true",
       value: this.query.search,
     });
-    this.replaceField = inputField("Replace", {
+    this.replaceField = inputField(t("files:search.replace"), {
       name: "replace",
       value: this.query.replace,
     });
     this.count = elt("span", { class: "cm-find-count" });
-    this.caseButton = toggleButton("Aa", "Match Case", `${ALT}C`);
-    this.wordButton = toggleButton("ab", "Match Whole Word", `${ALT}W`);
-    this.regexButton = toggleButton(".*", "Use Regular Expression", `${ALT}R`);
+    this.caseButton = toggleButton("Aa", t("files:search.matchCase"), `${ALT}C`);
+    this.wordButton = toggleButton("ab", t("files:search.wholeWord"), `${ALT}W`);
+    this.regexButton = toggleButton(".*", t("files:search.regex"), `${ALT}R`);
     this.expandButton = iconButton(
       "cm-find-expand",
-      "Toggle Replace",
+      t("files:search.toggleReplace"),
       `${MOD}${ALT}F`,
       svgIcon("M6 4l4 4-4 4"),
     );
@@ -258,19 +259,19 @@ class FindPanel implements Panel {
 
     const prevButton = iconButton(
       "cm-find-step",
-      "Previous Match",
+      t("files:search.previous"),
       `${MOD}${SHIFT}G`,
       svgIcon("M4 10l4-4 4 4"),
     );
     const nextButton = iconButton(
       "cm-find-step",
-      "Next Match",
+      t("files:search.next"),
       `${MOD}G`,
       svgIcon("M4 6l4 4 4-4"),
     );
     const closeButton = iconButton(
       "cm-find-close",
-      "Close",
+      t("files:search.close"),
       "Escape",
       svgIcon("M4.5 4.5l7 7M11.5 4.5l-7 7"),
     );
@@ -282,8 +283,8 @@ class FindPanel implements Panel {
       elt(
         "div",
         { class: "cm-find-replace-actions" },
-        textButton("Replace", () => replaceNext(this.view)),
-        textButton("All", () => replaceAll(this.view)),
+        textButton(t("files:search.replace"), () => replaceNext(this.view)),
+        textButton(t("files:search.replaceAll"), () => replaceAll(this.view)),
       ),
     );
 
@@ -464,7 +465,7 @@ class FindPanel implements Panel {
       return;
     }
     if (!this.query.valid) {
-      this.count.textContent = "Invalid regex";
+      this.count.textContent = t("files:search.invalidRegex");
       this.count.dataset.state = "invalid";
       this.dom.classList.add("is-invalid");
       this.dom.classList.remove("is-empty");
@@ -477,13 +478,15 @@ class FindPanel implements Panel {
     this.dom.classList.toggle("is-empty", total === 0);
     this.dom.classList.remove("is-invalid");
     if (total === 0) {
-      this.count.textContent = "No results";
+      this.count.textContent = t("files:search.noResults");
       this.count.dataset.state = "empty";
       return;
     }
     const suffix = capped ? "+" : "";
     this.count.textContent =
-      current > 0 ? `${current} of ${total}${suffix}` : `${total}${suffix}`;
+      current > 0
+        ? t("files:search.count", { current, total: `${total}${suffix}` })
+        : `${total}${suffix}`;
     this.count.dataset.state = "ok";
   }
 
@@ -569,7 +572,7 @@ function toggleButton(label: string, title: string, shortcut: string) {
     {
       type: "button",
       class: "cm-find-toggle",
-      title: `${title} (${shortcut})`,
+      title: t("files:search.withShortcut", { label: title, shortcut }),
       "aria-label": title,
       "aria-pressed": "false",
       tabindex: "-1",
@@ -590,7 +593,7 @@ function iconButton(
     {
       type: "button",
       class: className,
-      title: `${title} (${shortcut})`,
+      title: t("files:search.withShortcut", { label: title, shortcut }),
       "aria-label": title,
       tabindex: "-1",
     },

@@ -14,6 +14,35 @@ import {
   shortcutTokens,
 } from "../../quick-composer/model/quickComposerShortcut";
 import { readFlag, writeFlag } from "./storageFlags";
+// Soloyard: the English labels below stay as search terms; what is shown comes
+// from locales/*/settings.json, translated when these helpers run at render.
+import { t } from "../../../i18n";
+import type settingsLocale from "../../../i18n/locales/en/settings.json";
+
+type IndexKey = keyof (typeof settingsLocale)["index"];
+type CommandKey = keyof (typeof settingsLocale)["keybindings"]["command"];
+type WhenKey = keyof (typeof settingsLocale)["keybindings"]["when"];
+
+/** Translated name of a `SETTINGS_INDEX` row (falls back to its English label). */
+export function settingLabel(id: string, fallback = id): string {
+  return t(`settings:index.${id as IndexKey}`, { defaultValue: fallback });
+}
+
+const commandKey = (command: string) => command.replace(/[^A-Za-z0-9]/g, "");
+
+/** Display name of a keybinding command; the English command stays its id. */
+export function keybindingCommandLabel(command: string): string {
+  return t(`settings:keybindings.command.${commandKey(command) as CommandKey}`, {
+    defaultValue: command,
+  });
+}
+
+/** Display text of a keybinding's `when`; context expressions stay as written. */
+export function keybindingWhenLabel(when: string): string {
+  return t(`settings:keybindings.when.${commandKey(when) as WhenKey}`, {
+    defaultValue: when,
+  });
+}
 
 const SECTION_KEY = "monocode.settingsSection";
 
@@ -144,9 +173,17 @@ export function settingsSectionsByGroup(): {
   label: string;
   sections: SettingsSection[];
 }[] {
+  // Soloyard: translated at call time (render).
   return SETTINGS_GROUPS.map((group) => ({
     ...group,
-    sections: SETTINGS_SECTIONS.filter((section) => section.group === group.id),
+    label: t(`settings:groups.${group.id}`),
+    sections: SETTINGS_SECTIONS.filter(
+      (section) => section.group === group.id,
+    ).map((section) => ({
+      ...section,
+      label: settingsSectionLabel(section.id),
+      description: settingsSectionDescription(section.id),
+    })),
   })).filter((group) => group.sections.length > 0);
 }
 
@@ -174,6 +211,12 @@ export const SETTINGS_INDEX: SettingsEntry[] = [
     section: "worktrees",
     label: "Project worktrees",
     keywords: "git branch working copy create delete manage",
+  },
+  {
+    id: "language", // Soloyard
+    section: "general",
+    label: "Language",
+    keywords: "locale i18n english chinese 中文 语言",
   },
   {
     id: "update",
@@ -451,8 +494,14 @@ export function searchSettings(
   if (!needle) return [];
   const scored: { score: number; result: SettingsSearchResult }[] = [];
 
+  // Soloyard: match the translated label, and keep the English one as a keyword.
   for (const entry of SETTINGS_INDEX) {
-    const score = matchScore(needle, entry.label, entry.keywords);
+    const label = settingLabel(entry.id, entry.label);
+    const score = matchScore(
+      needle,
+      label,
+      `${entry.label} ${entry.keywords ?? ""}`,
+    );
     if (score == null) continue;
     scored.push({
       score,
@@ -460,25 +509,26 @@ export function searchSettings(
         section: entry.section,
         sectionLabel: settingsSectionLabel(entry.section),
         settingId: entry.id,
-        label: entry.label,
+        label,
       },
     });
   }
 
   for (const section of SETTINGS_SECTIONS) {
+    const label = settingsSectionLabel(section.id);
     const score = matchScore(
       needle,
-      section.label,
-      `${section.description} ${section.keywords ?? ""}`,
+      label,
+      `${settingsSectionDescription(section.id)} ${section.label} ${section.description} ${section.keywords ?? ""}`,
     );
     if (score == null) continue;
     scored.push({
       score: score + 0.5,
       result: {
         section: section.id,
-        sectionLabel: section.label,
+        sectionLabel: label,
         settingId: null,
-        label: section.label,
+        label,
       },
     });
   }
@@ -501,15 +551,15 @@ export function isSettingsSectionId(
 }
 
 export function settingsSectionLabel(id: SettingsSectionId): string {
-  return (
-    SETTINGS_SECTIONS.find((section) => section.id === id)?.label ?? "General"
-  );
+  // Soloyard
+  return isSettingsSectionId(id)
+    ? t(`settings:sections.${id}.label`)
+    : t("settings:sections.general.label");
 }
 
 export function settingsSectionDescription(id: SettingsSectionId): string {
-  return (
-    SETTINGS_SECTIONS.find((section) => section.id === id)?.description ?? ""
-  );
+  // Soloyard
+  return isSettingsSectionId(id) ? t(`settings:sections.${id}.description`) : "";
 }
 
 export function loadSettingsSection(): SettingsSectionId {
@@ -1151,9 +1201,13 @@ function shortcutOwners(): Map<string, string> {
 
 function validateShortcut(command: string, shortcut: string): string {
   const canonical = canonicalShortcut(shortcut);
-  if (!canonical) throw new Error("That combination is not a valid shortcut");
+  if (!canonical) throw new Error(t("settings:keybindings.errors.invalid"));
   if (command === ACTIVATE_RANGE_COMMAND && !/Digit[1-8]$/.test(canonical)) {
-    throw new Error("Tab: Activate 1–8 needs a number key from 1 to 8");
+    throw new Error(
+      t("settings:keybindings.errors.activateRange", {
+        command: keybindingCommandLabel(ACTIVATE_RANGE_COMMAND),
+      }),
+    );
   }
   return canonical;
 }
@@ -1166,7 +1220,11 @@ export function validateKeybindingShortcut(
   const canonical = validateShortcut(command, shortcut);
   const owner = shortcutOwners().get(canonical);
   if (owner && owner !== command) {
-    throw new Error(`Already used by ${owner}`);
+    throw new Error(
+      t("settings:keybindings.errors.alreadyUsed", {
+        command: keybindingCommandLabel(owner),
+      }),
+    );
   }
   return canonical;
 }
@@ -1229,7 +1287,7 @@ export function saveKeybindingOverride(
       localStorage.removeItem(KEYBINDING_OVERRIDES_KEY);
     }
   } catch {
-    throw new Error("Could not save shortcuts");
+    throw new Error(t("settings:keybindings.errors.saveFailed"));
   }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(KEYBINDINGS_CHANGE_EVENT));
@@ -1320,14 +1378,14 @@ export function currentKeybindings(): KeybindingRow[] {
         ...row,
         keys: loadQuickComposerEnabled()
           ? quickComposerShortcutLabel(loadQuickComposerShortcut())
-          : "Disabled",
+          : t("settings:keybindings.disabled"),
       };
     }
     const override = overrides[row.command];
     return {
       ...row,
       keys: override?.disabled
-        ? "Disabled"
+        ? t("settings:keybindings.disabled")
         : override?.shortcut
           ? quickComposerShortcutLabel(override.shortcut)
           : row.keys,
@@ -1341,10 +1399,13 @@ export function filterKeybindings(
 ): KeybindingRow[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return rows;
+  // Soloyard: also match the translated command and context.
   return rows.filter(
     (row) =>
       row.command.toLowerCase().includes(needle) ||
+      keybindingCommandLabel(row.command).toLowerCase().includes(needle) ||
       row.keys.toLowerCase().includes(needle) ||
-      row.when.toLowerCase().includes(needle),
+      row.when.toLowerCase().includes(needle) ||
+      keybindingWhenLabel(row.when).toLowerCase().includes(needle),
   );
 }

@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../i18n";
 import { clearKnownInboxItems } from "./inboxSeen";
 import {
   linearConnected,
@@ -547,14 +548,15 @@ export async function githubPrAction(
   return item;
 }
 
+// Soloyard: render-only label (translated); githubReviewStateLabel stays English for agent prompts.
 export function githubReviewDecisionLabel(decision: string): string {
   switch (decision.trim().toUpperCase()) {
     case "APPROVED":
-      return "Approved";
+      return t("inbox:review.approved");
     case "CHANGES_REQUESTED":
-      return "Changes requested";
+      return t("inbox:review.changesRequested");
     case "REVIEW_REQUIRED":
-      return "Review required";
+      return t("inbox:review.reviewRequired");
     default:
       return "";
   }
@@ -575,30 +577,31 @@ export function githubReviewStateLabel(state: string): string {
   }
 }
 
+// Soloyard: render-only label (translated).
 export function gitlabAttentionLabel(reason: string): string {
   const action = reason.trim().toLowerCase();
   switch (action) {
     case "assigned":
-      return "Assigned to you";
+      return t("inbox:attention.assigned");
     case "mentioned":
     case "directly_addressed":
-      return "Mentioned you";
+      return t("inbox:attention.mentioned");
     case "review_requested":
-      return "Review requested";
+      return t("inbox:attention.reviewRequested");
     case "review_submitted":
-      return "Review submitted";
+      return t("inbox:attention.reviewSubmitted");
     case "approval_required":
-      return "Approval required";
+      return t("inbox:attention.approvalRequired");
     case "build_failed":
-      return "Pipeline failed";
+      return t("inbox:attention.buildFailed");
     case "unmergeable":
-      return "Cannot be merged";
+      return t("inbox:attention.unmergeable");
     case "merge_train_removed":
-      return "Removed from merge train";
+      return t("inbox:attention.mergeTrainRemoved");
     case "member_access_requested":
-      return "Access requested";
+      return t("inbox:attention.accessRequested");
     case "marked":
-      return "Added to your to-dos";
+      return t("inbox:attention.marked");
     default:
       return action
         .split("_")

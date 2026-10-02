@@ -1,10 +1,14 @@
 import type { BuiltinSkill } from "../../skills/model/skills";
+import { t } from "../../../i18n";
 
 export const PLAN_COMMAND: BuiltinSkill = {
   kind: "builtin",
   name: "plan",
   invocation: "plan",
-  description: "Create a reviewable implementation plan before changing files.",
+  // Soloyard: getter, so the slash menu reads the current language.
+  get description() {
+    return t("sessions:commands.plan");
+  },
   scope: "builtin",
   source: "monocode",
 };
@@ -80,9 +84,9 @@ export function planTitle(text: string): string {
   for (const line of text.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("```") || trimmed === "---") continue;
-    return unwrapMarkdown(trimmed).slice(0, 80) || "Plan";
+    return unwrapMarkdown(trimmed).slice(0, 80) || t("sessions:plan.fallbackTitle");
   }
-  return "Plan";
+  return t("sessions:plan.fallbackTitle");
 }
 
 /** First prose paragraph that is not the title heading. */

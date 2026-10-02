@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu } from "../../../files/ui/ExplorerMenu";
 import { AgentMarkdown } from "../../../sessions/ui/AgentMarkdown";
 import { MessageSquare, Play, Plus, X } from "../../../../shared/ui/icons";
@@ -8,20 +9,21 @@ import { startWorkPrompt } from "../../model/startWork";
 import { PRIORITIES, STATUSES, priorityLabel, statusLabel, type IssueDetail as Detail } from "../../model/issues";
 import { PriorityIcon, StatusIcon } from "./IssueIcons";
 
-const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-const actorName = (actor: string) => (actor === "user" ? "You" : actor.replace(/^agent:/, ""));
+const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 type Picker = { anchor: HTMLElement; kind: "status" | "priority" };
 
 /** Issue 详情标签：标题、属性、描述、验收清单、关联会话、评论。 */
 export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) {
+  const { t, i18n } = useTranslation("soloyard");
+  const actorName = (actor: string) => (actor === "user" ? t("detail.you") : actor.replace(/^agent:/, ""));
   const { data: issue, error } = useSoloyard<Detail | null>("getIssue", issueId);
   const [picker, setPicker] = useState<Picker | null>(null);
   const [editingBody, setEditingBody] = useState(false);
   const [sendingBack, setSendingBack] = useState(false);
   const { data: project } = useProjectForPath(cwd);
   if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
-  if (issue === null) return <p className="p-6 text-[13px] text-content/50">This issue was deleted.</p>;
+  if (issue === null) return <p className="p-6 text-[13px] text-content/50">{t("detail.deleted")}</p>;
   if (!issue) return null;
   const update = (patch: Record<string, unknown>) => mutateSoloyard("updateIssue", issue.id, patch);
   // 开工：先生成会话 id 挂到 issue 上，再请底座开新会话、把开工提示词填进输入框。
@@ -36,10 +38,10 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const latestSession = sessions[0];
   // 打回：原因记成评论，退回进行中，并发给最近的那个会话让 agent 接着改
   const sendBack = async (reason: string) => {
-    await mutateSoloyard("addComment", issue.id, `打回：${reason}`);
+    await mutateSoloyard("addComment", issue.id, t("prompt.sentBackComment", { reason }));
     await update({ status: "in_progress" });
     if (latestSession) {
-      requestSendToSession({ sessionId: latestSession.id, text: `${issue.ident} 验收没通过：${reason}\n\n请修改后重新自查，再把 issue 改回 in_review 并评论说明。` });
+      requestSendToSession({ sessionId: latestSession.id, text: t("prompt.sentBackMessage", { ident: issue.ident, reason }) });
     }
     setSendingBack(false);
   };
@@ -52,7 +54,7 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
           <input
             key={issue.version}
             defaultValue={issue.title}
-            aria-label="Title"
+            aria-label={t("detail.titleAria")}
             onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== issue.title && update({ title: e.target.value.trim() })}
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
             className="w-full bg-transparent text-[20px] font-medium text-content outline-none"
@@ -61,11 +63,11 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
             <button
               type="button"
               onClick={() => void startWork()}
-              title="Open a new session with this issue in the composer"
+              title={t("detail.startWorkHint")}
               className="flex h-7 items-center gap-1.5 rounded-md bg-accent px-2.5 text-[12px] font-medium text-white hover:opacity-90"
             >
               <Play className="size-3" />
-              Start work
+              {t("detail.startWork")}
             </button>
             <PropertyButton onClick={(el) => setPicker({ anchor: el, kind: "status" })}>
               <StatusIcon status={issue.status} />
@@ -83,19 +85,19 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
           <div className="flex flex-col gap-2 rounded-lg border border-sky-400/40 bg-sky-400/5 p-3">
             <div className="flex items-center gap-2 text-[13px] text-content">
               <StatusIcon status="in_review" />
-              Waiting for your review
+              {t("detail.review")}
               <span className="ml-auto flex gap-1.5">
                 <button type="button" onClick={() => void update({ status: "done" })} className="h-7 rounded-md bg-accent px-2.5 text-[12px] font-medium text-white hover:opacity-90">
-                  Accept
+                  {t("detail.accept")}
                 </button>
                 <button type="button" onClick={() => setSendingBack(true)} className="h-7 rounded-md border border-stroke px-2.5 text-[12px] text-content/80 hover:bg-content/10">
-                  Send back
+                  {t("detail.sendBack")}
                 </button>
               </span>
             </div>
             {sendingBack ? (
               <SendBack
-                target={latestSession ? (latestSession.title ?? "the latest session") : null}
+                target={latestSession ? (latestSession.title ?? t("detail.latestSession")) : null}
                 onCancel={() => setSendingBack(false)}
                 onSend={sendBack}
               />
@@ -103,7 +105,7 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
           </div>
         ) : null}
 
-        <Section title="Description" action={!editingBody ? <TextButton onClick={() => setEditingBody(true)}>Edit</TextButton> : null}>
+        <Section title={t("detail.description")} action={!editingBody ? <TextButton onClick={() => setEditingBody(true)}>{t("detail.edit")}</TextButton> : null}>
           {editingBody ? (
             <textarea
               autoFocus
@@ -113,19 +115,19 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
                 setEditingBody(false);
                 if (e.target.value !== issue.body_md) void update({ body_md: e.target.value });
               }}
-              placeholder="Markdown supported"
+              placeholder={t("detail.markdownHint")}
               className="w-full resize-y rounded-md border border-stroke bg-content/5 p-3 font-mono text-[12px] leading-relaxed text-content outline-none"
             />
           ) : issue.body_md ? (
             <AgentMarkdown text={issue.body_md} streaming={false} cwd={cwd} />
           ) : (
             <button type="button" onClick={() => setEditingBody(true)} className="text-left text-[13px] text-content/40 hover:text-content/70">
-              Add a description…
+              {t("detail.addDescription")}
             </button>
           )}
         </Section>
 
-        <Section title={`Acceptance criteria${issue.acceptance.length ? ` · ${issue.acceptance.filter((a) => a.done).length}/${issue.acceptance.length}` : ""}`}>
+        <Section title={`${t("detail.acceptance")}${issue.acceptance.length ? ` · ${issue.acceptance.filter((a) => a.done).length}/${issue.acceptance.length}` : ""}`}>
           <ul className="flex flex-col">
             {issue.acceptance.map((item) => (
               <li key={item.id} className="group flex h-8 items-center gap-2 text-[13px]">
@@ -137,16 +139,16 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
                   className="accent-[var(--color-accent)]"
                 />
                 <span className={`flex-1 ${item.done ? "text-content/40 line-through" : "text-content/90"}`}>{item.text}</span>
-                <button type="button" aria-label={`Remove ${item.text}`} onClick={() => void mutateSoloyard("removeAcceptance", item.id)} className="rounded p-0.5 text-content/40 opacity-0 hover:text-content group-hover:opacity-100">
+                <button type="button" aria-label={t("detail.remove", { text: item.text })} onClick={() => void mutateSoloyard("removeAcceptance", item.id)} className="rounded p-0.5 text-content/40 opacity-0 hover:text-content group-hover:opacity-100">
                   <X className="size-3" />
                 </button>
               </li>
             ))}
           </ul>
-          <AddLine placeholder="Add a criterion — Enter to add" onAdd={(text) => mutateSoloyard("addAcceptance", issue.id, text)} />
+          <AddLine placeholder={t("detail.addCriterion")} onAdd={(text) => mutateSoloyard("addAcceptance", issue.id, text)} />
         </Section>
 
-        <Section title="Sessions">
+        <Section title={t("detail.sessions")}>
           {sessions.length ? (
             <ul className="flex flex-col">
               {sessions.map((s) => (
@@ -158,24 +160,24 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
                     className="flex h-8 w-full items-center gap-2 rounded-md px-1 text-left text-[13px] text-content/80 hover:bg-content/5 disabled:cursor-default disabled:text-content/40 disabled:hover:bg-transparent"
                   >
                     <MessageSquare className="size-3.5 text-content/40" />
-                    <span className="flex-1 truncate">{s.missing ? "Deleted session" : (s.title ?? s.id)}</span>
+                    <span className="flex-1 truncate">{s.missing ? t("detail.deletedSession") : (s.title ?? s.id)}</span>
                     {s.harness ? <span className="text-[11px] text-content/40">{s.harness}</span> : null}
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[13px] text-content/40">No sessions yet. “Start work” opens one.</p>
+            <p className="text-[13px] text-content/40">{t("detail.noSessions")}</p>
           )}
         </Section>
 
-        <Section title="Comments">
+        <Section title={t("detail.comments")}>
           <ul className="flex flex-col gap-3">
             {issue.comments.map((c) => (
               <li key={c.id} className="rounded-md border border-stroke p-3">
                 <div className="mb-1 flex items-center gap-2 text-[11px] text-content/50">
                   <span className="font-medium text-content/80">{actorName(c.actor)}</span>
-                  {when(c.created_at)}
+                  {when(c.created_at, i18n.language)}
                 </div>
                 <AgentMarkdown text={c.body_md} streaming={false} cwd={cwd} />
               </li>
@@ -189,10 +191,10 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
           anchor={picker.anchor}
           items={
             picker.kind === "status"
-              ? STATUSES.map((s) => ({ kind: "item" as const, id: s.id, label: s.label, checked: issue.status === s.id }))
-              : PRIORITIES.map((p) => ({ kind: "item" as const, id: String(p.id), label: p.label, checked: issue.priority === p.id }))
+              ? STATUSES.map((s) => ({ kind: "item" as const, id: s, label: statusLabel(s), checked: issue.status === s }))
+              : PRIORITIES.map((p) => ({ kind: "item" as const, id: String(p), label: priorityLabel(p), checked: issue.priority === p }))
           }
-          ariaLabel={picker.kind === "status" ? "Change status" : "Change priority"}
+          ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : t("issues.changePriority")}
           width={180}
           onPick={(id) => {
             setPicker(null);
@@ -230,13 +232,14 @@ const TextButton = ({ onClick, children }: { onClick: () => void; children: Reac
 );
 
 function Labels({ labels, onChange }: { labels: string[]; onChange: (labels: string[]) => void }) {
+  const { t } = useTranslation("soloyard");
   const [adding, setAdding] = useState(false);
   return (
     <>
       {labels.map((label) => (
         <span key={label} className="flex h-7 items-center gap-1 rounded-md border border-stroke pl-2 pr-1 text-[12px] text-content/70">
           {label}
-          <button type="button" aria-label={`Remove label ${label}`} onClick={() => onChange(labels.filter((l) => l !== label))} className="rounded p-0.5 text-content/40 hover:text-content">
+          <button type="button" aria-label={t("detail.removeLabel", { label })} onClick={() => onChange(labels.filter((l) => l !== label))} className="rounded p-0.5 text-content/40 hover:text-content">
             <X className="size-3" />
           </button>
         </span>
@@ -244,7 +247,7 @@ function Labels({ labels, onChange }: { labels: string[]; onChange: (labels: str
       {adding ? (
         <input
           autoFocus
-          placeholder="Label"
+          placeholder={t("detail.label")}
           onBlur={() => setAdding(false)}
           onKeyDown={(e) => {
             const value = e.currentTarget.value.trim();
@@ -259,7 +262,7 @@ function Labels({ labels, onChange }: { labels: string[]; onChange: (labels: str
       ) : (
         <button type="button" onClick={() => setAdding(true)} className="flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-content/50 hover:bg-content/10 hover:text-content">
           <Plus className="size-3" />
-          Label
+          {t("detail.label")}
         </button>
       )}
     </>
@@ -285,6 +288,7 @@ function AddLine({ placeholder, onAdd }: { placeholder: string; onAdd: (text: st
 }
 
 function CommentBox({ onSend }: { onSend: (body: string) => Promise<unknown> }) {
+  const { t } = useTranslation("soloyard");
   const [body, setBody] = useState("");
   const send = async () => {
     if (!body.trim()) return;
@@ -296,19 +300,20 @@ function CommentBox({ onSend }: { onSend: (body: string) => Promise<unknown> }) 
       <textarea
         value={body}
         rows={3}
-        placeholder="Leave a comment — ⌘Enter to send"
+        placeholder={t("detail.commentPlaceholder")}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && e.metaKey && void send()}
         className="w-full resize-none bg-transparent text-[13px] text-content outline-none placeholder:text-content/40"
       />
       <button type="button" disabled={!body.trim()} onClick={() => void send()} className="self-end rounded-md bg-content/10 px-3 py-1 text-[12px] text-content hover:bg-content/15 disabled:opacity-40">
-        Comment
+        {t("detail.comment")}
       </button>
     </div>
   );
 }
 
 function SendBack({ target, onCancel, onSend }: { target: string | null; onCancel: () => void; onSend: (reason: string) => Promise<void> }) {
+  const { t } = useTranslation("soloyard");
   const [reason, setReason] = useState("");
   return (
     <div className="flex flex-col gap-2">
@@ -316,17 +321,17 @@ function SendBack({ target, onCancel, onSend }: { target: string | null; onCance
         autoFocus
         rows={2}
         value={reason}
-        placeholder="What still needs to change?"
+        placeholder={t("detail.sendBackPlaceholder")}
         onChange={(e) => setReason(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
         className="w-full resize-none rounded-md border border-stroke bg-background-base p-2 text-[13px] text-content outline-none placeholder:text-content/40"
       />
       <div className="flex items-center gap-2 text-[11px] text-content/50">
-        {target ? `Saved as a comment and sent to “${target}”.` : "Saved as a comment. No linked session to send it to."}
+        {target ? t("detail.sendBackTo", { target }) : t("detail.sendBackNoSession")}
         <span className="ml-auto flex gap-1.5">
-          <button type="button" onClick={onCancel} className="h-7 rounded-md px-2.5 text-[12px] text-content/60 hover:text-content">Cancel</button>
+          <button type="button" onClick={onCancel} className="h-7 rounded-md px-2.5 text-[12px] text-content/60 hover:text-content">{t("detail.cancel")}</button>
           <button type="button" disabled={!reason.trim()} onClick={() => void onSend(reason.trim())} className="h-7 rounded-md bg-content/10 px-2.5 text-[12px] text-content hover:bg-content/15 disabled:opacity-40">
-            Send back
+            {t("detail.sendBack")}
           </button>
         </span>
       </div>

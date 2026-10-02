@@ -70,6 +70,7 @@ import {
 } from "../../../shared/lib/drag";
 import { ExplorerMenu, type ExplorerMenuItem } from "./ExplorerMenu";
 import { FileTypeIcon } from "./FileTypeIcon";
+import { t as translate, Trans, useTranslation } from "../../../i18n";
 
 const GIT_STATUS_COLOR: Record<string, string> = {
   modified: "text-amber-400",
@@ -96,10 +97,10 @@ type MenuTarget = { path: string; isDir: boolean; isRoot: boolean };
 type MenuState = { x: number; y: number; target: MenuTarget };
 
 const REVEAL_LABEL = IS_MAC
-  ? "Reveal in Finder"
+  ? "files:tree.revealFinder"
   : IS_WIN
-    ? "Reveal in File Explorer"
-    : "Open Containing Folder";
+    ? "files:tree.revealExplorer"
+    : "files:tree.openContainingFolder";
 
 type TreeCtxValue = {
   expanded: Set<string>;
@@ -177,56 +178,56 @@ function explorerItems(
     !!clip?.isDir &&
     (pasteParent === clip.path || pasteParent.startsWith(`${clip.path}/`));
   return [
-    { kind: "item", id: "new-file", label: "New File" },
-    { kind: "item", id: "new-folder", label: "New Folder" },
+    { kind: "item", id: "new-file", label: translate("files:tree.newFile") },
+    { kind: "item", id: "new-folder", label: translate("files:tree.newFolder") },
     { kind: "sep" },
     {
       kind: "item",
       id: "cut",
-      label: "Cut",
+      label: translate("files:tree.cut"),
       shortcut: `${MOD}X`,
       disabled: target.isRoot,
     },
     {
       kind: "item",
       id: "copy",
-      label: "Copy",
+      label: translate("files:tree.copy"),
       shortcut: `${MOD}C`,
       disabled: target.isRoot,
     },
     {
       kind: "item",
       id: "paste",
-      label: "Paste",
+      label: translate("files:tree.paste"),
       shortcut: `${MOD}V`,
       disabled: pasteBlocked,
     },
     {
       kind: "item",
       id: "duplicate",
-      label: "Duplicate",
+      label: translate("files:tree.duplicate"),
       disabled: target.isRoot,
     },
     { kind: "sep" },
     {
       kind: "item",
       id: "copy-path",
-      label: "Copy Path",
+      label: translate("files:tree.copyPath"),
       shortcut: `${MOD}${SHIFT}C`,
     },
-    { kind: "item", id: "copy-relative-path", label: "Copy Relative Path" },
+    { kind: "item", id: "copy-relative-path", label: translate("files:tree.copyRelativePath") },
     { kind: "sep" },
     {
       kind: "item",
       id: "rename",
-      label: "Rename",
+      label: translate("files:tree.rename"),
       shortcut: "F2",
       disabled: target.isRoot,
     },
     {
       kind: "item",
       id: "delete",
-      label: "Delete",
+      label: translate("files:tree.delete"),
       shortcut: "⌫",
       disabled: target.isRoot,
       danger: true,
@@ -237,11 +238,11 @@ function explorerItems(
           {
             kind: "item" as const,
             id: "open-terminal",
-            label: "Open in Terminal",
+            label: translate("files:tree.openInTerminal"),
           },
         ]
       : []),
-    { kind: "item", id: "reveal", label: REVEAL_LABEL },
+    { kind: "item", id: "reveal", label: translate(REVEAL_LABEL) },
   ];
 }
 
@@ -257,6 +258,7 @@ export const FileTree = memo(function FileTree({
   onSearch,
   gitStatuses,
 }: Props) {
+  const { t } = useTranslation("files");
   const [expanded, setExpanded] = useState(() => loadExpanded(cwd));
   const [selectedPath, setSelectedPath] = useState(() => loadSelected(cwd));
   const [children, setChildren] = useState<FsEntry[] | null>(() =>
@@ -546,8 +548,8 @@ export const FileTree = memo(function FileTree({
     const label = basename(path);
     const ok = window.confirm(
       isDir
-        ? `Delete folder “${label}” and everything inside it?`
-        : `Delete “${label}”?`,
+        ? t("tree.confirmDeleteFolder", { name: label })
+        : t("tree.confirmDelete", { name: label }),
     );
     if (!ok) return;
     await deletePath(path);
@@ -592,7 +594,7 @@ export const FileTree = memo(function FileTree({
       clip.isDir &&
       (destParent === clip.path || destParent.startsWith(`${clip.path}/`))
     ) {
-      throw new Error("Cannot paste a folder into itself.");
+      throw new Error(t("tree.pasteIntoSelf"));
     }
     const from = clip.path;
     const mode = clip.mode;
@@ -890,14 +892,14 @@ export const FileTree = memo(function FileTree({
           className="flex h-9 shrink-0 items-center gap-px overflow-visible border-b border-stroke px-2"
           onContextMenu={(e) => e.stopPropagation()}
         >
-          <HeaderIcon label="New File" onClick={() => startCreate(false)}>
+          <HeaderIcon label={t("tree.newFile")} onClick={() => startCreate(false)}>
             <FilePlus className="size-3.5" strokeWidth={1.75} />
           </HeaderIcon>
-          <HeaderIcon label="New Folder" onClick={() => startCreate(true)}>
+          <HeaderIcon label={t("tree.newFolder")} onClick={() => startCreate(true)}>
             <FolderPlus className="size-3.5" strokeWidth={1.75} />
           </HeaderIcon>
           <HeaderIcon
-            label="Collapse All"
+            label={t("tree.collapseAll")}
             onClick={() => {
               setCreating(null);
               setRenaming(null);
@@ -910,7 +912,7 @@ export const FileTree = memo(function FileTree({
           </HeaderIcon>
           {onSearch ? (
             <HeaderIcon
-              label={`Search in files (${MOD}Shift+F)`}
+              label={t("tree.searchInFiles", { shortcut: `${MOD}Shift+F` })}
               onClick={onSearch}
             >
               <Search className="size-3.5" strokeWidth={1.75} />
@@ -962,7 +964,7 @@ export const FileTree = memo(function FileTree({
             </p>
           ) : null}
           {rootOpen ? (
-            <div role="tree" aria-label={`${name} files`}>
+            <div role="tree" aria-label={t("tree.label", { name })}>
               <TreeChildren
                 parent={cwd}
                 depth={0}
@@ -1235,6 +1237,7 @@ export function NameRow({
   onCommit: (raw: string) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation("files");
   const inputRef = useRef<HTMLInputElement>(null);
   const finished = useRef(false);
   const [value, setValue] = useState(initial);
@@ -1306,7 +1309,7 @@ export function NameRow({
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
-          aria-label="Type file name. Press Enter to confirm or Escape to cancel."
+          aria-label={t("tree.nameInput")}
           onChange={(e) => {
             setValue(e.target.value);
             setSubmitError(null);
@@ -1343,36 +1346,40 @@ function NameIssueView({
   issue: NameIssue | null;
   fallback: string | null;
 }) {
+  const { t } = useTranslation("files");
   let body: ReactNode = null;
   if (fallback) {
     body = fallback;
   } else if (issue) {
     switch (issue.kind) {
       case "empty":
-        body = "A file or folder name must be provided.";
+        body = t("tree.issue.empty");
         break;
       case "slash":
-        body = "A file or folder name cannot start with a slash.";
+        body = t("tree.issue.slash");
         break;
       case "exists":
         body = (
-          <>
-            A file or folder <span className="font-semibold">{issue.name}</span>{" "}
-            already exists at this location. Please choose a different name.
-          </>
+          <Trans
+            t={t}
+            i18nKey="tree.issue.exists"
+            values={{ name: issue.name }}
+            components={{ b: <span className="font-semibold" /> }}
+          />
         );
         break;
       case "invalid":
         body = (
-          <>
-            The name <span className="font-semibold">{issue.name}</span> is not
-            valid as a file or folder name. Please choose a different name.
-          </>
+          <Trans
+            t={t}
+            i18nKey="tree.issue.invalid"
+            values={{ name: issue.name }}
+            components={{ b: <span className="font-semibold" /> }}
+          />
         );
         break;
       case "whitespace":
-        body =
-          "Leading or trailing whitespace detected in file or folder name.";
+        body = t("tree.issue.whitespace");
         break;
     }
   }

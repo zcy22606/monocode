@@ -1,0 +1,66 @@
+{
+  "categories": {
+    "pullRequests": "Pull request / Merge request",
+    "issues": "Issues 和 Linear 任务",
+    "agentFinished": "Agent 完成",
+    "agentInput": "Agent 审批和提问",
+    "reminders": "提醒"
+  },
+  "os": {
+    "question": "{{harness}} 有问题要问你",
+    "approve": "批准：{{what}}",
+    "needsApproval": "{{harness}} 需要你批准",
+    "finished": "{{harness}} 已完成"
+  },
+  "reminders": {
+    "errorTitle": "提醒"
+  },
+  "saveError": "无法保存通知偏好，请重试。",
+  "mute": {
+    "status": {
+      "untilResumed": "已静音，直到手动恢复",
+      "until": "已静音至 {{date}}",
+      "projects": "{{total}} 个项目中有 {{muted}} 个已静音"
+    },
+    "preset": {
+      "hours_other": "{{count}} 小时",
+      "untilResumed": "直到手动恢复",
+      "custom": "选择日期和时间",
+      "at": "{{label}}（{{time}}）",
+      "atTomorrow": "{{label}}（明天 {{time}}）"
+    },
+    "resume": "恢复通知",
+    "change": "更改静音时长",
+    "mute": "静音通知",
+    "tooltip": "静音会暂停所有项目通知，不会改动你的分类选择。",
+    "muted": "已静音",
+    "button": "静音",
+    "menuHeader": "静音所有通知的时长",
+    "dialog": "静音项目通知"
+  },
+  "datePicker": {
+    "heading": "静音所有通知，直到",
+    "invalid": "请选择有效的日期和时间。",
+    "past": "请选择一个将来的日期和时间。",
+    "cancel": "取消",
+    "submit": "静音到这个时间"
+  },
+  "settings": {
+    "title": "项目通知",
+    "description": "按分类选择提示音、横幅和侧栏标记。静音会暂停它们，但不改动你的选择。未读条目在收件箱里仍保持标记。",
+    "done": "完成",
+    "selectProjects": "选择项目",
+    "selectAll": "选择全部项目",
+    "selected_other": "已选 {{count}} 个",
+    "muteSelected": "静音所选项目",
+    "empty": "打开一个项目或连接收件箱提供方后，即可配置它的通知。",
+    "selectProject": "选择 {{name}}",
+    "categoriesFor": "{{name}} 的通知分类",
+    "localProject": "本地项目 · ",
+    "allPaused": "所有通知已暂停",
+    "allEnabled": "所有分类已开启",
+    "enabledCount": "已开启 {{enabled}}/{{total}}",
+    "mutedHint": "通知恢复后会按你的分类选择生效。静音期间也可以修改。",
+    "categoryFor": "{{category}}（{{name}}）"
+  }
+}

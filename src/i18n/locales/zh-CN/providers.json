@@ -1,0 +1,40 @@
+{
+  "status": {
+    "checking": "正在检查…",
+    "notSignedIn": "未登录",
+    "usageUnavailable": "用量不可用",
+    "exhausted": "已用完",
+    "runningLow": "余量不足",
+    "ready": "可用",
+    "backIn": "{{duration}} 后恢复"
+  },
+  "usage": {
+    "refresh": "刷新用量额度",
+    "weekly": "每周",
+    "monthly": "每月",
+    "resetDue": "待重置",
+    "resetsAt": "{{date}} 重置",
+    "resetsNow": "即将重置",
+    "resetsIn": "{{duration}} 后重置",
+    "left": "剩余 {{percent}}",
+    "used": "已用 {{percent}}",
+    "window": "{{window}} 窗口",
+    "limitRemaining": "{{title}} 剩余额度"
+  },
+  "identity": {
+    "personal": "个人"
+  },
+  "harnessUpdate": {
+    "label": "CLI 更新",
+    "available_other": "CLI 有可用更新",
+    "updateAll": "全部更新",
+    "dismiss": "关闭 CLI 更新提示",
+    "refreshed": "模型选择器已刷新为新版本的模型。",
+    "hint": "新模型通常需要最新版本。",
+    "updatedTo": "已更新到 {{version}}",
+    "updating": "正在更新",
+    "retry": "重试",
+    "update": "更新",
+    "stillOn": "更新后仍是 {{version}}。"
+  }
+}

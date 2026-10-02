@@ -3,6 +3,7 @@ import type { ToolPreview } from "../model/session";
 import { FilePreview } from "../../files/ui/FilePreview";
 import { Popover } from "../../../shared/ui/Popover";
 import { X } from "../../../shared/ui/icons";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   preview: ToolPreview;
@@ -26,6 +27,7 @@ export function ToolDiffPreview({
   className,
   children,
 }: Props) {
+  const { t } = useTranslation("sessions");
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const surface = useRef<HTMLDivElement>(null);
@@ -69,12 +71,12 @@ export function ToolDiffPreview({
 
   const description =
     status === "pending"
-      ? "Proposed changes"
+      ? t("toolDiff.proposed")
       : status === "rejected"
-        ? "Attempted changes · tool did not complete"
+        ? t("toolDiff.attempted")
         : preview.contentOnly
-          ? "Written content · previous contents unavailable"
-          : "Change preview";
+          ? t("toolDiff.written")
+          : t("toolDiff.preview");
 
   return (
     <>
@@ -84,8 +86,10 @@ export function ToolDiffPreview({
         className={`${className ?? ""} focus-visible:outline-2 focus-visible:outline-sky-400/60`}
         aria-label={
           onOpen
-            ? `Open ${label}`
-            : `Preview ${preview.contentOnly ? "written content" : "changes"}: ${label}`
+            ? t("toolDiff.open", { label })
+            : preview.contentOnly
+              ? t("toolDiff.previewWritten", { label })
+              : t("toolDiff.previewChanges", { label })
         }
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -158,7 +162,7 @@ export function ToolDiffPreview({
             <span className="min-w-0 flex-1">{description}</span>
             <button
               type="button"
-              aria-label="Close preview"
+              aria-label={t("toolDiff.close")}
               className="shrink-0 rounded p-0.5 hover:bg-content/8 hover:text-content"
               onClick={() => dismiss(true)}
             >

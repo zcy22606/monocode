@@ -28,6 +28,7 @@ import { ProjectLogoIcon } from "../../projects/ui/ProjectLogoIcon";
 import { ProjectMascot } from "../../projects/ui/ProjectMascot";
 import { MOD } from "../../../platform/tauri/platform";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../files/ui/ExplorerMenu";
+import { useTranslation } from "../../../i18n";
 
 export type TabGroupMenuAction =
   | "new-tab"
@@ -90,36 +91,37 @@ type MenuItem = {
   icon: IconComponent;
 };
 
-const ITEMS: MenuItem[] = [
+// Soloyard: labels are i18n keys in the "workspace" namespace, translated at render.
+const ITEMS = [
   {
     id: "new-tab",
-    label: "New tab in group",
+    label: "groupMenu.newTab",
     shortcut: `${MOD}T`,
     icon: SquarePlus,
   },
   {
     id: "new-window",
-    label: "Move group to new window",
+    label: "groupMenu.newWindow",
     icon: AppWindow,
   },
   {
     id: "close-group",
-    label: "Close group",
+    label: "groupMenu.closeGroup",
     shortcut: `${MOD}W`,
     icon: X,
   },
   {
     id: "ungroup",
-    label: "Ungroup",
+    label: "groupMenu.ungroup",
     icon: Ungroup,
   },
   {
     id: "delete-group",
-    label: "Delete group",
+    label: "groupMenu.deleteGroup",
     danger: true,
     icon: Trash2,
   },
-];
+] as const satisfies readonly MenuItem[];
 
 export function TabGroupMenu({
   x,
@@ -140,13 +142,15 @@ export function TabGroupMenu({
   onLogoChange,
   onPick,
   onClose,
-  ariaLabel = "Tab group actions",
+  ariaLabel,
   showActions = true,
   leadingAction,
   extraItems,
   onExtraPick,
   footer,
 }: Props) {
+  const { t } = useTranslation("workspace");
+  ariaLabel ??= t("groupMenu.label");
   const menuId = useId();
   const [submenu, setSubmenu] = useState<{
     item: TabGroupMenuExtraItem;
@@ -231,7 +235,7 @@ export function TabGroupMenu({
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={commitName}
-          aria-label="Group name"
+          aria-label={t("groupMenu.name")}
           className="mb-2 w-full rounded-lg border border-content/10 bg-content/5 px-2.5 py-1.5 text-[13px] text-content outline-none ring-accent/40 focus:ring-1"
         />
 
@@ -239,8 +243,8 @@ export function TabGroupMenu({
           <div className="mb-2 flex items-center gap-2 px-0.5">
             <button
               type="button"
-              title={logoPath ? "Change project logo" : "Add project logo"}
-              aria-label={logoPath ? "Change project logo" : "Add project logo"}
+              title={logoPath ? t("groupMenu.changeLogo") : t("groupMenu.addLogo")}
+              aria-label={logoPath ? t("groupMenu.changeLogo") : t("groupMenu.addLogo")}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 void (async () => {
@@ -265,16 +269,16 @@ export function TabGroupMenu({
               />
             </button>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-content/50">Project logo</p>
+              <p className="text-[11px] text-content/50">{t("groupMenu.logo")}</p>
               <p className="truncate text-[12px] text-content/70">
-                {logoPath ? "Shown in tabs and composer" : "Optional — replaces folder icon"}
+                {logoPath ? t("groupMenu.logoShown") : t("groupMenu.logoOptional")}
               </p>
             </div>
             {logoPath ? (
               <button
                 type="button"
-                title="Remove project logo"
-                aria-label="Remove project logo"
+                title={t("groupMenu.removeLogo")}
+                aria-label={t("groupMenu.removeLogo")}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   void clearProjectLogo(projectKey(logoProject)).then(onLogoChange);
@@ -309,7 +313,7 @@ export function TabGroupMenu({
         ) : null}
 
         <div className="mb-2 px-0.5">
-          <p className="mb-1 text-[11px] text-content/50">Mascot</p>
+          <p className="mb-1 text-[11px] text-content/50">{t("groupMenu.mascot")}</p>
           <div className="flex items-center justify-between gap-1">
             {PROJECT_MASCOTS.map((mascot) => (
               <MascotSwatch
@@ -335,7 +339,7 @@ export function TabGroupMenu({
             {ITEMS.slice(0, 2).map((item) => (
               <MenuRow
                 key={item.id}
-                item={item}
+                item={{ ...item, label: t(item.label) }}
                 onHover={() => setSubmenu(null)}
                 onPick={() => onPick(item.id as TabGroupMenuAction)}
               />
@@ -346,7 +350,7 @@ export function TabGroupMenu({
             {ITEMS.slice(2, 4).map((item) => (
               <MenuRow
                 key={item.id}
-                item={item}
+                item={{ ...item, label: t(item.label) }}
                 onHover={() => setSubmenu(null)}
                 onPick={() => onPick(item.id as TabGroupMenuAction)}
               />
@@ -357,7 +361,7 @@ export function TabGroupMenu({
             {ITEMS.slice(4).map((item) => (
               <MenuRow
                 key={item.id}
-                item={item}
+                item={{ ...item, label: t(item.label) }}
                 onHover={() => setSubmenu(null)}
                 onPick={() => onPick(item.id as TabGroupMenuAction)}
               />
@@ -418,11 +422,12 @@ function MascotSwatch({
   onPick: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTranslation("workspace");
   return (
     <button
       type="button"
       title={title}
-      aria-label={`Mascot ${title}`}
+      aria-label={t("groupMenu.mascotLabel", { name: title })}
       aria-pressed={selected}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onPick}

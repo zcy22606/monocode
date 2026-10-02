@@ -1,0 +1,378 @@
+{
+  "title": "Inbox",
+  "kind": {
+    "pr": "Pull request",
+    "mr": "Merge request",
+    "issue": "Issue"
+  },
+  "status": {
+    "open": "Open",
+    "draft": "Draft",
+    "closed": "Closed",
+    "merged": "Merged"
+  },
+  "attention": {
+    "assigned": "Assigned to you",
+    "mentioned": "Mentioned you",
+    "reviewRequested": "Review requested",
+    "reviewSubmitted": "Review submitted",
+    "approvalRequired": "Approval required",
+    "buildFailed": "Pipeline failed",
+    "unmergeable": "Cannot be merged",
+    "mergeTrainRemoved": "Removed from merge train",
+    "accessRequested": "Access requested",
+    "marked": "Added to your to-dos"
+  },
+  "review": {
+    "approved": "Approved",
+    "changesRequested": "Changes requested",
+    "reviewRequired": "Review required",
+    "requestedChanges": "Requested changes",
+    "dismissed": "Dismissed",
+    "commented": "Commented"
+  },
+  "open": {
+    "reviewOn": "Review on {{provider}}",
+    "openIn": "Open in {{provider}}",
+    "openOn": "Open on {{provider}}",
+    "noLink": "No link available"
+  },
+  "connect": {
+    "label": "Connect an inbox source",
+    "notConnected": "Not connected",
+    "source": "Connect {{source}}",
+    "add": "Add connection",
+    "empty": "Add a connection to start using the Inbox."
+  },
+  "list": {
+    "sources": "Inbox source",
+    "filter": "Filter inbox",
+    "markAllRead": "Mark all as read",
+    "readStatusError": "Could not save read status. Please try again.",
+    "refresh": "Refresh",
+    "resize": "Resize inbox list",
+    "selectItem": "Select an inbox item"
+  },
+  "empty": {
+    "noMatchingTracker": "No matching {{source}} issues",
+    "noMatchingMr": "No matching issues or merge requests",
+    "noMatchingPr": "No matching issues or pull requests",
+    "trackerFiltered": "No {{source}} issues match these filters",
+    "nothingNeedsAttention": "Nothing needs your attention",
+    "sourceFiltered": "No {{source}} items match these filters",
+    "prFiltered": "No issues or pull requests match these filters",
+    "tracker": "No {{source}} issues",
+    "openProject": "Open a project to fill the inbox"
+  },
+  "card": {
+    "label": "{{status}} {{kind}} {{ref}}: {{title}}",
+    "attention": ", {{label}}",
+    "new": ", new",
+    "related_one": ", {{count}} related thread",
+    "related_other": ", {{count}} related threads",
+    "relatedTitle_one": "{{count}} related thread",
+    "relatedTitle_other": "{{count}} related threads"
+  },
+  "linked": {
+    "label": "Linked {{kind}} #{{number}}",
+    "resize": "Resize linked {{kind}} panel",
+    "close": "Close {{kind}} panel"
+  },
+  "detail": {
+    "unassigned": "Unassigned",
+    "created": "Created {{time}}",
+    "updated": "Updated {{time}}",
+    "related_one": "Related thread",
+    "related_other": "Related threads",
+    "openThread": "Open thread: {{title}}",
+    "archived": "Archived",
+    "sending": "Sending...",
+    "sendToAgent": "Send to agent",
+    "ask": "Ask",
+    "prSections": "Pull request sections",
+    "mrSections": "Merge request sections",
+    "summary": "Summary",
+    "code": "Code",
+    "diffContext": "Diff context",
+    "hunks": "Hunks",
+    "fullFile": "Full file",
+    "noFileChanges": "No file changes",
+    "noDescription": "No description",
+    "copied": "Copied",
+    "copyBranch": "Copy branch name",
+    "chooseProject": "Choose project"
+  },
+  "merge": {
+    "button": "Merge pull request",
+    "optionsButton": "Merge options",
+    "method": "Merge method",
+    "queued": "Merge queued or auto-merge enabled.",
+    "options": {
+      "merge": {
+        "label": "Create a merge commit",
+        "description": "Add every commit to the base branch."
+      },
+      "squash": {
+        "label": "Squash and merge",
+        "description": "Combine the commits into one."
+      },
+      "rebase": {
+        "label": "Rebase and merge",
+        "description": "Add the commits without a merge commit."
+      }
+    }
+  },
+  "prAction": {
+    "thisBranch": "this branch",
+    "baseBranch": "the base branch",
+    "cancel": "Cancel",
+    "merging": "Merging…",
+    "merge": {
+      "title": "Merge this pull request?",
+      "detail": "Every commit from {{source}} will be added to {{destination}} with a merge commit.",
+      "confirm": "Merge pull request"
+    },
+    "squash": {
+      "title": "Squash and merge?",
+      "detail": "The commits from {{source}} will be combined into one commit on {{destination}}.",
+      "confirm": "Squash and merge"
+    },
+    "rebase": {
+      "title": "Rebase and merge?",
+      "detail": "The commits from {{source}} will be rebased individually onto {{destination}}.",
+      "confirm": "Rebase and merge"
+    },
+    "draft": {
+      "title": "Convert to draft?",
+      "detail": "Reviewers will see that this pull request is not ready to merge.",
+      "confirm": "Convert to draft",
+      "progress": "Converting…"
+    },
+    "ready": {
+      "title": "Mark as ready for review?",
+      "detail": "Reviewers will see that this pull request is ready for feedback.",
+      "confirm": "Ready for review",
+      "progress": "Updating…"
+    },
+    "close": {
+      "title": "Close this pull request?",
+      "detail": "The pull request will close without merging. You can reopen it later.",
+      "confirm": "Close pull request",
+      "progress": "Closing…"
+    },
+    "reopen": {
+      "title": "Reopen this pull request?",
+      "detail": "The pull request will return to the open state.",
+      "confirm": "Reopen pull request",
+      "progress": "Reopening…"
+    }
+  },
+  "discussion": {
+    "label": "Ask about {{ref}}",
+    "resize": "Resize discussion",
+    "title": "Ask · {{ref}}",
+    "restart": "Restart conversation",
+    "close": "Close panel"
+  },
+  "miniCard": {
+    "open": "Open {{kind}} {{id}} in {{provider}}",
+    "remove": "Remove",
+    "removeItem": "Remove {{kind}} {{id}}"
+  },
+  "media": {
+    "image": "Image"
+  },
+  "diff": {
+    "tooLarge": "Patch unavailable because this change is too large",
+    "noTextual": "No textual diff"
+  },
+  "comments": {
+    "count_one": "{{count}} comment",
+    "count_other": "{{count}} comments",
+    "truncated": "Latest comments · more on {{provider}}",
+    "replyingTo": "Replying to {{author}}",
+    "fallbackAuthor": "comment",
+    "cancelReply": "Cancel reply",
+    "replyPlaceholder": "Write a reply ({{shortcut}})",
+    "commentPlaceholder": "Leave a comment ({{shortcut}})",
+    "posting": "Posting...",
+    "reply": "Reply",
+    "comment": "Comment",
+    "loading": "Loading comments",
+    "resolved": "Resolved"
+  },
+  "filters": {
+    "needsAttention": "Needs attention",
+    "assignedToMe": "Assigned to me",
+    "status": "Status",
+    "time": "Time",
+    "type": "Type",
+    "teams": "Teams",
+    "projects": "Projects",
+    "noProject": "No project",
+    "issues": "Issues",
+    "pullRequests": "Pull requests",
+    "mergeRequests": "Merge requests",
+    "clear": "Clear filters",
+    "timeOptions": {
+      "all": "All time",
+      "today": "Today",
+      "7d": "Last 7 days",
+      "30d": "Last 30 days"
+    }
+  },
+  "notifications": {
+    "actions": "Inbox actions",
+    "muteAll": "Mute all projects",
+    "resumeMuted": "Resume muted projects",
+    "settings": "Notification settings…",
+    "muteDialog": "Mute project notifications",
+    "summary_one": "{{count}} project · {{muted}} muted",
+    "summary_other": "{{count}} projects · {{muted}} muted",
+    "saveError": "Could not save notification preferences. Please try again."
+  },
+  "notice": {
+    "commit": "Commit {{sha}}",
+    "review": "Review",
+    "reviewComment": "Review comment",
+    "comment": "Comment",
+    "openCommit": "Open commit",
+    "openPr": "Open PR",
+    "openIssue": "Open issue",
+    "addressWithAgent": "Address with agent",
+    "reviewWithAgent": "Review with agent",
+    "continueWithAgent": "Continue with agent",
+    "prMerged": "Pull request merged",
+    "prClosed": "Pull request closed",
+    "issueClosed": "Issue closed",
+    "label": "New activity on {{kind}} {{number}}",
+    "heading": "GitHub activity",
+    "dismiss": "Dismiss",
+    "dismissLabel": "Dismiss updates for {{kind}} {{number}}",
+    "noMessage": "No message",
+    "cleanUp": "Clean up this session",
+    "archive": "Archive session",
+    "delete": "Delete session",
+    "deleteShort": "Delete…",
+    "newCommits_one": "{{count}} new commit",
+    "newCommits_other": "{{count}} new commits",
+    "newReviews_one": "{{count}} new review",
+    "newReviews_other": "{{count}} new reviews",
+    "newComments_one": "{{count}} new comment",
+    "newComments_other": "{{count}} new comments",
+    "detailsUnavailable": "Updated on GitHub · details unavailable",
+    "metadataChanged": "Metadata or status changed"
+  },
+  "checks": {
+    "tab": "Checks",
+    "tabLabel": "Checks: {{description}}",
+    "loading": "Loading checks",
+    "loadFailed": "Checks failed to load",
+    "loadFailedSaved": "Checks failed to load, showing saved results that may be out of date: {{saved}}",
+    "noneReported": "No checks reported",
+    "countSeparator": ", ",
+    "count": {
+      "pass": "{{count}} passed",
+      "fail": "{{count}} failed",
+      "pending": "{{count}} in progress",
+      "cancel": "{{count}} cancelled",
+      "unknown": "{{count}} unknown",
+      "skipping": "{{count}} skipped"
+    },
+    "state": {
+      "pass": "Passed",
+      "fail": "Failed",
+      "pending": "In progress",
+      "cancel": "Cancelled",
+      "unknown": "Unknown",
+      "skipping": "Skipped"
+    },
+    "failedAt": "Failed at {{step}}",
+    "failedAtSuffix": "; Failed at {{step}}",
+    "tookSuffix": ", took {{duration}}",
+    "workflowSuffix": ", {{workflow}}",
+    "details": "{{name}} details",
+    "expandDetails": "Expand {{name}} details",
+    "collapseDetails": "Collapse {{name}} details",
+    "fixWithAi": "Fix with AI",
+    "fixCheck": "Fix {{name}} with AI",
+    "viewLog": "View full log on GitHub",
+    "viewOnGithub": "View {{name}} on GitHub",
+    "loadingSteps": "Loading steps…",
+    "detailsFailed": "Could not load job details.",
+    "retryDetails": "Retry details",
+    "viewSteps": "View run steps",
+    "steps": "{{name}} steps",
+    "noSteps": "No steps reported for this job.",
+    "noAnnotations": "No error annotations reported. View the full log on GitHub.",
+    "retryLoading": "Retry loading checks",
+    "retry": "Retry",
+    "needsFix_one": "{{count}} check needs a fix",
+    "needsFix_other": "{{count}} checks need a fix",
+    "running_one": "{{count}} check is running",
+    "running_other": "{{count}} checks are running",
+    "needsAttention_one": "{{count}} check needs attention",
+    "needsAttention_other": "{{count}} checks need attention",
+    "passed": "Checks passed",
+    "noneRan": "No checks ran",
+    "sentence": "{{text}}.",
+    "sectionLabel": "Pull request checks",
+    "fixAllFailed": "Fix all failed",
+    "refresh": "Refresh checks",
+    "stale": "Saved results may be out of date.",
+    "filterLabel": "Filter checks",
+    "filterAttention": "Needs attention",
+    "filterAll": "All checks",
+    "filterCount": "{{label}}: {{count}}",
+    "failuresFirst": "Failures first"
+  },
+  "evidence": {
+    "showMore": "Show {{count}} more annotations",
+    "viewSource": "View source at the checked commit",
+    "viewOnGithub": "View {{location}} on GitHub",
+    "sourceAt": "Source at {{sha}}",
+    "previewUnavailable": "Source preview unavailable for this commit."
+  },
+  "repair": {
+    "startFailed": "Could not start this fix. Choose another chat and try again.",
+    "newChat": "New project chat",
+    "untitledChat": "Untitled chat",
+    "dialog": "Fix checks with AI",
+    "failedChecks_one": "{{count}} failed check",
+    "failedChecks_other": "{{count}} failed checks",
+    "closePicker": "Close fix picker",
+    "searchLabel": "Search project chats",
+    "searchPlaceholder": "Search chats...",
+    "chats": "Project chats",
+    "noMatches": "No matching chats",
+    "waitForChecks": "Wait for the latest checks before starting a fix.",
+    "ciIncluded": "CI details included",
+    "preparing": "Preparing...",
+    "start": "Start fix",
+    "checks_one": "{{count}} check",
+    "checks_other": "{{count}} checks",
+    "detailsFor": "Repair details for {{label}}",
+    "repairFor": "CI repair for {{label}}",
+    "showCheck": "Show check",
+    "openConversation": "Open conversation",
+    "includedChecks": "Included checks",
+    "latestCommit": "Latest PR commit: <code>{{sha}}</code>. Results appear in the checks below.",
+    "unavailable": "Unavailable",
+    "progress": "Repair progress",
+    "state": {
+      "repairing": { "label": "Repairing", "summary": "Repair in progress" },
+      "waiting": { "label": "Awaiting CI", "summary": "Awaiting new GitHub checks" },
+      "refreshing": { "label": "Refreshing", "summary": "Refreshing GitHub checks" },
+      "stale": { "label": "Out of date", "summary": "GitHub results are out of date" },
+      "pass": { "label": "CI passed", "summary": "passed" },
+      "fail": { "label": "Still failing", "summary": "still failing" },
+      "pending": { "label": "CI running", "summary": "running" },
+      "cancel": { "label": "CI cancelled", "summary": "cancelled" },
+      "skipping": { "label": "CI skipped", "summary": "skipped" },
+      "unknown": { "label": "Unknown", "summary": "unknown" },
+      "stopped": { "label": "Stopped", "summary": "Repair stopped" },
+      "interrupted": { "label": "Interrupted", "summary": "Tracking interrupted" },
+      "agent-error": { "label": "Agent stopped", "summary": "Agent could not finish" }
+    }
+  }
+}

@@ -22,6 +22,7 @@ import type {
   GithubPrCheckState,
 } from "../model/githubPrChecks";
 import { githubActionsJobId } from "../model/githubPrChecks";
+import { Trans, useTranslation } from "../../../i18n";
 
 type RepairState =
   | GithubPrCheckState
@@ -166,85 +167,60 @@ const neutral = "text-content/55";
 const positive = "text-emerald-700 dark:text-emerald-400";
 const negative = "text-rose-700 dark:text-rose-400";
 const active = "text-amber-700 dark:text-amber-400";
+// Soloyard: label/summary text lives in `inbox:repair.state.<state>`.
 const states: Record<
   RepairState,
-  { label: string; summary: string; Icon: IconComponent; color: string }
+  { Icon: IconComponent; color: string }
 > = {
   repairing: {
-    label: "Repairing",
-    summary: "Repair in progress",
     Icon: LoaderCircle,
     color: active,
   },
   waiting: {
-    label: "Awaiting CI",
-    summary: "Awaiting new GitHub checks",
     Icon: CircleDashed,
     color: neutral,
   },
   refreshing: {
-    label: "Refreshing",
-    summary: "Refreshing GitHub checks",
     Icon: LoaderCircle,
     color: neutral,
   },
   stale: {
-    label: "Out of date",
-    summary: "GitHub results are out of date",
     Icon: CircleDashed,
     color: neutral,
   },
   pass: {
-    label: "CI passed",
-    summary: "passed",
     Icon: CheckCircle,
     color: positive,
   },
   fail: {
-    label: "Still failing",
-    summary: "still failing",
     Icon: CircleX,
     color: negative,
   },
   pending: {
-    label: "CI running",
-    summary: "running",
     Icon: LoaderCircle,
     color: active,
   },
   cancel: {
-    label: "CI cancelled",
-    summary: "cancelled",
     Icon: CircleDashed,
     color: neutral,
   },
   skipping: {
-    label: "CI skipped",
-    summary: "skipped",
     Icon: CircleDashed,
     color: neutral,
   },
   unknown: {
-    label: "Unknown",
-    summary: "unknown",
     Icon: CircleDashed,
     color: neutral,
   },
   stopped: {
-    label: "Stopped",
-    summary: "Repair stopped",
     Icon: CircleDashed,
     color: neutral,
   },
   interrupted: {
-    label: "Interrupted",
-    summary: "Tracking interrupted",
     Icon: CircleDashed,
     color: neutral,
   },
   "agent-error": {
-    label: "Agent stopped",
-    summary: "Agent could not finish",
     Icon: CircleX,
     color: negative,
   },
@@ -261,16 +237,17 @@ function StatusIcon({ state }: { state: RepairState }) {
 }
 
 export function CheckRepairStatus({ item }: { item: RepairItem }) {
+  const { t } = useTranslation("inbox");
   const status = states[item.state];
   return (
     <span
       data-repair-status
       role="status"
-      title={status.summary}
+      title={t(`repair.state.${item.state}.summary`)}
       className={`inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium ${status.color}`}
     >
       <StatusIcon state={item.state} />
-      {status.label}
+      {t(`repair.state.${item.state}.label`)}
     </span>
   );
 }
@@ -286,6 +263,7 @@ function RepairCard({
   view: GithubPrChecksView;
   onShowCheck?: (check: RepairItem["check"]) => void;
 }) {
+  const { t } = useTranslation("inbox");
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
   const counts = new Map<RepairState, number>();
@@ -307,7 +285,7 @@ function RepairCard({
     "pass",
   ];
   const lead = priority.find((state) => counts.has(state))!;
-  const label = `${group.items.length} ${group.items.length === 1 ? "check" : "checks"}`;
+  const label = t("repair.checks", { count: group.items.length });
   const single = group.items.length === 1 ? group.items[0] : undefined;
   const canShowCheck =
     single?.state === "pass" &&
@@ -322,7 +300,7 @@ function RepairCard({
       <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5">
         <button
           type="button"
-          aria-label={`Repair details for ${label}`}
+          aria-label={t("repair.detailsFor", { label })}
           aria-expanded={expanded}
           aria-controls={detailsId}
           onClick={() => setExpanded(!expanded)}
@@ -345,11 +323,11 @@ function RepairCard({
                     "unknown",
                   ].includes(state)
                     ? single
-                      ? states[state].label
-                      : `${count} ${states[state].summary}`
+                      ? t(`repair.state.${state}.label`)
+                      : `${count} ${t(`repair.state.${state}.summary`)}`
                     : counts.size === 1
-                      ? states[state].summary
-                      : `${count} ${states[state].label.toLowerCase()}`}
+                      ? t(`repair.state.${state}.summary`)
+                      : `${count} ${t(`repair.state.${state}.label`).toLowerCase()}`}
                 </span>
               ))}
             </span>
@@ -361,7 +339,7 @@ function RepairCard({
               }
               className="mt-0.5 block truncate text-[11px] text-content/65"
             >
-              {single ? single.check.name : `CI repair for ${label}`}
+              {single ? single.check.name : t("repair.repairFor", { label })}
             </span>
           </span>
           <ChevronRight
@@ -375,7 +353,7 @@ function RepairCard({
             onClick={() => onShowCheck?.(single.check)}
             className="shrink-0 rounded-md px-2 py-1.5 text-[11px] text-content/70 hover:bg-selection hover:text-content focus-visible:outline focus-visible:outline-1 focus-visible:outline-content/50"
           >
-            Show check
+            {t("repair.showCheck")}
           </button>
         ) : null}
         {repair.onOpenSession ? (
@@ -385,7 +363,7 @@ function RepairCard({
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-stroke px-2.5 py-1.5 text-[11px] text-content/70 hover:bg-selection hover:text-content focus-visible:outline focus-visible:outline-1 focus-visible:outline-content/50"
           >
             <MessageSquare aria-hidden="true" className="size-3.5" />
-            Open conversation
+            {t("repair.openConversation")}
           </button>
         ) : null}
       </div>
@@ -394,7 +372,7 @@ function RepairCard({
           id={detailsId}
           className="space-y-2 border-t border-stroke px-3 py-2.5 text-[11px] text-content/55"
         >
-          <p>Included checks</p>
+          <p>{t("repair.includedChecks")}</p>
           <ul className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">
             {group.items.map(({ check }) => (
               <li
@@ -407,11 +385,15 @@ function RepairCard({
             ))}
           </ul>
           <p>
-            Latest PR commit:{" "}
-            <span className="font-mono">
-              {view.checks?.headOid.slice(0, 7) || "Unavailable"}
-            </span>
-            . Results appear in the checks below.
+            <Trans
+              t={t}
+              i18nKey="repair.latestCommit"
+              values={{
+                sha:
+                  view.checks?.headOid.slice(0, 7) || t("repair.unavailable"),
+              }}
+              components={{ code: <span className="font-mono" /> }}
+            />
           </p>
         </div>
       ) : null}
@@ -432,10 +414,11 @@ export function CheckRepairProgress({
   view: GithubPrChecksView;
   onShowCheck?: (check: RepairItem["check"]) => void;
 }) {
+  const { t } = useTranslation("inbox");
   const groups = useCheckRepairs(cwd, repo, repair.number, view);
   if (!groups.length) return null;
   return (
-    <div className="space-y-2" aria-label="Repair progress">
+    <div className="space-y-2" aria-label={t("repair.progress")}>
       {groups.map((group) => (
         <RepairCard
           key={group.sessionId}

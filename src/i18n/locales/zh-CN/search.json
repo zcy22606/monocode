@@ -1,0 +1,14 @@
+{
+  "label": "搜索",
+  "placeholder": "搜索全部内容…",
+  "results": "搜索结果",
+  "noResults": "没有结果",
+  "limitNotice": "只显示了前面的部分匹配结果",
+  "emptyHint": "查找文件、对话、消息和项目。",
+  "scope": {
+    "all": "全部",
+    "conversations": "对话",
+    "files": "文件",
+    "projects": "项目"
+  }
+}

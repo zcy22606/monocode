@@ -1,0 +1,564 @@
+{
+  "folderPicker": {
+    "dialogLabel": "选择会话文件夹",
+    "inputLabel": "会话文件夹",
+    "placeholder": "选择或命名一个会话文件夹…",
+    "cancel": "取消",
+    "listLabel": "会话文件夹",
+    "empty": "输入名称以创建第一个文件夹",
+    "create": "创建「{{name}}」"
+  },
+  "selectionMenu": {
+    "label": "选中文字操作",
+    "addToChat": "添加到对话",
+    "addToNotes": "添加到笔记",
+    "saveFailed": "无法保存笔记。{{error}}"
+  },
+  "generatedImage": {
+    "loading": "正在加载生成的图片…",
+    "error": "无法打开生成的图片。",
+    "open": "全屏打开 {{name}}"
+  },
+  "agentTab": {
+    "gone": "这个 Agent 已经停止运行，它的工作已汇总到编排者的对话里。",
+    "readOnly": "由编排者运行 · 只读"
+  },
+  "mentionPicker": {
+    "indexing": "正在索引文件…",
+    "noMatchingNotes": "没有匹配的文件或笔记",
+    "noMatching": "没有匹配的文件或文件夹",
+    "noneNotes": "没有找到文件或笔记",
+    "none": "没有找到文件或文件夹",
+    "listNotes": "文件和笔记",
+    "list": "文件和文件夹",
+    "note": "笔记"
+  },
+  "empty": {
+    "titleInProject": "想在 {{project}} 里做点什么？",
+    "title": "想做点什么？"
+  },
+  "reminders": {
+    "title": "到期提醒",
+    "loadFailed": "无法加载提醒。",
+    "retry": "重试",
+    "open": "打开会话",
+    "snooze": "稍后提醒",
+    "dismiss": "忽略",
+    "alertsOff": "桌面通知已关闭，可在设置中开启。",
+    "snoozeMenu": "稍后提醒",
+    "preset": {
+      "inHours_other": "{{count}} 小时后（{{time}}）",
+      "evening": "今晚（18:00）",
+      "tomorrow": "明天（9:00）",
+      "nextWeek": "下周（周一 9:00）"
+    }
+  },
+  "approval": {
+    "question": "提问",
+    "approval": "审批",
+    "allow": "允许",
+    "deny": "拒绝"
+  },
+  "signIn": {
+    "failed": "无法登录 {{harness}}。",
+    "required": "需要登录",
+    "continueUsing": "登录后继续使用 {{harness}}。",
+    "continue": "继续",
+    "signedInTo": "已登录 {{harness}}",
+    "retryNow": "现在可以重试上一条消息了。",
+    "waiting": "正在等待浏览器…",
+    "signedIn": "已登录",
+    "signInTo": "登录 {{harness}}"
+  },
+  "filters": {
+    "label": "筛选会话",
+    "archived": "已归档",
+    "status": "状态",
+    "working": "进行中",
+    "needsApproval": "等待审批",
+    "done": "已完成",
+    "timeLabel": "时间",
+    "provider": "提供方",
+    "clear": "清除筛选",
+    "time": {
+      "all": "全部时间",
+      "today": "今天",
+      "last7": "最近 7 天",
+      "last30": "最近 30 天"
+    }
+  },
+  "attachment": {
+    "remove": "移除",
+    "removeNamed": "移除 {{name}}",
+    "noPath": "无法附加 {{name}}：没有可用的本地文件路径。请重新附加这个文件。"
+  },
+  "find": {
+    "label": "在对话中查找",
+    "position": "{{index}} / {{total}}",
+    "noResults": "无结果",
+    "previous": "上一个匹配",
+    "next": "下一个匹配",
+    "close": "关闭查找"
+  },
+  "linkWorkItem": {
+    "invalid": "请输入有效的 GitHub issue 或 pull request 链接。",
+    "editTitle": "编辑 GitHub 链接",
+    "title": "关联 GitHub issue 或 PR",
+    "urlLabel": "Issue 或 pull request 链接",
+    "urlAria": "GitHub issue 或 pull request 链接",
+    "hint": "粘贴完整的 github.com 链接，关联的条目会显示在会话卡片上。",
+    "remove": "移除关联",
+    "cancel": "取消",
+    "update": "更新链接",
+    "link": "关联"
+  },
+  "mcpPicker": {
+    "dialogLabel": "选择 MCP 服务器",
+    "searchLabel": "搜索 MCP 服务器",
+    "searchPlaceholder": "搜索 MCP 服务器…",
+    "close": "关闭 MCP 选择器",
+    "closeTitle": "返回对话（Esc）",
+    "listLabel": "MCP 服务器",
+    "loading": "正在检查 MCP 服务器…",
+    "noMatching": "没有匹配的 MCP 服务器",
+    "none": "没有找到 MCP 服务器",
+    "needsAuth": "需要认证",
+    "available": "可用",
+    "manage": "管理 MCP 服务器…",
+    "differentProvider": "属于其他提供方",
+    "disabled": "已在提供方配置中禁用",
+    "connectionUnavailable": "连接不可用",
+    "configured": "已为这个提供方配置"
+  },
+  "handoff": {
+    "files_other": "{{count}} 个文件",
+    "label": "交接",
+    "remove": "移除交接",
+    "disabled": "安装其他提供方后才能交接",
+    "description": "把这个会话交给另一个 Agent 继续工作。",
+    "menuLabel": "把这个会话交给另一个 Agent"
+  },
+  "deleteSession": {
+    "title": "删除会话？",
+    "body": "「{{title}}」将被永久删除。",
+    "deleteWorktree": "同时删除未使用的工作树",
+    "worktreeHint": "分支会保留。如果有未提交的更改，工作树也会保留。",
+    "cancel": "取消",
+    "confirm": "删除会话"
+  },
+  "runtimeMode": {
+    "supervised": {
+      "label": "受监督",
+      "hint": "执行命令和修改文件前先询问。"
+    },
+    "autoAcceptEdits": {
+      "label": "自动接受编辑",
+      "hint": "自动批准编辑，其他操作前先询问。"
+    },
+    "auto": {
+      "label": "自动",
+      "hint": "由 AI 审核者批准或拒绝操作。"
+    },
+    "fullAccess": {
+      "label": "完全访问",
+      "hint": "在非计划轮次中，命令、编辑和支持的 MCP 确认都无需询问直接允许。"
+    },
+    "busy": "更改将在下一轮生效。",
+    "busyNote": "权限更改将在下一轮生效。停止并重新发送可立即生效。",
+    "label": "权限"
+  },
+  "tasks": {
+    "complete": "已完成",
+    "progress": "{{completed}} / {{total}}",
+    "label": "任务进度",
+    "title": "任务",
+    "completed": "已完成",
+    "inProgress": "进行中",
+    "cancelled": "已取消",
+    "pending": "待处理"
+  },
+  "context": {
+    "used": "已用上下文",
+    "usedPercent": "已用 {{percent}}% 上下文",
+    "tokensOf": "{{used}} / {{window}} tokens",
+    "tokens": "{{used}} tokens",
+    "usage": "上下文用量",
+    "openActions": "{{headline}}，{{detail}}。打开上下文操作",
+    "summary": "{{headline}}，{{detail}}",
+    "compactWait": "请等待当前操作完成",
+    "compactTitle": "压缩这个对话的上下文",
+    "compactNow": "立即压缩"
+  },
+  "usageLimit": {
+    "resetAt": "{{when}} · {{duration}}后",
+    "reached": "已达到用量上限",
+    "resets": "重置时间：{{when}}",
+    "hasReset": "额度已重置",
+    "resume": "继续",
+    "cancelAutoResume": "取消自动继续",
+    "resumingAtReset": "将在重置后继续",
+    "resumeAtResetTitle": "额度重置后继续这个会话",
+    "resumeAtReset": "重置后继续",
+    "dismiss": "关闭",
+    "dismissLabel": "关闭用量上限提示"
+  },
+  "liveAgents": {
+    "done": "已完成",
+    "question": "提问",
+    "working": "进行中",
+    "preparingHandoff": "正在准备交接",
+    "label": "运行中的 Agent",
+    "count_other": "{{count}} 个 Agent 正在运行",
+    "showLess": "收起",
+    "more_other": "还有 {{count}} 个",
+    "needApproval": "等待审批"
+  },
+  "secondOpinion": {
+    "label": "第二意见",
+    "withRequest": "第二意见：{{request}}",
+    "disabled": "没有其他模型可以提供第二意见",
+    "description": "把这一轮发给另一个 Agent 来审查工作。",
+    "menuLabel": "把这一轮发给另一个 Agent",
+    "models": "{{harness}} 模型",
+    "effort": "{{model}} 推理强度"
+  },
+  "markdownMode": {
+    "label": "Markdown 视图",
+    "preview": "预览",
+    "source": "源码"
+  },
+  "commands": {
+    "compact": "总结较早的对话上下文以腾出空间。",
+    "mcp": "为这条消息找一个 MCP 服务器。",
+    "draft": "保存这条消息，但不启动 Agent。",
+    "orchestrator": "规划并协调 Agent 的工作。",
+    "operator": "让这个对话可以访问 MonoCode 的会话、文件夹和笔记。",
+    "addToFolder": "把这个会话放进已有或新建的侧栏文件夹。",
+    "plan": "在修改文件前先生成一份可审阅的实施计划。",
+    "btw": "针对当前这一轮问一个只读的旁支问题。"
+  },
+  "plan": {
+    "fallbackTitle": "计划",
+    "openInPane": "在窗格中打开",
+    "openPlanInPane": "在窗格中打开计划",
+    "open": "打开",
+    "buildTitle": "按这个计划构建",
+    "building": "构建中…",
+    "built": "已构建",
+    "build": "构建"
+  },
+  "toolDiff": {
+    "proposed": "拟议的更改",
+    "attempted": "尝试的更改 · 工具未完成",
+    "written": "写入的内容 · 之前的内容不可用",
+    "preview": "更改预览",
+    "open": "打开 {{label}}",
+    "previewWritten": "预览写入的内容：{{label}}",
+    "previewChanges": "预览更改：{{label}}",
+    "close": "关闭预览"
+  },
+  "review": {
+    "changed_other": "更改了 {{count}} 个文件",
+    "undoAll": "撤销这个会话的全部更改",
+    "undoLocked": "这个项目里有其他会话正在运行，暂时无法撤销",
+    "undoUnavailable": "有文件在这个会话之外被修改，无法撤销",
+    "undo": "撤销",
+    "keepTitle": "保留这个会话的全部更改并关闭此卡片",
+    "keep": "保留",
+    "reviewTitle": "查看更改",
+    "review": "查看",
+    "showFewer": "收起文件",
+    "showMore_other": "显示另外 {{count}} 个文件",
+    "mixed": "混合更改"
+  },
+  "modes": {
+    "turnOff": "关闭「{{mode}}」",
+    "plan": {
+      "pill": "计划",
+      "title": "计划模式",
+      "description": "先审阅计划再构建"
+    },
+    "operator": {
+      "pill": "Operator",
+      "title": "Operator",
+      "description": "让这个对话可以访问 MonoCode"
+    },
+    "orchestrator": {
+      "pill": "编排",
+      "title": "编排模式",
+      "description": "规划并协调 Agent 的工作"
+    },
+    "draft": {
+      "pill": "草稿",
+      "title": "草稿模式",
+      "description": "保存这条消息，但不启动 Agent"
+    }
+  },
+  "question": {
+    "title": "提问",
+    "position": "{{index}} / {{total}}",
+    "skip": "跳过",
+    "keepOpen": "操作一下可以让这个问题保持打开。",
+    "optional": "可选问题",
+    "autoContinue": "{{seconds}} 秒后不作回答直接继续",
+    "continue": "继续",
+    "selectAll": "可多选",
+    "other": "其他",
+    "typeAnswer": "输入你的回答",
+    "numbered": "问题 {{number}}"
+  },
+  "outline": {
+    "emptyMessage": "空消息",
+    "label": "提示词",
+    "preview": "提示词预览"
+  },
+  "linkPreview": {
+    "open": "打开 {{title}}",
+    "openPr": "打开 {{repo}} 中的 pull request #{{number}}",
+    "openIssue": "打开 {{repo}} 中的 issue #{{number}}",
+    "openPrTitled": "打开 {{repo}} 中的 pull request #{{number}}：{{title}}",
+    "openIssueTitled": "打开 {{repo}} 中的 issue #{{number}}：{{title}}",
+    "pr": "Pull request",
+    "issue": "Issue",
+    "unavailable": "这里无法显示详情，但仍可以在 GitHub 上打开链接。",
+    "updated": "更新于 {{time}}",
+    "assigned": "指派给 {{names}}",
+    "clickToOpen": "点击标签在 GitHub 上打开",
+    "loading": "正在加载 GitHub 详情",
+    "draft": "草稿",
+    "merged": "已合并",
+    "closed": "已关闭",
+    "openState": "开启"
+  },
+  "buildTarget": {
+    "title": "用其他模型构建",
+    "disabled": "没有可用于构建的提供方",
+    "description": "选择用来构建这个计划的模型和提供方。",
+    "menuLabel": "用其他模型或提供方构建这个计划"
+  },
+  "btw": {
+    "turnUnavailable": "已完成的这一轮已经不可用了。",
+    "interruptedBeforeReload": "这个旁支提问在重新加载前被中断了。",
+    "newQuestion": "新问题",
+    "conversations": "旁支对话",
+    "sideQuestions": "旁支问题",
+    "deleteNamed": "删除「{{label}}」",
+    "discardNew": "放弃新问题",
+    "delete": "删除",
+    "discard": "放弃",
+    "newSideQuestion": "新的旁支问题",
+    "back": "返回对话",
+    "couldNotFinish": "未能完成",
+    "couldNotAnswer": "{{harness}} 无法回答这个旁支问题。",
+    "retry": "重试",
+    "placeholder": "问一个旁支问题…",
+    "inputLabel": "旁支问题"
+  },
+  "removal": {
+    "saveFailed": "无法保存这个对话。"
+  },
+  "folders": {
+    "newFolder": "新文件夹"
+  },
+  "subagent": {
+    "fallbackName": "子 Agent"
+  },
+  "quitWhileBusy_other": "还有 {{count}} 个对话正在运行。仍要退出吗？重新打开 MonoCode 后会继续运行。",
+  "fileLink": {
+    "revealFinder": "在访达中显示",
+    "revealExplorer": "在文件资源管理器中显示",
+    "openFolder": "打开所在文件夹",
+    "openInMonoCode": "在 MonoCode 中打开",
+    "openDefault": "用默认应用打开",
+    "copyPath": "复制路径",
+    "copyRelativePath": "复制相对路径",
+    "menuLabel": "文件链接操作",
+    "openDefaultFailed": "无法用默认应用打开文件：{{error}}",
+    "actionFailed": "无法完成文件操作：{{error}}"
+  },
+  "markdown": {
+    "copied": "已复制",
+    "copyCode": "复制代码",
+    "preview": "Markdown 预览",
+    "source": "Markdown 源码"
+  },
+  "monocodeCall": {
+    "modelsList": "列出模型",
+    "sessionsList": "列出会话",
+    "sessionsRead": "读取会话",
+    "sessionsSend": "继续会话",
+    "sessionsDraft": "保存草稿",
+    "sessionsStart": "开始会话",
+    "foldersList": "列出文件夹",
+    "foldersMove": "移动会话",
+    "notesList": "列出笔记",
+    "notesRead": "读取笔记",
+    "notesWrite": "写笔记",
+    "help": "查看 CLI 命令",
+    "using": "正在使用 MonoCode",
+    "used": "已使用 MonoCode"
+  },
+  "activity": {
+    "subagentsFailed_other": "{{count}} 个子 Agent 失败",
+    "files_other": "{{count}} 个文件",
+    "editing": "正在编辑 {{target}}",
+    "edited": "已编辑 {{target}}",
+    "reading": "正在读取 {{target}}",
+    "read": "已读取 {{target}}",
+    "searching": "正在搜索项目",
+    "searched": "已搜索项目",
+    "exploring": "正在浏览项目",
+    "explored": "已浏览项目",
+    "runningBackground": "正在后台运行",
+    "finishedBackground": "已在后台完成",
+    "runningCommands_other": "正在运行 {{count}} 个命令",
+    "ranCommands_other": "运行了 {{count}} 个命令",
+    "runningSubagents_other": "正在运行 {{count}} 个子 Agent",
+    "ranSubagents_other": "运行了 {{count}} 个子 Agent",
+    "runningTools_other": "正在运行 {{count}} 个工具",
+    "ranTools_other": "运行了 {{count}} 个工具",
+    "notes_other": "{{count}} 条备注",
+    "statusUpdate": "状态更新",
+    "thinking": "思考中",
+    "thought": "已思考"
+  },
+  "pane": {
+    "closeTitle": "关闭窗格（{{shortcut}}）",
+    "close": "关闭窗格",
+    "discussionEmpty": "和你的 Agent 一起探索这个条目。",
+    "jumpToLatest": "跳到最新"
+  },
+  "modelPicker": {
+    "effort": "推理强度",
+    "triggerTitle": "{{title}} · 最近用过的模型：右键或 {{shortcut}}",
+    "effortSuffix": "，推理强度 {{effort}}",
+    "menuLabel": "模型和设置",
+    "recent": "最近使用的模型",
+    "on": "开",
+    "off": "关",
+    "and": "和",
+    "listMany": "{{rest}}和{{last}}",
+    "listSeparator": "、",
+    "models": "模型",
+    "providers": "提供方",
+    "favorites": "收藏",
+    "search": "搜索模型",
+    "noFavorites": "没有收藏的模型",
+    "loadingCodex": "正在加载 Codex 模型…",
+    "noMatching": "没有匹配的模型",
+    "removeFavorite": "取消收藏",
+    "addFavorite": "加入收藏",
+    "model": "模型"
+  },
+  "queue": {
+    "paused": "你中断了运行，队列已暂停",
+    "resume": "继续",
+    "attachments_other": "{{count}} 个附件",
+    "edit": "编辑排队的消息",
+    "save": "保存排队的消息",
+    "cancelEdit": "取消编辑排队的消息",
+    "steer": "插入引导",
+    "remove": "移除排队的消息"
+  },
+  "composer": {
+    "dropFiles": "拖放文件以附加",
+    "placeholder": {
+      "worktreeRemoved": "选择一个分支或工作树以继续…",
+      "inbox": "加一条备注，或直接发送开始…",
+      "note": "加一条消息，或直接发送…",
+      "handoff": "补充上下文，或直接发送继续…",
+      "default": "提问、构建，/ 调出命令，@ 引用文件…"
+    },
+    "plus": {
+      "label": "添加文件或选择模式",
+      "heading": "添加到消息",
+      "upload": "上传文件",
+      "uploadHint": "附加文件或图片",
+      "updateHost": "更新这台机器上的主机程序后才能附加文件",
+      "unsupported": "{{harness}} 不支持附件"
+    },
+    "stopEditing": "停止编辑上一条消息",
+    "cancelEdit": "取消编辑",
+    "saveDraft": "保存草稿",
+    "send": "发送",
+    "stop": "停止"
+  },
+  "transcript": {
+    "loadEarlier": "加载更早的消息",
+    "waitingOrchestrator": "等待编排器",
+    "waitingAnswers": "等待回答",
+    "thinking": "思考中…",
+    "waitingApproval": "等待批准",
+    "background_other": "{{count}} 个任务在后台运行",
+    "copyResponse": "复制回复",
+    "copyFailed": "复制失败。{{error}}",
+    "saveAsNote": "存为笔记",
+    "savedToNotes": "已存入笔记",
+    "editResend": "编辑并重新发送",
+    "showMore": "显示更多",
+    "ciContext": "CI 上下文",
+    "ciContextHint": "这次请求附带了 CI 说明和失败详情。",
+    "removeDraft": "移除草稿",
+    "sendDraft": "发送草稿",
+    "copyMessage": "复制消息",
+    "hideWork": "隐藏工作过程",
+    "showWork": "显示工作过程",
+    "hideSteps": "隐藏「{{title}}」的步骤",
+    "showSteps": "显示「{{title}}」的步骤",
+    "thinkingSummary": "思考",
+    "hideThinking": "隐藏思考过程",
+    "showThinking": "显示思考过程：{{text}}",
+    "agentSaid": "Agent 说：{{text}}",
+    "hideFullNote": "隐藏完整内容",
+    "failedToolCall": "失败的工具调用：{{label}}",
+    "toolCall": "工具调用：{{label}}",
+    "hideErrorDetails": "隐藏 {{label}} 的错误详情",
+    "showErrorDetails": "显示 {{label}} 的错误详情",
+    "toolCallAccepted": "已接受的工具调用：{{label}}",
+    "toolCallRejected": "已拒绝的工具调用：{{label}}",
+    "toolCallPending": "待处理的工具调用：{{label}}",
+    "preparingHandoff": "正在准备交接",
+    "preparingHandoffTo": "正在准备交接给 {{name}}",
+    "continuedWith": "已由 {{name}} 继续",
+    "call": {
+      "run": "运行",
+      "running": "正在运行",
+      "ran": "已运行"
+    },
+    "work": {
+      "done": "已完成",
+      "doneWho": "{{who}} 已完成",
+      "doneFor": "工作了 {{elapsed}}",
+      "doneWhoFor": "{{who}} 工作了 {{elapsed}}",
+      "running": "工作中…",
+      "runningWho": "{{who}} 工作中…",
+      "runningFor": "已工作 {{elapsed}}",
+      "runningWhoFor": "{{who}} 已工作 {{elapsed}}"
+    },
+    "subagent": "子 Agent：{{name}}",
+    "hideAgentWork": "隐藏 {{name}} 的工作过程",
+    "showAgentWork": "显示 {{name}} 的工作过程",
+    "thinkingWith": "思考：{{text}}",
+    "interjection": "插话：{{label}}"
+  },
+  "interjection": {
+    "note": "{{label}}备注",
+    "hideNote": "隐藏{{label}}备注",
+    "summary": "{{label}}：{{summary}}",
+    "advisor": "顾问",
+    "notice": "通知",
+    "blocker": "阻断",
+    "concern": "关注",
+    "nit": "小问题"
+  },
+  "metrics": {
+    "cacheHit": "缓存命中 {{percent}}%",
+    "outputRate": "输出 {{rate}} tok/s",
+    "turnTokens": "本轮 token",
+    "input": "输入 {{value}}",
+    "output": "输出 {{value}}",
+    "cached": "缓存 {{value}}",
+    "labelWith": "本轮指标：{{label}}",
+    "label": "本轮指标"
+  }
+}

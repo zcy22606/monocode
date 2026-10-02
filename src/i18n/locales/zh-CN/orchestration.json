@@ -1,0 +1,82 @@
+{
+  "agents": {
+    "count_other": "{{count}} 个 Agent",
+    "done": "已完成 {{done}}/{{total}}",
+    "list": "编排的 Agent",
+    "details": "Agent 详情：{{title}}",
+    "openBeside": "在编排者旁边打开这个 Agent",
+    "seeDetails": "查看详情",
+    "cancelTask": "取消任务"
+  },
+  "taskStatus": {
+    "needsInput": "需要输入",
+    "saved": "已保存",
+    "paused": "已暂停",
+    "queued": "排队中",
+    "running": "工作中",
+    "cancelling": "正在停止",
+    "completed": "完成",
+    "failed": "失败",
+    "blocked": "需要审查",
+    "interrupted": "已中断",
+    "cancelled": "已取消"
+  },
+  "paused": {
+    "stopping": "正在停止被中断的工作，之后才能继续这次运行。",
+    "leadBusy": "正在等主 Agent 被中断的这一轮结束，之后才能继续这次运行。",
+    "info": "「继续」会让被中断的 worker 在保留的检出中接着干，并开始排队的工作。被策略拦下的任务保持停止，等你审查。",
+    "blocker": "{{title}} 仍在这个项目中运行。",
+    "anotherConversation": "另一个对话",
+    "otherConversation": "另一个对话",
+    "openBlocker": "打开阻塞的对话",
+    "waitStop": "等被中断的 Agent 停下来",
+    "waitLead": "等主 Agent 被中断的这一轮结束",
+    "stopBlocker": "先停止 {{title}} 再继续",
+    "continue": "继续被中断和排队的工作",
+    "resume": "继续"
+  },
+  "assignment": {
+    "modelFor": "{{title}} 的模型",
+    "search": "搜索分配的模型",
+    "searchPlaceholder": "搜索模型或 harness…",
+    "models": "可分配的模型",
+    "noModels": "没有匹配的模型",
+    "effort": "{{name}} 推理强度"
+  },
+  "workers": {
+    "help": "并行 worker 是什么意思",
+    "helpTitle": "同时运行多少个 worker",
+    "helpBody": "其余任务排队等候，依赖其他任务的任务无论如何都会等它完成。所有 worker 都在同一个项目文件夹里改动，所以数字越小，同时落到文件夹里的更改越少。",
+    "label": "并行 worker",
+    "count": "{{count}} 个并行"
+  },
+  "proposal": {
+    "label": "编排方案",
+    "planning": "正在规划分配…",
+    "lead": "主 Agent · {{name}}",
+    "tasks_other": "{{count}} 个任务",
+    "tryAgain": "重试",
+    "starting": "正在开始…",
+    "confirm": "确认并开始",
+    "viewAgents": "查看 Agent",
+    "choosing": "主 Agent 正在挑选任务和 worker 模型。开始前请在这里审查分配。",
+    "checking": "正在检查可用的 harness 和模型…",
+    "detailsFor": "{{title}} 的详情",
+    "task": "任务",
+    "instructions": "指令",
+    "titleFor": "任务 {{number}} 的标题",
+    "instructionsFor": "任务 {{number}} 的指令",
+    "after": "前置任务 · {{tasks}}",
+    "showFewer": "收起任务",
+    "showMore_other": "再显示 {{count}} 个任务",
+    "approved": "已批准",
+    "awaiting": "等待确认",
+    "sharedFolder": "· 共用项目文件夹"
+  },
+  "runStatus": {
+    "active": "进行中",
+    "paused": "已暂停",
+    "stopped": "已停止",
+    "finished": "已结束"
+  }
+}

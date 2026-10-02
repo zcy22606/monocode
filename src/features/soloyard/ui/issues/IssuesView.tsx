@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import { Popover } from "../../../../shared/ui/Popover";
 import { ChevronDown, ChevronRight, ListFilter, MessageSquare, Plus, SlidersHorizontal, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
-import { STATUSES, type Issue } from "../../model/issues";
+import { STATUSES, statusLabel, type Issue } from "../../model/issues";
 import {
   DEFAULT_VIEW,
   ISSUE_FIELDS,
@@ -21,12 +22,13 @@ import {
 import { openProjectView } from "../../model/projectViews";
 import { PriorityIcon, StatusIcon } from "./IssueIcons";
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const shortDate = (iso: string, lang: string) => new Date(iso).toLocaleDateString(lang, { month: "short", day: "numeric" });
 
 type MenuState = { anchor: HTMLElement; kind: "filter" } | { anchor: HTMLElement; kind: "status"; issue: Issue };
 
 /** Issues 标签：工具栏（筛选、显示设置）+ 列表 / 看板。视图配置每个项目各存一份。 */
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
+  const { t } = useTranslation("soloyard");
   const { data: issues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id });
   const [view, setViewState] = useState(() => loadIssueView(project.id));
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -60,7 +62,7 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   const filterItems: ExplorerMenuItem[] = filterableFields().map((field) => ({
     kind: "item",
     id: field.id,
-    label: field.label,
+    label: field.label(),
     submenu: field.filter!.options(issues).map((option) => ({
       kind: "item" as const,
       id: `${field.id}:${option.key}`,
@@ -73,17 +75,17 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke px-4">
-        <h1 className="text-[13px] font-medium text-content">Issues</h1>
+        <h1 className="text-[13px] font-medium text-content">{t("view.issues")}</h1>
         <span className="text-[12px] text-content/40">{visibleCount}</span>
         <div className="ml-auto flex items-center gap-1">
           <ToolbarButton
-            label="Filter"
+            label={t("issues.filter")}
             active={view.filters.length > 0}
             onClick={(el) => setMenu(menu?.kind === "filter" ? null : { anchor: el, kind: "filter" })}
           >
             <ListFilter className="size-3.5" />
           </ToolbarButton>
-          <ToolbarButton label="Display" active={!!displayAnchor} onClick={(el) => setDisplayAnchor(displayAnchor ? null : el)}>
+          <ToolbarButton label={t("issues.display")} active={!!displayAnchor} onClick={(el) => setDisplayAnchor(displayAnchor ? null : el)}>
             <SlidersHorizontal className="size-3.5" />
           </ToolbarButton>
           <button
@@ -92,7 +94,7 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
             className="flex h-7 items-center gap-1 rounded-md bg-content/10 px-2 text-[12px] text-content hover:bg-content/15"
           >
             <Plus className="size-3.5" />
-            New issue
+            {t("issues.newIssue")}
           </button>
         </div>
       </header>
@@ -100,11 +102,11 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
         <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-stroke px-4 py-1.5">
           {view.filters.map((f) => (
             <span key={f.field} className="flex h-6 items-center gap-1 rounded-md bg-content/10 pl-2 pr-1 text-[12px] text-content/80">
-              <span className="text-content/50">{ISSUE_FIELDS[f.field].label}:</span>
+              <span className="text-content/50">{ISSUE_FIELDS[f.field].label()}:</span>
               {f.values.map((v) => ISSUE_FIELDS[f.field].filter!.options(issues).find((o) => o.key === v)?.label ?? v).join(", ")}
               <button
                 type="button"
-                aria-label={`Clear ${ISSUE_FIELDS[f.field].label} filter`}
+                aria-label={t("issues.clearFilter", { field: ISSUE_FIELDS[f.field].label() })}
                 onClick={() => setView({ filters: view.filters.filter((x) => x.field !== f.field) })}
                 className="rounded p-0.5 text-content/50 hover:bg-content/10 hover:text-content"
               >
@@ -142,7 +144,7 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
         <ExplorerMenu
           anchor={menu.anchor}
           items={filterItems}
-          ariaLabel="Filter issues"
+          ariaLabel={t("issues.filterMenu")}
           width={200}
           onPick={(id) => {
             const [field, value] = id.split(/:(.*)/s);
@@ -154,8 +156,8 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
       {menu?.kind === "status" ? (
         <ExplorerMenu
           anchor={menu.anchor}
-          items={STATUSES.map((s) => ({ kind: "item" as const, id: s.id, label: s.label, checked: menu.issue.status === s.id }))}
-          ariaLabel="Change status"
+          items={STATUSES.map((s) => ({ kind: "item" as const, id: s, label: statusLabel(s), checked: menu.issue.status === s }))}
+          ariaLabel={t("issues.changeStatus")}
           width={180}
           onPick={(id) => {
             setMenu(null);
@@ -190,6 +192,7 @@ function ToolbarButton({ label, active, onClick, children }: { label: string; ac
 
 /** 显示设置：布局、分组（看板的列）、排序、已完成 / 空分组、显示哪些属性。 */
 function DisplayOptions({ view, setView }: { view: IssueViewConfig; setView: (patch: Partial<IssueViewConfig>) => void }) {
+  const { t } = useTranslation("soloyard");
   const row = "flex h-8 items-center justify-between gap-3 text-[12px] text-content/70";
   const select = "h-7 rounded-md border border-stroke bg-background-base px-1.5 text-[12px] text-content";
   return (
@@ -201,33 +204,33 @@ function DisplayOptions({ view, setView }: { view: IssueViewConfig; setView: (pa
             type="button"
             aria-pressed={view.layout === layout}
             onClick={() => setView({ layout })}
-            className={`h-7 rounded-md text-[12px] capitalize ${view.layout === layout ? "bg-selection text-content" : "text-content/60 hover:text-content"}`}
+            className={`h-7 rounded-md text-[12px] ${view.layout === layout ? "bg-selection text-content" : "text-content/60 hover:text-content"}`}
           >
-            {layout}
+            {t(`issues.layout.${layout}`)}
           </button>
         ))}
       </div>
       <label className={row}>
-        {view.layout === "board" ? "Columns" : "Grouping"}
+        {view.layout === "board" ? t("issues.columns") : t("issues.grouping")}
         <select className={select} value={view.groupBy ?? ""} onChange={(e) => setView({ groupBy: (e.target.value || null) as FieldId | null })}>
-          <option value="">No grouping</option>
-          {groupableFields().map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+          <option value="">{t("issues.noGrouping")}</option>
+          {groupableFields().map((f) => <option key={f.id} value={f.id}>{f.label()}</option>)}
         </select>
       </label>
       <label className={row}>
-        Ordering
+        {t("issues.ordering")}
         <span className="flex items-center gap-1">
           <select className={select} value={view.orderBy} onChange={(e) => setView({ orderBy: e.target.value as FieldId })}>
-            {sortableFields().map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+            {sortableFields().map((f) => <option key={f.id} value={f.id}>{f.label()}</option>)}
           </select>
-          <button type="button" title="Reverse order" onClick={() => setView({ orderDesc: !view.orderDesc })} className="h-7 rounded-md border border-stroke px-1.5 text-[12px] text-content/70 hover:text-content">
+          <button type="button" title={t("issues.reverseOrder")} onClick={() => setView({ orderDesc: !view.orderDesc })} className="h-7 rounded-md border border-stroke px-1.5 text-[12px] text-content/70 hover:text-content">
             {view.orderDesc ? "↓" : "↑"}
           </button>
         </span>
       </label>
-      <Toggle label="Show completed issues" on={view.showCompleted} onChange={(showCompleted) => setView({ showCompleted })} />
-      <Toggle label="Show empty groups" on={view.showEmptyGroups} onChange={(showEmptyGroups) => setView({ showEmptyGroups })} />
-      <div className="mt-2 border-t border-stroke pt-2 text-[12px] text-content/50">Display properties</div>
+      <Toggle label={t("issues.showCompleted")} on={view.showCompleted} onChange={(showCompleted) => setView({ showCompleted })} />
+      <Toggle label={t("issues.showEmpty")} on={view.showEmptyGroups} onChange={(showEmptyGroups) => setView({ showEmptyGroups })} />
+      <div className="mt-2 border-t border-stroke pt-2 text-[12px] text-content/50">{t("issues.displayProperties")}</div>
       <div className="flex flex-wrap gap-1.5 pt-1">
         {displayableFields().map((f) => {
           const on = view.properties.includes(f.id);
@@ -239,13 +242,13 @@ function DisplayOptions({ view, setView }: { view: IssueViewConfig; setView: (pa
               onClick={() => setView({ properties: on ? view.properties.filter((p) => p !== f.id) : [...view.properties, f.id] })}
               className={`h-6 rounded-md border px-2 text-[12px] ${on ? "border-transparent bg-selection text-content" : "border-stroke text-content/50 hover:text-content"}`}
             >
-              {f.label}
+              {f.label()}
             </button>
           );
         })}
       </div>
       <button type="button" onClick={() => setView(DEFAULT_VIEW)} className="mt-2 self-end text-[12px] text-content/50 hover:text-content">
-        Reset
+        {t("issues.reset")}
       </button>
     </div>
   );
@@ -263,12 +266,13 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
 }
 
 function InlineCreate({ onCreate, onDone }: { onCreate: (title: string) => Promise<void>; onDone: () => void }) {
+  const { t } = useTranslation("soloyard");
   const [title, setTitle] = useState("");
   return (
     <input
       autoFocus
       value={title}
-      placeholder="Issue title — Enter to create, Esc to cancel"
+      placeholder={t("issues.createPlaceholder")}
       onChange={(e) => setTitle(e.target.value)}
       onBlur={() => !title.trim() && onDone()}
       onKeyDown={async (e) => {
@@ -285,6 +289,7 @@ function InlineCreate({ onCreate, onDone }: { onCreate: (title: string) => Promi
 
 /** 行 / 卡片上的属性小标签，按视图配置显示。 */
 function Properties({ issue, view }: { issue: Issue; view: IssueViewConfig }) {
+  const { t, i18n } = useTranslation("soloyard");
   const show = (id: FieldId) => view.properties.includes(id);
   return (
     <>
@@ -294,13 +299,13 @@ function Properties({ issue, view }: { issue: Issue; view: IssueViewConfig }) {
           ))
         : null}
       {show("sessions") && issue.sessions > 0 ? (
-        <span className="flex shrink-0 items-center gap-0.5 text-[11px] text-content/50" title={`${issue.sessions} linked sessions`}>
+        <span className="flex shrink-0 items-center gap-0.5 text-[11px] text-content/50" title={t("issues.linkedSessions", { count: issue.sessions })}>
           <MessageSquare className="size-3" />
           {issue.sessions}
         </span>
       ) : null}
-      {show("created") ? <span className="shrink-0 text-[11px] text-content/40">{shortDate(issue.created_at)}</span> : null}
-      {show("updated") ? <span className="shrink-0 text-[11px] text-content/40" title="Updated">{shortDate(issue.updated_at)}</span> : null}
+      {show("created") ? <span className="shrink-0 text-[11px] text-content/40" title={t("field.created")}>{shortDate(issue.created_at, i18n.language)}</span> : null}
+      {show("updated") ? <span className="shrink-0 text-[11px] text-content/40" title={t("field.updated")}>{shortDate(issue.updated_at, i18n.language)}</span> : null}
     </>
   );
 }
@@ -321,10 +326,11 @@ function GroupIcon({ view, groupKey }: { view: IssueViewConfig; groupKey: string
 }
 
 function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, onOpen, onStatusClick }: ViewProps & { grouped: boolean; onStatusClick: (anchor: HTMLElement, issue: Issue) => void }) {
+  const { t } = useTranslation("soloyard");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const show = (id: FieldId) => view.properties.includes(id);
   if (!groups.length && creatingIn === null) {
-    return <p className="px-4 py-10 text-center text-[13px] text-content/50">No issues yet. Click “New issue” to add one.</p>;
+    return <p className="px-4 py-10 text-center text-[13px] text-content/50">{t("issues.empty")}</p>;
   }
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
@@ -353,7 +359,7 @@ function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, 
                   <span className="font-medium text-content">{group.label}</span>
                   <span className="text-content/40">{group.issues.length}</span>
                 </button>
-                <button type="button" aria-label={`New issue in ${group.label}`} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 opacity-0 hover:bg-content/10 hover:text-content group-hover:opacity-100">
+                <button type="button" aria-label={t("issues.newIn", { group: group.label })} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 opacity-0 hover:bg-content/10 hover:text-content group-hover:opacity-100">
                   <Plus className="size-3.5" />
                 </button>
               </div>
@@ -374,7 +380,7 @@ function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, 
                     {show("status") ? (
                       <button
                         type="button"
-                        aria-label={`Status: ${issue.status}`}
+                        aria-label={t("issues.statusAria", { status: statusLabel(issue.status) })}
                         onClick={(e) => {
                           e.stopPropagation();
                           onStatusClick(e.currentTarget, issue);
@@ -397,6 +403,7 @@ function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, 
 }
 
 function BoardView({ groups, view, canMove, creatingIn, setCreatingIn, onCreate, onMove, onOpen }: ViewProps & { canMove: boolean; onMove: (issueId: number, groupKey: string) => void }) {
+  const { t } = useTranslation("soloyard");
   const [over, setOver] = useState<string | null>(null);
   const show = (id: FieldId) => view.properties.includes(id);
   return (
@@ -421,7 +428,7 @@ function BoardView({ groups, view, canMove, creatingIn, setCreatingIn, onCreate,
             <GroupIcon view={view} groupKey={group.key} />
             <span className="font-medium text-content">{group.label}</span>
             <span className="text-content/40">{group.issues.length}</span>
-            <button type="button" aria-label={`New issue in ${group.label}`} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 hover:bg-content/10 hover:text-content">
+            <button type="button" aria-label={t("issues.newIn", { group: group.label })} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 hover:bg-content/10 hover:text-content">
               <Plus className="size-3.5" />
             </button>
           </div>

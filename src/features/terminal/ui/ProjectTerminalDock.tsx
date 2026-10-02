@@ -28,6 +28,7 @@ import {
 import { MOD } from "../../../platform/tauri/platform";
 import type { TerminalMetaPatch } from "../model/terminalTab";
 import { lazySurface } from "../../../shared/ui/lazySurface";
+import { useTranslation } from "../../../i18n";
 
 const TerminalView = lazySurface(async () => {
   const module = await import("./TerminalView");
@@ -50,12 +51,7 @@ type Props = {
   onTerminalMetaChange?: (fileId: string, patch: TerminalMetaPatch) => void;
 };
 
-const SIDE_ITEMS: { id: DockSide; label: string }[] = [
-  { id: "bottom", label: "Dock Bottom" },
-  { id: "top", label: "Dock Top" },
-  { id: "left", label: "Dock Left" },
-  { id: "right", label: "Dock Right" },
-];
+const SIDE_ITEMS: DockSide[] = ["bottom", "top", "left", "right"];
 
 function sideIcon(side: DockSide) {
   if (side === "top") return PanelTop;
@@ -86,6 +82,7 @@ export function ProjectTerminalDock({
   onReorderTerminals,
   onTerminalMetaChange,
 }: Props) {
+  const { t } = useTranslation("terminal");
   const vertical = isVerticalDock(dock.side);
   const [dragging, setDragging] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -193,7 +190,7 @@ export function ProjectTerminalDock({
       <div
         role="separator"
         aria-orientation={vertical ? "horizontal" : "vertical"}
-        aria-label="Resize terminal"
+        aria-label={t("dock.resize")}
         aria-valuenow={dock.size}
         className={`${sash} ${dragging ? "bg-content/15" : "hover:bg-content/10"}`}
         onPointerDown={onResizePointerDown}
@@ -210,7 +207,7 @@ export function ProjectTerminalDock({
         activeFileId={dock.pane.activeFileId}
         dirtyFileIds={EMPTY_IDS}
         fileErrorCounts={EMPTY_ERRORS}
-        label="Terminals"
+        label={t("dock.tabs")}
         onSelectFile={onSelectTerminal}
         onCloseFile={onCloseTerminal}
         onCloseOtherFiles={onCloseOtherTerminals}
@@ -218,14 +215,14 @@ export function ProjectTerminalDock({
         trailing={
           <div className="flex shrink-0 items-center gap-0.5 pr-1.5">
             <IconButton
-              label={`New Terminal (${MOD}\`)`}
+              label={t("dock.new", { shortcut: `${MOD}\`` })}
               onClick={onAddTerminal}
             >
               <Plus className="size-3.5" strokeWidth={1.75} />
             </IconButton>
             <div ref={sideButton}>
             <IconButton
-              label="Move Terminal"
+              label={t("dock.move")}
               onClick={() => {
                 const rect = sideButton.current?.getBoundingClientRect();
                 if (!rect) return;
@@ -236,7 +233,7 @@ export function ProjectTerminalDock({
             </IconButton>
             </div>
             <IconButton
-              label={`Hide Terminal (${MOD}J)`}
+              label={t("dock.hide", { shortcut: `${MOD}J` })}
               onClick={onHide}
             >
               <HideIcon className="size-3.5" strokeWidth={1.75} />
@@ -268,12 +265,12 @@ export function ProjectTerminalDock({
         <ExplorerMenu
           x={menu.x}
           y={menu.y}
-          ariaLabel="Move terminal"
-          items={SIDE_ITEMS.map((item) => ({
+          ariaLabel={t("dock.moveMenu")}
+          items={SIDE_ITEMS.map((side) => ({
             kind: "item" as const,
-            id: item.id,
-            label: item.label,
-            checked: item.id === dock.side,
+            id: side,
+            label: t(`dock.side.${side}`),
+            checked: side === dock.side,
           }))}
           onPick={(id) => {
             if (id === "top" || id === "bottom" || id === "left" || id === "right") {

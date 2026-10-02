@@ -50,6 +50,7 @@ import {
   useExternalTitleTabDrop,
 } from "../../features/workspace/model/paneDrop";
 import type { PaneEdge } from "../../features/workspace/model/layout";
+import { t as translate, useTranslation } from "../../i18n";
 
 export type Tab = {
   id: string;
@@ -116,7 +117,8 @@ type Props = {
 
 function sessionMeta(tab: Tab): string {
   if (tab.more.length === 1) return tab.more[0];
-  if (tab.sessionCount > 1) return `${tab.sessionCount} sessions`;
+  if (tab.sessionCount > 1)
+    return translate("shell:titleBar.sessionCount", { count: tab.sessionCount });
   return "";
 }
 
@@ -129,7 +131,7 @@ export function tabCopy(tab: Tab): {
   const conversation = tab.title.trim();
   const file = tab.files[0] ?? "";
   const sessions = sessionMeta(tab);
-  const untitled = "New session";
+  const untitled = translate("shell:titleBar.untitled");
 
   let headline: string;
   const metaParts: string[] = [];
@@ -161,7 +163,7 @@ export function tabCopy(tab: Tab): {
   if (conversation) tooltipParts.push(conversation);
   tooltipParts.push(...tab.more);
   if (tab.files.length > 0) tooltipParts.push(tab.files.join(", "));
-  if (tab.dirty) tooltipParts.push("Unsaved changes");
+  if (tab.dirty) tooltipParts.push(translate("shell:titleBar.unsavedChanges"));
 
   return { headline, meta, tooltip: tooltipParts.join(" · ") };
 }
@@ -285,11 +287,12 @@ function TitleTabItem({
   onContextMenu: (id: string, event: ReactMouseEvent<HTMLDivElement>) => void;
   itemRef?: (el: HTMLDivElement | null) => void;
 }) {
+  const { t } = useTranslation("shell");
   const { headline, meta, tooltip } = tabCopy(tab);
   const fileIcon = tab.files[0];
   const accessibleTooltip =
     (tab.doneHarnesses?.length ?? 0) > 0
-      ? `${tooltip} · Response complete`
+      ? t("titleBar.responseComplete", { tooltip })
       : tooltip;
 
   return (
@@ -380,8 +383,8 @@ function TitleTabItem({
             {tab.dirty ? (
               <span
                 className="size-1.5 shrink-0 rounded-full bg-content/70"
-                title="Unsaved changes"
-                aria-label="Unsaved changes"
+                title={t("titleBar.unsavedChanges")}
+                aria-label={t("titleBar.unsavedChanges")}
               />
             ) : null}
           </span>
@@ -395,8 +398,8 @@ function TitleTabItem({
       {closable ? (
         <button
           type="button"
-          title="Close Tab"
-          aria-label={`Close ${headline}`}
+          title={t("titleBar.closeTab")}
+          aria-label={t("titleBar.closeNamed", { name: headline })}
           data-no-drag
           data-tauri-drag-region="false"
           onPointerDown={(event) => event.stopPropagation()}
@@ -420,7 +423,9 @@ function TabStripChevron({
   side: "left" | "right";
   onClick: () => void;
 }) {
-  const label = side === "left" ? "Scroll tabs left" : "Scroll tabs right";
+  const { t } = useTranslation("shell");
+  const label =
+    side === "left" ? t("titleBar.scrollLeft") : t("titleBar.scrollRight");
   const Icon = side === "left" ? ChevronLeft : ChevronRight;
   return (
     <button
@@ -512,13 +517,14 @@ export function IconButton({
 }
 
 export function DevModeLabel() {
+  const { t } = useTranslation("shell");
   if (!import.meta.env.DEV) return null;
   return (
     <span
-      title="Development build"
+      title={t("titleBar.developmentBuild")}
       className="mr-1 min-w-0 truncate rounded-md bg-skill/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-skill"
     >
-      Development
+      {t("titleBar.development")}
     </span>
   );
 }
@@ -539,7 +545,7 @@ export function TabVisitNav({
   onGoForward,
   onTogglePanel,
   panelActive = false,
-  panelLabel = "Toggle Projects",
+  panelLabel,
 }: {
   canGoBack?: boolean;
   canGoForward?: boolean;
@@ -549,17 +555,18 @@ export function TabVisitNav({
   panelActive?: boolean;
   panelLabel?: string;
 }) {
+  const { t } = useTranslation("shell");
   return (
     <div className="flex shrink-0 items-center">
       <IconButton
-        label={`Back (${MOD}[)`}
+        label={t("titleBar.backShortcut", { shortcut: `${MOD}[` })}
         disabled={!canGoBack}
         onClick={onGoBack}
       >
         <ChevronLeft className="size-3.5" strokeWidth={1.75} />
       </IconButton>
       <IconButton
-        label={`Forward (${MOD}])`}
+        label={t("titleBar.forwardShortcut", { shortcut: `${MOD}]` })}
         disabled={!canGoForward}
         onClick={onGoForward}
       >
@@ -567,7 +574,7 @@ export function TabVisitNav({
       </IconButton>
       {onTogglePanel ? (
         <IconButton
-          label={panelLabel}
+          label={panelLabel ?? t("titleBar.toggleProjects")}
           active={panelActive}
           onClick={onTogglePanel}
         >
@@ -586,17 +593,21 @@ export function OverlayNav({
   onBack?: () => void;
   onToggleSidebar?: () => void;
 }) {
+  const { t } = useTranslation("shell");
   if (!onBack && !onToggleSidebar) return null;
   return (
     <div className="flex shrink-0 items-center px-1.5">
       {onBack ? (
-        <IconButton label={`Back (${MOD}[)`} onClick={onBack}>
+        <IconButton
+          label={t("titleBar.backShortcut", { shortcut: `${MOD}[` })}
+          onClick={onBack}
+        >
           <ChevronLeft className="size-3.5" strokeWidth={1.75} />
         </IconButton>
       ) : null}
       {onToggleSidebar ? (
         <IconButton
-          label={`Toggle Sidebar (${MOD}B)`}
+          label={t("common.toggleSidebarShortcut", { shortcut: `${MOD}B` })}
           onClick={onToggleSidebar}
         >
           <PanelLeft className="size-3.5" strokeWidth={1.75} />
@@ -636,6 +647,7 @@ function TitleBarComponent({
   recents = [],
   onSelectProject,
 }: Props) {
+  const { t } = useTranslation("shell");
   const tabIds = tabs.map((tab) => tab.id);
   const { displayed, setTabNode, finishMotion } = useTabCloseMotion(tabs);
   const externalTabDrop = useMemo<ReorderExternalDrop<string> | undefined>(
@@ -769,7 +781,7 @@ function TitleBarComponent({
         {
           kind: "item",
           id: "close",
-          label: "Close Tab",
+          label: t("titleBar.closeTab"),
           shortcut: `${MOD}W`,
           disabled: !titleTabClosable(contextTab, tabs.length),
         },
@@ -777,19 +789,19 @@ function TitleBarComponent({
         {
           kind: "item",
           id: "others",
-          label: "Close Other Tabs",
+          label: t("titleBar.closeOtherTabs"),
           disabled: contextCloseIds?.others.length === 0,
         },
         {
           kind: "item",
           id: "right",
-          label: "Close Tabs to the Right",
+          label: t("titleBar.closeTabsRight"),
           disabled: contextCloseIds?.right.length === 0,
         },
         {
           kind: "item",
           id: "left",
-          label: "Close Tabs to the Left",
+          label: t("titleBar.closeTabsLeft"),
           disabled: contextCloseIds?.left.length === 0,
         },
         ...(contextTab.sessionCount > 0 && (onArchiveTab || onDeleteTab)
@@ -800,10 +812,12 @@ function TitleBarComponent({
                     {
                       kind: "item" as const,
                       id: "archive",
-                      label: "Archive",
+                      label: t("common.archive"),
                       description:
                         contextTab.sessionCount > 1
-                          ? `All ${contextTab.sessionCount} conversations in this tab`
+                          ? t("titleBar.archiveAllDescription", {
+                              n: contextTab.sessionCount,
+                            })
                           : undefined,
                     },
                   ]
@@ -813,10 +827,12 @@ function TitleBarComponent({
                     {
                       kind: "item" as const,
                       id: "delete",
-                      label: "Delete",
+                      label: t("common.delete"),
                       description:
                         contextTab.sessionCount > 1
-                          ? `Permanently delete all ${contextTab.sessionCount} conversations in this tab`
+                          ? t("titleBar.deleteAllDescription", {
+                              n: contextTab.sessionCount,
+                            })
                           : undefined,
                       danger: true,
                     },
@@ -867,27 +883,36 @@ function TitleBarComponent({
         {showTrailingActions ? (
           <div className="flex items-center gap-0.5 px-2">
             {projectless && railClosed && onOpenInbox ? (
-              <IconButton label="Inbox" onClick={onOpenInbox}>
+              <IconButton label={t("common.inbox")} onClick={onOpenInbox}>
                 <Inbox className="size-3.5" strokeWidth={1.75} />
               </IconButton>
             ) : null}
             {projectless && railClosed && onOpenNotes ? (
-              <IconButton label="Notes" onClick={onOpenNotes}>
+              <IconButton label={t("common.notes")} onClick={onOpenNotes}>
                 <StickyNote className="size-3.5" strokeWidth={1.75} />
               </IconButton>
             ) : null}
             {railClosed && !projectless ? (
               <>
-                <IconButton label={`Go to File (${MOD}P)`} onClick={onGoToFile}>
+                <IconButton
+                  label={t("common.goToFileShortcut", { shortcut: `${MOD}P` })}
+                  onClick={onGoToFile}
+                >
                   <Search className="size-3.5" strokeWidth={1.75} />
                 </IconButton>
-                <IconButton label={`New session (${MOD}T)`} onClick={onNew}>
+                <IconButton
+                  label={t("common.newSessionShortcut", { shortcut: `${MOD}T` })}
+                  onClick={onNew}
+                >
                   <Plus className="size-3.5" strokeWidth={1.75} />
                 </IconButton>
               </>
             ) : null}
             {!projectRailOpen && !showCurrentProject && onOpenSettings ? (
-              <IconButton label={`Settings (${MOD},)`} onClick={onOpenSettings}>
+              <IconButton
+                label={t("common.settingsShortcut", { shortcut: `${MOD},` })}
+                onClick={onOpenSettings}
+              >
                 <Settings className="size-3.5" strokeWidth={1.75} />
               </IconButton>
             ) : null}
@@ -927,7 +952,7 @@ function TitleBarComponent({
           <div className="w-[78px] shrink-0" />
           <div className="flex shrink-0 items-center px-1.5">
             <IconButton
-              label={`Toggle Sidebar (${MOD}B)`}
+              label={t("common.toggleSidebarShortcut", { shortcut: `${MOD}B` })}
               onClick={onToggleSidebar}
             >
               <PanelLeft className="size-3.5" strokeWidth={1.75} />
@@ -941,7 +966,9 @@ function TitleBarComponent({
             <div className="w-[70px] shrink-0" />
           ) : null}
           <IconButton
-            label={`Toggle Session Sidebar (${MOD}${SHIFT}B)`}
+            label={t("titleBar.toggleSessionSidebarShortcut", {
+              shortcut: `${MOD}${SHIFT}B`,
+            })}
             onClick={onToggleSessionSidebar}
           >
             <DashboardSquare className="size-3.5" strokeWidth={1.75} />
@@ -957,7 +984,9 @@ function TitleBarComponent({
           onNewTerminal={onNewTerminal}
           buttonClassName="flex h-full min-w-0 max-w-64 shrink items-center gap-2 px-6 text-left text-sm font-medium leading-tight"
         >
-          <span className="min-w-0 truncate text-content/50">No project</span>
+          <span className="min-w-0 truncate text-content/50">
+            {t("titleBar.noProject")}
+          </span>
         </CwdPicker>
       ) : null}
 
@@ -1077,7 +1106,9 @@ function TitleBarComponent({
           y={tabMenu.y}
           width={244}
           items={contextMenuItems}
-          ariaLabel={`Tab actions for ${tabCopy(contextTab).headline}`}
+          ariaLabel={t("titleBar.tabActions", {
+            name: tabCopy(contextTab).headline,
+          })}
           onPick={onPickTabMenu}
           onClose={() => setTabMenu(null)}
         />

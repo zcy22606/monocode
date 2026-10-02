@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useTranslation } from "../../i18n";
 
 /** Keep account emails private in screenshots until explicitly revealed. */
 export function PrivateEmail({ email }: { email: string }) {
+  const { t } = useTranslation("shared");
   const [revealed, setRevealed] = useState(false);
-  const action = revealed ? "Hide email" : "Reveal email";
+  const action = revealed ? t("privateEmail.hide") : t("privateEmail.reveal");
 
   return (
     <button

@@ -5,6 +5,7 @@ import {
   sniffInboxMedia,
   type InboxMediaType,
 } from "../model/inboxMedia";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   src: string;
@@ -17,6 +18,7 @@ type LoadState =
   | { status: "error" };
 
 export function InboxMedia({ src, alt }: Props) {
+  const { t } = useTranslation("inbox");
   const [state, setState] = useState<LoadState>({ status: "loading" });
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export function InboxMedia({ src, alt }: Props) {
     );
   }
 
-  const label = alt?.trim() || "Image";
+  const label = alt?.trim() || t("media.image");
   return (
     <img
       src={state.url}

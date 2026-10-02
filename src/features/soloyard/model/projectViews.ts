@@ -2,6 +2,7 @@
  * Soloyard：侧栏「Project」分页里的竖排视图，点一项在右边开成顶层标签（同一项只开一个）。
  * 现在只有布局和交互，内容是占位，等交互确认后再接数据。
  */
+import { t } from "../../../i18n";
 import type { FilePaneTab } from "../../workspace/model/layout";
 
 export type ProjectViewId =
@@ -23,22 +24,22 @@ export type ProjectViewSource = {
   itemId?: string;
 };
 
-type NavView = { id: ProjectViewId; label: string; group: "work" | "plan" };
+type NavView = { id: ProjectViewId; group: "work" | "plan" };
 
 /** 侧栏里的顺序：上面是天天用的，下面是做产品规划时用的。 */
 export const NAV_VIEWS: NavView[] = [
-  { id: "overview", label: "Overview", group: "work" },
-  { id: "issues", label: "Issues", group: "work" },
-  { id: "cycles", label: "Cycles", group: "work" },
-  { id: "docs", label: "Docs", group: "work" },
-  { id: "decisions", label: "Decisions", group: "plan" },
-  { id: "features", label: "Feature Map", group: "plan" },
-  { id: "scope", label: "Scope", group: "plan" },
-  { id: "evidence", label: "Evidence", group: "plan" },
+  { id: "overview", group: "work" },
+  { id: "issues", group: "work" },
+  { id: "cycles", group: "work" },
+  { id: "docs", group: "work" },
+  { id: "decisions", group: "plan" },
+  { id: "features", group: "plan" },
+  { id: "scope", group: "plan" },
+  { id: "evidence", group: "plan" },
 ];
 
-export const viewLabel = (view: ProjectViewId) =>
-  NAV_VIEWS.find((entry) => entry.id === view)?.label ?? view;
+/** 渲染时调用，跟着当前语言走。 */
+export const viewLabel = (view: ProjectViewId) => t(`soloyard:view.${view}`);
 
 export type OpenProjectViewRequest = ProjectViewSource & {
   cwd: string;

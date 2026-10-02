@@ -1,0 +1,365 @@
+{
+  "title": "收件箱",
+  "kind": {
+    "pr": "Pull request",
+    "mr": "合并请求",
+    "issue": "Issue"
+  },
+  "status": {
+    "open": "开放",
+    "draft": "草稿",
+    "closed": "已关闭",
+    "merged": "已合并"
+  },
+  "attention": {
+    "assigned": "已指派给你",
+    "mentioned": "提到了你",
+    "reviewRequested": "请求审查",
+    "reviewSubmitted": "已提交审查",
+    "approvalRequired": "需要批准",
+    "buildFailed": "流水线失败",
+    "unmergeable": "无法合并",
+    "mergeTrainRemoved": "已移出合并队列",
+    "accessRequested": "请求访问权限",
+    "marked": "已加入你的待办"
+  },
+  "review": {
+    "approved": "已批准",
+    "changesRequested": "要求修改",
+    "reviewRequired": "需要审查",
+    "requestedChanges": "要求修改",
+    "dismissed": "已驳回",
+    "commented": "已评论"
+  },
+  "open": {
+    "reviewOn": "在 {{provider}} 上审查",
+    "openIn": "在 {{provider}} 中打开",
+    "openOn": "在 {{provider}} 上打开",
+    "noLink": "没有可用链接"
+  },
+  "connect": {
+    "label": "连接收件箱来源",
+    "notConnected": "未连接",
+    "source": "连接 {{source}}",
+    "add": "添加连接",
+    "empty": "添加一个连接即可开始使用收件箱。"
+  },
+  "list": {
+    "sources": "收件箱来源",
+    "filter": "筛选收件箱",
+    "markAllRead": "全部标为已读",
+    "readStatusError": "无法保存已读状态，请重试。",
+    "refresh": "刷新",
+    "resize": "调整收件箱列表宽度",
+    "selectItem": "选择一个收件箱条目"
+  },
+  "empty": {
+    "noMatchingTracker": "没有匹配的 {{source}} issue",
+    "noMatchingMr": "没有匹配的 issue 或合并请求",
+    "noMatchingPr": "没有匹配的 issue 或 pull request",
+    "trackerFiltered": "没有符合这些筛选条件的 {{source}} issue",
+    "nothingNeedsAttention": "没有需要你处理的事项",
+    "sourceFiltered": "没有符合这些筛选条件的 {{source}} 条目",
+    "prFiltered": "没有符合这些筛选条件的 issue 或 pull request",
+    "tracker": "没有 {{source}} issue",
+    "openProject": "打开一个项目来填充收件箱"
+  },
+  "card": {
+    "label": "{{status}}的{{kind}} {{ref}}：{{title}}",
+    "attention": "，{{label}}",
+    "new": "，新",
+    "related_other": "，{{count}} 个相关对话",
+    "relatedTitle_other": "{{count}} 个相关对话"
+  },
+  "linked": {
+    "label": "关联的{{kind}} #{{number}}",
+    "resize": "调整关联{{kind}}面板宽度",
+    "close": "关闭{{kind}}面板"
+  },
+  "detail": {
+    "unassigned": "未指派",
+    "created": "创建于 {{time}}",
+    "updated": "更新于 {{time}}",
+    "related_other": "相关对话",
+    "openThread": "打开对话：{{title}}",
+    "archived": "已归档",
+    "sending": "发送中…",
+    "sendToAgent": "发送给 Agent",
+    "ask": "提问",
+    "prSections": "Pull request 分区",
+    "mrSections": "合并请求分区",
+    "summary": "摘要",
+    "code": "代码",
+    "diffContext": "差异上下文",
+    "hunks": "片段",
+    "fullFile": "完整文件",
+    "noFileChanges": "没有文件更改",
+    "noDescription": "没有描述",
+    "copied": "已复制",
+    "copyBranch": "复制分支名",
+    "chooseProject": "选择项目"
+  },
+  "merge": {
+    "button": "合并 pull request",
+    "optionsButton": "合并选项",
+    "method": "合并方式",
+    "queued": "已加入合并队列或已启用自动合并。",
+    "options": {
+      "merge": {
+        "label": "创建合并提交",
+        "description": "将所有提交添加到基础分支。"
+      },
+      "squash": {
+        "label": "压缩并合并",
+        "description": "将这些提交合并为一个。"
+      },
+      "rebase": {
+        "label": "变基并合并",
+        "description": "添加这些提交，不创建合并提交。"
+      }
+    }
+  },
+  "prAction": {
+    "thisBranch": "此分支",
+    "baseBranch": "基础分支",
+    "cancel": "取消",
+    "merging": "合并中…",
+    "merge": {
+      "title": "合并这个 pull request？",
+      "detail": "{{source}} 的所有提交将通过一个合并提交添加到 {{destination}}。",
+      "confirm": "合并 pull request"
+    },
+    "squash": {
+      "title": "压缩并合并？",
+      "detail": "{{source}} 的提交将在 {{destination}} 上压缩为一个提交。",
+      "confirm": "压缩并合并"
+    },
+    "rebase": {
+      "title": "变基并合并？",
+      "detail": "{{source}} 的提交将逐个变基到 {{destination}} 上。",
+      "confirm": "变基并合并"
+    },
+    "draft": {
+      "title": "转为草稿？",
+      "detail": "审查者会看到这个 pull request 还不能合并。",
+      "confirm": "转为草稿",
+      "progress": "转换中…"
+    },
+    "ready": {
+      "title": "标记为可审查？",
+      "detail": "审查者会看到这个 pull request 已经可以接收反馈。",
+      "confirm": "可以审查",
+      "progress": "更新中…"
+    },
+    "close": {
+      "title": "关闭这个 pull request？",
+      "detail": "这个 pull request 将直接关闭而不合并，之后可以重新打开。",
+      "confirm": "关闭 pull request",
+      "progress": "关闭中…"
+    },
+    "reopen": {
+      "title": "重新打开这个 pull request？",
+      "detail": "这个 pull request 将恢复为开放状态。",
+      "confirm": "重新打开 pull request",
+      "progress": "重新打开中…"
+    }
+  },
+  "discussion": {
+    "label": "询问 {{ref}}",
+    "resize": "调整讨论面板宽度",
+    "title": "提问 · {{ref}}",
+    "restart": "重新开始对话",
+    "close": "关闭面板"
+  },
+  "miniCard": {
+    "open": "在 {{provider}} 中打开{{kind}} {{id}}",
+    "remove": "移除",
+    "removeItem": "移除{{kind}} {{id}}"
+  },
+  "media": {
+    "image": "图片"
+  },
+  "diff": {
+    "tooLarge": "更改太大，无法显示补丁",
+    "noTextual": "没有文本差异"
+  },
+  "comments": {
+    "count_other": "{{count}} 条评论",
+    "truncated": "最新评论 · 更多请到 {{provider}} 查看",
+    "replyingTo": "回复 {{author}}",
+    "fallbackAuthor": "评论",
+    "cancelReply": "取消回复",
+    "replyPlaceholder": "写回复（{{shortcut}}）",
+    "commentPlaceholder": "发表评论（{{shortcut}}）",
+    "posting": "发布中…",
+    "reply": "回复",
+    "comment": "评论",
+    "loading": "正在加载评论",
+    "resolved": "已解决"
+  },
+  "filters": {
+    "needsAttention": "需要处理",
+    "assignedToMe": "指派给我",
+    "status": "状态",
+    "time": "时间",
+    "type": "类型",
+    "teams": "团队",
+    "projects": "项目",
+    "noProject": "无项目",
+    "issues": "Issue",
+    "pullRequests": "Pull request",
+    "mergeRequests": "合并请求",
+    "clear": "清除筛选",
+    "timeOptions": {
+      "all": "全部时间",
+      "today": "今天",
+      "7d": "最近 7 天",
+      "30d": "最近 30 天"
+    }
+  },
+  "notifications": {
+    "actions": "收件箱操作",
+    "muteAll": "将所有项目设为免打扰",
+    "resumeMuted": "恢复免打扰的项目",
+    "settings": "通知设置…",
+    "muteDialog": "项目通知免打扰",
+    "summary_other": "{{count}} 个项目 · {{muted}} 个免打扰",
+    "saveError": "无法保存通知偏好，请重试。"
+  },
+  "notice": {
+    "commit": "提交 {{sha}}",
+    "review": "审查",
+    "reviewComment": "审查评论",
+    "comment": "评论",
+    "openCommit": "打开提交",
+    "openPr": "打开 PR",
+    "openIssue": "打开 issue",
+    "addressWithAgent": "交给 Agent 处理",
+    "reviewWithAgent": "交给 Agent 审查",
+    "continueWithAgent": "交给 Agent 继续",
+    "prMerged": "Pull request 已合并",
+    "prClosed": "Pull request 已关闭",
+    "issueClosed": "Issue 已关闭",
+    "label": "{{kind}} {{number}} 有新动态",
+    "heading": "GitHub 动态",
+    "dismiss": "忽略",
+    "dismissLabel": "忽略{{kind}} {{number}} 的更新",
+    "noMessage": "没有内容",
+    "cleanUp": "清理这个会话",
+    "archive": "归档会话",
+    "delete": "删除会话",
+    "deleteShort": "删除…",
+    "newCommits_other": "{{count}} 个新提交",
+    "newReviews_other": "{{count}} 个新审查",
+    "newComments_other": "{{count}} 条新评论",
+    "detailsUnavailable": "已在 GitHub 上更新 · 详情不可用",
+    "metadataChanged": "元数据或状态已变化"
+  },
+  "checks": {
+    "tab": "检查",
+    "tabLabel": "检查：{{description}}",
+    "loading": "正在加载检查",
+    "loadFailed": "检查加载失败",
+    "loadFailedSaved": "检查加载失败，显示的是可能已过时的已保存结果：{{saved}}",
+    "noneReported": "没有报告任何检查",
+    "countSeparator": "，",
+    "count": {
+      "pass": "{{count}} 个通过",
+      "fail": "{{count}} 个失败",
+      "pending": "{{count}} 个进行中",
+      "cancel": "{{count}} 个已取消",
+      "unknown": "{{count}} 个未知",
+      "skipping": "{{count}} 个已跳过"
+    },
+    "state": {
+      "pass": "通过",
+      "fail": "失败",
+      "pending": "进行中",
+      "cancel": "已取消",
+      "unknown": "未知",
+      "skipping": "已跳过"
+    },
+    "failedAt": "失败于 {{step}}",
+    "failedAtSuffix": "；失败于 {{step}}",
+    "tookSuffix": "，耗时 {{duration}}",
+    "workflowSuffix": "，{{workflow}}",
+    "details": "{{name}} 详情",
+    "expandDetails": "展开 {{name}} 详情",
+    "collapseDetails": "收起 {{name}} 详情",
+    "fixWithAi": "用 AI 修复",
+    "fixCheck": "用 AI 修复 {{name}}",
+    "viewLog": "在 GitHub 上查看完整日志",
+    "viewOnGithub": "在 GitHub 上查看 {{name}}",
+    "loadingSteps": "正在加载步骤…",
+    "detailsFailed": "无法加载任务详情。",
+    "retryDetails": "重试加载详情",
+    "viewSteps": "查看运行步骤",
+    "steps": "{{name}} 步骤",
+    "noSteps": "这个任务没有报告步骤。",
+    "noAnnotations": "没有报告错误注释，请在 GitHub 上查看完整日志。",
+    "retryLoading": "重试加载检查",
+    "retry": "重试",
+    "needsFix_other": "{{count}} 个检查需要修复",
+    "running_other": "{{count}} 个检查正在运行",
+    "needsAttention_other": "{{count}} 个检查需要处理",
+    "passed": "检查已通过",
+    "noneRan": "没有运行任何检查",
+    "sentence": "{{text}}。",
+    "sectionLabel": "Pull request 检查",
+    "fixAllFailed": "修复全部失败项",
+    "refresh": "刷新检查",
+    "stale": "已保存的结果可能已过时。",
+    "filterLabel": "筛选检查",
+    "filterAttention": "需要处理",
+    "filterAll": "全部检查",
+    "filterCount": "{{label}}：{{count}}",
+    "failuresFirst": "失败项优先"
+  },
+  "evidence": {
+    "showMore": "再显示 {{count}} 条注释",
+    "viewSource": "查看所检查提交中的源码",
+    "viewOnGithub": "在 GitHub 上查看 {{location}}",
+    "sourceAt": "{{sha}} 中的源码",
+    "previewUnavailable": "这个提交没有可用的源码预览。"
+  },
+  "repair": {
+    "startFailed": "无法开始这次修复，请选择其他对话后重试。",
+    "newChat": "新建项目对话",
+    "untitledChat": "未命名对话",
+    "dialog": "用 AI 修复检查",
+    "failedChecks_other": "{{count}} 个失败的检查",
+    "closePicker": "关闭修复选择器",
+    "searchLabel": "搜索项目对话",
+    "searchPlaceholder": "搜索对话…",
+    "chats": "项目对话",
+    "noMatches": "没有匹配的对话",
+    "waitForChecks": "请等最新的检查结果出来后再开始修复。",
+    "ciIncluded": "已附带 CI 详情",
+    "preparing": "准备中…",
+    "start": "开始修复",
+    "checks_other": "{{count}} 个检查",
+    "detailsFor": "{{label}}的修复详情",
+    "repairFor": "{{label}}的 CI 修复",
+    "showCheck": "显示检查",
+    "openConversation": "打开对话",
+    "includedChecks": "包含的检查",
+    "latestCommit": "最新的 PR 提交：<code>{{sha}}</code>。结果会显示在下方的检查中。",
+    "unavailable": "不可用",
+    "progress": "修复进度",
+    "state": {
+      "repairing": { "label": "修复中", "summary": "正在修复" },
+      "waiting": { "label": "等待 CI", "summary": "等待新的 GitHub 检查" },
+      "refreshing": { "label": "刷新中", "summary": "正在刷新 GitHub 检查" },
+      "stale": { "label": "已过时", "summary": "GitHub 结果已过时" },
+      "pass": { "label": "CI 已通过", "summary": "已通过" },
+      "fail": { "label": "仍然失败", "summary": "仍然失败" },
+      "pending": { "label": "CI 运行中", "summary": "运行中" },
+      "cancel": { "label": "CI 已取消", "summary": "已取消" },
+      "skipping": { "label": "CI 已跳过", "summary": "已跳过" },
+      "unknown": { "label": "未知", "summary": "未知" },
+      "stopped": { "label": "已停止", "summary": "修复已停止" },
+      "interrupted": { "label": "已中断", "summary": "跟踪已中断" },
+      "agent-error": { "label": "Agent 已停止", "summary": "Agent 未能完成" }
+    }
+  }
+}

@@ -1,0 +1,563 @@
+{
+  "language": {
+    "title": "Language",
+    "label": "Interface language",
+    "description": "System follows the OS language. Chinese uses Simplified Chinese.",
+    "system": "System"
+  },
+  "groups": {
+    "app": "App",
+    "agents": "Agents",
+    "workspace": "Workspace"
+  },
+  "sections": {
+    "general": {
+      "label": "General",
+      "description": "The build you are running, how MonoCode reaches you, and the panels it shows."
+    },
+    "connections": {
+      "label": "Connections",
+      "description": "Connect your machines and run agents remotely through SSH."
+    },
+    "appearance": {
+      "label": "Appearance",
+      "description": "Theme, tint, translucency, workspace layout, and conversation backgrounds."
+    },
+    "keybindings": {
+      "label": "Keybindings",
+      "description": "Every shortcut the workspace handles, from the app menu and the key handler."
+    },
+    "chat": {
+      "label": "Chat",
+      "description": "How transcripts read, what the composer does with a follow-up, how files save, and how diffs open."
+    },
+    "providers": {
+      "label": "Providers",
+      "description": "Provider accounts, agent CLIs MonoCode can drive, and the model new sessions start with."
+    },
+    "mcp": {
+      "label": "MCP",
+      "description": "Find MCP servers across providers and manage their connections."
+    },
+    "skills": {
+      "label": "Skills",
+      "description": "Discover and manage file skills from project, personal, and harness folders."
+    },
+    "inbox": {
+      "label": "Inbox",
+      "description": "Manage Inbox services and notification preferences for each project."
+    },
+    "archive": {
+      "label": "Archive",
+      "description": "Projects and conversations you have archived."
+    },
+    "worktrees": {
+      "label": "Worktrees",
+      "description": "Manage additional worktrees for each project."
+    }
+  },
+  "index": {
+    "remote-machines": "Your machines",
+    "mcp-servers": "MCP servers",
+    "project-worktrees": "Project worktrees",
+    "language": "Language",
+    "update": "Version",
+    "sounds": "Sounds",
+    "notifications": "Notifications",
+    "notes": "Notes",
+    "quick-composer": "Quick composer",
+    "working-agents": "Working agents",
+    "file-tabs": "File tabs",
+    "tab-animations": "Tab animations",
+    "close-to-tray": "Close to tray",
+    "theme": "Theme",
+    "accent-color": "Accent color",
+    "hue": "Hue",
+    "saturation": "Saturation",
+    "dark-lightness": "Dark-mode lightness",
+    "sidebar-opacity": "Sidebar opacity",
+    "blur": "Blur radius",
+    "main-pane-glass": "Main pane glass",
+    "interface-scale": "Interface scale",
+    "collapsed-project-rail": "Collapsed project rail",
+    "show-excluded-files": "Show excluded files",
+    "chat-background": "Chat background",
+    "transcript-layout": "Transcript layout",
+    "anchor-prompts": "Anchor prompts to top",
+    "follow-up": "Follow-up behavior",
+    "model-controls": "Model controls",
+    "composer-mascot": "Composer mascot",
+    "format-on-save": "Format on save",
+    "diff-view": "Diff view",
+    "empty-session-games": "Empty session games",
+    "agent-clis": "Agent CLIs",
+    "provider-accounts": "Provider accounts",
+    "claude-hooks": "Claude Code hooks",
+    "project-notifications": "Project notifications",
+    "github": "GitHub",
+    "gitlab": "GitLab",
+    "azuredevops": "ADO",
+    "jira": "Jira",
+    "linear": "Linear",
+    "show-archived": "Show archived in the sidebar"
+  },
+  "keybindings": {
+    "command": {
+      "AppSettings": "App: Settings",
+      "AppSearch": "App: Search",
+      "AppGotoFile": "App: Go to File",
+      "AppCommandPalette": "App: Command Palette",
+      "AppFindinFiles": "App: Find in Files",
+      "AppOpenProject": "App: Open Project",
+      "AppNewWindow": "App: New Window",
+      "AppQuickComposer": "App: Quick Composer",
+      "AppToggleSidebar": "App: Toggle Sidebar",
+      "AppToggleSessionSidebar": "App: Toggle Session Sidebar",
+      "AppSwitchModel": "App: Switch Model",
+      "ComposerToggleWorkspace": "Composer: Toggle Workspace",
+      "ViewReload": "View: Reload",
+      "ViewZoomIn": "View: Zoom In",
+      "ViewZoomOut": "View: Zoom Out",
+      "ViewResetZoom": "View: Reset Zoom",
+      "TabNew": "Tab: New",
+      "TabCloseOthers": "Tab: Close Others",
+      "TabCloseAll": "Tab: Close All",
+      "TabNext": "Tab: Next",
+      "TabPrevious": "Tab: Previous",
+      "TabCycleNext": "Tab: Cycle Next",
+      "TabCyclePrevious": "Tab: Cycle Previous",
+      "TabBack": "Tab: Back",
+      "TabForward": "Tab: Forward",
+      "TabActivate18": "Tab: Activate 1–8",
+      "TabActivateLast": "Tab: Activate Last",
+      "SessionArchive": "Session: Archive",
+      "SessionPrevious": "Session: Previous",
+      "SessionNext": "Session: Next",
+      "SessionPreviousinCurrentTab": "Session: Previous in Current Tab",
+      "SessionNextinCurrentTab": "Session: Next in Current Tab",
+      "ProjectPrevious": "Project: Previous",
+      "ProjectNext": "Project: Next",
+      "PaneClose": "Pane: Close",
+      "PaneSplitRight": "Pane: Split Right",
+      "PaneSplitDown": "Pane: Split Down",
+      "PaneFocusLeft": "Pane: Focus Left",
+      "PaneFocusRight": "Pane: Focus Right",
+      "PaneFocusUp": "Pane: Focus Up",
+      "PaneFocusDown": "Pane: Focus Down",
+      "TerminalNew": "Terminal: New",
+      "TerminalNewTab": "Terminal: New Tab",
+      "TerminalToggleDock": "Terminal: Toggle Dock",
+      "EditorFind": "Editor: Find",
+      "EditorReplace": "Editor: Replace"
+    },
+    "when": {
+      "Always": "Always",
+      "Anywhere": "Anywhere",
+      "Draftsessioncomposer": "Draft session composer"
+    },
+    "disabled": "Disabled",
+    "errors": {
+      "invalid": "That combination is not a valid shortcut",
+      "activateRange": "{{command}} needs a number key from 1 to 8",
+      "alreadyUsed": "Already used by {{command}}",
+      "saveFailed": "Could not save shortcuts",
+      "quickComposerGlobal": "Quick Composer needs ⌘ or Ctrl as a global hotkey"
+    },
+    "change": "Change {{name}} shortcut",
+    "record": "Record…",
+    "reset": "Reset {{name}} shortcut",
+    "recordingHint": "Del disables · Esc cancels",
+    "quickComposerName": "quick composer",
+    "title": "Shortcuts",
+    "description": "Click a shortcut to record new keys. Press Delete while recording to disable it.",
+    "count_one": "{{count}} binding",
+    "count_other": "{{count}} bindings",
+    "filter": "Filter",
+    "filterLabel": "Filter keybindings",
+    "columns": {
+      "command": "Command",
+      "keybinding": "Keybinding",
+      "when": "When"
+    },
+    "noResults": "No matching bindings"
+  },
+  "view": {
+    "settings": "Settings",
+    "restoreDefaults": "Restore defaults"
+  },
+  "search": {
+    "placeholder": "Search settings",
+    "clear": "Clear settings search",
+    "results": "Settings search results",
+    "noResults": "No matching settings",
+    "page": "Page"
+  },
+  "general": {
+    "alerts": {
+      "title": "Alerts",
+      "description": "How MonoCode reaches you while you are looking somewhere else."
+    },
+    "sounds": "Short cues for project activity, finished turns, and available updates. Choose project notification categories in Inbox settings. Switches and Copy on a finished turn also play.",
+    "notifications": "Notify when a reminder is due, or when an agent finishes or needs input in another session or while MonoCode is in the background. Click the notification to open that session.",
+    "notificationsUnsupported": "Not available on this platform",
+    "workspace": {
+      "description": "How project navigation and workspace tabs behave.",
+      "title": "Workspace"
+    },
+    "file-tabs": "Open files beside the active chat, or give each file a normal tab in the top bar. Top-bar files can still be combined into split panes.",
+    "fileTabs": {
+      "pane": "Beside chat",
+      "workspace": "Top bar"
+    },
+    "tab-animations": "Animate tabs as they open and close. Turn this off for instant tab changes.",
+    "notes": "A global markdown notebook on the project rail. Save a finished turn from the transcript, then mention it later with @note or add it to chat.",
+    "quick-composer": "Press {{shortcut}} in any app to float a prompt over it and start a session without switching to MonoCode. Change the shortcut in Keybindings. Return starts it in the background; ⌘Return starts it and brings the session forward.",
+    "working-agents": "When two or more chats are in flight, a card on the project rail lists them so you can jump across projects. Finished turns stay until you open that session.",
+    "close-to-tray": "Closing a window hides it to the system tray instead of quitting, so running agents keep going. Reopen from the tray icon, and quit for real from its menu. Turn this off to have close end the window.",
+    "about": "About",
+    "notificationsBlocked": {
+      "permission": "Permission needed",
+      "openSettings": "Open System Settings"
+    }
+  },
+  "chat": {
+    "transcript": {
+      "title": "Transcript",
+      "description": "How a conversation reads as it grows."
+    },
+    "transcript-layout": "Full width keeps user prompts as a spanning card. Chat aligns them to the right with a max width, like a messaging app.",
+    "transcriptLayout": {
+      "full": "Full width",
+      "chat": "Chat"
+    },
+    "anchor-prompts": "When you send, the new prompt sits at the top of the transcript and the reply grows into the space below. Turn this off to keep the classic layout, with the latest message resting on the composer.",
+    "composer": {
+      "title": "Composer",
+      "description": "What the composer does with what you type."
+    },
+    "follow-up": "Queue follow-ups until the active turn finishes, or steer the active turn immediately.",
+    "followUp": {
+      "queue": "Queue",
+      "steer": "Steer"
+    },
+    "model-controls": "Show model options beside the picker instead of inside the model menu.",
+    "modelControls": {
+      "menu": "Menu",
+      "beside": "Beside"
+    },
+    "editor": {
+      "title": "Editor",
+      "description": "What happens when you save a file in the workspace editor."
+    },
+    "format-on-save": "Run Prettier on supported files before writing. Off keeps the text you typed, including quote style.",
+    "codeReview": {
+      "title": "Code review",
+      "description": "Where a turn's changes open when you go to read them."
+    },
+    "diff-view": "Editor keeps working-tree changes in the file. Unified stacks every changed file in one review, with sticky headers and collapsed unchanged lines.",
+    "diffView": {
+      "editor": "Editor",
+      "unified": "Unified"
+    },
+    "extras": {
+      "title": "Extras",
+      "description": "Idle animation, and nothing else. Turn both off for a still workspace."
+    },
+    "composer-mascot": "When a turn is running, the project mascot runs along the composer, bonks the scroll-to-latest button the first time, then jumps it, and sometimes grabs a coin.",
+    "empty-session-games": "Pac-man and snake idle on the empty-session grid. Hover the band to take control of whichever is on screen. Turn this off to keep the pane still."
+  },
+  "inbox": {
+    "github": {
+      "description": "Pull requests, reviews, and issues, read through the GitHub CLI.",
+      "connected": "GitHub CLI is installed and authenticated. MonoCode uses it for GitHub inbox items.",
+      "signInHint": "Run gh auth login in a terminal, complete the sign-in flow, then check again.",
+      "installHint": "Install GitHub CLI from cli.github.com, run gh auth login in a terminal, then check again.",
+      "signInRequired": "Sign in required"
+    },
+    "gitlab": {
+      "description": "Merge requests from GitLab.com or a self-managed instance.",
+      "connection": "Connect GitLab.com or a self-managed GitLab instance. Use a personal access token with API access; the token is stored locally and Disconnect deletes it.",
+      "url": "GitLab URL",
+      "token": "GitLab access token"
+    },
+    "azuredevops": {
+      "description": "Pull requests and Boards work items from your ADO organization.",
+      "connection": "Connect your ADO organization with a personal access token (Boards + Repos read & write for comments). The token is stored locally and Disconnect deletes it.",
+      "url": "Azure DevOps organization URL",
+      "token": "Azure DevOps personal access token"
+    },
+    "jira": {
+      "description": "Jira Cloud issues from the projects you pick.",
+      "checking": "Checking Jira connection…",
+      "connectHint": "Connect your Jira Cloud site using your Atlassian email and an API token without scopes. Disconnect deletes the saved credentials.",
+      "site": "Jira site",
+      "email": "Atlassian email",
+      "token": "Jira API token",
+      "tokenPlaceholder": "API token",
+      "createToken": "Create API token",
+      "projects": "Projects",
+      "refresh": "Refresh projects",
+      "projectsHint": "Unchecked projects stay out of the inbox."
+    },
+    "linear": {
+      "description": "Issues assigned to you, from the teams you pick.",
+      "apiKey": "API key",
+      "apiKeyDescription": "Create a personal API key in Linear → Settings → Security & Access. Disconnect deletes it.",
+      "apiKeyInput": "Linear API key",
+      "teams": "Teams",
+      "teamsHint": "Unchecked teams stay out of the inbox."
+    }
+  },
+  "common": {
+    "checking": "Checking",
+    "connected": "Connected",
+    "notInstalled": "Not installed",
+    "connection": "Connection",
+    "installationGuide": "Installation guide",
+    "checkAgain": "Check again",
+    "disconnect": "Disconnect",
+    "saving": "Saving",
+    "connect": "Connect",
+    "change": "Change",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "default": "Default",
+    "save": "Save",
+    "delete": "Delete",
+    "selectValue": "{{label}}: {{value}}",
+    "disconnecting": "Disconnecting",
+    "connecting": "Connecting"
+  },
+  "update": {
+    "available": "Version {{version}} is available.",
+    "downloadingProgress": "Downloading {{progress}}%",
+    "downloading": "Downloading…",
+    "checking": "Checking for updates…",
+    "current": "You're on the latest version.",
+    "failed": "Update check failed.",
+    "idle": "MonoCode updates itself from the release feed.",
+    "version": "Version",
+    "whatsNew": "What's new",
+    "download": "Download",
+    "check": "Check for updates"
+  },
+  "backgroundEffect": {
+    "none": {
+      "label": "None",
+      "description": "Shows the original artwork."
+    },
+    "dither": {
+      "label": "Dither",
+      "description": "Rebuilds the artwork with a dithered color palette."
+    },
+    "ascii": {
+      "label": "ASCII",
+      "description": "Recreates the artwork with colored characters on black."
+    },
+    "halftone": {
+      "label": "Halftone",
+      "description": "Recreates the artwork with colored print dots on black."
+    },
+    "scanlines": {
+      "label": "Scanlines",
+      "description": "Adds a pronounced horizontal display-line texture."
+    },
+    "gradient-blur": {
+      "label": "Haze",
+      "description": "Blurs and fades the artwork into the background below."
+    }
+  },
+  "appearance": {
+    "themeGroup": {
+      "title": "Theme",
+      "description": "Dark and light share the same tint, so the color settings below apply to both."
+    },
+    "theme": "System follows the OS appearance.",
+    "themes": {
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "accent-color": "Used for the composer send button and your message bubbles.",
+    "color": {
+      "title": "Color",
+      "description": "Hue and saturation tint every surface. Lightness only moves the dark theme."
+    },
+    "hue": "Base hue for accents and tinted surfaces.",
+    "saturation": "How strongly the hue tints the interface. Zero keeps it neutral.",
+    "darkLightnessLight": "This only affects dark mode. Your dark-mode value is preserved.",
+    "dark-lightness": "Base brightness of the dark theme. Lower values are darker; zero is true black.",
+    "translucency": {
+      "title": "Translucency",
+      "light": "Light mode always uses an opaque window, so these are off. Your dark-mode values are preserved.",
+      "description": "How much of the desktop shows through MonoCode. Blur costs more to composite the higher it goes."
+    },
+    "sidebar-opacity": "Applies to the project rail and the other glass panes.",
+    "blur": "Background blur behind the window.",
+    "main-pane-glass": "Extend the translucent treatment to the main pane behind sessions and editors.",
+    "layout": {
+      "title": "Layout"
+    },
+    "collapsed-project-rail": "Keep project navigation available as a compact icon rail, or hide the rail completely.",
+    "rail": {
+      "compact": "Icon rail",
+      "hidden": "Hidden"
+    },
+    "interface-scale": "Zoom the whole interface. You can also use Ctrl+=, Ctrl+-, and Ctrl+0 (Cmd on macOS).",
+    "show-excluded-files": "Show files and folders Git excludes, such as build output and dependencies, in the explorer.",
+    "chatBackground": {
+      "description": "An image behind your chat panes. It stays on this device.",
+      "preview": "Empty chat preview at {{percent}}%",
+      "choose": "Choose an image",
+      "effect": "Background effect",
+      "showOn": "Show on",
+      "showOnDescription": "Empty sessions only, or every conversation.",
+      "showOnLabel": "Show background on",
+      "emptyOnly": "Empty only",
+      "allSessions": "All sessions",
+      "emptyVisibility": "Empty chat visibility",
+      "emptyVisibilityDescription": "Background strength before a chat has messages.",
+      "emptyVisibilityLabel": "Empty chat background visibility",
+      "sessionVisibility": "Session visibility",
+      "sessionVisibilityDescription": "Background strength once the conversation has messages.",
+      "sessionVisibilityLabel": "Session background visibility"
+    },
+    "accentColors": {
+      "blue": "Blue",
+      "violet": "Violet",
+      "pink": "Pink",
+      "red": "Red",
+      "orange": "Orange",
+      "green": "Green"
+    }
+  },
+  "providers": {
+    "cli": {
+      "invalidVersion": "{{title}} CLI returned an invalid version.",
+      "tooOld": "OpenCode v{{version}} is too old. Upgrade to v{{minimum}} or newer.",
+      "saveFailed": "Could not save the binary path.",
+      "showRestart": "Show {{title}} CLI details, restart required",
+      "show": "Show {{title}} CLI details",
+      "pathTitle": "{{title}} CLI path",
+      "pathTitleRestart": "{{title}} CLI path — restart required",
+      "details": "{{title}} CLI details",
+      "globalPath": "Global path",
+      "needsAttention": "Needs attention",
+      "restartRequired": "Restart required",
+      "configured": "Configured",
+      "autoDetected": "Auto-detected",
+      "path": "CLI path",
+      "autoDetectedPath": "Auto-detected path",
+      "pathHint": "Enter the absolute path to the CLI executable. Changes apply after restarting MonoCode.",
+      "useAuto": "Use auto-detected path",
+      "savePath": "Save path",
+      "unresolved": "CLI could not be resolved",
+      "checkingPath": "Checking the selected CLI…",
+      "retryHint": "Retry to check this CLI",
+      "checkingVersion": "Checking version…",
+      "revealFailed": "Could not open the CLI location: {{error}}",
+      "retryConfiguredLabel": "Retry {{title}} configured path",
+      "retryAutoLabel": "Retry {{title}} auto-detect",
+      "retryConfigured": "Retry configured path",
+      "retryAuto": "Retry auto-detect",
+      "openLocationLabel": "Open {{title}} CLI location",
+      "openLocation": "Open location",
+      "editPathLabel": "Edit {{title}} CLI path",
+      "editPath": "Edit path"
+    },
+    "scopeGlobal": "Global",
+    "scopeLabel": "Provider defaults scope",
+    "agentClis": {
+      "project": "These defaults apply to {{project}} only. A provider with Show in picker off is also kept out of new conversations started in this project. CLI paths remain global for MonoCode.",
+      "global": "A provider is listed as installed once its CLI is found on your PATH. Uninstalled CLIs stay listed but are left out of the model picker, as are installed ones with Show in picker off. The model beside a provider is what its new conversations start with; Use by default picks the provider itself. CLI paths are global for MonoCode and apply to every project."
+    },
+    "advanced": "Advanced",
+    "claude-hooks": "Run the hooks configured in your settings.json files — PreToolUse command rewrites, blocks, notifications, and the rest — just as the Claude Code CLI would. Turn this off if a hook is misbehaving and you need the session back. Takes effect on the next turn.",
+    "accounts": {
+      "saveFailed": "Could not save this account",
+      "removeFailed": "Could not remove this account",
+      "removeConfirm": "Remove “{{name}}”? Its stored credentials will be deleted and any running turns for this account will stop. Existing conversations stay in history, but cannot continue until you switch accounts.",
+      "removeTitle": "Remove {{provider}} account",
+      "removeAccount": "Remove account",
+      "title": "Accounts",
+      "description": "Create isolated sign-ins for providers that support account profiles. Account switching stays available from the usage control in the footer.",
+      "count_one": "{{count}} account",
+      "count_other": "{{count}} accounts",
+      "add": "Add account",
+      "cliProfile": "Provider CLI profile",
+      "isolatedProfile": "Isolated profile",
+      "renameLabel": "Rename {{name}}",
+      "rename": "Rename account",
+      "removeLabel": "Remove {{name}}",
+      "name": "Account name",
+      "namePlaceholder": "Work or Personal",
+      "newLabel": "New {{provider}} account",
+      "renameProviderLabel": "Rename {{provider}} account",
+      "waiting": "Waiting for browser…",
+      "signInAndAdd": "Sign in and add"
+    },
+    "modelsAvailable_one": "{{count}} model available.",
+    "modelsAvailable_other": "{{count}} models available.",
+    "modelLabel": "{{provider}} model",
+    "useByDefault": "Use by default",
+    "hiddenGlobally": "Hidden globally",
+    "showInPicker": "Show in picker",
+    "showInPickerLabel": "Show {{provider}} in the model picker"
+  },
+  "archive": {
+    "projects": {
+      "title": "Archived projects",
+      "description": "Archive a project from the rail to keep its chats without listing it in the sidebar.",
+      "empty": "No archived projects."
+    },
+    "restore": "Restore",
+    "sessions": {
+      "inProject": "Archived in {{project}}",
+      "title": "Archived conversations",
+      "noProject": "Open a project to see its archived conversations.",
+      "empty": "No archived conversations in this project."
+    },
+    "show-archived": "Keep archived conversations listed alongside the active ones.",
+    "unarchive": "Unarchive"
+  },
+  "mcp": {
+    "add": {
+      "notObject": "Configuration must be a JSON object",
+      "title": "Add MCP server",
+      "description": "Paste a server configuration and choose where to add it.",
+      "provider": "Provider",
+      "name": "Name",
+      "nameHint": "(optional for an mcpServers block)",
+      "config": "JSON configuration",
+      "configHint": "Paste one entry from an mcpServers block, or a single server object with a name above.",
+      "adding": "Adding…",
+      "submit": "Add server"
+    },
+    "scope": "Scope",
+    "scopes": {
+      "local": "Local",
+      "project": "Project",
+      "user": "User"
+    },
+    "remove": {
+      "confirm": "Remove {{name}} from {{scope}} scope?",
+      "title": "Remove MCP server"
+    },
+    "title": "MCP connections",
+    "description": "Configured servers for the selected project and your provider accounts.",
+    "refresh": "Refresh",
+    "showAvailable": "Show available providers",
+    "showAll": "Show all providers",
+    "showingAll": "Showing all providers",
+    "showingAvailable": "Showing available providers",
+    "filterLabel": "Filter MCP servers by provider",
+    "all": "All",
+    "claudeStatusUnavailable": "Claude connection status unavailable: {{error}}",
+    "checking": "Checking servers…",
+    "empty": "No MCP servers configured for this provider.",
+    "signIn": "Sign in",
+    "removeScopeLabel": "Scope to remove {{name}} from",
+    "showConfig": "Show config",
+    "footer": "Claude Code status comes from its CLI. Other providers show configured entries. Sign in opens your browser when supported."
+  }
+}

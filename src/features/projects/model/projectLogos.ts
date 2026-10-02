@@ -1,5 +1,6 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { t } from "../../../i18n";
 import { projectKey } from "../../../shared/lib/paths";
 import {
   loadTabGroupLogos,
@@ -13,10 +14,10 @@ export async function pickImageFile(directory: string): Promise<string | null> {
     defaultPath: directory,
     multiple: false,
     directory: false,
-    title: "Choose project logo",
+    title: t("projects:fileDialog.projectLogo"),
     filters: [
       {
-        name: "Images",
+        name: t("projects:fileDialog.images"),
         extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg"],
       },
     ],

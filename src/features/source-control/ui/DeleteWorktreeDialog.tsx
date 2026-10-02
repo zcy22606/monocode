@@ -16,6 +16,7 @@ import {
   Loader,
   MessageSquare,
 } from "../../../shared/ui/icons";
+import { Trans, useTranslation } from "../../../i18n";
 
 const TONE = {
   danger: "text-red-400",
@@ -60,6 +61,7 @@ export function DeleteWorktreeDialog({
   onClose: () => void;
   onDeleted: () => void;
 }) {
+  const { t } = useTranslation("sourceControl");
   const [busy, setBusy] = useState(false);
   const [deleteSessions, setDeleteSessions] = useState(false);
   const [error, setError] = useState<string>();
@@ -81,7 +83,7 @@ export function DeleteWorktreeDialog({
   };
   return (
     <Modal
-      title="Delete worktree?"
+      title={t("deleteWorktree.title")}
       size="sm"
       onClose={() => {
         if (!busy) onClose();
@@ -92,7 +94,7 @@ export function DeleteWorktreeDialog({
         onSubmit={(e) => void submit(e)}
       >
         <p className="text-content/75">
-          This permanently deletes the working copy and everything inside it.
+          {t("deleteWorktree.description")}
         </p>
         <div className="rounded-lg border border-content/10 bg-content/5 p-3">
           <p className="flex items-start gap-2.5 text-[12px] text-content/55">
@@ -107,41 +109,36 @@ export function DeleteWorktreeDialog({
                 icon={MessageSquare}
                 tone={deleteSessions ? "danger" : "muted"}
               >
-                {sessionCount} session{sessionCount === 1 ? "" : "s"} using this
-                worktree {sessionCount === 1 ? "is" : "are"}{" "}
                 {deleteSessions
-                  ? "permanently deleted."
-                  : "kept. Select a branch or worktree to continue them."}
+                  ? t("deleteWorktree.sessionsDeleted", { count: sessionCount })
+                  : t("deleteWorktree.sessionsKept", { count: sessionCount })}
               </Consequence>
             )}
             {tree.dirty && (
               <Consequence icon={FileDiff} tone="warn">
-                All uncommitted and untracked changes here are discarded.
+                {t("deleteWorktree.dirty")}
               </Consequence>
             )}
             {tree.dirty == null && (
               <Consequence icon={CircleAlert} tone="warn">
-                Changes could not be checked. Anything uncommitted here is
-                discarded.
+                {t("deleteWorktree.unknownDirty")}
               </Consequence>
             )}
             <Consequence icon={GitBranch}>
               {tree.branch ? (
-                <>
-                  The{" "}
-                  <span className="font-medium text-content">
-                    {tree.branch}
-                  </span>{" "}
-                  branch and its commits are kept.
-                </>
+                <Trans
+                  t={t}
+                  i18nKey="deleteWorktree.branchKept"
+                  values={{ branch: tree.branch }}
+                  components={{ b: <span className="font-medium text-content" /> }}
+                />
               ) : (
-                "The branch is kept."
+                t("deleteWorktree.branchKeptUnnamed")
               )}
             </Consequence>
             {!!tree.unpushed && (
               <Consequence icon={CloudUpload}>
-                {tree.unpushed} commit{tree.unpushed === 1 ? " is" : "s are"}{" "}
-                not on a remote. They stay on the branch.
+                {t("deleteWorktree.unpushed", { count: tree.unpushed })}
               </Consequence>
             )}
           </ul>
@@ -152,7 +149,7 @@ export function DeleteWorktreeDialog({
               id="delete-worktree-sessions-label"
               className="text-[12.5px] text-content/75"
             >
-              Also delete associated sessions
+              {t("deleteWorktree.deleteSessions")}
             </span>
             <button
               type="button"
@@ -181,7 +178,7 @@ export function DeleteWorktreeDialog({
             onClick={onClose}
             className="rounded-md px-3 py-1.5 hover:bg-content/8 active:scale-[0.97]"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -190,8 +187,8 @@ export function DeleteWorktreeDialog({
           >
             {busy && <Loader className="size-3.5 animate-spin" />}
             {sessionCount && deleteSessions
-              ? `Delete worktree and session${sessionCount === 1 ? "" : "s"}`
-              : "Delete worktree"}
+              ? t("deleteWorktree.submitWithSessions", { count: sessionCount })
+              : t("deleteWorktree.submit")}
           </button>
         </div>
       </form>

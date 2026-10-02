@@ -1,0 +1,79 @@
+{
+  "mode": {
+    "current": "Current checkout",
+    "newWorktree": "New worktree",
+    "worktree": "Worktree"
+  },
+  "picker": {
+    "title": "Workspace",
+    "label": "Workspace {{label}}",
+    "tooltip": "Workspace: {{label}}",
+    "tooltipShortcut": "Workspace: {{label}} ({{shortcut}})",
+    "existingWorktree": "Existing worktree…",
+    "openSettings": "Open worktree settings",
+    "settings": "Worktree settings",
+    "existingWorktrees": "Existing worktrees",
+    "loadingWorktrees": "Loading worktrees…",
+    "detached": "Detached {{sha}}",
+    "noWorktrees": "No existing worktrees"
+  },
+  "base": {
+    "title": "Create from {{branch}}",
+    "label": "Create worktree from {{branch}}",
+    "from": "From {{branch}}",
+    "dialog": "Worktree base branch",
+    "searchPlaceholder": "Search base branches…",
+    "searchLabel": "Search base branches",
+    "list": "Base branches",
+    "noMatches": "No matching branches"
+  },
+  "tabMenu": {
+    "label": "File tab actions",
+    "close": "Close",
+    "closeOthers": "Close Others",
+    "openDefault": "Open in Default App",
+    "revealFinder": "Reveal in Finder",
+    "revealExplorer": "Reveal in File Explorer",
+    "openContainingFolder": "Open Containing Folder",
+    "copyPath": "Copy Path",
+    "copyRelativePath": "Copy Relative Path",
+    "copyName": "Copy File Name"
+  },
+  "tab": {
+    "changes": "Changes",
+    "stagedChanges": "Staged Changes",
+    "stagedChangesTooltip": "Staged changes",
+    "workingTreeChangesTooltip": "Working tree changes",
+    "sessionChanges": "Session Changes",
+    "sessionChangesTooltip": "Changes captured for this session only",
+    "agentTooltip": "{{name}} — orchestration agent",
+    "plan": "Plan",
+    "workingTree": "{{name}} (Working Tree)",
+    "problems_one": "{{title}} — {{count}} problem",
+    "problems_other": "{{title}} — {{count}} problems",
+    "openFiles": "Open files",
+    "openDefaultError": "Could not open the file in its default app: {{error}}",
+    "actionError": "Could not complete the file action: {{error}}",
+    "dragPane": "Drag to reorder pane",
+    "unsaved": "Unsaved changes",
+    "close": "Close {{label}}"
+  },
+  "groupMenu": {
+    "label": "Tab group actions",
+    "newTab": "New tab in group",
+    "newWindow": "Move group to new window",
+    "closeGroup": "Close group",
+    "ungroup": "Ungroup",
+    "deleteGroup": "Delete group",
+    "name": "Group name",
+    "changeLogo": "Change project logo",
+    "addLogo": "Add project logo",
+    "logo": "Project logo",
+    "logoShown": "Shown in tabs and composer",
+    "logoOptional": "Optional — replaces folder icon",
+    "removeLogo": "Remove project logo",
+    "mascot": "Mascot",
+    "mascotLabel": "Mascot {{name}}"
+  },
+  "groupFallback": "Group"
+}

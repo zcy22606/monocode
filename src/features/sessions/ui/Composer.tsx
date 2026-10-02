@@ -153,6 +153,7 @@ import {
 import { resolveTabGroupLogo } from "../../workspace/model/tabGroups";
 import { useComposerSkills } from "./useComposerSkills";
 import { Popover } from "../../../shared/ui/Popover";
+import { useTranslation } from "../../../i18n";
 import { UsageLimitNotice } from "./UsageLimitNotice";
 import { consumePlanCommand, PLAN_COMMAND } from "../model/plan";
 import {
@@ -351,6 +352,7 @@ function MessageQueue({
   onSteer?: (messageId: string) => void;
   onResume?: () => void;
 }) {
+  const { t } = useTranslation("sessions");
   const [editingId, setEditingId] = useState<string>();
   const [editDraft, setEditDraft] = useState("");
   const onEditingChangeRef = useRef(onEditingChange);
@@ -392,7 +394,7 @@ function MessageQueue({
           <div className="flex h-7 items-center gap-2 border-b border-stroke text-[12px]">
             <Pause className="size-3.5" />
             <span className="min-w-0 flex-1 truncate">
-              Queue paused because you interrupted
+              {t("queue.paused")}
             </span>
             <button
               type="button"
@@ -400,7 +402,7 @@ function MessageQueue({
               className="flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 hover:bg-content/10 hover:text-content"
             >
               <Play className="size-3.5" />
-              Resume
+              {t("queue.resume")}
             </button>
           </div>
         ) : null}
@@ -408,7 +410,7 @@ function MessageQueue({
           const editing = editingId === message.id;
           const label =
             message.text.trim() ||
-            `${message.attachments.length} attachment${message.attachments.length === 1 ? "" : "s"}`;
+            t("queue.attachments", { count: message.attachments.length });
           return (
             <div
               key={message.id}
@@ -421,7 +423,7 @@ function MessageQueue({
                 <>
                   <textarea
                     autoFocus
-                    aria-label="Edit queued message"
+                    aria-label={t("queue.edit")}
                     value={editDraft}
                     rows={1}
                     onChange={(event) => setEditDraft(event.target.value)}
@@ -439,8 +441,8 @@ function MessageQueue({
                   />
                   <button
                     type="button"
-                    title="Save queued message"
-                    aria-label="Save queued message"
+                    title={t("queue.save")}
+                    aria-label={t("queue.save")}
                     disabled={
                       !editDraft.trim() && message.attachments.length === 0
                     }
@@ -451,8 +453,8 @@ function MessageQueue({
                   </button>
                   <button
                     type="button"
-                    title="Cancel queued message edit"
-                    aria-label="Cancel queued message edit"
+                    title={t("queue.cancelEdit")}
+                    aria-label={t("queue.cancelEdit")}
                     onClick={cancelEdit}
                     className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-content/10 hover:text-content"
                   >
@@ -470,12 +472,12 @@ function MessageQueue({
                     className="flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 hover:bg-content/10 hover:text-content"
                   >
                     <CornerDownRight className="size-3.5" />
-                    Steer
+                    {t("queue.steer")}
                   </button>
                   <button
                     type="button"
-                    title="Edit queued message"
-                    aria-label="Edit queued message"
+                    title={t("queue.edit")}
+                    aria-label={t("queue.edit")}
                     onClick={() => startEdit(message)}
                     className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-content/10 hover:text-content"
                   >
@@ -483,8 +485,8 @@ function MessageQueue({
                   </button>
                   <button
                     type="button"
-                    title="Remove queued message"
-                    aria-label="Remove queued message"
+                    title={t("queue.remove")}
+                    aria-label={t("queue.remove")}
                     onClick={() => onDelete?.(message.id)}
                     className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-content/10 hover:text-content"
                   >
@@ -583,6 +585,7 @@ export function Composer({
   onEditingLastTurnChange,
   children,
 }: Props) {
+  const { t } = useTranslation("sessions");
   const ref = useRef<HTMLTextAreaElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const plusRef = useRef<HTMLDivElement>(null);
@@ -2167,7 +2170,7 @@ export function Composer({
         >
           {fileDrag ? (
             <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-lg bg-accent/8 text-[12px] text-content/70">
-              Drop files to attach
+              {t("composer.dropFiles")}
             </div>
           ) : null}
           {hideTopBar ? null : (
@@ -2308,17 +2311,14 @@ export function Composer({
               defaultValue={initialDraft}
               placeholder={
                 worktreeRemoved
-                  ? "Select a branch or worktree to continue…"
+                  ? t("composer.placeholder.worktreeRemoved")
                   : inboxCard
-                    ? "Add a note, or send to start…"
+                    ? t("composer.placeholder.inbox")
                     : noteCard
-                      ? "Add a message, or send…"
+                      ? t("composer.placeholder.note")
                       : handoffCard
-                        ? "Add context, or send to continue…"
-                        : (placeholder ??
-                          (shell
-                            ? "Ask, build, / for commands, @ for references... "
-                            : "Ask, build, / for commands, @ for references... "))
+                        ? t("composer.placeholder.handoff")
+                        : (placeholder ?? t("composer.placeholder.default"))
               }
               aria-label={inputAriaLabel}
               disabled={disabled}
@@ -2365,7 +2365,7 @@ export function Composer({
               className={compact ? "hidden" : "relative shrink-0"}
             >
               <ToolButton
-                label="Add files or choose a mode"
+                label={t("composer.plus.label")}
                 active={plusOpen}
                 onClick={() => setPlusOpen((open) => !open)}
               >
@@ -2382,7 +2382,7 @@ export function Composer({
                   className="p-1.5"
                 >
                   <p className="px-2 pb-1 pt-0.5 text-[10px] font-medium uppercase tracking-wide text-content/40">
-                    Add to message
+                    {t("composer.plus.heading")}
                   </p>
                   <button
                     type="button"
@@ -2396,13 +2396,15 @@ export function Composer({
                   >
                     <FilePlus className="mt-0.5 size-4 shrink-0" />
                     <span className="min-w-0">
-                      <span className="block text-[13px]">Upload file</span>
+                      <span className="block text-[13px]">{t("composer.plus.upload")}</span>
                       <span className="block truncate whitespace-nowrap text-[11px] leading-4 text-content/45">
                         {attachmentsSupported
-                          ? "Attach files or images"
+                          ? t("composer.plus.uploadHint")
                           : remote && !remoteFeatures?.attachments
-                            ? "Update this machine’s host to attach files"
-                            : `${HARNESS_TITLE[harness]} does not support attachments`}
+                            ? t("composer.plus.updateHost")
+                            : t("composer.plus.unsupported", {
+                                harness: HARNESS_TITLE[harness],
+                              })}
                       </span>
                     </span>
                   </button>
@@ -2424,9 +2426,9 @@ export function Composer({
                     >
                       <AiIdea className="mt-0.5 size-4 shrink-0 text-yellow-300/80" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13px]">Plan mode</span>
+                        <span className="block text-[13px]">{t("modes.plan.title")}</span>
                         <span className="block truncate whitespace-nowrap text-[11px] leading-4 text-content/45">
-                          Review a plan before building
+                          {t("modes.plan.description")}
                         </span>
                       </span>
                       {planActive ? (
@@ -2454,9 +2456,9 @@ export function Composer({
                     >
                       <CursorMagicSelection className="mt-0.5 size-4 shrink-0 text-sky-300/80" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13px]">Operator</span>
+                        <span className="block text-[13px]">{t("modes.operator.title")}</span>
                         <span className="block truncate whitespace-nowrap text-[11px] leading-4 text-content/45">
-                          Give this thread access to MonoCode
+                          {t("modes.operator.description")}
                         </span>
                       </span>
                       {operatorActive ? (
@@ -2485,13 +2487,13 @@ export function Composer({
                       <Share className="mt-0.5 size-4 shrink-0 text-fuchsia-300/65" />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-1.5">
-                          <span className="text-[13px]">Orchestrator</span>
+                          <span className="text-[13px]">{t("modes.orchestrator.pill")}</span>
                           <span className="rounded-full bg-fuchsia-300/10 px-1.5 py-0.5 text-[9px] font-medium leading-none tracking-wide text-fuchsia-200/55 mb-px">
                             v1
                           </span>
                         </span>
                         <span className="block truncate whitespace-nowrap text-[11px] leading-4 text-content/45">
-                          Plan and coordinate agent work
+                          {t("modes.orchestrator.description")}
                         </span>
                       </span>
                       {orchestrationActive && (
@@ -2517,9 +2519,9 @@ export function Composer({
                     >
                       <CircleDashed className="mt-0.5 size-4 shrink-0 text-content/60" />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[13px]">Draft</span>
+                        <span className="block text-[13px]">{t("modes.draft.pill")}</span>
                         <span className="block truncate whitespace-nowrap text-[11px] leading-4 text-content/45">
-                          Save this message without starting the agent
+                          {t("modes.draft.description")}
                         </span>
                       </span>
                       {draftActive ? (
@@ -2626,14 +2628,14 @@ export function Composer({
             {resendEdited ? (
               <button
                 type="button"
-                title="Stop editing last message"
-                aria-label="Stop editing last message"
+                title={t("composer.stopEditing")}
+                aria-label={t("composer.stopEditing")}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={exitEditMode}
                 className="edit-last-turn-button flex h-6.5 shrink-0 items-center gap-1 rounded-md border border-current/20 px-2 text-[11px] font-medium transition-[background-color,color,border-color] hover:border-current/35 hover:bg-content/15 hover:text-content focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent"
               >
                 <X className="size-3" strokeWidth={1.8} />
-                <span>Cancel edit</span>
+                <span>{t("composer.cancelEdit")}</span>
               </button>
             ) : null}
             <div className="flex shrink-0 items-center gap-1">
@@ -2642,7 +2644,7 @@ export function Composer({
                 disabled={disabled}
                 hasValue={hasValue && !worktreeRemoved}
                 allowBusySubmit={allowBusySubmit}
-                label={draftActive ? "Save draft" : "Send"}
+                label={draftActive ? t("composer.saveDraft") : t("composer.send")}
                 onSend={() => submit(ref.current?.value ?? "")}
                 onStop={() => onStop?.()}
               />
@@ -2776,7 +2778,7 @@ export function ComposerAction({
   disabled = false,
   hasValue,
   allowBusySubmit = true,
-  label = "Send",
+  label: labelProp,
   onSend,
   onStop,
 }: {
@@ -2788,6 +2790,8 @@ export function ComposerAction({
   onSend: () => void;
   onStop: () => void;
 }) {
+  const { t } = useTranslation("sessions");
+  const label = labelProp ?? t("composer.send");
   if (disabled) {
     return (
       <button
@@ -2815,8 +2819,8 @@ export function ComposerAction({
     ) : (
       <button
         type="button"
-        title="Stop"
-        aria-label="Stop"
+        title={t("composer.stop")}
+        aria-label={t("composer.stop")}
         onClick={onStop}
         className="grid size-6.5 place-items-center rounded-md bg-white text-black hover:bg-white/90"
       >

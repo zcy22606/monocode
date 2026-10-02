@@ -5,7 +5,8 @@
  * 列表视图、看板视图、筛选菜单、显示设置都只认字段接口，不认具体字段。加一个新维度（cycle、负责人、截止日……）
  * 只需要在 ISSUE_FIELDS 里注册一条。
  */
-import { PRIORITIES, STATUSES, isCompleted, type Issue } from "./issues";
+import { t } from "../../../i18n";
+import { PRIORITIES, STATUSES, isCompleted, priorityLabel, statusLabel, type Issue } from "./issues";
 
 export type FieldId = "status" | "priority" | "labels" | "created" | "updated" | "id" | "sessions";
 
@@ -13,7 +14,8 @@ export type FieldOption = { key: string; label: string };
 
 export type IssueField = {
   id: FieldId;
-  label: string;
+  /** 渲染时调用（会跟着界面语言变）。 */
+  label: () => string;
   /** 能分组：列出所有组（按显示顺序）、一个 issue 落在哪些组、拖到某组时要改什么。 */
   group?: {
     options: (issues: Issue[]) => FieldOption[];
@@ -33,46 +35,48 @@ export type IssueField = {
 };
 
 const NO_LABEL = "__none__";
+const statusOptions = () => STATUSES.map((s) => ({ key: s, label: statusLabel(s) }));
+const priorityOptions = () => PRIORITIES.map((p) => ({ key: String(p), label: priorityLabel(p) }));
 const byPriority = (p: number) => (p === 0 ? 9 : p); // 无优先级排最后
 
 export const ISSUE_FIELDS: Record<FieldId, IssueField> = {
   status: {
     id: "status",
-    label: "Status",
+    label: () => t("soloyard:field.status"),
     group: {
-      options: () => STATUSES.map((s) => ({ key: s.id, label: s.label })),
+      options: statusOptions,
       keysOf: (issue) => [issue.status],
       patchFor: (key) => ({ status: key as Issue["status"] }),
     },
-    compare: (a, b) => STATUSES.findIndex((s) => s.id === a.status) - STATUSES.findIndex((s) => s.id === b.status),
+    compare: (a, b) => STATUSES.indexOf(a.status) - STATUSES.indexOf(b.status),
     filter: {
-      options: () => STATUSES.map((s) => ({ key: s.id, label: s.label })),
+      options: statusOptions,
       matches: (issue, values) => values.includes(issue.status),
     },
     display: true,
   },
   priority: {
     id: "priority",
-    label: "Priority",
+    label: () => t("soloyard:field.priority"),
     group: {
-      options: () => PRIORITIES.map((p) => ({ key: String(p.id), label: p.label })),
+      options: priorityOptions,
       keysOf: (issue) => [String(issue.priority)],
       patchFor: (key) => ({ priority: Number(key) }),
     },
     compare: (a, b) => byPriority(a.priority) - byPriority(b.priority),
     filter: {
-      options: () => PRIORITIES.map((p) => ({ key: String(p.id), label: p.label })),
+      options: priorityOptions,
       matches: (issue, values) => values.includes(String(issue.priority)),
     },
     display: true,
   },
   labels: {
     id: "labels",
-    label: "Labels",
+    label: () => t("soloyard:field.labels"),
     group: {
       options: (issues) => [
         ...[...new Set(issues.flatMap((i) => i.labels))].sort().map((l) => ({ key: l, label: l })),
-        { key: NO_LABEL, label: "No labels" },
+        { key: NO_LABEL, label: t("soloyard:field.noLabels") },
       ],
       keysOf: (issue) => (issue.labels.length ? issue.labels : [NO_LABEL]),
       // 拖到某个标签组 = 加上这个标签；拖到「无标签」= 清空
@@ -87,18 +91,18 @@ export const ISSUE_FIELDS: Record<FieldId, IssueField> = {
   },
   created: {
     id: "created",
-    label: "Created",
+    label: () => t("soloyard:field.created"),
     compare: (a, b) => a.created_at.localeCompare(b.created_at),
     display: true,
   },
   updated: {
     id: "updated",
-    label: "Updated",
+    label: () => t("soloyard:field.updated"),
     compare: (a, b) => a.updated_at.localeCompare(b.updated_at),
     display: true,
   },
-  id: { id: "id", label: "ID", compare: (a, b) => a.number - b.number, display: true },
-  sessions: { id: "sessions", label: "Sessions", display: true },
+  id: { id: "id", label: () => t("soloyard:field.id"), compare: (a, b) => a.number - b.number, display: true },
+  sessions: { id: "sessions", label: () => t("soloyard:field.sessions"), display: true },
 };
 
 export const groupableFields = () => Object.values(ISSUE_FIELDS).filter((f) => f.group);
@@ -143,7 +147,7 @@ export function applyView(issues: Issue[], view: IssueViewConfig): IssueGroup[] 
   const compare = ISSUE_FIELDS[view.orderBy]?.compare;
   const sorted = compare ? [...visible].sort((a, b) => (view.orderDesc ? -1 : 1) * compare(a, b) || a.number - b.number) : visible;
   const group = view.groupBy ? ISSUE_FIELDS[view.groupBy]?.group : undefined;
-  if (!group) return [{ key: "all", label: "All issues", issues: sorted }];
+  if (!group) return [{ key: "all", label: t("soloyard:field.allIssues"), issues: sorted }];
   const groups = group.options(issues).map((option) => ({ ...option, issues: [] as Issue[] }));
   for (const issue of sorted) {
     for (const key of group.keysOf(issue)) groups.find((g) => g.key === key)?.issues.push(issue);

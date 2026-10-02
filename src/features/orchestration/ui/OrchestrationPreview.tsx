@@ -35,6 +35,7 @@ import {
   Play,
   Search,
 } from "../../../shared/ui/icons";
+import { useTranslation } from "../../../i18n"; // Soloyard
 
 function AssignmentModel({
   task,
@@ -48,6 +49,7 @@ function AssignmentModel({
     modelSettings: Record<string, string>,
   ): void;
 }) {
+  const { t } = useTranslation("orchestration");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -192,7 +194,7 @@ function AssignmentModel({
       <button
         type="button"
         ref={anchor}
-        aria-label={`Model for ${task.title}`}
+        aria-label={t("assignment.modelFor", { title: task.title })}
         aria-expanded={open}
         onClick={() => {
           setQuery("");
@@ -231,8 +233,8 @@ function AssignmentModel({
             <input
               ref={search}
               type="text"
-              aria-label="Search assignment models"
-              placeholder="Search models or harnesses…"
+              aria-label={t("assignment.search")}
+              placeholder={t("assignment.searchPlaceholder")}
               spellCheck={false}
               autoComplete="off"
               value={query}
@@ -248,7 +250,7 @@ function AssignmentModel({
           <div
             ref={listOverscroll}
             role="listbox"
-            aria-label="Assignment models"
+            aria-label={t("assignment.models")}
             className="min-h-0 flex-1 overflow-y-auto overscroll-none p-1"
           >
             {matches.map((choice, index) => (
@@ -307,7 +309,7 @@ function AssignmentModel({
             ))}
             {!matches.length && (
               <p className="px-2 py-3 text-[12px] text-content/45">
-                No matching models
+                {t("assignment.noModels")}
               </p>
             )}
           </div>
@@ -326,7 +328,7 @@ function AssignmentModel({
           width={200}
           layer={LAYER.submenu}
           role="menu"
-          aria-label={`${activeChoice.name} effort`}
+          aria-label={t("assignment.effort", { name: activeChoice.name })}
           ignore="[data-assignment-model-target]"
           onMouseEnter={() => setInEffort(true)}
           data-assignment-model-target
@@ -367,6 +369,7 @@ function AssignmentModel({
 }
 
 function WorkerHelp() {
+  const { t } = useTranslation("orchestration");
   const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLButtonElement>(null);
@@ -375,7 +378,7 @@ function WorkerHelp() {
       <button
         type="button"
         ref={anchor}
-        aria-label="What parallel workers means"
+        aria-label={t("workers.help")}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         onMouseEnter={() => setHovered(true)}
@@ -396,13 +399,10 @@ function WorkerHelp() {
           className={`px-2.5 py-2 ${open ? "" : "pointer-events-none"}`}
         >
           <div className="text-[12px] leading-4 text-content">
-            How many workers run at once
+            {t("workers.helpTitle")}
           </div>
           <div className="mt-1 text-[11px] leading-4 text-content/50">
-            The rest of the tasks wait their turn, and a task that depends on
-            another waits for it either way. Every worker edits this same
-            project folder, so a lower number means fewer changes landing in it
-            at the same time.
+            {t("workers.helpBody")}
           </div>
         </Popover>
       )}
@@ -451,6 +451,7 @@ export function OrchestrationPreview({
   block: Block;
   busy?: boolean;
 }) {
+  const { t } = useTranslation("orchestration");
   const actions = useContext(OrchestrationActions);
   const runs = useSyncExternalStore(
     orchestrator.subscribe,
@@ -505,7 +506,7 @@ export function OrchestrationPreview({
   return (
     <div
       className="mb-2 overflow-hidden rounded-xl border border-content/10 bg-content/3 font-sans"
-      aria-label="Orchestration proposal"
+      aria-label={t("proposal.label")}
       data-orchestration-review
     >
       <div className="flex min-w-0 flex-wrap items-center gap-2.5 px-3 py-2.5">
@@ -518,7 +519,7 @@ export function OrchestrationPreview({
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-medium leading-tight text-content/90">
-            {planning ? "Planning assignments…" : proposal.title}
+            {planning ? t("proposal.planning") : proposal.title}
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-[11px] leading-tight text-content/45">
             <HarnessIcon
@@ -529,12 +530,11 @@ export function OrchestrationPreview({
               className="truncate"
               title={HARNESS_TITLE[proposal.author.harness]}
             >
-              Lead · {proposal.author.name}
+              {t("proposal.lead", { name: proposal.author.name })}
             </span>
             {!!proposal.tasks.length && (
               <span className="shrink-0">
-                · {proposal.tasks.length}{" "}
-                {proposal.tasks.length === 1 ? "task" : "tasks"}
+                · {t("proposal.tasks", { count: proposal.tasks.length })}
               </span>
             )}
           </div>
@@ -546,7 +546,7 @@ export function OrchestrationPreview({
               disabled={busy || !actions}
               onClick={() => actions?.retry(proposal.leadId, block.id)}
             >
-              Try again
+              {t("proposal.tryAgain")}
             </button>
           )}
           {!run && ["ready", "starting"].includes(proposal.status) && (
@@ -558,7 +558,7 @@ export function OrchestrationPreview({
               }
             >
               <Play className="size-3" strokeWidth={1.75} />
-              {starting ? "Starting…" : "Confirm & start"}
+              {starting ? t("proposal.starting") : t("proposal.confirm")}
             </button>
           )}
           {run && (
@@ -575,7 +575,7 @@ export function OrchestrationPreview({
                 )
               }
             >
-              View agents
+              {t("proposal.viewAgents")}
             </button>
           )}
         </div>
@@ -583,8 +583,8 @@ export function OrchestrationPreview({
       {planning && (
         <p className="px-3 pb-2.5 text-[12px] leading-5 text-content/50">
           {proposal.settings.choices.length
-            ? "Your lead is choosing tasks and worker models. Review the assignments here before starting."
-            : "Checking available harnesses and models…"}
+            ? t("proposal.choosing")
+            : t("proposal.checking")}
         </p>
       )}
       {!!proposal.tasks.length && (
@@ -606,7 +606,7 @@ export function OrchestrationPreview({
                 <div className="flex min-h-9 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3 py-1 hover:bg-content/5">
                   <button
                     type="button"
-                    aria-label={`Details for ${task.title}`}
+                    aria-label={t("proposal.detailsFor", { title: task.title })}
                     aria-expanded={open}
                     onClick={() =>
                       setExpanded((prev) =>
@@ -661,9 +661,11 @@ export function OrchestrationPreview({
                     {editable ? (
                       <>
                         <label className="block">
-                          <span className={fieldLabel}>Task</span>
+                          <span className={fieldLabel}>{t("proposal.task")}</span>
                           <input
-                            aria-label={`Title for task ${index + 1}`}
+                            aria-label={t("proposal.titleFor", {
+                              number: index + 1,
+                            })}
                             className={field}
                             value={task.title}
                             onChange={(event) =>
@@ -672,9 +674,13 @@ export function OrchestrationPreview({
                           />
                         </label>
                         <label className="block">
-                          <span className={fieldLabel}>Instructions</span>
+                          <span className={fieldLabel}>
+                            {t("proposal.instructions")}
+                          </span>
                           <InstructionsField
-                            label={`Instructions for task ${index + 1}`}
+                            label={t("proposal.instructionsFor", {
+                              number: index + 1,
+                            })}
                             value={task.prompt}
                             className={field}
                             onChange={(prompt) => change(task.id, { prompt })}
@@ -688,14 +694,15 @@ export function OrchestrationPreview({
                     )}
                     {!!task.dependsOn.length && (
                       <p>
-                        After ·{" "}
-                        {task.dependsOn
-                          .map(
-                            (id) =>
-                              proposal.tasks.find((entry) => entry.id === id)
-                                ?.title ?? id,
-                          )
-                          .join(", ")}
+                        {t("proposal.after", {
+                          tasks: task.dependsOn
+                            .map(
+                              (id) =>
+                                proposal.tasks.find((entry) => entry.id === id)
+                                  ?.title ?? id,
+                            )
+                            .join(", "),
+                        })}
                       </p>
                     )}
                   </div>
@@ -718,8 +725,8 @@ export function OrchestrationPreview({
             <ChevronRight className="size-3.5" />
           )}
           {showAll
-            ? "Show fewer tasks"
-            : `Show ${proposal.tasks.length - 3} more ${proposal.tasks.length === 4 ? "task" : "tasks"}`}
+            ? t("proposal.showFewer")
+            : t("proposal.showMore", { count: proposal.tasks.length - 3 })}
         </button>
       )}
       {(error || proposal.error) && (
@@ -732,10 +739,10 @@ export function OrchestrationPreview({
           <div className="flex items-center gap-1.5">
             {editable ? (
               <>
-                <span>Parallel workers</span>
+                <span>{t("workers.label")}</span>
                 <div
                   role="radiogroup"
-                  aria-label="Parallel workers"
+                  aria-label={t("workers.label")}
                   className="flex items-center gap-0.5 rounded-md bg-content/5 p-0.5"
                 >
                   {[1, 2, 3, 4].map((number) => (
@@ -765,18 +772,21 @@ export function OrchestrationPreview({
                 </div>
               </>
             ) : (
-              <span>{proposal.settings.maxWorkers} parallel</span>
+              <span>
+                {t("workers.count", { count: proposal.settings.maxWorkers })}
+              </span>
             )}
             <WorkerHelp />
           </div>
           <span>
-            {run?.status ??
-              (proposal.status === "approved"
-                ? "Approved"
+            {run
+              ? t(`runStatus.${run.status}`)
+              : proposal.status === "approved"
+                ? t("proposal.approved")
                 : proposal.status === "ready"
-                  ? "Awaiting confirmation"
-                  : "")}{" "}
-            · Shared project folder
+                  ? t("proposal.awaiting")
+                  : ""}{" "}
+            {t("proposal.sharedFolder")}
           </span>
         </div>
       )}

@@ -14,6 +14,7 @@ import {
   resolveModel,
 } from "./models";
 import { loadProjectProviderSettings } from "./projectProviders";
+import { t } from "../../../i18n";
 
 export type HarnessId =
   | "claude"
@@ -374,19 +375,19 @@ export const RUNTIME_MODES: RuntimeMode[] = [
 
 export const DEFAULT_RUNTIME_MODE: RuntimeMode = "supervised";
 
+// Soloyard: getters, so every reader gets the current language at render time.
 export const RUNTIME_MODE_LABEL: Record<RuntimeMode, string> = {
-  supervised: "Supervised",
-  "auto-accept-edits": "Auto-accept edits",
-  auto: "Auto",
-  "full-access": "Full access",
+  get supervised() { return t("sessions:runtimeMode.supervised.label"); },
+  get "auto-accept-edits"() { return t("sessions:runtimeMode.autoAcceptEdits.label"); },
+  get auto() { return t("sessions:runtimeMode.auto.label"); },
+  get "full-access"() { return t("sessions:runtimeMode.fullAccess.label"); },
 };
 
 export const RUNTIME_MODE_HINT: Record<RuntimeMode, string> = {
-  supervised: "Ask before commands and file changes.",
-  "auto-accept-edits": "Auto-approve edits, ask before other actions.",
-  auto: "An AI reviewer can approve or deny actions.",
-  "full-access":
-    "Allow commands, edits, and supported MCP confirmations in non-plan turns without prompts.",
+  get supervised() { return t("sessions:runtimeMode.supervised.hint"); },
+  get "auto-accept-edits"() { return t("sessions:runtimeMode.autoAcceptEdits.hint"); },
+  get auto() { return t("sessions:runtimeMode.auto.hint"); },
+  get "full-access"() { return t("sessions:runtimeMode.fullAccess.hint"); },
 };
 
 export type WorkspaceMode = "current" | "worktree";

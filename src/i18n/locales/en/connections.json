@@ -1,0 +1,114 @@
+{
+  "common": {
+    "cancel": "Cancel"
+  },
+  "settings": {
+    "title": "Your machines",
+    "description": "Run agents on another computer and return to them from your laptop. The host keeps working when you close MonoCode here.",
+    "addMachine": "Add machine",
+    "empty": "Add your always-on Windows, Mac, or Linux machine to get started.",
+    "sshEndpoint": "SSH · {{target}}",
+    "sshEndpointWithPort": "SSH · {{target}} · port {{port}}",
+    "checking": "Checking connection…",
+    "updateWarning": "Updating restarts the host and interrupts active agent turns.",
+    "updateHost": "Update Host",
+    "updateHostTitle": "Downloads the matching host package and restarts the host; active agent turns will be interrupted",
+    "reconnect": "Reconnect",
+    "removeLabel": "Remove {{name}}",
+    "removeTitle": "Remove connection…",
+    "status": {
+      "connected": "Connected",
+      "noProvider": "Connected · install a supported provider on the host",
+      "needsUpdate": "Connected · host update needed for Explorer and Changes",
+      "offline": "Offline · reconnect to check access"
+    },
+    "notice": {
+      "updated": "{{name}} was updated and reconnected.",
+      "connected": "{{name}} is connected. To work on it, click + next to Projects in the project rail and choose Open folder on a machine.",
+      "connectedByUrl": "{{name}} is connected.",
+      "removedRevoked": "{{name}} was removed and this desktop's access was revoked. The host and its sessions keep running.",
+      "removed": "{{name}} was removed from this desktop. The host and its sessions keep running, and it still accepts this desktop's credential."
+    },
+    "revokeFailed": "Could not revoke access, so {{name}} was not removed: {{reason}}. Reconnect and try again, or remove it from this desktop only and revoke it on the host with monocode-host devices and monocode-host revoke <device-id>.",
+    "remove": {
+      "groupLabel": "Confirm removing {{name}}",
+      "title": "Remove {{name}} from this desktop?",
+      "closes": "This closes this desktop’s connection to the machine. It does not stop the host, and its sessions keep running and stay on that machine. You can add it again later.",
+      "credential": "Removing alone leaves this desktop’s credential valid on the host. Revoke access to invalidate it first; the machine must be reachable.",
+      "stopHost": "To stop the host and turn off its background service, run <code>{{command}}</code> on that machine (<code>{{windowsCommand}}</code> on Windows). Its sessions and history are kept.",
+      "revokeAndRemove": "Revoke access and remove",
+      "removeOnly": "Remove from this desktop only"
+    },
+    "ssh": {
+      "title": "Connect through SSH",
+      "address": "SSH address",
+      "addressPlaceholder": "user@my-mac-mini or an SSH alias",
+      "name": "Name",
+      "optional": "(optional)",
+      "namePlaceholder": "Optional, e.g. Home Mac mini",
+      "advanced": "Advanced",
+      "port": "SSH port",
+      "portPlaceholder": "From SSH config",
+      "about": "MonoCode installs and starts its background host, then connects securely. Your SSH keys and config are used automatically. Enable SSH on the host and sign in to Codex or Claude Code there. On Windows and Mac, keep the host’s desktop account signed in and the machine awake. Locking the desktop is fine.",
+      "linux": "On Linux, setup installs a systemd user service and turns on lingering for your account (<code>{{command}}</code>), so the host and your other user services keep running after you log out. The host keeps running until you stop it on that machine; removing it here only disconnects this desktop.",
+      "connect": "Connect",
+      "connecting": "Connecting…"
+    },
+    "progress": {
+      "starting": "Starting connection…",
+      "password": "SSH password or passphrase",
+      "trust": "Trust host and continue",
+      "continue": "Continue",
+      "reject": "Reject",
+      "cancel": "Cancel connection"
+    },
+    "url": {
+      "summary": "Connect to an existing host by URL",
+      "hostUrl": "Host URL",
+      "token": "Device token",
+      "connect": "Connect by URL"
+    }
+  },
+  "addProject": {
+    "title": "Open folder on a machine",
+    "description": "Sessions in this project run on that machine, using its checkout and its Codex or Claude Code sign-in. They keep running when you close MonoCode here.",
+    "noMachines": "No machines are connected yet. Add one in Settings, then open a folder on it here.",
+    "addMachine": "Add a machine",
+    "machine": "Machine",
+    "on": "On <name>{{name}}</name>",
+    "pathLabel": "Folder path on the machine",
+    "folders": "Folders",
+    "noSubfolders": "No subfolders",
+    "loading": "Loading folders…",
+    "open": "Open",
+    "opening": "Opening…"
+  },
+  "session": {
+    "missingProject": "This project’s machine details are missing. Add the project again from the project rail.",
+    "notConnected": "The machine for this project isn’t connected on this computer.",
+    "connecting": "Connecting to the machine…",
+    "manageMachines": "Manage machines",
+    "loadingModels": "Loading models…",
+    "waitingForHost": "Waiting for the host to confirm your request.",
+    "draftFailed": "Couldn’t save the draft on {{name}}.",
+    "sendFailed": "Couldn’t send the message on {{name}}.",
+    "modelsFailed": "Couldn’t load models from {{name}}.",
+    "retry": "Retry",
+    "tryAgain": "Try again",
+    "dismiss": "Dismiss",
+    "chooseWorktree": "Choose a worktree on this machine",
+    "worktreeFixed": "This session’s worktree is fixed. Start a new session to use another.",
+    "selectModelForPlan": "Select that model in the composer before building this remote plan."
+  },
+  "errors": {
+    "saveLocally": "Cannot save your request locally. Free up app storage before sending.",
+    "tooManyAttachments": "Too many attachments",
+    "attachmentTooLarge": "{{name}} is too large to send to a remote machine (20 MB maximum)",
+    "attachmentUnreadable": "Cannot read {{name}} for remote upload",
+    "attachmentUploadFailed": "Could not finish uploading {{name}}",
+    "unavailable": "This isn’t available for projects on another machine yet.",
+    "outdated": "Update MonoCode Host in Connections settings to use this project’s files.",
+    "crossMachine": "Files can only be copied or moved within one machine.",
+    "notConnected": "This project’s machine isn’t connected on this computer."
+  }
+}

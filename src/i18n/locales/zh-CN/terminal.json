@@ -1,0 +1,44 @@
+{
+  "defaultTitle": "终端",
+  "close": {
+    "one": "「{{process}}」仍在 {{label}} 中运行。仍要关闭这个终端吗？",
+    "many": "以下终端仍在运行：\n{{lines}}\n\n仍要关闭吗？"
+  },
+  "dock": {
+    "resize": "调整终端大小",
+    "tabs": "终端",
+    "new": "新建终端（{{shortcut}}）",
+    "move": "移动终端",
+    "moveMenu": "移动终端",
+    "hide": "隐藏终端（{{shortcut}}）",
+    "side": {
+      "bottom": "停靠在底部",
+      "top": "停靠在顶部",
+      "left": "停靠在左侧",
+      "right": "停靠在右侧"
+    }
+  },
+  "arcade": {
+    "score": "得分 {{score}}",
+    "gameOver": "游戏结束",
+    "release": "退出",
+    "takeControl": "接管控制",
+    "levelClear": "过关！",
+    "gameOverBubble": "游戏结束",
+    "mode": {
+      "low": "慢",
+      "mid": "中",
+      "hard": "快"
+    },
+    "game": {
+      "pacman": {
+        "label": "pac-man",
+        "play": "Pac-man。用方向键或 WASD 移动，按 Esc 退出。"
+      },
+      "snake": {
+        "label": "贪吃蛇",
+        "play": "贪吃蛇。用方向键或 WASD 移动，按 Esc 退出。"
+      }
+    }
+  }
+}

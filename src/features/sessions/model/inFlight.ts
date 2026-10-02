@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import { leafIds, newTab, type WorkspaceTab } from "../../workspace/model/layout";
 import type { DockSide, ProjectTerminalDock } from "../../projects/model/projectTerminal";
 import { sessionNeedsInput, type Session } from "./session";
@@ -62,10 +63,7 @@ export function inFlightRefs(
 }
 
 export function quitWhileBusyMessage(count: number): string {
-  if (count === 1) {
-    return "1 chat is still running. Quit anyway? It will resume when you reopen MonoCode.";
-  }
-  return `${count} chats are still running. Quit anyway? They will resume when you reopen MonoCode.`;
+  return t("sessions:quitWhileBusy", { count });
 }
 
 /**

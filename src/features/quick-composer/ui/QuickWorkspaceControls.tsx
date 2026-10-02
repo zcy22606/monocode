@@ -12,6 +12,7 @@ import {
   type QuickGitResult,
 } from "../model/quickGitPopup";
 import type { QuickWorkspace } from "../model/quickWorkspace";
+import { useTranslation } from "../../../i18n"; // Soloyard
 
 export function QuickWorkspaceControls({
   value,
@@ -28,6 +29,7 @@ export function QuickWorkspaceControls({
   onClose: () => void;
   onError?: (error: string) => void;
 }) {
+  const { t } = useTranslation("quickComposer");
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState<QuickGitKind | null>(null);
   const activeKind = useRef<QuickGitKind | null>(null);
@@ -143,13 +145,16 @@ export function QuickWorkspaceControls({
   };
   const disabled = !enabled || !ready || !branches?.current;
   const Icon = value.mode === "worktree" ? FolderTree : Folder;
-  const label = value.mode === "worktree" ? "New worktree" : "Current checkout";
+  const label =
+    value.mode === "worktree"
+      ? t("workspace.newWorktree")
+      : t("workspace.currentCheckout");
   return (
     <div className="flex min-w-0 items-center gap-2 pl-1.5">
       <button
         type="button"
         disabled={disabled}
-        aria-label={`Workspace ${label}`}
+        aria-label={t("workspace.label", { label })}
         aria-haspopup="dialog"
         aria-expanded={open === "workspace"}
         onMouseDown={(event) => {
@@ -165,13 +170,14 @@ export function QuickWorkspaceControls({
       <GitPickerTrigger
         label={
           value.mode === "worktree"
-            ? `From ${base}`
-            : branches?.current || (settled ? "No repo" : "Loading…")
+            ? t("workspace.from", { base })
+            : branches?.current ||
+              (settled ? t("workspace.noRepo") : t("workspace.loading"))
         }
         aria-label={
           value.mode === "worktree"
-            ? `Create worktree from ${base}`
-            : "Choose branch"
+            ? t("workspace.createFrom", { base })
+            : t("workspace.chooseBranch")
         }
         aria-haspopup="dialog"
         aria-expanded={open === "branch" || open === "base"}

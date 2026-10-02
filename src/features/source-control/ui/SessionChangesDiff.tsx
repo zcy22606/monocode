@@ -9,6 +9,7 @@ import {
 import { forEachConcurrent } from "../../../shared/lib/concurrent";
 import { buildUnifiedFile, type UnifiedFileDiff } from "../model/unifiedDiff";
 import { UnifiedDiffView, type UnifiedDiffFileModel } from "./UnifiedDiffView";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   cwd: string;
@@ -27,6 +28,7 @@ const DIFF_LOAD_CONCURRENCY = 4;
 
 /** Read-only review of the exact before/after snapshots owned by one session. */
 export function SessionChangesDiff({ cwd, sessionId, focusPath }: Props) {
+  const { t } = useTranslation("sourceControl");
   const [files, setFiles] = useState<CheckpointFile[] | null>(null);
   const [diffs, setDiffs] = useState<Map<string, LoadedDiff>>(new Map());
   const [error, setError] = useState<string | null>(null);
@@ -117,21 +119,21 @@ export function SessionChangesDiff({ cwd, sessionId, focusPath }: Props) {
         tooLarge: loaded?.tooLarge,
         emptyMessage:
           loaded == null
-            ? "Loading…"
+            ? t("diff.loading")
             : loaded.error
               ? loaded.error
               : unified != null &&
                   unified.additions === 0 &&
                   unified.deletions === 0 &&
                   !loaded.binary
-                ? "No textual diff"
+                ? t("diff.noTextual")
                 : undefined,
         additions: unified?.additions ?? file.additions,
         deletions: unified?.deletions ?? file.deletions,
         blocks: unified?.blocks ?? [],
       };
     });
-  }, [diffs, files]);
+  }, [diffs, files, t]);
 
   const totals = useMemo(
     () =>
@@ -148,7 +150,7 @@ export function SessionChangesDiff({ cwd, sessionId, focusPath }: Props) {
   if (!cwd || cwd === "~") {
     return (
       <p className="grid h-full place-items-center text-[13px] text-content/45">
-        No project folder
+        {t("diff.noProject")}
       </p>
     );
   }
@@ -156,7 +158,7 @@ export function SessionChangesDiff({ cwd, sessionId, focusPath }: Props) {
     return (
       <div className="grid h-full place-items-center p-6 text-center">
         <AlertCircle className="mx-auto mb-3 size-5 text-red-400" />
-        <p className="text-[13px] text-content">Couldn’t load session changes</p>
+        <p className="text-[13px] text-content">{t("diff.sessionLoadFailed")}</p>
         <p className="mt-1 text-[12px] text-content/50">{error}</p>
       </div>
     );
@@ -171,7 +173,7 @@ export function SessionChangesDiff({ cwd, sessionId, focusPath }: Props) {
   if (files.length === 0) {
     return (
       <p className="grid h-full place-items-center text-[13px] text-content/45">
-        No session changes
+        {t("diff.noSessionChanges")}
       </p>
     );
   }

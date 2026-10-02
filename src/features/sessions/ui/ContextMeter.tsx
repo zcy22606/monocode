@@ -5,6 +5,7 @@ import {
   type ContextUsage,
 } from "../model/contextUsage";
 import { Popover } from "../../../shared/ui/Popover";
+import { useTranslation } from "../../../i18n";
 
 const SIZE = 14;
 const STROKE = 2;
@@ -34,6 +35,7 @@ export function ContextMeter({
   onCompact?: () => void;
   compactDisabled?: boolean;
 }) {
+  const { t } = useTranslation("sessions");
   const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -53,8 +55,8 @@ export function ContextMeter({
       {onCompact ? (
         <button
           type="button"
-          title="Context usage"
-          aria-label={`${headline}, ${detail}. Open context actions`}
+          title={t("context.usage")}
+          aria-label={t("context.openActions", { headline, detail })}
           aria-expanded={actionsOpen}
           onClick={() => setOpen((value) => !value)}
           className="-m-1 grid rounded-sm p-1 outline-none focus-visible:ring-1 focus-visible:ring-accent"
@@ -62,7 +64,7 @@ export function ContextMeter({
           <MeterRing ratio={ratio} />
         </button>
       ) : (
-        <MeterRing ratio={ratio} label={`${headline}, ${detail}`} />
+        <MeterRing ratio={ratio} label={t("context.summary", { headline, detail })} />
       )}
       {hovered || actionsOpen ? (
         <Popover
@@ -80,8 +82,8 @@ export function ContextMeter({
               disabled={compactDisabled}
               title={
                 compactDisabled
-                  ? "Wait for the current operation to finish"
-                  : "Compact this conversation's context"
+                  ? t("context.compactWait")
+                  : t("context.compactTitle")
               }
               onClick={() => {
                 setOpen(false);
@@ -89,7 +91,7 @@ export function ContextMeter({
               }}
               className="mt-1.5 w-full rounded-md bg-content/10 px-2 py-1 text-[11px] text-content hover:bg-content/15 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Compact now
+              {t("context.compactNow")}
             </button>
           ) : null}
         </Popover>

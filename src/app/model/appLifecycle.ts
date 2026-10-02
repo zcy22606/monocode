@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { ask } from "@tauri-apps/plugin-dialog";
+import { t } from "../../i18n";
 import {
   bindHarnessSession,
   forgetHarnessSession,
@@ -165,7 +166,7 @@ export async function askQuitConfirmation(
       confirmed = await ask(quitWhileBusyMessage(inFlight), {
         title: "MonoCode",
         kind: "warning",
-        okLabel: "Quit",
+        okLabel: t("app:quit.ok"),
       });
     } catch {
       confirmed = false;
@@ -355,10 +356,10 @@ export async function confirmReload(
   hasUnsavedFiles: boolean,
 ): Promise<boolean> {
   if (!hasUnsavedFiles) return true;
-  return ask("Reload MonoCode and discard unsaved changes?", {
+  return ask(t("app:reload.confirm"), {
     title: "MonoCode",
     kind: "warning",
-    okLabel: "Reload",
+    okLabel: t("app:reload.ok"),
   });
 }
 
@@ -461,8 +462,8 @@ async function confirmAndCloseWindow(
     const refs = inFlightRefs(sessions, tabs);
     if (refs.length > 0) {
       const ok = await ask(
-        "Close this window and stop its running chats? Other windows will stay open.",
-        { title: "MonoCode", kind: "warning", okLabel: "Close window" },
+        t("app:closeWindow.confirm"),
+        { title: "MonoCode", kind: "warning", okLabel: t("app:closeWindow.ok") },
       );
       if (!ok) return;
     }

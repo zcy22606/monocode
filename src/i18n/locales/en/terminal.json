@@ -1,0 +1,44 @@
+{
+  "defaultTitle": "Terminal",
+  "close": {
+    "one": "\"{{process}}\" is still running in {{label}}. Close this terminal anyway?",
+    "many": "These terminals are still running:\n{{lines}}\n\nClose them anyway?"
+  },
+  "dock": {
+    "resize": "Resize terminal",
+    "tabs": "Terminals",
+    "new": "New Terminal ({{shortcut}})",
+    "move": "Move Terminal",
+    "moveMenu": "Move terminal",
+    "hide": "Hide Terminal ({{shortcut}})",
+    "side": {
+      "bottom": "Dock Bottom",
+      "top": "Dock Top",
+      "left": "Dock Left",
+      "right": "Dock Right"
+    }
+  },
+  "arcade": {
+    "score": "score {{score}}",
+    "gameOver": "game over",
+    "release": "release",
+    "takeControl": "take control",
+    "levelClear": "LEVEL CLEAR",
+    "gameOverBubble": "GAME OVER",
+    "mode": {
+      "low": "low",
+      "mid": "mid",
+      "hard": "hard"
+    },
+    "game": {
+      "pacman": {
+        "label": "pac-man",
+        "play": "Pac-man. Arrow keys or WASD to move. Escape to release."
+      },
+      "snake": {
+        "label": "snake",
+        "play": "Snake. Arrow keys or WASD to move. Escape to release."
+      }
+    }
+  }
+}

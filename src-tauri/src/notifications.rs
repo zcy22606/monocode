@@ -344,7 +344,7 @@ mod platform {
 
         let show = UNNotificationAction::actionWithIdentifier_title_options(
             &NSString::from_str(SHOW_ACTION),
-            &NSString::from_str("Show"),
+            &NSString::from_str(crate::i18n::tr("Show")), // Soloyard
             UNNotificationActionOptions::Foreground,
         );
         let category =
@@ -452,7 +452,7 @@ mod platform {
             .body(&escape_markup(body))
             .icon("monocode")
             // Servers only report the click when a "default" action exists.
-            .action("default", "Show");
+            .action("default", crate::i18n::tr("Show")); // Soloyard
         if sound {
             notification.sound_name("message-new-instant");
         }
@@ -655,7 +655,7 @@ mod platform {
             .text1(subtitle)
             .text2(body)
             .sound(sound)
-            .add_button("Show", &show_action(session_id))
+            .add_button(crate::i18n::tr("Show"), &show_action(session_id)) // Soloyard
             .on_activated(move |action| {
                 let session = action
                     .as_deref()

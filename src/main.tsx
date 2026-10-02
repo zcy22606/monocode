@@ -21,6 +21,7 @@ import { initializeProviderBinaryPaths } from "./features/providers/model/provid
 // Lets file commands reach a connected machine for `remote://` paths.
 import "./features/connections/model/remoteCommands";
 import "./styles/index.css";
+import { initLanguage } from "./i18n"; // Soloyard
 
 performance.mark("monocode:bootstrap");
 // Let local boot IPC overlap loading/evaluating the workspace UI.
@@ -28,6 +29,7 @@ const appLoaded = import("./app/App");
 
 initAppearance();
 initSounds();
+initLanguage(); // Soloyard
 // Prime the real home directory before the first render so every `~/` file
 // reference resolves consistently. The IPC call is local and failures remain
 // best-effort, falling back to inference from a session's cwd.

@@ -4,6 +4,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type DownloadEvent, type Update } from "@tauri-apps/plugin-updater";
 import { announceUpdateAvailable } from "../../features/settings/model/sounds";
 import { rememberInstalledUpdate } from "./updateNotice";
+import { t } from "../../i18n";
 
 export type UpdaterPhase =
   | "idle"
@@ -58,7 +59,7 @@ export async function runUpdateFlow(
       const current: UpdaterSnapshot = { phase: "current", currentVersion };
       onProgress?.(current);
       if (manual) {
-        await message("You're on the latest version.", { title: "MonoCode" });
+        await message(t("app:update.latest"), { title: "MonoCode" });
       }
       return current;
     }
@@ -77,8 +78,12 @@ export async function runUpdateFlow(
     const notes = update.body?.trim();
     const detail = notes ? `\n\n${notes}` : "";
     const yes = await ask(
-      `MonoCode ${update.version} is available (you have ${currentVersion}).${detail}\n\nInstall now?`,
-      { title: "Update available", kind: "info" },
+      t("app:update.prompt", {
+        version: update.version,
+        current: currentVersion,
+        detail,
+      }),
+      { title: t("app:update.availableTitle"), kind: "info" },
     );
     if (!yes) return available;
 
@@ -90,7 +95,9 @@ export async function runUpdateFlow(
       onProgress?.(idle);
       if (manual) {
         await message(
-          "Automatic updates aren't configured for this build.\n\nDownload releases at https://github.com/hardbeat920/monocode/releases/latest",
+          t("app:update.notConfigured", {
+            url: "https://github.com/hardbeat920/monocode/releases/latest",
+          }),
           { title: "MonoCode" },
         );
       }
@@ -101,7 +108,7 @@ export async function runUpdateFlow(
     const failed: UpdaterSnapshot = { phase: "error", currentVersion, error };
     onProgress?.(failed);
     if (manual) {
-      await message(`Couldn't check for updates.\n\n${error}`, {
+      await message(t("app:update.checkFailed", { error }), {
         title: "MonoCode",
       });
     }
@@ -169,7 +176,9 @@ export async function installPendingUpdate(
       error,
     };
     onProgress?.(failed);
-    await message(`Couldn't install the update.\n\n${error}`, { title: "MonoCode" });
+    await message(t("app:update.installFailed", { error }), {
+      title: "MonoCode",
+    });
     return failed;
   }
 }

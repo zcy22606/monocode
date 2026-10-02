@@ -661,6 +661,7 @@ import {
   setQuitWorkspace,
   type ResumedWorkspace,
 } from "./model/appLifecycle";
+import { t } from "../i18n";
 
 const SearchView = lazySurface(
   async () => {
@@ -2288,7 +2289,7 @@ function Workspace({
     const document = releaseNotesForVersion(version);
     if (!document) {
       void message(
-        "Release notes for this version are not available in this build.",
+        t("app:releaseNotes.unavailable"),
         { title: "MonoCode" },
       );
       return;
@@ -2870,7 +2871,7 @@ function Workspace({
       void (async () => {
         if (unsaved.length > 0) {
           const ok = await confirmDiscardUnsaved(
-            "Close this tab with unsaved files?",
+            t("app:close.tabUnsaved"),
           );
           if (!ok) return;
         }
@@ -2937,7 +2938,7 @@ function Workspace({
       void (async () => {
         if (unsaved.length > 0) {
           const ok = await confirmDiscardUnsaved(
-            "Close these tabs with unsaved files?",
+            t("app:close.tabsUnsaved"),
           );
           if (!ok) return;
         }
@@ -3077,7 +3078,7 @@ function Workspace({
       void (async () => {
         if (needsUnsavedConfirm) {
           const ok = await confirmDiscardUnsaved(
-            `Close ${basename(file.path)} without saving?`,
+            t("app:close.fileUnsaved", { name: basename(file.path) }),
           );
           if (!ok) return;
         }
@@ -3139,7 +3140,7 @@ function Workspace({
     void (async () => {
       if (unsaved.length > 0) {
         const ok = await confirmDiscardUnsaved(
-          "Close other tabs with unsaved files?",
+          t("app:close.otherTabsUnsaved"),
         );
         if (!ok) return;
       }
@@ -3217,7 +3218,7 @@ function Workspace({
         return;
       }
       void confirmDiscardUnsaved(
-        "Close this conversation with unsaved files?",
+        t("app:close.conversationUnsaved"),
       ).then((ok) => ok && finishClear());
     },
     [tabs, persistSession, refreshHistory, sidebarCwd],
@@ -3310,7 +3311,7 @@ function Workspace({
       void (async () => {
         if (unsaved.length > 0) {
           const ok = await confirmDiscardUnsaved(
-            "Close all open files with unsaved changes?",
+            t("app:close.allFilesUnsaved"),
           );
           if (!ok) return;
         }
@@ -3345,7 +3346,7 @@ function Workspace({
     void (async () => {
       if (unsaved.length > 0) {
         const ok = await confirmDiscardUnsaved(
-          "Close all tabs with unsaved files?",
+          t("app:close.allTabsUnsaved"),
         );
         if (!ok) return;
       }
@@ -4142,7 +4143,7 @@ function Workspace({
     async (sessionId: string) => {
       const session = await ensureOpenSession(sessionId);
       if (!session)
-        throw new Error("This conversation is no longer available.");
+        throw new Error(t("app:conversation.unavailable"));
       setSearchViewOpen(false);
       setInboxViewOpen(false);
       setNotesViewOpen(false);
@@ -4165,7 +4166,7 @@ function Workspace({
         );
         if (session && !(await upsertSession(session))) {
           throw new Error(
-            "Send a message in this conversation before setting a reminder.",
+            t("app:reminder.sendFirst"),
           );
         }
       }
@@ -4349,7 +4350,7 @@ function Workspace({
   const onRemoveWorktree = useCallback(
     async (cwd: string, path: string, force: boolean, keepSessions = false) => {
       if (removingWorktreePaths.current.has(path)) {
-        throw new Error("This worktree is already being deleted.");
+        throw new Error(t("app:worktree.alreadyDeleting"));
       }
       removingWorktreePaths.current.add(path);
       const lockedIds = new Set<string>();
@@ -4361,7 +4362,7 @@ function Workspace({
           )
         ) {
           throw new Error(
-            "A session is selecting this worktree. Try deleting it again once selection finishes.",
+            t("app:worktree.selecting"),
           );
         }
         await onCheckWorktreeRemoval(cwd, path, force);
@@ -4369,11 +4370,11 @@ function Workspace({
         const tree = listed.worktrees.find(
           (entry) => pathKey(entry.path) === pathKey(path),
         );
-        if (!tree) throw new Error("This worktree is no longer available.");
+        if (!tree) throw new Error(t("app:worktree.unavailable"));
         const ids = worktreeSessionIds(tree, sessionsRef.current);
         if (!keepSessions && ids.length) {
           throw new Error(
-            "Move or delete the sessions using this worktree first.",
+            t("app:worktree.moveSessionsFirst"),
           );
         }
         if (
@@ -4384,7 +4385,7 @@ function Workspace({
           )
         ) {
           throw new Error(
-            "Wait for these sessions to finish changing before deleting the worktree.",
+            t("app:worktree.waitForSessions"),
           );
         }
         for (const id of ids) {
@@ -4658,7 +4659,9 @@ function Workspace({
             if (
               unsaved &&
               !(await confirmDiscardUnsaved(
-                `${removalMode === "archive" ? "Archive" : "Delete"} this conversation with unsaved files?`,
+                removalMode === "archive"
+                  ? t("app:removal.archiveUnsaved")
+                  : t("app:removal.deleteUnsaved"),
               ))
             )
               return false;
@@ -4675,7 +4678,7 @@ function Workspace({
             await onRemoveWorktree(seed.cwd, deleteWorktreePath, false);
           } catch (error) {
             void message(
-              `The session was deleted. Its worktree was kept.\n\n${String(error)}\n\nYou can manage it in Settings → Worktrees.`,
+              t("app:removal.worktreeKept", { error: String(error) }),
               { title: "MonoCode", kind: "warning" },
             );
           }
@@ -4683,10 +4686,12 @@ function Workspace({
         return removed;
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        void message(`Could not ${mode} this conversation.\n\n${detail}`, {
-          title: "MonoCode",
-          kind: "error",
-        });
+        void message(
+          mode === "archive"
+            ? t("app:removal.archiveFailed", { detail })
+            : t("app:removal.deleteFailed", { detail }),
+          { title: "MonoCode", kind: "error" },
+        );
         return false;
       } finally {
         removingSessionIds.current.delete(sessionId);
@@ -4718,7 +4723,7 @@ function Workspace({
         return true;
       } catch (error) {
         void message(
-          `Could not unarchive this conversation.\n\n${String(error)}`,
+          t("app:removal.unarchiveFailed", { error: String(error) }),
           {
             title: "MonoCode",
             kind: "error",
@@ -4848,7 +4853,7 @@ function Workspace({
           );
           void refreshHistory(sidebarCwd);
           void message(
-            `Could not update this conversation's GitHub link.\n\n${String(error)}`,
+            t("app:githubLinkFailed", { error: String(error) }),
             { title: "MonoCode", kind: "error" },
           );
         },
@@ -4897,7 +4902,7 @@ function Workspace({
       if (sessionIds.length === 0) return;
       if (
         !window.confirm(
-          `Delete ${sessionIds.length} selected conversations? This can’t be undone.`,
+          t("app:deleteSelected", { count: sessionIds.length }),
         )
       )
         return;
@@ -5120,7 +5125,7 @@ function Workspace({
         switchingWorktrees.current.has(sessionId)
       ) {
         throw new Error(
-          "Wait for this session to finish before changing working copies.",
+          t("app:workingCopy.busy"),
         );
       }
       if (
@@ -5134,18 +5139,18 @@ function Workspace({
         )
       ) {
         throw new Error(
-          "This worktree is being deleted. Select another working copy.",
+          t("app:workingCopy.deleting"),
         );
       }
       if (!current.worktreeRemoved && current.queuedMessages?.length) {
         throw new Error(
-          "Clear queued messages before changing working copies.",
+          t("app:workingCopy.clearQueue"),
         );
       }
       const run = orchestrator.forSession(sessionId);
       if (run && ["active", "paused"].includes(run.status)) {
         throw new Error(
-          "Stop this orchestration run before changing working copies.",
+          t("app:workingCopy.stopRun"),
         );
       }
       switchingWorktrees.current.set(sessionId, tree.path);
@@ -5158,7 +5163,7 @@ function Workspace({
         );
         if (!target) {
           throw new Error(
-            "This worktree is no longer available. Refresh the picker.",
+            t("app:workingCopy.unavailable"),
           );
         }
         const source = sessionsRef.current.find((s) => s.id === sessionId);
@@ -5169,7 +5174,7 @@ function Workspace({
           sessionWorkCwd(source) !== sessionWorkCwd(current)
         ) {
           throw new Error(
-            "The session changed. Try selecting the working copy again.",
+            t("app:workingCopy.changed"),
           );
         }
         const selected = sessionInWorktree(source, target);
@@ -5196,7 +5201,7 @@ function Workspace({
           sessionWorkCwd(latest) !== sessionWorkCwd(current)
         ) {
           throw new Error(
-            "The session changed. Try selecting the working copy again.",
+            t("app:workingCopy.changed"),
           );
         }
         const next = sessionInWorktree(latest, target);
@@ -6015,7 +6020,7 @@ function Workspace({
           const run = orchestrator.forSession(sessionId);
           if (run && ["active", "paused"].includes(run.status))
             throw new Error(
-              "Stop the current orchestration run before preparing another proposal.",
+              t("app:orchestration.stopCurrentRun"),
             );
         } catch (error) {
           enqueueHarnessEvent(sessionId, {
@@ -6074,7 +6079,7 @@ function Workspace({
         enqueueHarnessEvent(sessionId, {
           type: "session.error",
           message:
-            "This conversation uses a removed provider account. Switch accounts from the usage control to start a new conversation.",
+            t("app:providerAccountRemoved"),
         });
         flushHarnessEvents();
         return false;
@@ -6090,7 +6095,7 @@ function Workspace({
       ) {
         enqueueHarnessEvent(sessionId, {
           type: "status",
-          text: "Use /operator from a regular session turn, outside an orchestration run.",
+          text: t("app:operator.outsideRun"),
         });
         flushHarnessEvents();
         return false;
@@ -6122,7 +6127,7 @@ function Workspace({
         ) {
           enqueueHarnessEvent(sessionId, {
             type: "status",
-            text: "/operator starts a new turn after the current turn finishes.",
+            text: t("app:operator.newTurn"),
           });
           flushHarnessEvents();
           return false;
@@ -6176,7 +6181,7 @@ function Workspace({
           // floor here, so a follow-up sent mid-turn just vanished. Say so.
           enqueueHarnessEvent(sessionId, {
             type: "status",
-            text: `${current.harness} cannot take a follow-up mid-turn — wait for this turn to finish, or stop it first.`,
+            text: t("app:followUp.cannotSteer", { harness: current.harness }),
           });
           flushHarnessEvents();
           return false;
@@ -6223,7 +6228,7 @@ function Workspace({
             const message =
               error instanceof Error
                 ? error.message
-                : `${current.harness} could not steer the active turn`;
+                : t("app:followUp.steerFailed", { harness: current.harness });
             enqueueHarnessEvent(sessionId, {
               type: "session.error",
               message,
@@ -6275,7 +6280,7 @@ function Workspace({
             const message =
               error instanceof Error
                 ? error.message
-                : "The project folder could not be opened.";
+                : t("app:projectOpenFailed");
             enqueueHarnessEvent(sessionId, {
               type: "session.error",
               message,
@@ -6432,7 +6437,7 @@ function Workspace({
                   {
                     id: crypto.randomUUID(),
                     role: "system",
-                    text: `${next.harness} is not connected yet — install and sign in to that provider, then retry.`,
+                    text: t("app:harness.notConnected", { harness: next.harness }),
                     notice: "error",
                   },
                 ],
@@ -6904,7 +6909,7 @@ function Workspace({
                 if (providerFailureSeen)
                   throw new Error(
                     controlOutcome.error ??
-                      "The lead could not repair the proposal.",
+                      t("app:orchestration.repairFailed"),
                   );
                 return nativeProposalText || proposalText;
               },
@@ -6934,7 +6939,8 @@ function Workspace({
           const message =
             error instanceof Error
               ? error.message
-              : String(error) || `${current.harness} adapter failed`;
+              : String(error) ||
+                t("app:harness.adapterFailed", { harness: current.harness });
           controlOutcome.error = message;
           if (!providerFailureSeen) {
             enqueueHarnessEvent(sessionId, {
@@ -6984,7 +6990,7 @@ function Workspace({
                             nativeProposalText || proposalText,
                             providerFailed || !buildSucceeded
                               ? (controlOutcome.error ??
-                                  "The lead could not finish planning.")
+                                  t("app:orchestration.planningFailed"))
                               : undefined,
                           ),
                     )
@@ -7210,7 +7216,7 @@ function Workspace({
               onSettled,
             }),
           rejectionMessage:
-            "The selected agent session could not start this run.",
+            t("app:automation.startFailed"),
           onSettled: (outcome) => {
             const status =
               outcome.status === "completed"
@@ -7602,7 +7608,7 @@ function Workspace({
       if (message.intent === "orchestrate" && session.busy) {
         enqueueHarnessEvent(sessionId, {
           type: "status",
-          text: "Orchestration planning will start after the current turn finishes.",
+          text: t("app:orchestration.planningQueued"),
         });
         flushHarnessEvents();
         return;
@@ -7930,7 +7936,7 @@ function Workspace({
                   status: "error",
                   updatedAt: Date.now(),
                   error:
-                    "A project working directory is required for this question.",
+                    t("app:sideQuestion.noProject"),
                 }
               : undefined,
         );
@@ -7947,7 +7953,7 @@ function Workspace({
                   ...thread,
                   status: "error",
                   updatedAt: Date.now(),
-                  error: "The selected Codex model is unavailable.",
+                  error: t("app:sideQuestion.codexModelUnavailable"),
                 }
               : undefined,
         );
@@ -7975,7 +7981,7 @@ function Workspace({
                   error:
                     error instanceof Error
                       ? error.message
-                      : "The completed turn is no longer available.",
+                      : t("app:sideQuestion.turnUnavailable"),
                 }
               : undefined,
         );
@@ -8049,7 +8055,9 @@ function Workspace({
           const text = output.trim();
           if (!text) {
             throw new Error(
-              `${HARNESS_TITLE[harness]} returned an empty side answer.`,
+              t("app:sideQuestion.emptyAnswer", {
+                harness: HARNESS_TITLE[harness],
+              }),
             );
           }
           updateBtwThread(
@@ -8093,7 +8101,7 @@ function Workspace({
           const message =
             error instanceof Error
               ? error.message
-              : `${HARNESS_TITLE[harness]} could not answer this side question.`;
+              : t("app:sideQuestion.failed", { harness: HARNESS_TITLE[harness] });
           updateBtwThread(
             input.sessionId,
             input.userBlockId,
@@ -8495,7 +8503,9 @@ function Workspace({
           session.id === sessionId
             ? applyHarnessEvent(session, {
                 type: "status",
-                text: `${HARNESS_TITLE[current.harness]} does not support manual context compaction.`,
+                text: t("app:compact.unsupported", {
+                  harness: HARNESS_TITLE[current.harness],
+                }),
               })
             : session,
         );
@@ -8512,7 +8522,7 @@ function Workspace({
         session.id === sessionId
           ? applyHarnessEvent(
               { ...session, busy: true },
-              { type: "status", text: "Compacting context…" },
+              { type: "status", text: t("app:compact.compacting") },
             )
           : session,
       );
@@ -8541,7 +8551,7 @@ function Workspace({
           if (turnGen.current.get(sessionId) !== gen) return;
           enqueueHarnessEvent(sessionId, {
             type: "status",
-            text: "Compacted context",
+            text: t("app:compact.compacted"),
           });
         } catch (error: unknown) {
           if (turnGen.current.get(sessionId) !== gen) return;
@@ -8550,7 +8560,7 @@ function Workspace({
             message:
               error instanceof Error
                 ? error.message
-                : `${current.harness} could not compact this context`,
+                : t("app:compact.failed", { harness: current.harness }),
           });
         } finally {
           if (turnGen.current.get(sessionId) !== gen) return;
@@ -9456,14 +9466,14 @@ function Workspace({
           )?.orchestration;
           if (!session || session.busy || proposal?.status !== "ready")
             throw new Error(
-              "Wait for the proposal to finish before confirming.",
+              t("app:orchestration.waitForProposal"),
             );
           if (
             session.harness !== proposal.author.harness ||
             session.model !== proposal.author.model
           )
             throw new Error(
-              "The lead model has changed. Switch back to the model shown on this card, or generate a new proposal.",
+              t("app:orchestration.leadModelChanged"),
             );
           const starting = updateOrchestrationCard(leadId, blockId, {
             ...proposal,
@@ -9757,7 +9767,7 @@ function Workspace({
   const onRepairChecks = useCallback(
     async (item: InboxItem, request: CiRepairRequest, sessionId?: string) => {
       const cwd = item.projectPath;
-      if (!cwd) throw new Error("Choose a local project for this PR first.");
+      if (!cwd) throw new Error(t("app:ciRepair.chooseProject"));
       let session = sessionId ? await ensureOpenSession(sessionId) : undefined;
       if (
         sessionId &&
@@ -9766,20 +9776,23 @@ function Workspace({
           session.orchestrationLeadId ||
           !sameProjectPath(session.cwd, cwd))
       ) {
-        throw new Error("Choose a chat from this project.");
+        throw new Error(t("app:ciRepair.chooseChat"));
       }
       if (
         session &&
         (session.busy || session.pendingSwitch || isPreparingHandoff(session))
       ) {
         throw new Error(
-          "This chat is busy. Choose another chat or start a new one.",
+          t("app:ciRepair.chatBusy"),
         );
       }
       if (!session) {
         session = {
           ...newDefaultSession(cwd, sessionDefaults?.runtimeMode),
-          title: `Fix CI #${item.number}: ${item.title}`,
+          title: t("app:ciRepair.sessionTitle", {
+            number: item.number,
+            title: item.title,
+          }),
           linkedWorkItem: linkedWorkItemFromInboxItem(item) ?? undefined,
         };
         const next = [...sessionsRef.current, session];
@@ -9844,7 +9857,7 @@ function Workspace({
     async (sessionId: string) => {
       const session = await ensureOpenSession(sessionId);
       if (!session)
-        throw new Error("This conversation is no longer available.");
+        throw new Error(t("app:conversation.unavailable"));
       setAutomationsViewOpen(false);
       setSearchViewOpen(false);
       setInboxViewOpen(false);

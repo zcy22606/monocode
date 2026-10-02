@@ -1,4 +1,5 @@
 import type { Block } from "./session";
+import { t } from "../../../i18n";
 
 export type MonoCodeToolCall = {
   action: string;
@@ -6,19 +7,20 @@ export type MonoCodeToolCall = {
   command: string;
 };
 
-const ACTION_LABELS: Record<string, string> = {
-  "models.list": "List models",
-  "sessions.list": "List sessions",
-  "sessions.read": "Read a session",
-  "sessions.send": "Continue a session",
-  "sessions.draft": "Save a draft",
-  "sessions.start": "Start a session",
-  "folders.list": "List folders",
-  "folders.move": "Move a session",
-  "notes.list": "List notes",
-  "notes.read": "Read a note",
-  "notes.write": "Write a note",
-};
+// Soloyard: translation keys; labels are translated when a call is recognized.
+const ACTION_LABELS = {
+  "models.list": "sessions:monocodeCall.modelsList",
+  "sessions.list": "sessions:monocodeCall.sessionsList",
+  "sessions.read": "sessions:monocodeCall.sessionsRead",
+  "sessions.send": "sessions:monocodeCall.sessionsSend",
+  "sessions.draft": "sessions:monocodeCall.sessionsDraft",
+  "sessions.start": "sessions:monocodeCall.sessionsStart",
+  "folders.list": "sessions:monocodeCall.foldersList",
+  "folders.move": "sessions:monocodeCall.foldersMove",
+  "notes.list": "sessions:monocodeCall.notesList",
+  "notes.read": "sessions:monocodeCall.notesRead",
+  "notes.write": "sessions:monocodeCall.notesWrite",
+} as const;
 
 /** Conservatively parse one shell invocation; compound commands use the shell row. */
 function shellWords(command: string): string[] | undefined {
@@ -96,7 +98,11 @@ export function monoCodeToolCall(block: Block): MonoCodeToolCall | undefined {
   if (action === "--help" || action === "help" || action === "-h") {
     return words.length > 3
       ? undefined
-      : { action: "--help", label: "View CLI commands", command };
+      : {
+          action: "--help",
+          label: t("sessions:monocodeCall.help"),
+          command,
+        };
   }
   if (!Object.prototype.hasOwnProperty.call(ACTION_LABELS, action))
     return undefined;
@@ -107,7 +113,11 @@ export function monoCodeToolCall(block: Block): MonoCodeToolCall | undefined {
     )
       return undefined;
   }
-  return { action, label: ACTION_LABELS[action], command };
+  return {
+    action,
+    label: t(ACTION_LABELS[action as keyof typeof ACTION_LABELS]),
+    command,
+  };
 }
 
 /** A group of only MonoCode calls can be named for the app, not the shell. */
@@ -124,5 +134,7 @@ export function monoCodeWorkSummary(
   if (calls.length === 0 || calls.some((block) => !monoCodeToolCall(block))) {
     return undefined;
   }
-  return live ? "Using MonoCode" : "Used MonoCode";
+  return live
+    ? t("sessions:monocodeCall.using")
+    : t("sessions:monocodeCall.used");
 }

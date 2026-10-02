@@ -1,10 +1,14 @@
 import type { BuiltinSkill } from "../../skills/model/skills";
+import { t } from "../../../i18n";
 
 export const COMPACT_COMMAND: BuiltinSkill = {
   kind: "builtin",
   name: "compact",
   invocation: "compact",
-  description: "Summarize older conversation context to free space.",
+  // Soloyard: getter, so the slash menu reads the current language.
+  get description() {
+    return t("sessions:commands.compact");
+  },
   scope: "builtin",
   source: "monocode",
 };

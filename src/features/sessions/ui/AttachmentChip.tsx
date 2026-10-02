@@ -4,6 +4,7 @@ import { attachmentPreviewSrc, isAttachmentFolder } from "../model/attachments";
 import type { Attachment } from "../model/session";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import { ImageLightbox } from "../../../shared/ui/ImageLightbox";
+import { useTranslation } from "../../../i18n";
 
 type Props = {
   attachment: Attachment;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function AttachmentChip({ attachment, onRemove }: Props) {
+  const { t } = useTranslation("sessions");
   const [previewOpen, setPreviewOpen] = useState(false);
   const preview = attachmentPreviewSrc(attachment);
   const image = attachment.kind === "image" && preview;
@@ -26,8 +28,8 @@ export function AttachmentChip({ attachment, onRemove }: Props) {
         {image ? (
           <button
             type="button"
-            aria-label={`Open ${attachment.name} full screen`}
-            title={`Open ${attachment.name} full screen`}
+            aria-label={t("generatedImage.open", { name: attachment.name })}
+            title={t("generatedImage.open", { name: attachment.name })}
             onClick={(event) => {
               event.stopPropagation();
               setPreviewOpen(true);
@@ -58,8 +60,8 @@ export function AttachmentChip({ attachment, onRemove }: Props) {
         {onRemove ? (
           <button
             type="button"
-            title="Remove"
-            aria-label={`Remove ${attachment.name}`}
+            title={t("attachment.remove")}
+            aria-label={t("attachment.removeNamed", { name: attachment.name })}
             onClick={(event) => {
               event.stopPropagation();
               onRemove();

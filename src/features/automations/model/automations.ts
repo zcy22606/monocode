@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { HarnessId, RuntimeMode } from "../../sessions/model/session";
+import { i18n, t } from "../../../i18n"; // Soloyard
 
 export const AUTOMATIONS_CHANGED = "monocode:automations-changed";
 const LOCAL_CHANGED = "monocode:automations-local-changed";
@@ -97,9 +98,9 @@ export type DueAutomationRun = {
 export function formatAutomationRunAt(at: number): string {
   if (!Number.isFinite(at) || at <= 0) return "—";
   const date = new Date(at);
-  const month = date.toLocaleDateString(undefined, { month: "short" });
+  const month = date.toLocaleDateString(i18n.language, { month: "short" });
   const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-  return `${date.getDate()} ${month}, ${time}`;
+  return t("automations:run.at", { day: date.getDate(), month, time });
 }
 
 export function formatAutomationRunDuration(
@@ -115,11 +116,13 @@ export function formatAutomationRunDuration(
   const end = run.completedAt ?? (live && start ? now : undefined);
   if (!start || end == null || end < start) return "—";
   const minutes = Math.floor((end - start) / 60_000);
-  if (minutes < 1) return "< 1m";
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1) return t("automations:duration.lessThanMinute");
+  if (minutes < 60) return t("automations:duration.minutes", { minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours}h ${rest}m` : `${hours}h`;
+  return rest
+    ? t("automations:duration.hoursMinutes", { hours, minutes: rest })
+    : t("automations:duration.hours", { hours });
 }
 
 export type AutomationDraft = {
@@ -146,15 +149,14 @@ export type AutomationDraft = {
   enabled: boolean;
 };
 
-export const AUTOMATION_WEEKDAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
+/** Soloyard: weekday name in the UI language (0 = Sunday); call at render. */
+export function weekdayName(day: number): string | undefined {
+  if (!Number.isInteger(day) || day < 0 || day > 6) return undefined;
+  // 2 Jan 2000 was a Sunday.
+  return new Date(2000, 0, 2 + day).toLocaleDateString(i18n.language, {
+    weekday: "long",
+  });
+}
 
 export function isScheduleKind(value: string): value is AutomationScheduleKind {
   return (
@@ -276,7 +278,7 @@ export function gmtOffsetLabel(date = new Date()): string {
 export function nextRunPreview(at: number): string {
   const date = new Date(at);
   const day = date
-    .toLocaleDateString(undefined, {
+    .toLocaleDateString(i18n.language, {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -284,11 +286,11 @@ export function nextRunPreview(at: number): string {
     .replace(/,/g, "");
   const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   const zone =
-    new Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+    new Intl.DateTimeFormat(i18n.language, { timeZoneName: "short" })
       .formatToParts(date)
       .find((part) => part.type === "timeZoneName")?.value ??
     gmtOffsetLabel(date);
-  return `Next run ${day}, ${time} ${zone}`;
+  return t("automations:schedule.nextRun", { day, time, zone });
 }
 
 export function nextAutomationRunAt(
@@ -340,11 +342,19 @@ export function automationScheduleLabel(
 ): string {
   const time = formatClock(automation.time);
   if (automation.scheduleKind === "hourly") {
-    return `Hourly at :${String(automation.minute).padStart(2, "0")}`;
+    return t("automations:schedule.hourly", {
+      minute: String(automation.minute).padStart(2, "0"),
+    });
   }
-  if (automation.scheduleKind === "daily") return `Daily at ${time}`;
-  if (automation.scheduleKind === "weekdays") return `Weekdays at ${time}`;
-  return `${AUTOMATION_WEEKDAYS[automation.dayOfWeek] ?? "Weekly"} at ${time}`;
+  if (automation.scheduleKind === "daily")
+    return t("automations:schedule.daily", { time });
+  if (automation.scheduleKind === "weekdays")
+    return t("automations:schedule.weekdays", { time });
+  return t("automations:schedule.weekly", {
+    day:
+      weekdayName(automation.dayOfWeek) ?? t("automations:events.time.weekly"),
+    time,
+  });
 }
 
 export function newAutomationDraft(
@@ -605,7 +615,7 @@ function clamp(value: number, min: number, max: number): number {
 
 function formatClock(value: string): string {
   const [hour, minute] = parseTime(value);
-  return new Date(2000, 0, 1, hour, minute).toLocaleTimeString(undefined, {
+  return new Date(2000, 0, 1, hour, minute).toLocaleTimeString(i18n.language, {
     hour: "numeric",
     minute: "2-digit",
   });

@@ -6,6 +6,9 @@ import {
   type KeyboardEvent,
 } from "react";
 import { ChevronLeft, ChevronRight, Clock } from "./icons";
+import { i18n, useTranslation } from "../../i18n";
+
+const WEEKDAYS = ["mo", "tu", "we", "th", "fr", "sa", "su"] as const;
 
 export function toLocalDateTime(date: Date): string {
   const pad = (part: number) => String(part).padStart(2, "0");
@@ -51,6 +54,7 @@ export function DateTimePicker({
   minDate,
   autoFocus = false,
 }: Props) {
+  const { t } = useTranslation("shared");
   const today = new Date(Date.now());
   const selected = parseLocalDateTime(`${value.slice(0, 10)}T12:00`) ?? today;
   const minimum = minDate ? parseLocalDateTime(`${minDate}T12:00`) : null;
@@ -81,7 +85,7 @@ export function DateTimePicker({
     !!minimum &&
     month.getFullYear() * 12 + month.getMonth() <=
       minimum.getFullYear() * 12 + minimum.getMonth();
-  const monthLabel = month.toLocaleDateString(undefined, { month: "long" });
+  const monthLabel = month.toLocaleDateString(i18n.language, { month: "long" });
   const headingId = useId();
   const timeId = useId();
   const timeHintId = useId();
@@ -162,7 +166,7 @@ export function DateTimePicker({
         <div className="flex gap-0.5">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t("dateTimePicker.previousMonth")}
             disabled={previousDisabled}
             onClick={() => navigate(shiftMonth(focusedDate, -1), false)}
             className="grid size-7 place-items-center rounded text-content/55 hover:bg-content/5 hover:text-content focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-30"
@@ -171,7 +175,7 @@ export function DateTimePicker({
           </button>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t("dateTimePicker.nextMonth")}
             onClick={() => navigate(shiftMonth(focusedDate, 1), false)}
             className="grid size-7 place-items-center rounded text-content/55 hover:bg-content/5 hover:text-content focus-visible:outline-2 focus-visible:outline-accent"
           >
@@ -181,13 +185,13 @@ export function DateTimePicker({
       </div>
       <div ref={gridRef} role="grid" aria-labelledby={headingId}>
         <div role="row" className="grid grid-cols-7">
-          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((label) => (
+          {WEEKDAYS.map((day) => (
             <span
-              key={label}
+              key={day}
               role="columnheader"
               className="pb-1.5 text-center text-[10px] font-normal text-content/40"
             >
-              {label}
+              {t(`dateTimePicker.weekdays.${day}`)}
             </span>
           ))}
         </div>
@@ -206,7 +210,7 @@ export function DateTimePicker({
                     aria-label={dateKey(date)}
                     tabIndex={dateKey(date) === dateKey(focusedDate) ? 0 : -1}
                     onKeyDown={(event) => onDayKeyDown(event, date)}
-                    title={date.toLocaleDateString(undefined, {
+                    title={date.toLocaleDateString(i18n.language, {
                       dateStyle: "full",
                     })}
                     disabled={!!minimum && date < minimum}
@@ -240,10 +244,10 @@ export function DateTimePicker({
               className="size-3 shrink-0 text-content/40"
               aria-hidden="true"
             />
-            Time
+            {t("dateTimePicker.time")}
           </label>
           <p id={timeHintId} className="mt-0.5 text-[10px] text-content/40">
-            Local time, 24-hour
+            {t("dateTimePicker.timeHint")}
           </p>
         </div>
         <div className="w-20 rounded border border-content/10 bg-content/5 focus-within:border-content/40 focus-within:outline-2 focus-within:outline-accent">

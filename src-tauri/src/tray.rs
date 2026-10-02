@@ -4,17 +4,30 @@
 //! running, and a hidden window drops off the taskbar, so without this the
 //! windows would be unreachable.
 
-use tauri::menu::{MenuBuilder, MenuItemBuilder};
+use crate::i18n::tr; // Soloyard
+use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::AppHandle;
+use tauri::{AppHandle, Wry};
 
 const SHOW: &str = "tray_show";
 const QUIT: &str = "tray_quit";
 
+// Soloyard: built from here so a language change can swap it.
+fn menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
+    let show = MenuItemBuilder::with_id(SHOW, tr("Show MonoCode")).build(app)?;
+    let quit = MenuItemBuilder::with_id(QUIT, tr("Quit MonoCode")).build(app)?;
+    MenuBuilder::new(app).items(&[&show, &quit]).build()
+}
+
+// Soloyard
+pub fn rebuild_menu(app: &AppHandle) {
+    if let (Some(tray), Ok(menu)) = (app.tray_by_id("main"), menu(app)) {
+        let _ = tray.set_menu(Some(menu));
+    }
+}
+
 pub fn install(app: &AppHandle) -> tauri::Result<()> {
-    let show = MenuItemBuilder::with_id(SHOW, "Show MonoCode").build(app)?;
-    let quit = MenuItemBuilder::with_id(QUIT, "Quit MonoCode").build(app)?;
-    let menu = MenuBuilder::new(app).items(&[&show, &quit]).build()?;
+    let menu = menu(app)?;
 
     let mut tray = TrayIconBuilder::with_id("main")
         .tooltip("MonoCode")

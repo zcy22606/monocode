@@ -1,3 +1,4 @@
+import { t } from "../../../i18n";
 import { applyHarnessEvent } from "../../../integrations/harness/core/apply";
 import type { HarnessEvent } from "../../../integrations/harness/core/types";
 import { displayPath } from "../../../shared/lib/paths";
@@ -174,7 +175,10 @@ export const BTW_COMMAND: BuiltinSkill = {
   kind: "builtin",
   name: "btw",
   invocation: "btw",
-  description: "Ask a read-only side question about the current turn.",
+  // Soloyard: getter, so the slash menu reads the current language.
+  get description() {
+    return t("sessions:commands.btw");
+  },
   scope: "builtin",
   source: "monocode",
 };
@@ -335,7 +339,7 @@ export function serializeBtwSnapshot(
 ): string {
   const visible = btwVisibleBlocks(blocks, sourceEndBlockId);
   if (visible.length === 0) {
-    throw new Error("The completed turn is no longer available.");
+    throw new Error(t("sessions:btw.turnUnavailable"));
   }
   const serialized = visible
     .map((block) => serializeBtwBlock(block, cwd))

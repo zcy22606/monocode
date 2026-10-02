@@ -31,6 +31,7 @@ import {
   keybindingShortcutLabel,
   keybindingShortcutTokens,
 } from "../../settings/model/settings";
+import { useTranslation } from "../../../i18n";
 
 export const WORKSPACE_MODE_SHORTCUT = `${MOD}${SHIFT}G`;
 const WORKSPACE_SURFACES =
@@ -133,12 +134,13 @@ export function WorkspacePicker({
 
 /** A started conversation owns its working copy; only its branch stays mutable. */
 export function WorkspaceIdentity({ worktree }: { worktree: boolean }) {
+  const { t } = useTranslation("workspace");
   const Icon = worktree ? FolderTree : Folder;
-  const label = worktree ? "Worktree" : "Current checkout";
+  const label = worktree ? t("mode.worktree") : t("mode.current");
   return (
     <div
-      title={`Workspace: ${label}`}
-      aria-label={`Workspace ${label}`}
+      title={t("picker.tooltip", { label })}
+      aria-label={t("picker.label", { label })}
       className="-ml-1.5 flex h-6 min-w-0 shrink-0 items-center gap-1.5 px-1.5 text-[12px] text-content/45"
     >
       <Icon className="size-3.5 shrink-0" />
@@ -170,6 +172,7 @@ function WorkspaceModePicker({
   onOpenChange?: (open: boolean) => void;
   popoverSide?: "top" | "bottom";
 }) {
+  const { t } = useTranslation("workspace");
   const host = useContext(NativePopupHost);
   const [open, setOpen] = useState(initialOpen);
   useEffect(() => {
@@ -253,7 +256,7 @@ function WorkspaceModePicker({
       setPickError(undefined);
     }, HOVER_CLOSE_MS);
   };
-  const label = mode === "worktree" ? "New worktree" : "Current checkout";
+  const label = mode === "worktree" ? t("mode.newWorktree") : t("mode.current");
   const shortcut = keybindingShortcutLabel(
     "Composer: Toggle Workspace",
     WORKSPACE_MODE_SHORTCUT,
@@ -270,8 +273,8 @@ function WorkspaceModePicker({
         <button
           type="button"
           disabled={!enabled}
-          title={shortcut ? `Workspace: ${label} (${shortcut})` : undefined}
-          aria-label={`Workspace ${label}`}
+          title={shortcut ? t("picker.tooltipShortcut", { label, shortcut }) : undefined}
+          aria-label={t("picker.label", { label })}
           aria-keyshortcuts={shortcutTokens ?? undefined}
           aria-haspopup="dialog"
           aria-expanded={open}
@@ -298,12 +301,12 @@ function WorkspaceModePicker({
           onDismiss={dismiss}
           ignore={WORKSPACE_SURFACES}
           role="dialog"
-          aria-label="Workspace"
+          aria-label={t("picker.title")}
           data-workspace-picker
           className="overflow-hidden p-1.5"
         >
           <div className="flex items-center justify-between gap-3 px-2 py-1 text-[11px] font-medium text-content/45">
-            <span>Workspace</span>
+            <span>{t("picker.title")}</span>
             {shortcut ? (
               <kbd className="font-sans text-[10px] font-normal text-content/35">
                 {shortcut}
@@ -312,8 +315,8 @@ function WorkspaceModePicker({
           </div>
           {(
             [
-              ["current", "Current checkout", Folder],
-              ["worktree", "New worktree", FolderTree],
+              ["current", "mode.current", Folder],
+              ["worktree", "mode.newWorktree", FolderTree],
             ] as const
           ).map(([value, text, RowIcon]) => (
             <button
@@ -331,7 +334,7 @@ function WorkspaceModePicker({
               }`}
             >
               <RowIcon className="size-4 shrink-0 text-content/55" />
-              <span className="flex-1">{text}</span>
+              <span className="flex-1">{t(text)}</span>
               {mode === value ? <Check className="size-3.5" /> : null}
             </button>
           ))}
@@ -361,7 +364,7 @@ function WorkspaceModePicker({
               }`}
             >
               <FolderTree className="size-4 shrink-0 text-content/55" />
-              <span className="flex-1">Existing worktree…</span>
+              <span className="flex-1">{t("picker.existingWorktree")}</span>
               <ChevronRight className="size-3.5 shrink-0 text-content/45" />
             </button>
           ) : null}
@@ -369,8 +372,8 @@ function WorkspaceModePicker({
             <div className="h-9 border-t border-stroke">
               <button
                 type="button"
-                title="Open worktree settings"
-                aria-label="Open worktree settings"
+                title={t("picker.openSettings")}
+                aria-label={t("picker.openSettings")}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={closeWorktreeMenu}
                 onClick={() => {
@@ -383,7 +386,7 @@ function WorkspaceModePicker({
                   className="size-4 shrink-0 text-content/45"
                   strokeWidth={1.75}
                 />
-                <span className="flex-1">Worktree settings</span>
+                <span className="flex-1">{t("picker.settings")}</span>
               </button>
             </div>
           ) : null}
@@ -398,7 +401,7 @@ function WorkspaceModePicker({
           maxHeight={320}
           layer={LAYER.submenu}
           role="menu"
-          aria-label="Existing worktrees"
+          aria-label={t("picker.existingWorktrees")}
           data-existing-worktrees-submenu
           className="flex flex-col overflow-hidden p-1.5"
           onMouseEnter={openWorktreeMenu}
@@ -414,7 +417,7 @@ function WorkspaceModePicker({
           {!data && !loadError ? (
             <p className="flex items-center gap-2 px-2 py-3 text-[12px] text-content/50">
               <Loader className="size-3.5 animate-spin" />
-              Loading worktrees…
+              {t("picker.loadingWorktrees")}
             </p>
           ) : null}
           <div className="min-h-0 overflow-y-auto">
@@ -436,7 +439,7 @@ function WorkspaceModePicker({
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13px]">
-                    {tree.branch ?? `Detached ${tree.head.slice(0, 7)}`}
+                    {tree.branch ?? t("picker.detached", { sha: tree.head.slice(0, 7) })}
                   </span>
                   <span className="block truncate font-mono text-[10px] text-content/40">
                     {prettyCwd(tree.path)}
@@ -446,7 +449,7 @@ function WorkspaceModePicker({
             ))}
             {data && worktrees.length === 0 ? (
               <p className="px-2 py-3 text-[12px] text-content/50">
-                No existing worktrees
+                {t("picker.noWorktrees")}
               </p>
             ) : null}
           </div>
@@ -491,6 +494,7 @@ export function WorktreeBasePicker({
   onOpenChange?: (open: boolean) => void;
   popoverSide?: "top" | "bottom";
 }) {
+  const { t } = useTranslation("workspace");
   const [open, setOpen] = useState(initialOpen);
   useEffect(() => {
     onOpenChange?.(open);
@@ -531,13 +535,13 @@ export function WorktreeBasePicker({
     <div ref={anchor} className="relative flex min-w-0 shrink-0">
       <GitPickerTrigger
         disabled={!enabled}
-        title={`Create from ${selected}`}
-        aria-label={`Create worktree from ${selected}`}
+        title={t("base.title", { branch: selected })}
+        aria-label={t("base.label", { branch: selected })}
         aria-haspopup="dialog"
         aria-expanded={open}
         onMouseDown={(event) => event.preventDefault()}
         onClick={() => setOpen((value) => !value)}
-        label={`From ${selected}`}
+        label={t("base.from", { branch: selected })}
         loading={loading}
       />
       {open ? (
@@ -549,7 +553,7 @@ export function WorktreeBasePicker({
           maxHeight={280}
           onDismiss={dismiss}
           role="dialog"
-          aria-label="Worktree base branch"
+          aria-label={t("base.dialog")}
           className="flex flex-col overflow-hidden"
         >
           <label className="flex shrink-0 items-center gap-2 border-b border-stroke px-2 py-2.5 text-content/50">
@@ -557,8 +561,8 @@ export function WorktreeBasePicker({
             <input
               ref={search}
               value={query}
-              placeholder="Search base branches…"
-              aria-label="Search base branches"
+              placeholder={t("base.searchPlaceholder")}
+              aria-label={t("base.searchLabel")}
               spellCheck={false}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -588,7 +592,7 @@ export function WorktreeBasePicker({
           </label>
           <div
             role="listbox"
-            aria-label="Base branches"
+            aria-label={t("base.list")}
             className="min-h-0 flex-1 overflow-y-auto p-1.5"
           >
             {rows.map((branch, index) => {
@@ -628,7 +632,7 @@ export function WorktreeBasePicker({
             })}
             {rows.length === 0 ? (
               <p className="px-2 py-3 text-[12px] text-content/45">
-                No matching branches
+                {t("base.noMatches")}
               </p>
             ) : null}
           </div>
