@@ -15,6 +15,7 @@ mod harness;
 mod harness_updates;
 mod history_import; // Soloyard
 mod i18n; // Soloyard
+mod soloyard_agents; // Soloyard
 mod soloyard_bridge; // Soloyard
 mod soloyard_missing_worktree; // Soloyard
 #[cfg(unix)]
@@ -277,6 +278,10 @@ pub fn run() {
             soloyard_services::soloyard_package_scripts, // Soloyard
             #[cfg(unix)]
             soloyard_services::soloyard_service_log, // Soloyard
+            soloyard_agents::soloyard_agents_status, // Soloyard
+            soloyard_agents::soloyard_mcp_connect, // Soloyard
+            soloyard_agents::soloyard_mcp_remove, // Soloyard
+            soloyard_agents::soloyard_legacy_cleanup, // Soloyard
             remote::remote_machines,
             remote::remote_connect,
             remote::remote_disconnect,

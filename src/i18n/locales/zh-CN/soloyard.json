@@ -326,5 +326,19 @@
       "asset": "资产"
     },
     "hint": "在输入框里输入 @ 引用，内容会随那条消息发给 Agent。"
+  },
+  "mcp": {
+    "title": "Soloyard MCP",
+    "description": "让 Claude Code 和 Codex 读写本应用的项目和 issue。通过各自的 CLI 添加一个名为 soloyard 的用户级 MCP 服务。",
+    "checking": "正在检查…",
+    "notInstalled": "没找到 CLI",
+    "connected": "已接入",
+    "notConnected": "未接入",
+    "connect": "接入",
+    "disconnect": "断开",
+    "legacyTitle": "旧的 indie-desk 配置",
+    "legacyDescription": "原型留下的，指向原型。清理会移除下面的 MCP 服务、技能软链和 SessionStart 钩子（钩子文件先备份为 *.soloyard.bak）。",
+    "legacyMcp": "{{agent}} 里的 indie-desk MCP",
+    "legacyCleanup": "清理"
   }
 }

@@ -113,3 +113,28 @@ test('MCP：迭代表、建迭代、建功能、挪功能；不许 agent 标「�
     s.close()
   }
 })
+
+test('agent 经 MCP 建的 issue，界面的数据进程 1 秒内广播 changed', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'soloyard-live-'))
+  const file = join(dir, 'monocode.db')
+  const db = openDb(file)
+  repo.createProject(db, 'user', { name: 'Live', key: 'LIV', path: dir })
+  const sidecar = spawn(process.execPath, [join(import.meta.dirname, '../../core/src/sidecar.ts'), file], { stdio: ['pipe', 'pipe', 'inherit'] })
+  let changedAt = 0
+  sidecar.stdout.on('data', (d) => { if (String(d).includes('"changed"')) changedAt ||= performance.now() })
+  const s = server(file)
+  try {
+    await s.rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } })
+    await new Promise((r) => setTimeout(r, 300)) // 等数据进程起来、记下初始版本
+    const start = performance.now()
+    assert.ok((await s.tool('create_issues', { project: 'LIV', issues: [{ title: 'from agent' }] })).data)
+    while (!changedAt && performance.now() - start < 2000) await new Promise((r) => setTimeout(r, 10))
+    assert.ok(changedAt, 'no changed event')
+    t.diagnostic(`latency ${Math.round(changedAt - start)}ms`)
+    assert.ok(changedAt - start < 1000, `took ${Math.round(changedAt - start)}ms`)
+  } finally {
+    s.close()
+    sidecar.stdin.end()
+    db.close()
+  }
+})

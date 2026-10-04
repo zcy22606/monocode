@@ -338,5 +338,19 @@
       "asset": "Assets"
     },
     "hint": "Type @ in the composer to send an item's content with your message."
+  },
+  "mcp": {
+    "title": "Soloyard MCP",
+    "description": "Let Claude Code and Codex read and write this app's projects and issues. Adds a user-level MCP server named soloyard through each CLI.",
+    "checking": "Checking…",
+    "notInstalled": "CLI not found",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "legacyTitle": "Old indie-desk setup",
+    "legacyDescription": "Left by the prototype and points at it. Clean up removes the MCP servers, skill links and SessionStart hooks below (hook files are backed up as *.soloyard.bak).",
+    "legacyMcp": "indie-desk MCP in {{agent}}",
+    "legacyCleanup": "Clean up"
   }
 }
