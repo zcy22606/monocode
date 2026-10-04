@@ -73,6 +73,21 @@ export function projectViewFile(request: OpenProjectViewRequest): FilePaneTab {
     projectView: { view: request.view, itemId: request.itemId },
   };
 }
+const VIEW_IDS: readonly ProjectViewId[] = [
+  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service",
+];
+
+/** 恢复标签布局时校验 projectView 字段（底座的快照解析对标签字段走白名单）。不认识的返回 undefined。 */
+export function sanitizeProjectView(raw: unknown): ProjectViewSource | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Record<string, unknown>;
+  if (!VIEW_IDS.includes(value.view as ProjectViewId)) return undefined;
+  return {
+    view: value.view as ProjectViewId,
+    ...(typeof value.itemId === "string" && value.itemId ? { itemId: value.itemId } : {}),
+  };
+}
+
 
 export function projectViewKey(cwd: string, source: ProjectViewSource) {
   return `project-view:${cwd}:${source.view}:${source.itemId ?? ""}`;

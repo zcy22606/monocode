@@ -17,6 +17,7 @@ import {
   type WorkspaceTab,
 } from "./layout";
 import type { ReleaseNotesTabSource } from "../../../app/model/releaseNotes";
+import { sanitizeProjectView } from "../../soloyard/model/projectViews";
 import {
   clampDockSize,
   isDockSide,
@@ -548,6 +549,7 @@ function sanitizeFile(raw: unknown): FilePaneTab | null {
   if (typeof value.path !== "string" || !value.path) return null;
   if (typeof value.cwd !== "string" || !value.cwd) return null;
   const plan = sanitizePlan(value.plan);
+  const projectView = sanitizeProjectView(value.projectView); // Soloyard
   const hasReleaseNotes = "releaseNotes" in value;
   const releaseNotes = sanitizeReleaseNotes(value.releaseNotes);
   const hasCommit = "commit" in value;
@@ -614,6 +616,7 @@ function sanitizeFile(raw: unknown): FilePaneTab | null {
       : {}),
     ...(plan ? { plan } : {}),
     ...(releaseNotes ? { releaseNotes } : {}),
+    ...(projectView ? { projectView } : {}), // Soloyard
     ...(commit ? { commit } : {}),
     ...(sessionChanges ? { sessionChanges, review: true } : {}),
     ...(value.review === true ? { review: true } : {}),
