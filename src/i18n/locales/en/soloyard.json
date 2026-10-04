@@ -168,8 +168,6 @@
     }
   },
   "iterations": {
-    "prototype": "Prototype · mock data — changes reset when the app restarts",
-    "reset": "Reset",
     "layout": {
       "board": "Board",
       "list": "List"
@@ -183,8 +181,6 @@
       "active": "Active",
       "done": "Done"
     },
-    "features_one": "{{count}} feature",
-    "features_other": "{{count}} features",
     "issuesProgress": "{{done}}/{{total}} issues done",
     "start": "Start iteration",
     "cancel": "Cancel",
@@ -195,7 +191,7 @@
     "untitled": "Untitled",
     "aiWas": "AI: {{version}}",
     "aiWasHint": "AI originally planned this for {{version}}",
-    "coverage": "{{covered}}/{{total}} competitors",
+    "coverage": "Competitor coverage {{coverage}}",
     "overcut_one": "{{count}} must-have or common feature was moved out of the first two releases or cut",
     "overcut_other": "{{count}} must-have or common features were moved out of the first two releases or cut",
     "show": "Show",
@@ -276,6 +272,41 @@
       "issuesFollow": "Existing issues move with their features and aren't deleted.",
       "lock": "Completing locks the iteration (features can't be moved in or out). You can reopen it later.",
       "confirm": "Complete iteration"
+    },
+    "loading": "Loading iterations…",
+    "counts": "{{iterations}} iterations · {{features}} features",
+    "noBackbone": "Ungrouped",
+    "lockedEmpty": "Completed and locked",
+    "deleteFeature": "Delete feature",
+    "bucket": {
+      "pending": "Pending",
+      "split": "Separate project",
+      "cut": "Won't do"
+    },
+    "bucketGoal": {
+      "pending": "Wanted, but no version picked yet",
+      "split": "Worth doing, but as another product",
+      "cut": "Decided against (can be brought back anytime)"
+    },
+    "empty": {
+      "generateHint": "No iterations yet. Lay out the {{count}} features as a first version plan from the AI tiers (v0.1 skeleton / v1.0 MVP / v1.1 / v2.0), then adjust freely.",
+      "generate": "Generate from AI tiers",
+      "noFeatures": "No features yet. Generate a feature map with product-thinking, or add one with New feature."
+    },
+    "newFeature": {
+      "action": "New feature",
+      "title": "New feature",
+      "name": "Feature name",
+      "placeholder": "e.g. Export ROADMAP.md",
+      "where": "Put in"
+    },
+    "notice": {
+      "generated": "Generated the iteration plan from AI tiers",
+      "started_one": "Started {{iteration}}, created {{count}} issue",
+      "started_other": "Started {{iteration}}, created {{count}} issues",
+      "finished_one": "Completed {{iteration}}; {{count}} unfinished feature moved out",
+      "finished_other": "Completed {{iteration}}; {{count}} unfinished features moved out",
+      "featureDeleted": "Deleted feature “{{name}}”"
     }
   }
 }

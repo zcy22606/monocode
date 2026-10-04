@@ -23,13 +23,14 @@ export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source
 
 function ProjectDataView({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
   const { data: project, error } = useProjectForPath(cwd);
-  if (source.view === "issues" || source.view === "issue") {
+  // 迭代 = 功能全景 + 减法 + 迭代；旧的 features / scope 标签也落到这里
+  const iterations = source.view === "cycles" || source.view === "features" || source.view === "scope";
+  if (source.view === "issues" || source.view === "issue" || iterations) {
     if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
     if (!project) return null;
+    if (iterations) return <IterationsView project={project} cwd={cwd} />;
     return source.view === "issues" ? <IssuesView project={project} cwd={cwd} /> : <IssueDetail issueId={Number(source.itemId)} cwd={cwd} />;
   }
-  // 迭代 = 功能全景 + 减法 + 迭代（原型，mock 数据）；旧的 features / scope 标签也落到这里
-  if (source.view === "cycles" || source.view === "features" || source.view === "scope") return <IterationsView />;
   return <Placeholder cwd={cwd} source={source} title={title} />;
 }
 

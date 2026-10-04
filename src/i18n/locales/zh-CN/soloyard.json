@@ -166,8 +166,6 @@
     }
   },
   "iterations": {
-    "prototype": "原型 · mock 数据——重启应用后复原",
-    "reset": "重置",
     "layout": {
       "board": "看板",
       "list": "列表"
@@ -181,7 +179,6 @@
       "active": "进行中",
       "done": "已完成"
     },
-    "features_other": "{{count}} 个功能",
     "issuesProgress": "issue 完成 {{done}}/{{total}}",
     "start": "开始迭代",
     "cancel": "取消",
@@ -192,7 +189,7 @@
     "untitled": "未命名",
     "aiWas": "AI：{{version}}",
     "aiWasHint": "AI 原本安排在 {{version}}",
-    "coverage": "{{covered}}/{{total}} 家竞品有",
+    "coverage": "竞品覆盖 {{coverage}}",
     "overcut_other": "有 {{count}} 个必备 / 常见功能被移出前两个版本或砍掉",
     "show": "查看",
     "hide": "收起",
@@ -266,6 +263,39 @@
       "issuesFollow": "已建的 issue 跟着功能一起走，不会删除。",
       "lock": "完成后迭代会锁定（功能不能拖进拖出），需要时可以重新打开。",
       "confirm": "完成迭代"
+    },
+    "loading": "正在加载迭代…",
+    "counts": "{{iterations}} 个迭代 · {{features}} 个功能",
+    "noBackbone": "未分组",
+    "lockedEmpty": "已完成并锁定",
+    "deleteFeature": "删除功能",
+    "bucket": {
+      "pending": "待定",
+      "split": "另立项",
+      "cut": "不做"
+    },
+    "bucketGoal": {
+      "pending": "想做，但还没定放哪个版本",
+      "split": "值得做，但应该是另一个产品",
+      "cut": "明确不做（可以随时捞回来）"
+    },
+    "empty": {
+      "generateHint": "还没有迭代。可以按功能全景的 AI 分层，把 {{count}} 个功能排成第一版迭代表（v0.1 骨架 / v1.0 MVP / v1.1 / v2.0），之后随时调整。",
+      "generate": "按 AI 分层生成",
+      "noFeatures": "还没有功能。用 product-thinking 生成功能全景，或点右上角「新建功能」手动加。"
+    },
+    "newFeature": {
+      "action": "新建功能",
+      "title": "新建功能",
+      "name": "功能名",
+      "placeholder": "例如：导出 ROADMAP.md",
+      "where": "放在"
+    },
+    "notice": {
+      "generated": "已按 AI 分层生成迭代表",
+      "started_other": "已开始 {{iteration}}，建了 {{count}} 个 issue",
+      "finished_other": "已完成 {{iteration}}，{{count}} 个没做完的功能已移走",
+      "featureDeleted": "已删除功能「{{name}}」"
     }
   }
 }

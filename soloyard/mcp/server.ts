@@ -11,6 +11,7 @@ import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { openDb, tx } from '../core/src/db.ts'
 import * as repo from '../core/src/repo.ts'
+import * as iter from '../core/src/iterations.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -21,7 +22,9 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
-- 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。`
+- 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
+- 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。
+  开始 / 完成 / 删除迭代、把功能标「不做」都由用户在应用里决定，agent 不做。`
 
 type Json = Record<string, any>
 const str = (description: string) => ({ type: 'string', description })
@@ -56,6 +59,21 @@ function project(ref: unknown) {
   if (!p) throw new Error(`找不到项目 ${ref}。先在 Soloyard 里打开这个文件夹的 Project 分页，或用 list_projects 查 key。`)
   return p
 }
+
+/** 迭代按版本号找（v1.0 和 1.0 算同一个）。 */
+function iterationByTag(projectId: number, tag: string) {
+  const norm = (v: string) => v.trim().toLowerCase().replace(/^v/, '')
+  const hit = iter.iterationPlan(db, projectId).iterations.find((i) => norm(i.tag) === norm(String(tag)))
+  if (!hit) throw new Error(`找不到迭代 ${tag}（用 get_iteration_plan 查版本号）`)
+  return hit
+}
+/** agent 能把功能放去的地方：某个迭代的版本号、pending、split。「不做」只能用户定。 */
+function agentTarget(projectId: number, to: string): iter.Target {
+  if (to === 'cut') throw new Error('不能由 agent 把功能标成「不做」：这是用户的减法决定，可以挪到 pending 待定并说明理由')
+  if (to === 'pending' || to === 'split') return to
+  return iterationByTag(projectId, to).id
+}
+const featureBrief = (f: Json) => ({ code: f.code, name: f.name, level: f.level ?? undefined, issue: f.issue_ident ? `${f.issue_ident} (${f.issue_status})` : undefined })
 
 const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Json) => unknown }[] = [
   {
@@ -109,6 +127,67 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     name: 'add_comment', description: '在 issue 下留评论：进度、做完的证据（改了哪些文件、跑了什么命令、结果）、遇到的问题',
     inputSchema: { type: 'object', required: ['issue', 'body_md'], properties: { issue: issueRef, body_md: str('评论（markdown）') } },
     run: ({ issue, body_md }) => ({ id: repo.addComment(db, actor, repo.findIssueId(db, issue), body_md) }),
+  },
+  {
+    name: 'get_iteration_plan',
+    description: '迭代表：不传 iteration 时返回所有迭代（版本号、名称、目标、状态、功能数）和待定 / 另立项 / 不做的功能数；传 iteration（版本号，或 pending / split / cut）返回那一列的功能。迭代的先后就是优先级。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, iteration: str('版本号如 v1.0，或 pending / split / cut') } },
+    run: ({ project: ref, iteration }) => {
+      const plan = iter.iterationPlan(db, project(ref).id)
+      const where = (f: Json) => f.iteration_id ?? f.bucket
+      if (iteration != null) {
+        const target = iter.BUCKETS.includes(iteration) ? iteration : iterationByTag(project(ref).id, iteration).id
+        return plan.features.filter((f) => where(f) === target).map(featureBrief)
+      }
+      return {
+        iterations: plan.iterations.map((i) => ({
+          tag: i.tag, name: i.name, goal: i.goal || undefined, status: i.status, target_date: i.target_date ?? undefined,
+          features: plan.features.filter((f) => f.iteration_id === i.id).length,
+        })),
+        ...Object.fromEntries(iter.BUCKETS.map((b) => [b, plan.features.filter((f) => !f.iteration_id && f.bucket === b).length])),
+      }
+    },
+  },
+  {
+    name: 'create_iteration', description: '新建迭代（只建，不开始）。版本号必填且不能重复；before 传某个版本号表示排在它前面，不传排最后。',
+    inputSchema: { type: 'object', required: ['project', 'tag'], properties: {
+      project: projectRef, tag: str('版本号，如 v1.2'), name: str('名称'), goal: str('这个版本做完用户能做到什么'), target_date: str('目标日期 YYYY-MM-DD'), before: str('排在这个版本号前面'),
+    } },
+    run: ({ project: ref, tag, name, goal, target_date, before }) => {
+      const pid = project(ref).id
+      const id = iter.createIteration(db, actor, pid, { tag, name, goal, target_date }, before ? iterationByTag(pid, before).id : null)
+      return { id, tag }
+    },
+  },
+  {
+    name: 'create_features', description: '新建功能（编号自动 F-001 往下排），放到某个迭代（版本号）或 pending 待定（默认）/ split 另立项。',
+    inputSchema: { type: 'object', required: ['project', 'features'], properties: {
+      project: projectRef, to: str('版本号，或 pending / split，默认 pending'),
+      features: { type: 'array', items: { type: 'object', required: ['name'], properties: { name: str('功能名'), backbone: str('骨干编号，可选') } } },
+    } },
+    run: ({ project: ref, to, features }) => {
+      const pid = project(ref).id
+      const target = agentTarget(pid, to ?? 'pending')
+      const ids = tx(db, () => (features as Json[]).map((f) => iter.createFeature(db, actor, pid, { name: f.name, backbone: f.backbone }, target)))
+      return iter.iterationPlan(db, pid).features.filter((f) => ids.includes(f.id)).map(featureBrief)
+    },
+  },
+  {
+    name: 'move_features', description: '把功能挪到别的迭代（版本号）、pending 待定或 split 另立项；已建的 issue 跟着走。已完成的迭代锁定，进出都不行。不能挪到「不做」。',
+    inputSchema: { type: 'object', required: ['project', 'codes', 'to'], properties: {
+      project: projectRef, codes: { type: 'array', items: { type: 'string' }, description: '功能编号，如 ACCT-001' }, to: str('版本号，或 pending / split'),
+    } },
+    run: ({ project: ref, codes, to }) => {
+      const pid = project(ref).id
+      const byCode = new Map(iter.iterationPlan(db, pid).features.map((f) => [f.code, f.id]))
+      const ids = (codes as string[]).map((c) => {
+        const id = byCode.get(c)
+        if (id == null) throw new Error(`找不到功能 ${c}`)
+        return id
+      })
+      iter.moveFeatures(db, actor, ids, agentTarget(pid, to))
+      return { moved: ids.length, to }
+    },
   },
   {
     name: 'add_acceptance', description: '给 issue 加一条验收标准',

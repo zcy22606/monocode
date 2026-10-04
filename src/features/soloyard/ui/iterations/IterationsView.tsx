@@ -1,110 +1,170 @@
 /**
- * 迭代（原型，mock 数据）：功能全景 = 一张带版本号的迭代表。
- * 每个版本一列，从左到右就是优先级；最后是「另立项」「不做」两个特殊列。
- * 减法 = 把功能拖到别的版本或「不做」；开始迭代 = 给这个版本的功能批量建 issue。
+ * 迭代：功能全景 = 一张带版本号的迭代表。每个迭代一列，从左到右就是优先级；最后是「待定」「另立项」「不做」三列。
+ * 减法 = 把功能挪到别的迭代或特殊列；开始迭代 = 给勾选的功能各建一个 issue；完成迭代 = 处理没做完的功能并锁定。
+ * 数据在 soloyard/core/src/iterations.ts；多步操作返回 batch，顶部的「撤销」按 batch 整批回滚。
  */
 import { useMemo, useState } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
-import { ChevronDown, ChevronRight, ListFilter, MoreHorizontal, Plus, Search, X } from "../../../../shared/ui/icons";
-import { MOCK_BACKBONES, MOCK_FEATURES, type MockFeature, type MockIteration } from "../../mock/iterationsMock";
-import { mockActions, releases, resetIterationsMock, unfinished, useIterationsMock, type IterationsState } from "../../mock/iterationsStore";
-import { DeleteIterationDialog, FinishIterationDialog, IterationFormDialog, StartIterationDialog } from "./IterationDialogs";
+import { ChevronDown, ChevronRight, ListFilter, MoreHorizontal, Plus, Search, Trash2, X } from "../../../../shared/ui/icons";
+import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
+import {
+  aiMovedFrom,
+  columnLabel,
+  columnsOf,
+  encodeTarget,
+  iterationLabel,
+  planLabel,
+  targetOf,
+  unfinished,
+  type Column,
+  type Feature,
+  type Iteration,
+  type IterationPlan,
+  type Target,
+} from "../../model/iterations";
+import { openProjectView } from "../../model/projectViews";
 import { StatusIcon } from "../issues/IssueIcons";
+import { DeleteIterationDialog, FinishIterationDialog, IterationFormDialog, NewFeatureDialog, StartIterationDialog } from "./IterationDialogs";
 
 const FEATURE_DRAG = "application/x-soloyard-feature";
 const ITERATION_DRAG = "application/x-soloyard-iteration";
 const LAYOUT_KEY = "soloyard.iterationsLayout";
 /** 「减过头」只看这两类：竞品普遍都有，砍掉或推得太后要提醒。 */
 const ESSENTIAL = new Set(["必备", "常见"]);
+const NO_BACKBONE = "—";
 
 type Layout = "board" | "list";
-type Menu = { anchor: HTMLElement; kind: "iteration"; id: string } | { anchor: HTMLElement; kind: "backbones" } | { anchor: HTMLElement; kind: "move"; code: string };
+type Menu = { anchor: HTMLElement; kind: "iteration"; id: number } | { anchor: HTMLElement; kind: "backbones" } | { anchor: HTMLElement; kind: "move"; id: number };
+/** 顶部提示条：多步操作后的撤销，或操作失败的原因。 */
+type Notice = { kind: "undo"; batch: string; message: string } | { kind: "error"; message: string };
 
-export function IterationsView() {
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+export function IterationsView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
-  const store = useIterationsMock();
+  const { data: plan, error } = useSoloyard<IterationPlan>("iterationPlan", project.id);
+  if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
+  if (!plan) return <p className="p-6 text-[12px] text-content/40">{t("iterations.loading")}</p>;
+  return <Iterations plan={plan} project={project} cwd={cwd} />;
+}
+
+function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: SoloyardProject; cwd: string }) {
+  const { t } = useTranslation("soloyard");
+  const { iterations, features, backbones: backboneNames } = plan;
   const [layout, setLayoutState] = useState<Layout>(() => (localStorage.getItem(LAYOUT_KEY) === "list" ? "list" : "board"));
   const [backbones, setBackbones] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
-  const [confirmStart, setConfirmStart] = useState<MockIteration | null>(null);
-  const [finishing, setFinishing] = useState<MockIteration | null>(null);
   const [showOvercut, setShowOvercut] = useState(false);
   /** null = 不显示；editing 为空 = 新建。 */
-  const [form, setForm] = useState<{ editing?: MockIteration } | null>(null);
-  const [removing, setRemoving] = useState<MockIteration | null>(null);
-  /** 删除后顶部的「撤销」：存删除前后的整份状态；删完又改过别的（store 不再是 next）就不再提供撤销，免得把后来的改动一起撤掉。 */
-  const [undo, setUndo] = useState<{ prev: IterationsState; next: IterationsState; message: string } | null>(null);
+  const [form, setForm] = useState<{ editing?: Iteration } | null>(null);
+  const [removing, setRemoving] = useState<Iteration | null>(null);
+  const [starting, setStarting] = useState<Iteration | null>(null);
+  const [finishing, setFinishing] = useState<Iteration | null>(null);
+  const [newFeature, setNewFeature] = useState<Target | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const setLayout = (next: Layout) => {
     setLayoutState(next);
     localStorage.setItem(LAYOUT_KEY, next);
   };
 
-  const releaseIds = releases(store).map((i) => i.id);
-  const overcut = MOCK_FEATURES.filter((f) => {
+  /** 单步操作：失败就在顶部显示原因（比如迭代刚被别处锁定）。 */
+  const act = async (method: string, ...args: unknown[]) => {
+    try {
+      await mutateSoloyard(method, ...args);
+      setNotice((n) => (n?.kind === "error" ? null : n));
+    } catch (e) {
+      setNotice({ kind: "error", message: errorText(e) });
+    }
+  };
+  /** 多步操作：成功后提供整批撤销；失败抛给调用方（弹窗里显示原因）。 */
+  const actBatch = async (message: string, method: string, ...args: unknown[]) => {
+    const batch = await mutateSoloyard<string>(method, ...args);
+    setNotice({ kind: "undo", batch, message });
+  };
+  const undo = async (batch: string) => {
+    try {
+      await mutateSoloyard("revertBatch", batch);
+      setNotice(null);
+    } catch (e) {
+      setNotice({ kind: "error", message: errorText(e) });
+    }
+  };
+
+  const columns = columnsOf(iterations);
+  const releaseIds = iterations.map((i) => i.id);
+  const byId = useMemo(() => new Map(iterations.map((i) => [i.id, i])), [iterations]);
+  const lockedTarget = (target: Target) => typeof target === "number" && byId.get(target)?.status === "done";
+  const targetLabel = (target: Target) => {
+    const col = columns.find((c) => c.target === target);
+    return col ? columnLabel(col) : String(target);
+  };
+  const overcut = features.filter((f) => {
     if (!f.level || !ESSENTIAL.has(f.level)) return false;
-    const where = store.placement[f.code];
-    return releaseIds.indexOf(where) < 0 || releaseIds.indexOf(where) >= 2;
+    const index = f.iteration_id ? releaseIds.indexOf(f.iteration_id) : -1;
+    return index < 0 || index >= 2;
   });
-  const visible = MOCK_FEATURES.filter(
+  const visible = features.filter(
     (f) =>
-      (!backbones.size || backbones.has(f.backbone)) &&
+      (!backbones.size || backbones.has(f.backbone ?? NO_BACKBONE)) &&
       (!q.trim() || `${f.code} ${f.name}`.toLowerCase().includes(q.trim().toLowerCase())) &&
       (!showOvercut || overcut.includes(f)),
   );
-  const byIteration = useMemo(() => {
-    const map = new Map<string, MockFeature[]>(store.iterations.map((i) => [i.id, []]));
-    for (const f of visible) map.get(store.placement[f.code])?.push(f);
-    return map;
-  }, [visible, store]);
-  const versionLabel = (id: string) => {
-    const it = store.iterations.find((i) => i.id === id);
-    return it ? (it.version || it.name) : id;
+  const byColumn = new Map<string, Feature[]>(columns.map((c) => [encodeTarget(c.target), []]));
+  for (const f of visible) byColumn.get(encodeTarget(targetOf(f)))?.push(f);
+  const inColumn = (target: Target) => features.filter((f) => targetOf(f) === target);
+  const feature = selected != null ? features.find((f) => f.id === selected) : undefined;
+  const backboneLabel = (bb: string) => (bb === NO_BACKBONE ? t("iterations.noBackbone") : `${bb} ${backboneNames[bb] ?? ""}`.trim());
+  const moveFeature = (f: Feature, target: Target) => {
+    if (targetOf(f) === target || lockedTarget(targetOf(f)) || lockedTarget(target)) return;
+    void act("moveFeatures", [f.id], target);
   };
-  const feature = selected ? MOCK_FEATURES.find((f) => f.code === selected) : undefined;
 
-  const iterationMenu = (id: string): ExplorerMenuItem[] => {
-    const it = store.iterations.find((i) => i.id === id)!;
+  const iterationMenu = (id: number): ExplorerMenuItem[] => {
+    const it = byId.get(id)!;
     const index = releaseIds.indexOf(id);
     return [
       ...(it.status === "planned" ? [{ kind: "item" as const, id: "start", label: t("iterations.start") }] : []),
       ...(it.status === "active" ? [{ kind: "item" as const, id: "finish", label: t("iterations.finish") }] : []),
       ...(it.status === "done" ? [{ kind: "item" as const, id: "reopen", label: t("iterations.reopen") }] : []),
       { kind: "item", id: "earlier", label: t("iterations.earlier"), disabled: index <= 0 },
-      { kind: "item", id: "later", label: t("iterations.later"), disabled: index < 0 || index >= releaseIds.length - 1 },
+      { kind: "item", id: "later", label: t("iterations.later"), disabled: index >= releaseIds.length - 1 },
+      { kind: "item", id: "addFeature", label: t("iterations.newFeature.action"), disabled: it.status === "done" },
       { kind: "item", id: "edit", label: t("iterations.edit") },
       { kind: "sep" },
       { kind: "item", id: "delete", label: t("iterations.remove.action"), danger: true },
     ];
   };
-  const onIterationMenu = (id: string, action: string) => {
+  const onIterationMenu = (id: number, action: string) => {
+    const it = byId.get(id)!;
     const index = releaseIds.indexOf(id);
-    if (action === "start") setConfirmStart(store.iterations.find((i) => i.id === id)!);
-    if (action === "finish") setFinishing(store.iterations.find((i) => i.id === id) ?? null);
-    if (action === "reopen") mockActions.reopen(id);
-    if (action === "earlier") mockActions.reorder(id, releaseIds[index - 1]);
-    if (action === "later") mockActions.reorder(id, releaseIds[index + 2] ?? null);
-    if (action === "edit") setForm({ editing: store.iterations.find((i) => i.id === id) });
-    if (action === "delete") setRemoving(store.iterations.find((i) => i.id === id) ?? null);
+    if (action === "start") setStarting(it);
+    if (action === "finish") setFinishing(it);
+    if (action === "reopen") void act("reopenIteration", id);
+    if (action === "earlier") void act("moveIteration", id, releaseIds[index - 1]);
+    if (action === "later") void act("moveIteration", id, releaseIds[index + 2] ?? null);
+    if (action === "addFeature") setNewFeature(id);
+    if (action === "edit") setForm({ editing: it });
+    if (action === "delete") setRemoving(it);
   };
-  const header = (it: MockIteration) => (
-    <IterationHeader
-      it={it}
-      features={MOCK_FEATURES.filter((f) => store.placement[f.code] === it.id)}
-      issues={store.issues}
-      onStart={() => setConfirmStart(it)}
-      onFinish={() => setFinishing(it)}
-      onMenu={(anchor) => setMenu({ anchor, kind: "iteration", id: it.id })}
+  const header = (col: Column) => (
+    <ColumnHeader
+      col={col}
+      features={inColumn(col.target)}
+      onStart={() => col.iteration && setStarting(col.iteration)}
+      onFinish={() => col.iteration && setFinishing(col.iteration)}
+      onMenu={(anchor) => col.iteration && setMenu({ anchor, kind: "iteration", id: col.iteration.id })}
     />
   );
+  const aiWas = (f: Feature) => aiMovedFrom(f, iterations);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke px-4">
         <h1 className="text-[13px] font-medium text-content">{t("view.cycles")}</h1>
-        <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[11px] text-amber-300">{t("iterations.prototype")}</span>
+        <span className="text-[12px] text-content/40">{t("iterations.counts", { iterations: iterations.length, features: features.length })}</span>
         <div className="ml-auto flex items-center gap-1">
           <label className="relative flex h-7 items-center">
             <Search className="pointer-events-none absolute left-2 size-3 text-content/40" />
@@ -125,25 +185,43 @@ export function IterationsView() {
               </button>
             ))}
           </div>
+          <button type="button" onClick={() => setNewFeature("pending")} className="flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-content/70 hover:bg-content/10 hover:text-content">
+            <Plus className="size-3.5" />
+            {t("iterations.newFeature.action")}
+          </button>
           <button type="button" onClick={() => setForm({})} className="flex h-7 items-center gap-1 rounded-md bg-content/10 px-2 text-[12px] text-content hover:bg-content/15">
             <Plus className="size-3.5" />
             {t("iterations.newIteration")}
           </button>
-          <button type="button" onClick={resetIterationsMock} className="h-7 rounded-md px-2 text-[12px] text-content/50 hover:text-content">
-            {t("iterations.reset")}
-          </button>
         </div>
       </header>
-      {undo?.next === store ? (
-        <div className="flex shrink-0 items-center gap-2 border-b border-stroke bg-content/5 px-4 py-1.5 text-[12px] text-content/70">
-          {undo.message}
-          <button type="button" onClick={() => { mockActions.restore(undo.prev); setUndo(null); }} className="ml-auto rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
-            {t("iterations.undo")}
-          </button>
-          <button type="button" aria-label={t("iterations.close")} onClick={() => setUndo(null)} className="rounded p-0.5 text-content/40 hover:bg-content/10 hover:text-content">
+      {notice ? (
+        <div className={`flex shrink-0 items-center gap-2 border-b border-stroke px-4 py-1.5 text-[12px] ${notice.kind === "error" ? "bg-red-500/10 text-red-300" : "bg-content/5 text-content/70"}`}>
+          <span role={notice.kind === "error" ? "alert" : "status"}>{notice.message}</span>
+          {notice.kind === "undo" ? (
+            <button type="button" onClick={() => void undo(notice.batch)} className="ml-auto rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
+              {t("iterations.undo")}
+            </button>
+          ) : null}
+          <button type="button" aria-label={t("iterations.close")} onClick={() => setNotice(null)} className={`rounded p-0.5 opacity-60 hover:bg-content/10 hover:opacity-100 ${notice.kind === "undo" ? "" : "ml-auto"}`}>
             <X className="size-3.5" />
           </button>
         </div>
+      ) : null}
+      {!iterations.length && features.length ? (
+        <div className="flex shrink-0 items-center gap-3 border-b border-stroke bg-accent/5 px-4 py-2 text-[12px] text-content/70">
+          <span>{t("iterations.empty.generateHint", { count: features.length })}</span>
+          <button
+            type="button"
+            onClick={() => void actBatch(t("iterations.notice.generated"), "generateIterations", project.id).catch((e: unknown) => setNotice({ kind: "error", message: errorText(e) }))}
+            className="ml-auto shrink-0 rounded-md bg-content px-2.5 py-1 font-medium text-background-base hover:bg-content/80"
+          >
+            {t("iterations.empty.generate")}
+          </button>
+        </div>
+      ) : null}
+      {!features.length ? (
+        <div className="shrink-0 border-b border-stroke px-4 py-2 text-[12px] text-content/60">{t("iterations.empty.noFeatures")}</div>
       ) : null}
       {overcut.length ? (
         <div className="flex shrink-0 items-center gap-2 border-b border-stroke bg-amber-400/5 px-4 py-1.5 text-[12px] text-amber-300">
@@ -155,123 +233,170 @@ export function IterationsView() {
       ) : null}
       <div className="flex min-h-0 flex-1">
         {layout === "board" ? (
-          <Board iterations={store.iterations} byIteration={byIteration} placementAi={(f) => f.ai !== store.placement[f.code] ? versionLabel(f.ai) : null} issues={store.issues} selected={selected} onSelect={setSelected} header={header} onAdd={() => setForm({})} />
+          <Board
+            columns={columns}
+            byColumn={byColumn}
+            aiWas={aiWas}
+            selected={selected}
+            onSelect={setSelected}
+            header={header}
+            backboneLabel={backboneLabel}
+            onAdd={() => setForm({})}
+            onDropFeature={(id, target) => {
+              const f = features.find((x) => x.id === id);
+              if (f) moveFeature(f, target);
+            }}
+            onDropIteration={(id, beforeId) => void act("moveIteration", id, beforeId)}
+          />
         ) : (
-          <List iterations={store.iterations} byIteration={byIteration} placementAi={(f) => f.ai !== store.placement[f.code] ? versionLabel(f.ai) : null} issues={store.issues} selected={selected} onSelect={setSelected} header={header} onMove={(anchor, code) => setMenu({ anchor, kind: "move", code })} />
+          <List columns={columns} byColumn={byColumn} aiWas={aiWas} selected={selected} onSelect={setSelected} header={header} backboneLabel={backboneLabel} onMove={(anchor, id) => setMenu({ anchor, kind: "move", id })} />
         )}
         {feature ? (
           <Detail
+            key={feature.id}
             feature={feature}
-            where={store.placement[feature.code]}
-            aiLabel={versionLabel(feature.ai)}
-            issue={store.issues[feature.code]}
-            iterations={store.iterations}
-            onMove={(id) => mockActions.move(feature.code, id)}
+            iterations={iterations}
+            backboneLabel={backboneLabel}
+            onMove={(target) => moveFeature(feature, target)}
+            onRename={(name) => void act("renameFeature", feature.id, name)}
+            onCreateIssue={() => void act("createFeatureIssue", feature.id)}
+            onOpenIssue={() =>
+              feature.issue_id &&
+              // 标签名取 path 的 basename，不能含 /
+              openProjectView({ cwd, view: "issue", itemId: String(feature.issue_id), title: `${feature.issue_ident} ${feature.name}`.replace(/\//g, "∕") })
+            }
+            onDelete={() => {
+              setSelected(null);
+              void actBatch(t("iterations.notice.featureDeleted", { name: feature.name }), "deleteFeature", feature.id).catch((e: unknown) => setNotice({ kind: "error", message: errorText(e) }));
+            }}
             onClose={() => setSelected(null)}
           />
         ) : null}
       </div>
 
-      {menu?.kind === "iteration" ? (
+      {menu?.kind === "iteration" && byId.has(menu.id) ? (
         <ExplorerMenu anchor={menu.anchor} items={iterationMenu(menu.id)} ariaLabel={t("iterations.actions")} width={180} onPick={(action) => { setMenu(null); onIterationMenu(menu.id, action); }} onClose={() => setMenu(null)} />
       ) : null}
-      {menu?.kind === "move" ? (
-        <ExplorerMenu
-          anchor={menu.anchor}
-          items={store.iterations.map((it) => ({ kind: "item" as const, id: it.id, label: [it.version, it.name].filter(Boolean).join(" · ") || t("iterations.untitled"), checked: store.placement[menu.code] === it.id, disabled: it.status === "done" }))}
-          ariaLabel={t("iterations.moveTo")}
-          width={200}
-          onPick={(id) => { setMenu(null); mockActions.move(menu.code, id); }}
-          onClose={() => setMenu(null)}
-        />
-      ) : null}
+      {menu?.kind === "move" ? (() => {
+        const f = features.find((x) => x.id === menu.id);
+        if (!f) return null;
+        return (
+          <ExplorerMenu
+            anchor={menu.anchor}
+            items={columns.map((c) => ({ kind: "item" as const, id: encodeTarget(c.target), label: columnLabel(c), checked: targetOf(f) === c.target, disabled: c.iteration?.status === "done" }))}
+            ariaLabel={t("iterations.moveTo")}
+            width={200}
+            onPick={(value) => {
+              setMenu(null);
+              const col = columns.find((c) => encodeTarget(c.target) === value);
+              if (col) moveFeature(f, col.target);
+            }}
+            onClose={() => setMenu(null)}
+          />
+        );
+      })() : null}
       {menu?.kind === "backbones" ? (
         <ExplorerMenu
           anchor={menu.anchor}
-          items={Object.entries(MOCK_BACKBONES).map(([id, name]) => ({ kind: "item" as const, id, label: `${id} ${name}`, checked: backbones.has(id) }))}
+          items={[...new Set(features.map((f) => f.backbone ?? NO_BACKBONE))].sort().map((id) => ({ kind: "item" as const, id, label: backboneLabel(id), checked: backbones.has(id) }))}
           ariaLabel={t("iterations.backbones")}
           width={240}
           onPick={(id) => setBackbones((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; })}
           onClose={() => setMenu(null)}
         />
       ) : null}
+
       {form ? (
         <IterationFormDialog
-          iterations={store.iterations}
+          iterations={iterations}
           editing={form.editing}
           onClose={() => setForm(null)}
-          onSubmit={(input, beforeId) => {
-            if (form.editing) mockActions.update(form.editing.id, input);
-            else mockActions.add(input, beforeId);
+          onSubmit={async (input, beforeId) => {
+            if (form.editing) await mutateSoloyard("updateIteration", form.editing.id, input);
+            else await mutateSoloyard("createIteration", project.id, input, beforeId);
             setForm(null);
           }}
         />
       ) : null}
       {removing ? (() => {
-        const codes = MOCK_FEATURES.filter((f) => store.placement[f.code] === removing.id).map((f) => f.code);
-        const label = [removing.version, removing.name].filter(Boolean).join(" · ");
+        const inIt = inColumn(removing.id);
         return (
           <DeleteIterationDialog
             iteration={removing}
-            iterations={store.iterations}
-            featureCount={codes.length}
-            issueCount={codes.filter((c) => store.issues[c]).length}
+            iterations={iterations}
+            featureCount={inIt.length}
+            issueCount={inIt.filter((f) => f.issue_id).length}
             onClose={() => setRemoving(null)}
-            onDelete={(moveTo) => {
-              setUndo({
-                ...mockActions.remove(removing.id, moveTo),
-                message: codes.length
-                  ? t("iterations.remove.doneMoved", { iteration: label, count: codes.length, target: versionLabel(moveTo) })
-                  : t("iterations.remove.doneEmpty", { iteration: label }),
-              });
+            onDelete={async (moveTo) => {
+              await actBatch(
+                inIt.length
+                  ? t("iterations.remove.doneMoved", { iteration: iterationLabel(removing), count: inIt.length, target: targetLabel(moveTo) })
+                  : t("iterations.remove.doneEmpty", { iteration: iterationLabel(removing) }),
+                "deleteIteration", removing.id, moveTo,
+              );
               setRemoving(null);
             }}
           />
         );
       })() : null}
-      {confirmStart ? (
+      {starting ? (
         <StartIterationDialog
-          iteration={confirmStart}
-          features={MOCK_FEATURES.filter((f) => store.placement[f.code] === confirmStart.id)}
-          issueOf={(code) => store.issues[code]}
-          activeOther={store.iterations.find((i) => i.status === "active" && i.id !== confirmStart.id)}
-          onClose={() => setConfirmStart(null)}
-          onStart={(codes) => { mockActions.start(confirmStart.id, codes); setConfirmStart(null); }}
+          iteration={starting}
+          features={inColumn(starting.id)}
+          activeOther={iterations.find((i) => i.status === "active" && i.id !== starting.id)}
+          onClose={() => setStarting(null)}
+          onStart={async (ids) => {
+            await actBatch(t("iterations.notice.started", { iteration: iterationLabel(starting), count: ids.length }), "startIteration", starting.id, ids);
+            setStarting(null);
+          }}
         />
       ) : null}
       {finishing ? (() => {
-        const inIt = MOCK_FEATURES.filter((f) => store.placement[f.code] === finishing.id);
-        const leftovers = inIt.filter((f) => unfinished(store, f.code));
+        const inIt = inColumn(finishing.id);
+        const leftovers = inIt.filter(unfinished);
         return (
           <FinishIterationDialog
             iteration={finishing}
-            iterations={store.iterations}
+            iterations={iterations}
             done={inIt.length - leftovers.length}
             leftovers={leftovers}
-            issueOf={(code) => store.issues[code]}
             onClose={() => setFinishing(null)}
-            onFinish={(moves) => { mockActions.finish(finishing.id, moves); setFinishing(null); }}
+            onFinish={async (moves) => {
+              await actBatch(t("iterations.notice.finished", { iteration: iterationLabel(finishing), count: leftovers.length }), "finishIteration", finishing.id, moves);
+              setFinishing(null);
+            }}
           />
         );
       })() : null}
+      {newFeature != null ? (
+        <NewFeatureDialog
+          iterations={iterations}
+          initialTarget={newFeature}
+          onClose={() => setNewFeature(null)}
+          onCreate={async (name, target) => {
+            const id = await mutateSoloyard<number>("createFeature", project.id, { name }, target);
+            setNewFeature(null);
+            setSelected(id);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
-type Issues = Record<string, { ident: string; status: import("../../model/issues").IssueStatus }>;
-
-function IterationHeader({ it, features, issues, onStart, onFinish, onMenu }: { it: MockIteration; features: MockFeature[]; issues: Issues; onStart: () => void; onFinish: () => void; onMenu: (anchor: HTMLElement) => void }) {
+function ColumnHeader({ col, features, onStart, onFinish, onMenu }: { col: Column; features: Feature[]; onStart: () => void; onFinish: () => void; onMenu: (anchor: HTMLElement) => void }) {
   const { t } = useTranslation("soloyard");
-  const withIssue = features.filter((f) => issues[f.code]);
-  const done = withIssue.filter((f) => issues[f.code].status === "done").length;
-  const release = it.kind === "release";
+  const it = col.iteration;
+  const withIssue = features.filter((f) => f.issue_id);
+  const done = withIssue.filter((f) => f.issue_status === "done").length;
+  const actionButton = "mt-1 self-start rounded-md border border-stroke px-2 py-0.5 text-[11px] text-content/70 hover:bg-content/10 hover:text-content";
   return (
     <div className="flex flex-col gap-1 px-3 py-2">
       <div className="flex items-center gap-2 text-[13px]">
-        {it.version ? <span className="rounded bg-content/10 px-1.5 font-mono text-[12px] text-content">{it.version}</span> : null}
-        <span className="truncate font-medium text-content">{it.name || t("iterations.untitled")}</span>
+        {it ? <span className="rounded bg-content/10 px-1.5 font-mono text-[12px] text-content">{it.tag}</span> : null}
+        <span className="truncate font-medium text-content">{it ? it.name : columnLabel(col)}</span>
         <span className="text-[12px] text-content/40">{features.length}</span>
-        {release ? (
+        {it ? (
           <>
             <span className={`ml-auto rounded px-1.5 py-0.5 text-[11px] ${it.status === "active" ? "bg-amber-400/15 text-amber-300" : it.status === "done" ? "bg-accent/15 text-accent" : "bg-content/5 text-content/50"}`}>
               {t(`iterations.status.${it.status}`)}
@@ -282,11 +407,17 @@ function IterationHeader({ it, features, issues, onStart, onFinish, onMenu }: { 
           </>
         ) : null}
       </div>
-      {it.goal ? <p className="line-clamp-2 text-[11px] text-content/50">{it.goal}</p> : null}
-      {it.targetDate ? <p className="text-[11px] text-content/40">{t("iterations.target", { date: it.targetDate })}</p> : null}
-      {it.summary ? (
+      {it ? (
+        <>
+          {it.goal ? <p className="line-clamp-2 text-[11px] text-content/50">{it.goal}</p> : null}
+          {it.target_date ? <p className="text-[11px] text-content/40">{t("iterations.target", { date: it.target_date })}</p> : null}
+        </>
+      ) : (
+        <p className="line-clamp-2 text-[11px] text-content/50">{t(`iterations.bucketGoal.${col.kind as "pending" | "split" | "cut"}`)}</p>
+      )}
+      {it?.summary ? (
         <p className="text-[11px] text-content/50">{t("iterations.summary", { done: it.summary.done, moved: it.summary.moved })}</p>
-      ) : release && withIssue.length ? (
+      ) : it && withIssue.length ? (
         <div className="flex items-center gap-2 text-[11px] text-content/50">
           <div className="h-1 flex-1 overflow-hidden rounded bg-content/10">
             <div className="h-full bg-accent" style={{ width: `${(done / withIssue.length) * 100}%` }} />
@@ -294,98 +425,107 @@ function IterationHeader({ it, features, issues, onStart, onFinish, onMenu }: { 
           {t("iterations.issuesProgress", { done, total: withIssue.length })}
         </div>
       ) : null}
-      {release && it.status === "planned" && features.length ? (
-        <button type="button" onClick={onStart} className="mt-1 self-start rounded-md border border-stroke px-2 py-0.5 text-[11px] text-content/70 hover:bg-content/10 hover:text-content">
-          {t("iterations.start")}
-        </button>
-      ) : null}
-      {release && it.status === "active" ? (
-        <button type="button" onClick={onFinish} className="mt-1 self-start rounded-md border border-stroke px-2 py-0.5 text-[11px] text-content/70 hover:bg-content/10 hover:text-content">
-          {t("iterations.finish")}
-        </button>
-      ) : null}
+      {it?.status === "planned" && features.length ? <button type="button" onClick={onStart} className={actionButton}>{t("iterations.start")}</button> : null}
+      {it?.status === "active" ? <button type="button" onClick={onFinish} className={actionButton}>{t("iterations.finish")}</button> : null}
     </div>
   );
 }
 
 type ViewProps = {
-  iterations: MockIteration[];
-  byIteration: Map<string, MockFeature[]>;
-  placementAi: (f: MockFeature) => string | null;
-  issues: Issues;
-  selected: string | null;
-  onSelect: (code: string) => void;
-  header: (it: MockIteration) => React.ReactNode;
+  columns: Column[];
+  byColumn: Map<string, Feature[]>;
+  aiWas: (f: Feature) => string | null;
+  selected: number | null;
+  onSelect: (id: number) => void;
+  header: (col: Column) => React.ReactNode;
+  backboneLabel: (bb: string) => string;
 };
 
-/** 按骨干分组；组可折叠，默认展开前两个版本，后面的折叠，免得一屏几百张卡。 */
-function useGroups(iterations: MockIteration[]) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
-    const later = iterations.filter((it, i) => it.kind !== "release" || i >= 2).map((it) => it.id);
-    return new Set(later.flatMap((id) => Object.keys(MOCK_BACKBONES).map((bb) => `${id}:${bb}`)));
-  });
-  const toggle = (key: string) => setCollapsed((prev) => { const next = new Set(prev); if (next.has(key)) next.delete(key); else next.add(key); return next; });
-  return { collapsed, toggle };
+/** 组展开状态：默认只展开前两个迭代，其余（含特殊列）折叠，免得一屏几百张卡；点过的组和默认相反。 */
+function useGroups(columns: Column[]) {
+  const [toggled, setToggled] = useState<Set<string>>(new Set());
+  const defaultOpen = (target: Target) => {
+    const index = columns.findIndex((c) => c.target === target);
+    return columns[index]?.kind === "release" && index < 2;
+  };
+  const key = (target: Target, group: string) => `${encodeTarget(target)}:${group}`;
+  const isOpen = (target: Target, group: string) => defaultOpen(target) !== toggled.has(key(target, group));
+  const toggle = (target: Target, group: string) =>
+    setToggled((prev) => {
+      const next = new Set(prev);
+      if (next.has(key(target, group))) next.delete(key(target, group));
+      else next.add(key(target, group));
+      return next;
+    });
+  return { isOpen, toggle };
 }
 
-const groupByBackbone = (features: MockFeature[]) => {
-  const map = new Map<string, MockFeature[]>();
-  for (const f of features) map.set(f.backbone, [...(map.get(f.backbone) ?? []), f]);
+const groupByBackbone = (features: Feature[]) => {
+  const map = new Map<string, Feature[]>();
+  for (const f of features) map.set(f.backbone ?? NO_BACKBONE, [...(map.get(f.backbone ?? NO_BACKBONE) ?? []), f]);
   return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
 };
 
-function Board({ iterations, byIteration, placementAi, issues, selected, onSelect, header, onAdd }: ViewProps & { onAdd: () => void }) {
+function Board({ columns, byColumn, aiWas, selected, onSelect, header, backboneLabel, onAdd, onDropFeature, onDropIteration }: ViewProps & {
+  onAdd: () => void;
+  onDropFeature: (id: number, target: Target) => void;
+  onDropIteration: (id: number, beforeId: number) => void;
+}) {
   const { t } = useTranslation("soloyard");
-  const { collapsed, toggle } = useGroups(iterations);
+  const { isOpen, toggle } = useGroups(columns);
   const [over, setOver] = useState<string | null>(null);
+  const firstBucket = columns.findIndex((c) => c.kind !== "release");
   return (
     <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto overscroll-none p-3">
-      {iterations.map((it, index) => {
-        const features = byIteration.get(it.id) ?? [];
-        // 「新建迭代」列放在最后一个正常版本后面、特殊列前面（新建默认排最后）
-        const addColumn = index === iterations.findIndex((i) => i.kind !== "release") ? (
-          <button key="add" type="button" onClick={onAdd} className="flex w-44 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stroke text-[12px] text-content/45 hover:border-content/25 hover:text-content">
-            <Plus className="size-4" />
-            {t("iterations.newIteration")}
-          </button>
-        ) : null;
-        return [addColumn,
+      {columns.map((col, index) => {
+        const key = encodeTarget(col.target);
+        const features = byColumn.get(key) ?? [];
+        const locked = col.iteration?.status === "done";
+        const release = col.kind === "release";
+        return [
+          // 「新建迭代」列放在最后一个迭代后面、特殊列前面（新建默认排最后）
+          index === firstBucket ? (
+            <button key="add" type="button" onClick={onAdd} className="flex w-44 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-stroke text-[12px] text-content/45 hover:border-content/25 hover:text-content">
+              <Plus className="size-4" />
+              {t("iterations.newIteration")}
+            </button>
+          ) : null,
           <section
-            key={it.id}
+            key={key}
             onDragOver={(e) => {
-              // 已完成的迭代锁定：不接功能，但还能参与版本排序
-              if (it.status === "done" && e.dataTransfer.types.includes(FEATURE_DRAG)) return;
+              // 已完成的迭代锁定：不接功能，但还能参与排序；特殊列不参与排序
+              if (locked && e.dataTransfer.types.includes(FEATURE_DRAG)) return;
+              if (!release && e.dataTransfer.types.includes(ITERATION_DRAG)) return;
               e.preventDefault();
-              setOver(it.id);
+              setOver(key);
             }}
-            onDragLeave={() => setOver((id) => (id === it.id ? null : id))}
+            onDragLeave={() => setOver((k) => (k === key ? null : k))}
             onDrop={(e) => {
               setOver(null);
-              const code = e.dataTransfer.getData(FEATURE_DRAG);
-              const iteration = e.dataTransfer.getData(ITERATION_DRAG);
-              if (code) mockActions.move(code, it.id);
-              else if (iteration && it.kind === "release" && iteration !== it.id) mockActions.reorder(iteration, it.id);
+              const featureId = e.dataTransfer.getData(FEATURE_DRAG);
+              const iterationId = e.dataTransfer.getData(ITERATION_DRAG);
+              if (featureId) onDropFeature(Number(featureId), col.target);
+              else if (iterationId && col.iteration && Number(iterationId) !== col.iteration.id) onDropIteration(Number(iterationId), col.iteration.id);
             }}
-            className={`flex w-72 shrink-0 flex-col rounded-lg ${it.kind === "release" ? "bg-content/5" : "border border-dashed border-stroke"} ${over === it.id ? "ring-1 ring-accent/60" : ""}`}
+            className={`flex w-72 shrink-0 flex-col rounded-lg ${release ? "bg-content/5" : "border border-dashed border-stroke"} ${over === key ? "ring-1 ring-accent/60" : ""}`}
           >
-            <div draggable={it.kind === "release"} onDragStart={(e) => e.dataTransfer.setData(ITERATION_DRAG, it.id)} className={it.kind === "release" ? "cursor-grab" : ""}>
-              {header(it)}
+            <div draggable={release} onDragStart={(e) => col.iteration && e.dataTransfer.setData(ITERATION_DRAG, String(col.iteration.id))} className={release ? "cursor-grab" : ""}>
+              {header(col)}
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2 pb-2">
-              {!features.length ? <p className="rounded-md border border-dashed border-stroke px-3 py-6 text-center text-[11px] text-content/40">{t("iterations.drop")}</p> : null}
+              {!features.length ? <p className="rounded-md border border-dashed border-stroke px-3 py-6 text-center text-[11px] text-content/40">{locked ? t("iterations.lockedEmpty") : t("iterations.drop")}</p> : null}
               {groupByBackbone(features).map(([bb, list]) => {
-                const key = `${it.id}:${bb}`;
-                const open = !collapsed.has(key);
+                const open = isOpen(col.target, bb);
                 return (
                   <div key={bb}>
-                    <button type="button" onClick={() => toggle(key)} className="flex h-6 w-full items-center gap-1 px-1 text-[11px] text-content/50 hover:text-content">
+                    <button type="button" onClick={() => toggle(col.target, bb)} className="flex h-6 w-full items-center gap-1 px-1 text-[11px] text-content/50 hover:text-content">
                       {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                      <span className="truncate">{bb} {MOCK_BACKBONES[bb]}</span>
+                      <span className="truncate">{backboneLabel(bb)}</span>
                       <span className="ml-auto">{list.length}</span>
                     </button>
                     {open ? (
                       <div className="flex flex-col gap-1">
-                        {list.map((f) => <Card key={f.code} f={f} aiWas={placementAi(f)} issue={issues[f.code]} selected={selected === f.code} locked={it.status === "done"} onSelect={onSelect} />)}
+                        {list.map((f) => <Card key={f.id} f={f} aiWas={aiWas(f)} selected={selected === f.id} locked={locked} onSelect={onSelect} />)}
                       </div>
                     ) : null}
                   </div>
@@ -399,65 +539,65 @@ function Board({ iterations, byIteration, placementAi, issues, selected, onSelec
   );
 }
 
-function Card({ f, aiWas, issue, selected, locked, onSelect }: { f: MockFeature; aiWas: string | null; issue?: Issues[string]; selected: boolean; locked: boolean; onSelect: (code: string) => void }) {
+function Card({ f, aiWas, selected, locked, onSelect }: { f: Feature; aiWas: string | null; selected: boolean; locked: boolean; onSelect: (id: number) => void }) {
   const { t } = useTranslation("soloyard");
   return (
     <div
       role="button"
       tabIndex={0}
       draggable={!locked}
-      onDragStart={(e) => e.dataTransfer.setData(FEATURE_DRAG, f.code)}
-      onClick={() => onSelect(f.code)}
-      onKeyDown={(e) => e.key === "Enter" && onSelect(f.code)}
+      onDragStart={(e) => e.dataTransfer.setData(FEATURE_DRAG, String(f.id))}
+      onClick={() => onSelect(f.id)}
+      onKeyDown={(e) => e.key === "Enter" && onSelect(f.id)}
       className={`flex cursor-default flex-col gap-1 rounded-md border bg-background-base px-2.5 py-2 text-[12px] ${selected ? "border-accent/60" : "border-stroke hover:border-content/20"}`}
     >
       <div className="flex items-start gap-1.5">
-        {issue ? <StatusIcon status={issue.status} className="mt-0.5" /> : null}
+        {f.issue_status ? <StatusIcon status={f.issue_status} className="mt-0.5" /> : null}
         <span className="line-clamp-2 text-content/90">{f.name}</span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-content/45">
         <span className="font-mono">{f.code}</span>
         {f.level ? <span className={`rounded px-1 ${ESSENTIAL.has(f.level) ? "bg-sky-400/15 text-sky-300" : "bg-content/5"}`}>{f.level}</span> : null}
-        {f.total ? <span title={t("iterations.coverage", { covered: f.covered, total: f.total })}>{f.covered}/{f.total}</span> : null}
+        {f.prevalence ? <span title={t("iterations.coverage", { coverage: f.prevalence })}>{f.prevalence}</span> : null}
         {aiWas ? <span className="rounded bg-amber-400/10 px-1 text-amber-300" title={t("iterations.aiWasHint", { version: aiWas })}>{t("iterations.aiWas", { version: aiWas })}</span> : null}
-        {issue ? <span className="ml-auto font-mono">{issue.ident}</span> : null}
+        {f.issue_ident ? <span className="ml-auto font-mono">{f.issue_ident}</span> : null}
       </div>
     </div>
   );
 }
 
-function List({ iterations, byIteration, placementAi, issues, selected, onSelect, header, onMove }: ViewProps & { onMove: (anchor: HTMLElement, code: string) => void }) {
+function List({ columns, byColumn, aiWas, selected, onSelect, header, backboneLabel, onMove }: ViewProps & { onMove: (anchor: HTMLElement, id: number) => void }) {
   const { t } = useTranslation("soloyard");
-  const { collapsed, toggle } = useGroups(iterations);
+  const { isOpen, toggle } = useGroups(columns);
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
-      {iterations.map((it) => {
-        const features = byIteration.get(it.id) ?? [];
-        const open = !collapsed.has(`${it.id}:*`);
+      {columns.map((col) => {
+        const features = byColumn.get(encodeTarget(col.target)) ?? [];
+        const open = isOpen(col.target, "*");
+        const locked = col.iteration?.status === "done";
         return (
-          <section key={it.id} className="border-b border-stroke">
-            <div className={`sticky top-0 z-10 flex items-start gap-1 bg-background-base ${it.kind !== "release" ? "opacity-80" : ""}`}>
-              <button type="button" aria-expanded={open} onClick={() => toggle(`${it.id}:*`)} className="mt-2.5 pl-3 text-content/40 hover:text-content">
+          <section key={encodeTarget(col.target)} className="border-b border-stroke">
+            <div className={`sticky top-0 z-10 flex items-start gap-1 bg-background-base ${col.kind !== "release" ? "opacity-80" : ""}`}>
+              <button type="button" aria-expanded={open} onClick={() => toggle(col.target, "*")} className="mt-2.5 pl-3 text-content/40 hover:text-content">
                 {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
               </button>
-              <div className="min-w-0 flex-1">{header(it)}</div>
+              <div className="min-w-0 flex-1">{header(col)}</div>
             </div>
             {open
               ? features.map((f) => {
-                  const issue = issues[f.code];
-                  const aiWas = placementAi(f);
+                  const was = aiWas(f);
                   return (
-                    <div key={f.code} role="button" tabIndex={0} onClick={() => onSelect(f.code)} onKeyDown={(e) => e.key === "Enter" && onSelect(f.code)}
-                      className={`flex h-8 cursor-default items-center gap-3 px-8 text-[12px] hover:bg-content/5 ${selected === f.code ? "bg-content/5" : ""}`}>
+                    <div key={f.id} role="button" tabIndex={0} onClick={() => onSelect(f.id)} onKeyDown={(e) => e.key === "Enter" && onSelect(f.id)}
+                      className={`flex h-8 cursor-default items-center gap-3 px-8 text-[12px] hover:bg-content/5 ${selected === f.id ? "bg-content/5" : ""}`}>
                       <span className="w-20 shrink-0 font-mono text-[11px] text-content/40">{f.code}</span>
-                      {issue ? <StatusIcon status={issue.status} /> : <span className="size-3.5 shrink-0" />}
+                      {f.issue_status ? <StatusIcon status={f.issue_status} /> : <span className="size-3.5 shrink-0" />}
                       <span className="min-w-0 flex-1 truncate text-content/90">{f.name}</span>
-                      <span className="w-40 shrink-0 truncate text-[11px] text-content/40">{MOCK_BACKBONES[f.backbone]}</span>
+                      <span className="w-40 shrink-0 truncate text-[11px] text-content/40">{backboneLabel(f.backbone ?? NO_BACKBONE)}</span>
                       <span className="w-14 shrink-0 text-[11px] text-content/45">{f.level ?? ""}</span>
-                      <span className="w-10 shrink-0 text-[11px] text-content/45">{f.total ? `${f.covered}/${f.total}` : ""}</span>
-                      <span className="w-20 shrink-0 text-[11px] text-amber-300">{aiWas ? t("iterations.aiWas", { version: aiWas }) : ""}</span>
-                      {it.status === "done" ? <span className="w-[42px] shrink-0" /> : (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onMove(e.currentTarget, f.code); }} className="rounded px-1.5 py-0.5 text-[11px] text-content/50 hover:bg-content/10 hover:text-content">
+                      <span className="w-10 shrink-0 text-[11px] text-content/45">{f.prevalence ?? ""}</span>
+                      <span className="w-20 shrink-0 truncate text-[11px] text-amber-300">{was ? t("iterations.aiWas", { version: was }) : ""}</span>
+                      {locked ? <span className="w-[42px] shrink-0" /> : (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onMove(e.currentTarget, f.id); }} className="rounded px-1.5 py-0.5 text-[11px] text-content/50 hover:bg-content/10 hover:text-content">
                           {t("iterations.moveTo")}
                         </button>
                       )}
@@ -472,9 +612,26 @@ function List({ iterations, byIteration, placementAi, issues, selected, onSelect
   );
 }
 
-function Detail({ feature: f, where, aiLabel, issue, iterations, onMove, onClose }: { feature: MockFeature; where: string; aiLabel: string; issue?: Issues[string]; iterations: MockIteration[]; onMove: (id: string) => void; onClose: () => void }) {
+function Detail({ feature: f, iterations, backboneLabel, onMove, onRename, onCreateIssue, onOpenIssue, onDelete, onClose }: {
+  feature: Feature;
+  iterations: Iteration[];
+  backboneLabel: (bb: string) => string;
+  onMove: (target: Target) => void;
+  onRename: (name: string) => void;
+  onCreateIssue: () => void;
+  onOpenIssue: () => void;
+  onDelete: () => void;
+  onClose: () => void;
+}) {
   const { t } = useTranslation("soloyard");
+  const [name, setName] = useState(f.name);
+  const columns = columnsOf(iterations);
+  const where = targetOf(f);
   const isLocked = iterations.some((it) => it.id === where && it.status === "done");
+  const saveName = () => {
+    if (name.trim() && name.trim() !== f.name) onRename(name.trim());
+    else setName(f.name);
+  };
   const row = (label: string, value: React.ReactNode) =>
     value ? (
       <div className="flex flex-col gap-0.5">
@@ -486,8 +643,21 @@ function Detail({ feature: f, where, aiLabel, issue, iterations, onMove, onClose
     <aside className="flex w-96 shrink-0 flex-col gap-4 overflow-y-auto border-l border-stroke p-4">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <div className="font-mono text-[11px] text-content/40">{f.code} · {f.backbone} {MOCK_BACKBONES[f.backbone]}</div>
-          <h2 className="mt-1 text-[15px] font-medium text-content">{f.name}</h2>
+          <div className="font-mono text-[11px] text-content/40">{f.code} · {backboneLabel(f.backbone ?? NO_BACKBONE)}</div>
+          <input
+            value={name}
+            aria-label={t("iterations.newFeature.name")}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={saveName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setName(f.name);
+                e.currentTarget.blur();
+              }
+            }}
+            className="-mx-1 mt-1 w-full rounded px-1 text-[15px] font-medium text-content outline-none hover:bg-content/5 focus:bg-content/5"
+          />
         </div>
         <button type="button" aria-label={t("iterations.close")} onClick={onClose} className="rounded p-1 text-content/40 hover:bg-content/10 hover:text-content">
           <X className="size-3.5" />
@@ -495,30 +665,45 @@ function Detail({ feature: f, where, aiLabel, issue, iterations, onMove, onClose
       </div>
       <label className="flex items-center gap-2 text-[12px] text-content/70">
         {t("iterations.moveTo")}
-        <select value={where} disabled={isLocked} onChange={(e) => onMove(e.target.value)} className="h-7 flex-1 rounded-md border border-stroke bg-background-base px-1.5 text-[12px] text-content disabled:opacity-50">
-          {iterations.map((it) => <option key={it.id} value={it.id} disabled={it.status === "done" && it.id !== where}>{[it.version, it.name].filter(Boolean).join(" · ") || t("iterations.untitled")}</option>)}
+        <select
+          value={encodeTarget(where)}
+          disabled={isLocked}
+          onChange={(e) => {
+            const col = columns.find((c) => encodeTarget(c.target) === e.target.value);
+            if (col) onMove(col.target);
+          }}
+          className="h-7 flex-1 rounded-md border border-stroke bg-background-base px-1.5 text-[12px] text-content disabled:opacity-50"
+        >
+          {columns.map((c) => <option key={encodeTarget(c.target)} value={encodeTarget(c.target)} disabled={c.iteration?.status === "done" && c.target !== where}>{columnLabel(c)}</option>)}
         </select>
       </label>
       {isLocked ? <p className="-mt-2 text-[11px] text-content/45">{t("iterations.lockedHint")}</p> : null}
-      {row(t("iterations.aiPlan"), aiLabel)}
+      {row(t("iterations.aiPlan"), f.ai_plan ? planLabel(f.ai_plan) : null)}
       {row(t("iterations.reason"), f.reason)}
       {row(t("iterations.job"), f.job)}
       {row("Kano", f.kano)}
-      {row(t("iterations.competitors"), f.total ? t("iterations.coverage", { covered: f.covered, total: f.total }) : null)}
+      {row(t("iterations.competitors"), f.prevalence ? t("iterations.coverage", { coverage: f.prevalence }) : null)}
       {row(t("iterations.evidence"), f.evidence.length ? <span className="flex flex-wrap gap-1">{f.evidence.map((e) => <span key={e} className="rounded bg-content/5 px-1.5 font-mono text-[11px]">{e}</span>)}</span> : null)}
       <div className="flex flex-col gap-1.5 border-t border-stroke pt-3">
         <span className="text-[11px] uppercase tracking-wide text-content/40">{t("iterations.issue")}</span>
-        {issue ? (
-          <span className="flex items-center gap-2 text-[12px] text-content/80"><StatusIcon status={issue.status} /> <span className="font-mono">{issue.ident}</span></span>
+        {f.issue_id && f.issue_status ? (
+          <button type="button" onClick={onOpenIssue} className="flex items-center gap-2 self-start rounded px-1 py-0.5 text-[12px] text-content/80 hover:bg-content/10">
+            <StatusIcon status={f.issue_status} />
+            <span className="font-mono">{f.issue_ident}</span>
+          </button>
         ) : (
           <>
             <p className="text-[12px] text-content/50">{t("iterations.noIssue")}</p>
-            <button type="button" onClick={() => mockActions.createIssue(f.code)} className="self-start rounded-md bg-content/10 px-2.5 py-1 text-[12px] text-content hover:bg-content/15">
+            <button type="button" onClick={onCreateIssue} className="self-start rounded-md bg-content/10 px-2.5 py-1 text-[12px] text-content hover:bg-content/15">
               {t("iterations.createIssue")}
             </button>
           </>
         )}
       </div>
+      <button type="button" onClick={onDelete} className="mt-auto flex items-center gap-1.5 self-start rounded-md px-2 py-1 text-[12px] text-red-400/80 hover:bg-red-500/10 hover:text-red-400">
+        <Trash2 className="size-3.5" />
+        {t("iterations.deleteFeature")}
+      </button>
     </aside>
   );
 }
