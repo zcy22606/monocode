@@ -237,7 +237,8 @@
       "noCredit": "没有可用的储存重置。",
       "alreadyRedeemed": "这次重置已经用过了。"
     },
-    "expired": "已过期"
+    "expired": "已过期",
+    "usedLabel": "{{title}}已用"
   },
   "sidebar": {
     "tabs": {

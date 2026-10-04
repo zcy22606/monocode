@@ -1,7 +1,7 @@
 {
   "name": "monocode-desktop",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -66,6 +66,7 @@
     "react-i18next": "^17.0.15",
     "react-material-icon-theme": "^1.2.0",
     "rehype-harden": "^1.1.8",
+    "shiki": "^3.23.0",
     "streamdown": "^2.5.0"
   },
   "devDependencies": {

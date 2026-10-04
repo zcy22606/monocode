@@ -99,7 +99,9 @@
     "azuredevops": "ADO",
     "jira": "Jira",
     "linear": "Linear",
-    "show-archived": "Show archived in the sidebar"
+    "show-archived": "Show archived in the sidebar",
+    "show-remaining-usage": "Show remaining usage",
+    "mask-emails": "Mask account emails"
   },
   "keybindings": {
     "command": {
@@ -502,7 +504,10 @@
     "useByDefault": "Use by default",
     "hiddenGlobally": "Hidden globally",
     "showInPicker": "Show in picker",
-    "showInPickerLabel": "Show {{provider}} in the model picker"
+    "showInPickerLabel": "Show {{provider}} in the model picker",
+    "usagePrivacy": "Usage and privacy",
+    "show-remaining-usage": "Fill usage meters with what is left in each limit instead of what has been used.",
+    "mask-emails": "Blur account emails in Settings and the usage popover until you click one, so they stay out of screenshots."
   },
   "archive": {
     "projects": {

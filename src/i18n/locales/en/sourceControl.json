@@ -243,5 +243,20 @@
     "createPr": "Create PR",
     "viewPrNumber": "View PR #{{number}}",
     "viewPr": "View PR"
+  },
+  "worktreeSwitcher": {
+    "detachedWorktree": "Detached worktree",
+    "detached": "detached",
+    "switch": "Switch working copy",
+    "switching": "Switching working copy",
+    "list": "Working copies",
+    "projectFolder": "Project folder",
+    "projectFolderDetail": "Project folder · all sessions",
+    "loading": "Loading working copies…",
+    "detachedHead": "Detached {{head}}",
+    "openTabs_one": "{{count}} open tab",
+    "openTabs_other": "{{count}} open tabs",
+    "openTabsBusy_one": "{{count}} open tab, working",
+    "openTabsBusy_other": "{{count}} open tabs, working"
   }
 }

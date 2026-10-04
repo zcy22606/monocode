@@ -230,5 +230,18 @@
     "createPr": "创建 PR",
     "viewPrNumber": "查看 PR #{{number}}",
     "viewPr": "查看 PR"
+  },
+  "worktreeSwitcher": {
+    "detachedWorktree": "游离的工作树",
+    "detached": "游离",
+    "switch": "切换工作副本",
+    "switching": "正在切换工作副本",
+    "list": "工作副本",
+    "projectFolder": "项目文件夹",
+    "projectFolderDetail": "项目文件夹 · 全部会话",
+    "loading": "正在加载工作副本…",
+    "detachedHead": "游离 {{head}}",
+    "openTabs_other": "{{count}} 个打开的标签",
+    "openTabsBusy_other": "{{count}} 个打开的标签，运行中"
   }
 }

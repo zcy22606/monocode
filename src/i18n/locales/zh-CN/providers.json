@@ -19,7 +19,9 @@
     "left": "剩余 {{percent}}",
     "used": "已用 {{percent}}",
     "window": "{{window}} 窗口",
-    "limitRemaining": "{{title}} 剩余额度"
+    "limitRemaining": "{{title}} 剩余额度",
+    "full": "已满",
+    "limitUsed": "{{title}} 已用额度"
   },
   "identity": {
     "personal": "个人"
