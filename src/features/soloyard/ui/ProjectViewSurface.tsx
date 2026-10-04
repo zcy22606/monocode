@@ -4,6 +4,7 @@ import { useProjectForPath } from "../data/api";
 import { openProjectView, viewLabel, type ProjectViewId, type ProjectViewSource } from "../model/projectViews";
 import { IssueDetail } from "./issues/IssueDetail";
 import { IssuesView } from "./issues/IssuesView";
+import { IterationsView } from "./iterations/IterationsView";
 import { ServiceLog } from "../services/ServiceLog";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
@@ -27,6 +28,8 @@ function ProjectDataView({ cwd, source, title }: { cwd: string; source: ProjectV
     if (!project) return null;
     return source.view === "issues" ? <IssuesView project={project} cwd={cwd} /> : <IssueDetail issueId={Number(source.itemId)} cwd={cwd} />;
   }
+  // 迭代 = 功能全景 + 减法 + 迭代（原型，mock 数据）；旧的 features / scope 标签也落到这里
+  if (source.view === "cycles" || source.view === "features" || source.view === "scope") return <IterationsView />;
   return <Placeholder cwd={cwd} source={source} title={title} />;
 }
 

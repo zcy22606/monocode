@@ -35,8 +35,7 @@ export const NAV_VIEWS: NavView[] = [
   { id: "cycles", group: "work" },
   { id: "docs", group: "work" },
   { id: "decisions", group: "plan" },
-  { id: "features", group: "plan" },
-  { id: "scope", group: "plan" },
+  // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
   { id: "evidence", group: "plan" },
 ];
 
@@ -73,6 +72,7 @@ export function projectViewFile(request: OpenProjectViewRequest): FilePaneTab {
     projectView: { view: request.view, itemId: request.itemId },
   };
 }
+
 const VIEW_IDS: readonly ProjectViewId[] = [
   "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service",
 ];
@@ -87,7 +87,6 @@ export function sanitizeProjectView(raw: unknown): ProjectViewSource | undefined
     ...(typeof value.itemId === "string" && value.itemId ? { itemId: value.itemId } : {}),
   };
 }
-
 
 export function projectViewKey(cwd: string, source: ProjectViewSource) {
   return `project-view:${cwd}:${source.view}:${source.itemId ?? ""}`;
