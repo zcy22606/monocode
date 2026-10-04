@@ -5,6 +5,7 @@ import {
   parseCodexRateLimits,
 } from "../../../../features/providers/model/rateLimits";
 import type { RuntimeMode } from "../../../../features/sessions/model/session";
+import { withSoloyardWritableRoots } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
 import { questionPromptTitle, type UserQuestionReply } from "../../../../features/sessions/model/userQuestion";
 import {
   killChild,
@@ -646,7 +647,8 @@ async function runTurn(live: Live, input: SendTurnInput): Promise<void> {
   const effort = input.modelSettings?.reasoningEffort;
   const serviceTier = input.modelSettings?.serviceTier;
 
-  const params = buildTurnStartParams({
+  // Soloyard: 关联的文件夹加进可写目录
+  const params = withSoloyardWritableRoots(buildTurnStartParams({
     threadId: live.threadId,
     runtimeMode: input.runtimeMode,
     controlsAgents: input.controlsAgents,
@@ -656,7 +658,7 @@ async function runTurn(live: Live, input: SendTurnInput): Promise<void> {
     effort,
     serviceTier,
     intent: input.intent,
-  });
+  }), input.sessionId);
 
   if (Array.isArray(params.input) && params.input.length === 0) {
     return;

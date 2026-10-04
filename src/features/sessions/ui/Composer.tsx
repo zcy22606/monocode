@@ -121,6 +121,7 @@ import {
 import type { Worktree } from "../../source-control/model/worktrees";
 import { CwdPicker } from "../../projects/ui/CwdPicker";
 import { FileMentionPicker } from "./FileMentionPicker";
+import { NO_SOLOYARD_MENTIONS, isSoloyardMentionPath, rankSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
 import { McpServerPicker } from "./McpServerPicker";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import { InboxMiniCard } from "../../inbox/ui/InboxMiniCard";
@@ -231,6 +232,10 @@ type Props = {
   recents?: RecentProject[];
   hideProjectPicker?: boolean;
   hideBranchPicker?: boolean;
+  /** Soloyard: session links button, shown after the branch picker. */
+  soloyardLinks?: ReactNode;
+  /** Soloyard: linked items offered in the @ picker. */
+  soloyardMentions?: ProjectFile[];
   hideTopBar?: boolean;
   /** Keeps local file mentions, skills, and app modes off for host sessions. */
   remoteSession?: boolean;
@@ -524,6 +529,8 @@ export function Composer({
   recents = [],
   hideProjectPicker = false,
   hideBranchPicker = false,
+  soloyardLinks, // Soloyard
+  soloyardMentions = NO_SOLOYARD_MENTIONS, // Soloyard
   hideTopBar = false,
   remoteSession = false,
   remoteFeatures,
@@ -695,7 +702,9 @@ export function Composer({
   attachmentsRef.current = attachments;
 
   const mentionOpen =
-    !remote && mention !== null && (looksLikeProject(cwd) || notesEnabled);
+    !remote &&
+    mention !== null &&
+    (looksLikeProject(cwd) || notesEnabled || soloyardMentions.length > 0); // Soloyard: linked items
   const navigationEmpty =
     draft.length === 0 &&
     attachments.length === 0 &&
@@ -767,8 +776,11 @@ export function Composer({
     if (ref.current) resizeComposer(ref.current);
   }, [modeIndent]);
   const mentionFiles = useMemo(
-    () => (notesEnabled ? [...files, ...notesAsProjectFiles(notes)] : files),
-    [files, notes, notesEnabled],
+    () => [
+      ...(notesEnabled ? [...files, ...notesAsProjectFiles(notes)] : files),
+      ...soloyardMentions, // Soloyard
+    ],
+    [files, notes, notesEnabled, soloyardMentions],
   );
   const mentionIndex = useMemo(
     () => buildMentionIndex(mentionFiles),
@@ -789,8 +801,12 @@ export function Composer({
       ? rankNoteFiles(notes, mention?.query ?? "")
       : [];
     const seen = new Set(noteHits.map((file) => file.path));
-    return [...noteHits, ...fileHits.filter((file) => !seen.has(file.path))];
-  }, [executionCwd, files, mention?.query, mentionOpen, notes, notesEnabled]);
+    return [
+      ...rankSoloyardMentions(soloyardMentions, mention?.query ?? ""), // Soloyard
+      ...noteHits,
+      ...fileHits.filter((file) => !seen.has(file.path)),
+    ];
+  }, [executionCwd, files, mention?.query, mentionOpen, notes, notesEnabled, soloyardMentions]);
 
   const syncHasValue = useCallback(
     (text: string, files: Attachment[]) => {
@@ -1227,7 +1243,8 @@ export function Composer({
         setMention(null);
         return;
       }
-      const label = isNoteMentionPath(file.path)
+      const label =
+        isNoteMentionPath(file.path) || isSoloyardMentionPath(file.path) // Soloyard
         ? file.relative
         : mentionLabel(file, mentionIndexRef.current);
       const next = replaceMentionToken(el.value, token, label);
@@ -2238,6 +2255,7 @@ export function Composer({
                   />
                 </>
               )}
+              {soloyardLinks}
               <div className="ml-auto flex shrink-0 items-center">
                 <ContextMeter
                   usage={context}

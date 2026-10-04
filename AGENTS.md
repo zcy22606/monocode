@@ -41,6 +41,7 @@
   - 界面经 `src-tauri/src/soloyard_bridge.rs` 拉起常驻的 `soloyard/core/src/sidecar.ts`，前端用 `src/features/soloyard/data/api.ts`（`useSoloyard` / `mutateSoloyard`），我们的数据变了会收到 `soloyard:changed` 自动刷新。
   - agent 经 `soloyard/mcp/server.ts`（零依赖 stdio MCP）读写同一个库；`soloyard/core/src/import-legacy.ts` 是原型库的一次性导入。
 - **Issues**：列表 / 看板、视图配置和筛选（`model/issueView.ts` 的字段注册表——加新维度只注册一个字段）、行内新建、详情标签、Start work（开新会话，开工提示词填进输入框，模型 / 工作区由用户选）、验收（Accept / Send back）。
+- **会话关联**（SOL-5）：输入框顶栏分支后面的关联按钮（`ui/session/SessionLinks.tsx`），可挂文件夹、文件、issue、文档、功能、决策，存在 `soloyard_session_links`。按需注入：关联对象进输入框的 @ 候选（`model/sessionMentions.ts`，写法 `@link/SOL-5`），发送时只把 @ 到的内容附成 `<soloyard_context>`（`model/sessionContext.ts`）；关联的文件夹自动给 Claude 加 `--add-dir`、给 Codex 加 `writableRoots`。上游挂载：`Composer.tsx`（顶栏插槽 + @ 候选）、`SessionPane.tsx`、`App.tsx`、`claude.ts`、`codex.ts`。
 - 请底座做事（开会话、切会话、发消息、开标签）一律用窗口事件（`model/appActions.ts`、`model/projectViews.ts`），App.tsx 里各只有一个监听。
 - 项目自己的待办就在应用里：`~/Playground/monocode` 对应项目 **Soloyard（SOL）**，开工前先看 SOL 的 issue。
 - 多语言：`src/i18n/` + `src-tauri/src/i18n.rs`，上游界面文字也改成了 i18n（这是用户明确决定的，同步上游时冲突会比较多，按「上游加了新文字就补 key」来合）。我们的界面用命名空间 `soloyard`。

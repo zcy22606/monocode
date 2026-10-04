@@ -18,6 +18,8 @@ import {
 } from "../../orchestration/model/orchestration";
 import { DiscussionEmpty } from "./DiscussionEmpty";
 import { LinkedWorkItemUpdateNotice } from "../../inbox/ui/LinkedWorkItemUpdateNotice";
+import { SessionLinksButton } from "../../soloyard/ui/session/SessionLinks"; // Soloyard
+import { useSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
 import { SessionReview } from "./SessionReview";
 import { PromptOutline } from "./PromptOutline";
 import {
@@ -323,6 +325,8 @@ const LocalSessionPane = memo(function LocalSessionPane({
       sameCheckout(orchestrationCheckoutCwd(run), sessionWorkCwd(session)),
   );
   const title = sessionDisplayTitle(session.title, session.harness);
+  const soloyardLinks = !remoteSession && !session.inboxAsk; // Soloyard
+  const soloyardMentions = useSoloyardMentions(session.id); // Soloyard
   const isEmpty = session.blocks.length === 0;
   const recallLastTurnRef = useRef<(() => void) | null>(null);
   const remote = remoteSession;
@@ -547,6 +551,12 @@ const LocalSessionPane = memo(function LocalSessionPane({
   const draftRef = useRef<string | undefined>(getComposerDraft(session.id));
   const composer = (
     <Composer
+      soloyardLinks={
+        soloyardLinks ? ( // Soloyard
+          <SessionLinksButton sessionId={session.id} cwd={session.cwd} onOpenFile={onOpenFile} />
+        ) : undefined
+      }
+      soloyardMentions={soloyardMentions}
       key={session.id}
       remoteSession={remoteSession}
       remoteFeatures={remoteFeatures}

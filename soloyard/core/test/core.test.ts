@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { test } from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { openDb } from '../src/db.ts'
@@ -45,6 +45,52 @@ test('验收项、评论、会话关联', () => {
   assert.deepEqual(issue.sessions.map((s) => s.id), ['sess-1'])
   assert.equal(r.listIssues(db, { projectId: p.id })[0].sessions, 1)
   assert.deepEqual(r.sessionLinks(db, 'sess-1').map((l) => l.kind), ['issue'])
+})
+
+test('会话关联：多种对象、显示信息、候选、上下文和额外目录', () => {
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, '/x/app')
+  const issue = r.createIssue(db, 'user', p.id, { title: '登录页', body_md: '未登录要跳转', acceptance: ['跳到 /login'] })
+  const doc = r.insert(db, 'user', 'documents', { project_id: p.id, title: '立项卡', blocks_json: JSON.stringify({ sections: [{ id: 's0', title: '结论', blocks: [{ type: 'text', text: '先做自用切片' }] }] }) })
+  const feat = r.insert(db, 'user', 'features', { project_id: p.id, code: 'SES-1', name: '会话关联', module: 'SES' })
+  const dec = r.insert(db, 'user', 'decisions', { project_id: p.id, code: 'D-1', title: '桌面框架', status: 'decided',
+    data_json: JSON.stringify({ options: [{ key: 'A', label: 'Electron' }, { key: 'B', label: 'Tauri' }], user: { option: 'B', note: '包小' } }) })
+  const shared = mkdtempSync(join(tmpdir(), 'shared-'))
+  const lib = mkdtempSync(join(tmpdir(), 'lib-'))
+  for (const [kind, target] of [['folder', shared], ['file', '/x/spec.md'], ['issue', issue], ['document', doc], ['feature', feat], ['decision', dec], ['folder', lib], ['folder', '/x/gone']] as const)
+    r.linkSession(db, 's', kind, String(target))
+  assert.throws(() => r.linkSession(db, 's', 'asset', '1'), /unknown link kind/)
+
+  const links = r.sessionLinks(db, 's')
+  assert.deepEqual(links.map((l) => [l.kind, l.code, l.title, l.mention]), [
+    ['folder', null, basename(shared), `link/${basename(shared)}`], ['file', null, 'spec.md', 'link/spec.md'], ['issue', 'APP-1', '登录页', 'link/APP-1'],
+    ['document', null, '立项卡', `link/doc-${doc}`], ['feature', 'SES-1', '会话关联', 'link/SES-1'], ['decision', 'D-1', '桌面框架', 'link/D-1'],
+    ['folder', null, basename(lib), `link/${basename(lib)}`], ['folder', null, 'gone', 'link/gone'],
+  ])
+
+  // 按需注入：没 @ 就只有目录，没有内容
+  assert.deepEqual(r.sessionContext(db, 's'), { dirs: [shared, lib], text: '' }, '不存在的目录不交给 CLI')
+  const all = `看下 @link/spec.md @link/APP-1 @link/doc-${doc}，@link/SES-1。还有 @link/D-1`
+  const ctx = r.sessionContext(db, 's', all)
+  for (const piece of ['Linked file (read it when relevant): /x/spec.md', 'Issue APP-1: 登录页', '未登录要跳转', '- [ ] 跳到 /login', '结论\n先做自用切片', 'Feature SES-1: 会话关联', 'Chosen: B. Tauri', 'Note: 包小'])
+    assert.ok(ctx.text.includes(piece), piece)
+  const one = r.sessionContext(db, 's', '只要 @link/D-1').text
+  assert.ok(one.startsWith('Decision D-1') && !one.includes('APP-1'), '只带 @ 到的')
+  assert.ok(r.sessionContext(db, 's', `@link/${basename(lib)}`).text.includes(`Linked folder (readable and writable in addition to the working directory): ${lib}`))
+  assert.equal(r.sessionContext(db, 's', 'email@link/APP-1 不算').text, '', '@ 前面要是空白或开头')
+
+  // 对象删了：列表里标 missing，上下文里跳过
+  r.remove(db, 'user', 'features', feat)
+  assert.equal(r.sessionLinks(db, 's').find((l) => l.kind === 'feature')!.missing, true)
+  assert.equal(r.sessionContext(db, 's', '@link/SES-1').text, '')
+
+  assert.deepEqual(r.linkCandidates(db, p.id, 'issue', 'APP-1').map((c) => c.title), ['登录页'])
+  assert.deepEqual(r.linkCandidates(db, p.id, 'decision', '框架').map((c) => c.code), ['D-1'])
+  assert.deepEqual(r.linkCandidates(db, p.id, 'folder'), [])
+
+  r.unlinkSession(db, 's', 'folder', shared)
+  assert.deepEqual(r.sessionContext(db, 's').dirs, [lib])
+  assert.deepEqual(r.sessionContext(db, 'other'), { dirs: [], text: '' })
 })
 
 test('迁移可重复执行；和底座的表共存', () => {

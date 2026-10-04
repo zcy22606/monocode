@@ -123,5 +123,35 @@
     "listSeparator": ", ",
     "sentBackComment": "Sent back: {{reason}}",
     "sentBackMessage": "{{ident}} didn't pass review: {{reason}}\n\nPlease fix it, check again, then set the issue back to in_review and comment on what changed."
+  },
+  "links": {
+    "title": "Links",
+    "count_one": "Links ({{count}})",
+    "count_other": "Links ({{count}})",
+    "add": "Add link",
+    "remove": "Remove link",
+    "back": "Back",
+    "primary": "Working directory",
+    "missing": "Deleted",
+    "linked": "Linked",
+    "later": "(later)",
+    "empty": "Nothing linked yet. Type @ in the composer to reference a linked item; its content goes to the agent with that message.",
+    "noProject": "This folder isn't a Soloyard project yet, so only folders and files can be linked.",
+    "search": "Search…",
+    "noMatches": "No matches",
+    "pickFolders": "Link folders",
+    "pickFiles": "Link files",
+    "kind": {
+      "folder": "Folders",
+      "file": "Files",
+      "issue": "Issues",
+      "document": "Docs",
+      "feature": "Features",
+      "decision": "Decisions",
+      "session": "Other sessions",
+      "output": "Outputs",
+      "asset": "Assets"
+    },
+    "hint": "Type @ in the composer to send an item's content with your message."
   }
 }

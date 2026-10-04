@@ -33,6 +33,9 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   linkSession: { write: true, run: (sessionId: string, kind: string, target: string) => repo.linkSession(db, sessionId, kind, target) },
   unlinkSession: { write: true, run: (sessionId: string, kind: string, target: string) => repo.unlinkSession(db, sessionId, kind, target) },
   sessionLinks: { run: (sessionId: string) => repo.sessionLinks(db, sessionId) },
+  sessionContext: { run: (sessionId: string, message?: string) => repo.sessionContext(db, sessionId, message) },
+  linkCandidates: { run: (projectId: number, kind: string, q?: string) => repo.linkCandidates(db, projectId, kind, q) },
+  findProjectByPath: { run: (p: string) => repo.findProjectByPath(db, p) ?? null },
   undo: { write: true, run: () => repo.undoLast(db, actor) },
   redo: { write: true, run: () => repo.redoLast(db, actor) },
 }

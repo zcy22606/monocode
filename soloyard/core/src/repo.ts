@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { basename } from 'node:path'
 import type { DB } from './db.ts'
 import { tx } from './db.ts'
@@ -264,12 +265,126 @@ export function projectLabels(db: DB, projectId: number): string[] {
 
 // ───────────── 会话关联（会话上下文）─────────────
 
+/** 会话能关联的种类。folder / file 的 target 是绝对路径，其余是对应表的 id。 */
+export const LINK_KINDS = ['folder', 'file', 'issue', 'document', 'feature', 'decision'] as const
+
+/** 关联对象的显示信息（code + title）；对象已删掉时查不到。 */
+const LINK_LABEL: Record<string, string> = {
+  issue: "SELECT p.key || '-' || i.number AS code, i.title, i.status FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.id = ?",
+  document: 'SELECT NULL AS code, title FROM soloyard_documents WHERE id = ?',
+  feature: 'SELECT code, name AS title FROM soloyard_features WHERE id = ?',
+  decision: 'SELECT code, title FROM soloyard_decisions WHERE id = ?',
+}
+
 export function linkSession(db: DB, sessionId: string, kind: string, target: string) {
+  if (!(LINK_KINDS as readonly string[]).includes(kind)) throw new Error(`unknown link kind: ${kind}`)
   db.prepare('INSERT OR IGNORE INTO soloyard_session_links (session_id, kind, target, created_at) VALUES (?, ?, ?, ?)').run(sessionId, kind, target, now())
 }
 export function unlinkSession(db: DB, sessionId: string, kind: string, target: string) {
   db.prepare('DELETE FROM soloyard_session_links WHERE session_id = ? AND kind = ? AND target = ?').run(sessionId, kind, target)
 }
+/** 会话的关联，带上显示用的 code / title 和输入框里 @ 引用用的 mention；对象被删了的标 missing。 */
 export function sessionLinks(db: DB, sessionId: string): Row[] {
-  return db.prepare('SELECT kind, target, created_at FROM soloyard_session_links WHERE session_id = ? ORDER BY created_at').all(sessionId) as Row[]
+  const rows = db.prepare('SELECT kind, target, created_at FROM soloyard_session_links WHERE session_id = ? ORDER BY created_at, rowid').all(sessionId) as Row[]
+  return rows.map((l) => {
+    let row: Row
+    if (l.kind === 'folder' || l.kind === 'file') row = { ...l, code: null, title: basename(l.target) || l.target }
+    else {
+      const hit = LINK_LABEL[l.kind] && (db.prepare(LINK_LABEL[l.kind]).get(Number(l.target)) as Row | undefined)
+      row = hit ? { ...l, ...hit } : { ...l, code: null, title: l.target, missing: true }
+    }
+    return { ...row, mention: mentionOf(row) }
+  })
+}
+
+/**
+ * 输入框里引用关联的写法：@link/SOL-5、@link/D-1、@link/doc-2、@link/<文件夹名>。
+ * ponytail: 同名文件夹 / 文件会撞名，@ 一次两个都带上；真成问题再加序号。
+ */
+function mentionOf(l: Row): string {
+  const name = l.code ?? (l.kind === 'document' ? `doc-${l.target}` : l.title)
+  return `link/${String(name).replace(/\s+/g, '-')}`
+}
+
+/** 文字里 @ 到的 mention：@ 前面是开头、空白或标点（email@link 不算），去掉紧跟的标点。 */
+function mentionsIn(text: string): Set<string> {
+  return new Set([...text.matchAll(/(?:^|[\s，。；：！？、（(])@(link\/[^\s@，。；：！？、）]+)/g)].map((m) => m[1].replace(/[.,;:!?)]+$/, '')))
+}
+
+/** 添加关联时的候选：项目里某一类对象，按 code / 标题搜，最多 50 条。 */
+export function linkCandidates(db: DB, projectId: number, kind: string, q = ''): Row[] {
+  const like = `%${q.trim()}%`
+  const sql: Record<string, string> = {
+    issue: `SELECT i.id, p.key || '-' || i.number AS code, i.title, i.status FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id
+      WHERE i.project_id = ? AND (i.title LIKE ? OR p.key || '-' || i.number LIKE ?) ORDER BY i.status IN ('done','canceled'), i.number DESC`,
+    document: 'SELECT id, NULL AS code, title FROM soloyard_documents WHERE project_id = ? AND (title LIKE ? OR slug LIKE ?) ORDER BY updated_at DESC',
+    feature: 'SELECT id, code, name AS title FROM soloyard_features WHERE project_id = ? AND (name LIKE ? OR code LIKE ?) ORDER BY code',
+    decision: 'SELECT id, code, title FROM soloyard_decisions WHERE project_id = ? AND (title LIKE ? OR code LIKE ?) ORDER BY id',
+  }
+  if (!sql[kind]) return []
+  return db.prepare(`${sql[kind]} LIMIT 50`).all(projectId, like, like) as Row[]
+}
+
+/** 文档正文：有 markdown 用 markdown，否则把结构化块里的文字按顺序摊平。 */
+function documentText(doc: Row): string {
+  if (doc.body_md?.trim()) return doc.body_md.trim()
+  const out: string[] = []
+  const walk = (v: unknown) => {
+    if (typeof v === 'string') { if (v.trim()) out.push(v.trim()) }
+    else if (Array.isArray(v)) v.forEach(walk)
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => k !== 'type' && k !== 'id' && k !== 'tone' && walk(x))
+  }
+  try { walk(JSON.parse(doc.blocks_json ?? 'null')) } catch { /* 坏 JSON 当空文档 */ }
+  return out.join('\n')
+}
+
+// ponytail: 单篇文档截到 2 万字，再长就该给 agent 一个按需读文档的 MCP 工具
+const DOC_LIMIT = 20_000
+const clip = (text: string) => (text.length > DOC_LIMIT ? `${text.slice(0, DOC_LIMIT)}\n…(truncated)` : text)
+
+/** 一个关联对象发给 agent 的内容；对象没了返回 null。 */
+function linkContext(db: DB, kind: string, target: string): string | null {
+  if (kind === 'folder') return `Linked folder (readable and writable in addition to the working directory): ${target}`
+  if (kind === 'file') return `Linked file (read it when relevant): ${target}`
+  if (kind === 'issue') {
+    const issue = getIssue(db, Number(target))
+    if (!issue) return null
+    const acc = issue.acceptance.map((a) => `- [${a.done ? 'x' : ' '}] ${a.text}`).join('\n')
+    return [`Issue ${issue.ident}: ${issue.title}`, issue.body_md?.trim(), acc && `Acceptance criteria:\n${acc}`].filter(Boolean).join('\n\n')
+  }
+  if (kind === 'document') {
+    const doc = getRow(db, 'documents', Number(target))
+    return doc ? `Document "${doc.title}":\n\n${clip(documentText(doc))}` : null
+  }
+  if (kind === 'feature') {
+    const f = getRow(db, 'features', Number(target))
+    return f ? `Feature ${f.code}: ${f.name} (${[f.backbone, f.module, f.layer, f.level, f.tier, f.choice].filter(Boolean).join(' / ')})` : null
+  }
+  if (kind === 'decision') {
+    const d = getRow(db, 'decisions', Number(target))
+    if (!d) return null
+    const data = JSON.parse(d.data_json || '{}')
+    const pick = data.user?.option ?? data.ai?.option
+    const label = data.options?.find((o: Row) => o.key === pick)?.label
+    const lines = [`Decision ${d.code}: ${d.title} (${d.status})`]
+    if (label) lines.push(`Chosen: ${pick}. ${label}`)
+    if (data.user?.note) lines.push(`Note: ${data.user.note}`)
+    return lines.join('\n')
+  }
+  return null
+}
+
+/**
+ * 发送前调用：按需注入——只把消息里 @ 到的关联对象的内容带给 agent（text），
+ * 再加上额外关联且还在的文件夹（dirs），交给 Claude 的 --add-dir / Codex 的可写目录。
+ */
+export function sessionContext(db: DB, sessionId: string, message = ''): { dirs: string[]; text: string } {
+  const links = sessionLinks(db, sessionId)
+  const dirs = links.filter((l) => l.kind === 'folder' && existsSync(l.target)).map((l) => l.target as string) // 删掉的目录交给 --add-dir 会让 CLI 报错
+  const wanted = mentionsIn(message)
+  const parts = links
+    .filter((l) => wanted.has(l.mention))
+    .map((l) => linkContext(db, l.kind, l.target))
+    .filter((part): part is string => !!part)
+  return { dirs, text: parts.join('\n\n---\n\n') }
 }

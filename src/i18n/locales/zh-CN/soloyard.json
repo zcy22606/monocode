@@ -122,5 +122,34 @@
     "listSeparator": "、",
     "sentBackComment": "打回：{{reason}}",
     "sentBackMessage": "{{ident}} 验收没通过：{{reason}}\n\n请修改后重新自查，再把 issue 改回 in_review 并评论说明。"
+  },
+  "links": {
+    "title": "关联",
+    "count_other": "关联 ({{count}})",
+    "add": "添加关联",
+    "remove": "移除关联",
+    "back": "返回",
+    "primary": "主目录",
+    "missing": "已删除",
+    "linked": "已关联",
+    "later": "（以后）",
+    "empty": "还没有关联。关联后在输入框里输入 @ 引用，内容会随那条消息发给 Agent。",
+    "noProject": "这个文件夹还不是 Soloyard 项目，只能关联文件夹和文件。",
+    "search": "搜索…",
+    "noMatches": "没有匹配项",
+    "pickFolders": "关联文件夹",
+    "pickFiles": "关联文件",
+    "kind": {
+      "folder": "文件夹",
+      "file": "文件",
+      "issue": "Issue",
+      "document": "文档",
+      "feature": "功能",
+      "decision": "决策",
+      "session": "其他会话",
+      "output": "产物",
+      "asset": "资产"
+    },
+    "hint": "在输入框里输入 @ 引用，内容会随那条消息发给 Agent。"
   }
 }

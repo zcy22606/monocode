@@ -6,6 +6,7 @@ import type {
   TaskListMeta,
 } from "../../../../features/sessions/model/session";
 import { loadClaudeHooks } from "../../../../features/settings/model/settings";
+import { soloyardClaudeAddDirArgs } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
 import {
   killChild,
   resolveClaudeBinary,
@@ -540,7 +541,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
   await spawnChild(
     input.sessionId,
     path,
-    buildClaudeSpawnArgs(launch),
+    [...buildClaudeSpawnArgs(launch), ...soloyardClaudeAddDirArgs(input.sessionId)], // Soloyard: 关联的文件夹
     input.cwd,
     { provider: "claude", id: input.providerAccountId ?? "default" },
     "claude",
@@ -1768,7 +1769,7 @@ function settingsKeyFor(input: HarnessSessionInput): string {
     context: input.modelSettings?.context,
     runtimeMode: input.runtimeMode,
     hooks: loadClaudeHooks(),
-  })}`;
+  })}:${soloyardClaudeAddDirArgs(input.sessionId).join("\0")}`; // Soloyard: 关联的文件夹变了要重启
 }
 
 function launchOptions(

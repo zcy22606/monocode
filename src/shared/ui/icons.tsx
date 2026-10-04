@@ -273,3 +273,17 @@ export const WholeWord = wrap(WholeWordIcon, "WholeWord");
 export const Wrench = wrap(Wrench01Icon, "Wrench");
 export const X = wrap(Cancel01Icon, "X");
 export const Zap = wrap(FlashIcon, "Zap");
+
+// Soloyard: session link kinds (kept in one block at the end to stay clear of upstream edits).
+import Link01Icon from "@hugeicons/core-free-icons/Link01Icon";
+import Attachment01Icon from "@hugeicons/core-free-icons/Attachment01Icon";
+import CheckmarkSquare02Icon from "@hugeicons/core-free-icons/CheckmarkSquare02Icon";
+import Book02Icon from "@hugeicons/core-free-icons/Book02Icon";
+import PuzzleIcon from "@hugeicons/core-free-icons/PuzzleIcon";
+import JusticeScale01Icon from "@hugeicons/core-free-icons/JusticeScale01Icon";
+export const Link = wrap(Link01Icon, "Link");
+export const Attachment = wrap(Attachment01Icon, "Attachment");
+export const CheckSquare = wrap(CheckmarkSquare02Icon, "CheckSquare");
+export const Book = wrap(Book02Icon, "Book");
+export const Puzzle = wrap(PuzzleIcon, "Puzzle");
+export const Scale = wrap(JusticeScale01Icon, "Scale");
