@@ -261,6 +261,7 @@ pub fn session_list_by_project(
     }
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
     crate::history_import::import_for_project(&conn, &cwd); // Soloyard
+    crate::soloyard_missing_worktree::detach_for_project(&conn, &cwd); // Soloyard
     list_by_project(&conn, &cwd).map_err(|e| e.to_string())
 }
 
@@ -298,6 +299,7 @@ pub fn session_get(
 ) -> Result<Option<SessionRecord>, String> {
     validate_id(&session_id, "session")?;
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
+    crate::soloyard_missing_worktree::detach_for_session(&conn, &session_id); // Soloyard
     get_session(&conn, &session_id).map_err(|e| e.to_string())
 }
 

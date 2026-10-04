@@ -16,6 +16,7 @@ mod harness_updates;
 mod history_import; // Soloyard
 mod i18n; // Soloyard
 mod soloyard_bridge; // Soloyard
+mod soloyard_missing_worktree; // Soloyard
 #[cfg(unix)]
 mod soloyard_services; // Soloyard
 mod inbox_media;
