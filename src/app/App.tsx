@@ -1469,7 +1469,12 @@ function Workspace({
     });
   }, [tabs]);
 
-  const sessionDefaults = active ?? sessions[0];
+  // Soloyard: on a non-session tab (Project views, files) `active` is undefined; fall back to a
+  // session in the current project, not whichever session happens to be first (another project).
+  const sessionDefaults =
+    active ??
+    sessions.find((session) => sameProjectPath(session.cwd, projectCwd)) ??
+    sessions[0];
 
   useEffect(() => {
     const openSessionForAddToChat = (event: Event) => {
@@ -2302,7 +2307,9 @@ function Workspace({
     setInboxViewOpen(false);
     setNotesViewOpen(false);
     setAutomationsViewOpen(false);
-    const cwd = active?.cwd ?? sessionDefaults?.cwd ?? projectCwd;
+    // Soloyard: without an active session, the project selected in the sidebar decides.
+    const cwd =
+      active?.cwd ?? (projectCwd && projectCwd !== "~" ? projectCwd : sessionDefaults?.cwd) ?? projectCwd;
     const session = newDefaultSession(cwd, sessionDefaults?.runtimeMode);
     const tab = newTab(session.id);
     setSessions((prev) => [...prev, session]);
