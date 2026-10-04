@@ -101,6 +101,7 @@ test('MCP：迭代表、建迭代、建功能、挪功能；不许 agent 标「�
     const plan = (await s.tool('get_iteration_plan', { project: 'APP' })).data
     assert.deepEqual(plan.iterations.map((i: any) => [i.tag, i.features]), [['v0.1', 1], ['v1.0', 1]])
     assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v1.0' })).data.map((f: any) => f.name), ['登录'])
+    assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', moved: true })).data, [], 'agent 建的功能没有 AI 安排，不算挪过')
 
     // 用户在应用里完成了 v0.1：锁定后 agent 也挪不进去
     const db2 = openDb(dbPath)

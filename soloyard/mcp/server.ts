@@ -12,6 +12,7 @@ import { createInterface } from 'node:readline'
 import { openDb, tx } from '../core/src/db.ts'
 import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
+import { importProductThinking } from '../core/src/import-pt.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -24,7 +25,8 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
 - 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。
-  开始 / 完成 / 删除迭代、把功能标「不做」都由用户在应用里决定，agent 不做。`
+  开始 / 完成 / 删除迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
+- 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。`
 
 type Json = Record<string, any>
 const str = (description: string) => ({ type: 'string', description })
@@ -130,11 +132,13 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
   },
   {
     name: 'get_iteration_plan',
-    description: '迭代表：不传 iteration 时返回所有迭代（版本号、名称、目标、状态、功能数）和待定 / 另立项 / 不做的功能数；传 iteration（版本号，或 pending / split / cut）返回那一列的功能。迭代的先后就是优先级。',
-    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, iteration: str('版本号如 v1.0，或 pending / split / cut') } },
-    run: ({ project: ref, iteration }) => {
+    description: '迭代表：不传 iteration 时返回所有迭代（版本号、名称、目标、状态、功能数）和待定 / 另立项 / 不做的功能数；传 iteration（版本号，或 pending / split / cut）返回那一列的功能；moved=true 返回位置和 AI 安排（ai_plan）不一样的功能，也就是用户挪过的。迭代的先后就是优先级。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, iteration: str('版本号如 v1.0，或 pending / split / cut'), moved: { type: 'boolean', description: '只列用户挪过的功能' } } },
+    run: ({ project: ref, iteration, moved }) => {
       const plan = iter.iterationPlan(db, project(ref).id)
       const where = (f: Json) => f.iteration_id ?? f.bucket
+      const at = (f: Json) => (f.iteration_id ? plan.iterations.find((i) => i.id === f.iteration_id)?.tag : f.bucket)
+      if (moved) return plan.features.filter((f) => f.ai_plan && f.ai_plan !== at(f)).map((f) => ({ code: f.code, name: f.name, ai_plan: f.ai_plan, at: at(f) }))
       if (iteration != null) {
         const target = iter.BUCKETS.includes(iteration) ? iteration : iterationByTag(project(ref).id, iteration).id
         return plan.features.filter((f) => where(f) === target).map(featureBrief)
@@ -187,6 +191,21 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
       })
       iter.moveFeatures(db, actor, ids, agentTarget(pid, to))
       return { moved: ids.length, to }
+    },
+  },
+  {
+    name: 'import_product_thinking',
+    description: 'product-thinking 每个命令结束、pt.py check 通过后调用：把项目目录里的立项卡等文档、证据、决策、功能全景和版本表写进 Soloyard。按编号覆盖，重复导入安全：用户在应用里挪过的功能、做过的决定都保留。project 传目录绝对路径时，还没有项目就按这个目录新建。',
+    inputSchema: { type: 'object', required: ['dir', 'project'], properties: {
+      dir: str('product-thinking 项目目录的绝对路径（含 project.json）'), project: projectRef,
+    } },
+    run: ({ dir, project: ref }) => {
+      let p = typeof ref === 'string' && ref.startsWith('/') ? projectByPath(ref) : repo.findProject(db, ref as string | number)
+      if (!p && typeof ref === 'string' && ref.startsWith('/')) {
+        p = repo.getRow(db, 'projects', repo.createProject(db, actor, { name: ref.split('/').filter(Boolean).at(-1) ?? ref, path: ref }))
+      }
+      if (!p) throw new Error(`找不到项目 ${ref}`)
+      return { project: p.key, ...importProductThinking(db, actor, dir, p.id) }
     },
   },
   {

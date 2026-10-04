@@ -16,7 +16,9 @@ const WRITABLE: Record<string, string[]> = {
   issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at'],
   acceptance: ['text', 'done', 'sort'],
   iterations: ['tag', 'name', 'goal', 'target_date', 'status', 'sort', 'summary_json', 'started_at', 'completed_at'],
-  features: ['name', 'backbone', 'iteration_id', 'bucket', 'sort', 'ai_plan'],
+  features: ['name', 'backbone', 'module', 'layer', 'level', 'tier', 'data_json', 'iteration_id', 'bucket', 'sort', 'ai_plan'],
+  documents: ['kind', 'title', 'body_md', 'blocks_json'],
+  decisions: ['title', 'door', 'status', 'data_json'],
 }
 const VERSIONED = new Set(['projects', 'ideas', 'documents', 'decisions', 'features', 'milestones', 'cycles', 'issues', 'iterations'])
 

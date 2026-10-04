@@ -89,3 +89,58 @@ test('手动新建 / 改名 / 删除功能；删除后 issue 保留并可撤销'
   assert.equal(r.getIssue(db, issue)!.feature_id, id)
   assert.equal(plan(db, p.id).features.find((x) => x.id === id)!.name, '导出 ROADMAP.md')
 })
+
+test('导入 product-thinking：建版本、按 plan 放功能；重新导入保留用户挪过的、跟随没挪过的', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const { importProductThinking } = await import('../src/import-pt.ts')
+  const dir = mkdtempSync(join(tmpdir(), 'pt-'))
+  mkdirSync(join(dir, 'docs'))
+  const write = (f: string, v: unknown) => writeFileSync(join(dir, f), JSON.stringify(v))
+  write('project.json', { name: 'app', idea: '做个 app' })
+  write('docs/01-立项.json', { id: '01-立项', title: '立项卡', sections: [] })
+  write('evidence.json', { items: [{ id: 'E-1', level: 'A', quote: 'x' }] })
+  write('decisions.json', { decisions: [{ id: 'D-1', title: '人群', door: 'one-way', status: 'pending', user: null }] })
+  const features = (plans: Record<string, string>) => ({
+    iterations: [{ tag: 'v0.1', name: '骨架', goal: '跑通' }, { tag: 'v1.0', name: 'MVP' }],
+    backbone: [{ id: 'BB01', name: '发现' }],
+    rows: Object.entries(plans).map(([id, plan]) => ({ id, backbone: 'BB01', name: id, layer: '①竞品', plan, reason: `why ${id}` })),
+  })
+  write('features.json', features({ A: 'v0.1', B: 'v1.0', C: 'cut', D: 'v9.9' }))
+
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, '/work/app')
+  const res = importProductThinking(db, 'agent:t', dir, p.id)
+  assert.equal(res.iterations_created, 2)
+  const where = (code: string) => {
+    const plan = it.iterationPlan(db, p.id)
+    const f = plan.features.find((x) => x.code === code)!
+    return f.iteration_id ? plan.iterations.find((i) => i.id === f.iteration_id)!.tag : f.bucket
+  }
+  assert.deepEqual(['A', 'B', 'C', 'D'].map(where), ['v0.1', 'v1.0', 'cut', 'pending'], '版本号对不上的放待定')
+  assert.equal(it.iterationPlan(db, p.id).backbones.BB01, '发现')
+  assert.equal(it.iterationPlan(db, p.id).features.find((x) => x.code === 'A')!.reason, 'why A')
+
+  // 用户在应用里：把 A 挪到 v1.0，并决定了 D-1
+  const fid = (code: string) => it.iterationPlan(db, p.id).features.find((x) => x.code === code)!.id
+  it.moveFeatures(db, 'user', [fid('A')], it.iterationPlan(db, p.id).iterations[1].id)
+  const d1 = db.prepare("SELECT id, data_json FROM soloyard_decisions WHERE code = 'D-1'").get() as { id: number; data_json: string }
+  r.update(db, 'user', 'decisions', d1.id, { status: 'decided', data_json: JSON.stringify({ ...JSON.parse(d1.data_json), user: { option: 'A' } }) })
+
+  // 用户在应用里删了 v0.1（功能挪去待定）：重新导入不能再建回来
+  const v01 = it.iterationPlan(db, p.id).iterations.find((i) => i.tag === 'v0.1')!.id
+  it.deleteIteration(db, 'user', v01, 'pending')
+
+  // AI 重新规划：A、B 都改到 split
+  write('features.json', features({ A: 'split', B: 'split', C: 'cut', D: 'v9.9' }))
+  const again = importProductThinking(db, 'agent:t', dir, p.id)
+  assert.equal(again.iterations_created, 0, '用户删掉的 v0.1 不重建')
+  assert.deepEqual(it.iterationPlan(db, p.id).iterations.map((i) => i.tag), ['v1.0'])
+  assert.equal(where('A'), 'v1.0', '用户挪过的保留')
+  assert.equal(where('B'), 'split', '没挪过的跟着新安排走')
+  assert.equal(it.iterationPlan(db, p.id).features.find((x) => x.code === 'A')!.ai_plan, 'split')
+  const kept = db.prepare("SELECT status, data_json FROM soloyard_decisions WHERE code = 'D-1'").get() as { status: string; data_json: string }
+  assert.equal(kept.status, 'decided')
+  assert.deepEqual(JSON.parse(kept.data_json).user, { option: 'A' }, '用户的决定不被冲掉')
+})
