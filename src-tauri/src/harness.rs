@@ -371,7 +371,11 @@ pub fn harness_resolve_claude() -> Result<CursorBinary, String> {
         })
 }
 
-fn resolve_mcp_binary(provider: &str, binary_path: Option<&str>) -> Result<PathBuf, String> {
+// Soloyard: pub(crate)
+pub(crate) fn resolve_mcp_binary(
+    provider: &str,
+    binary_path: Option<&str>,
+) -> Result<PathBuf, String> {
     if !matches!(provider, "claude" | "codex" | "cursor" | "opencode") {
         return Err("Unsupported MCP provider".into());
     }
@@ -392,7 +396,8 @@ fn claude_mcp_command(
     mcp_command(binary, args, cwd, timeout)
 }
 
-fn mcp_command(
+// Soloyard: pub(crate)
+pub(crate) fn mcp_command(
     binary: PathBuf,
     args: Vec<String>,
     cwd: String,

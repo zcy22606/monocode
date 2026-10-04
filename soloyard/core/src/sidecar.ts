@@ -73,7 +73,7 @@ setInterval(() => {
   if (sig === lastSignature) return
   lastSignature = sig
   send({ event: 'changed' })
-}, 1000).unref()
+}, 250).unref() // 验收要求 agent 写的 1 秒内出现在界面上；PRAGMA data_version 很便宜
 
 createInterface({ input: process.stdin }).on('line', (line) => {
   let req: { id: number; method: string; args?: unknown[] }
