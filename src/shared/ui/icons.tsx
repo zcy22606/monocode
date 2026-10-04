@@ -101,6 +101,7 @@ import UndoIcon from "@hugeicons/core-free-icons/UndoIcon";
 import UngroupItemsIcon from "@hugeicons/core-free-icons/UngroupItemsIcon";
 import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WholeWordIcon from "@hugeicons/core-free-icons/WholeWordIcon";
+import ServerStack01Icon from "@hugeicons/core-free-icons/ServerStack01Icon"; // Soloyard
 import Wrench01Icon from "@hugeicons/core-free-icons/Wrench01Icon";
 import { forwardRef, type Ref } from "react";
 
@@ -273,3 +274,4 @@ export const WholeWord = wrap(WholeWordIcon, "WholeWord");
 export const Wrench = wrap(Wrench01Icon, "Wrench");
 export const X = wrap(Cancel01Icon, "X");
 export const Zap = wrap(FlashIcon, "Zap");
+export const Server = wrap(ServerStack01Icon, "Server"); // Soloyard

@@ -99,7 +99,7 @@ const ANSI_LIGHT = {
   brightWhite: "#ffffff",
 };
 
-function terminalTheme(light: boolean) {
+export function terminalTheme(light: boolean) { // Soloyard: exported for the service log view
   return {
     background: "#00000000",
     foreground: cssColor("var(--color-content)", light ? "#2e2e2e" : "#e8eef2"),
@@ -113,7 +113,7 @@ function terminalTheme(light: boolean) {
   };
 }
 
-function monoFont(): string {
+export function monoFont(): string { // Soloyard: exported for the service log view
   const fromCss = getComputedStyle(document.documentElement)
     .getPropertyValue("--font-mono")
     .trim();

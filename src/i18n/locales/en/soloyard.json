@@ -15,7 +15,8 @@
     "evidence": "Evidence",
     "issue": "Issue",
     "doc": "Doc",
-    "decision": "Decision"
+    "decision": "Decision",
+    "service": "Service"
   },
   "placeholder": {
     "project": "Project",
@@ -123,5 +124,47 @@
     "listSeparator": ", ",
     "sentBackComment": "Sent back: {{reason}}",
     "sentBackMessage": "{{ident}} didn't pass review: {{reason}}\n\nPlease fix it, check again, then set the issue back to in_review and comment on what changed."
+  },
+  "services": {
+    "empty": "No services yet. Services that run in this workspace show up here, or use + to add one.",
+    "openInBrowser": "Open http://localhost:{{port}}",
+    "stop": "Stop",
+    "restart": "Restart",
+    "self": "Soloyard",
+    "selfHint": "This is Soloyard itself. Stopping it would close the app.",
+    "uptime": {
+      "s": "{{count}}s",
+      "m": "{{count}}m",
+      "h": "{{count}}h",
+      "d": "{{count}}d"
+    },
+    "log": {
+      "notRunning": "Not running, or not listening on a port yet.",
+      "noLog": "This service writes its output to a terminal outside Soloyard, so its log can't be shown here. Restart it from Soloyard to capture the log."
+    },
+    "title": "Services",
+    "running": "Running",
+    "history": "Recent",
+    "add": "Add service",
+    "addTitle": "Add services",
+    "addDescription": "Added services show up under Recent, ready to start with one click.",
+    "scripts": "Scripts in package.json",
+    "noScripts": "No package.json scripts found in this project.",
+    "added": "Added",
+    "custom": "Custom command",
+    "commandPlaceholder": "Command, e.g. PORT=3000 npm run dev",
+    "dirPlaceholder": "Directory relative to the project (default: project root)",
+    "cancel": "Cancel",
+    "addCount_one": "Add {{count}}",
+    "addCount_other": "Add {{count}}",
+    "start": "Start",
+    "remove": "Remove from history",
+    "neverRun": "Not run yet",
+    "ago": {
+      "s": "{{count}}s ago",
+      "m": "{{count}}m ago",
+      "h": "{{count}}h ago",
+      "d": "{{count}}d ago"
+    }
   }
 }

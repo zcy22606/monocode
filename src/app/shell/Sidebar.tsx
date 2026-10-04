@@ -4,6 +4,7 @@ import {
   Archive,
   Chatting,
   DashboardSquare,
+  Server, // Soloyard
   Check,
   ChevronDown,
   ChevronRight,
@@ -27,6 +28,7 @@ import {
   Zap,
 } from "../../shared/ui/icons";
 import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
+import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import {
   memo,
   useEffect,
@@ -196,6 +198,7 @@ const TAB_LABELS = {
   files: "sidebar.tabs.files",
   changes: "sidebar.tabs.changes",
   project: "sidebar.tabs.project",
+  services: "sidebar.tabs.services",
 } as const satisfies Record<SidebarTab, string>;
 
 const COMPACT_TAB_ICONS: Record<SidebarTab, typeof PanelLeft> = {
@@ -204,6 +207,7 @@ const COMPACT_TAB_ICONS: Record<SidebarTab, typeof PanelLeft> = {
   files: FileScript,
   changes: GitBranch,
   project: DashboardSquare,
+  services: Server, // Soloyard
 };
 
 function projectPathBusy(
@@ -1747,6 +1751,7 @@ function SidebarComponent({
           )}
         </div>
         {tab === "project" ? <ProjectNav cwd={cwd} /> : null}
+        {tab === "services" ? <ServicesNav cwd={cwd} /> : null}
         {tab === "sessions" && cwd && cwd !== "~" ? (
           <div className="flex h-9 shrink-0 items-center gap-1 border-b border-stroke px-2">
             <div className="relative flex h-7 min-w-0 flex-1 items-center">

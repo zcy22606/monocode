@@ -101,7 +101,7 @@ export const SHOW_EXCLUDED_FILES_DEFAULT = false;
 export const SHOW_EXCLUDED_FILES_CHANGE_EVENT =
   "monocode:showexcludedfileschange";
 
-export type SidebarTabId = "files" | "sessions" | "changes" | "inbox" | "project";
+export type SidebarTabId = "files" | "sessions" | "changes" | "inbox" | "project" | "services"; // Soloyard: project, services
 
 const DEFAULT_SIDEBAR_TAB_ORDER: SidebarTabId[] = [
   "sessions",
@@ -109,6 +109,7 @@ const DEFAULT_SIDEBAR_TAB_ORDER: SidebarTabId[] = [
   "inbox",
   "files",
   "changes",
+  "services", // Soloyard
 ];
 
 export const THEME_HUE_MIN = 0;
@@ -721,6 +722,7 @@ function isSidebarTabId(value: unknown): value is SidebarTabId {
     value === "files" ||
     value === "sessions" ||
     value === "project" ||
+    value === "services" || // Soloyard
     value === "changes" ||
     value === "inbox"
   );

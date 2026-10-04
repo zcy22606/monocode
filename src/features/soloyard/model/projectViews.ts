@@ -16,7 +16,9 @@ export type ProjectViewId =
   | "evidence"
   | "issue"
   | "doc"
-  | "decision";
+  | "decision"
+  /** 「服务」分页打开的日志标签，itemId 是「目录 + 命令」（services/history.ts 的 entryKey）。 */
+  | "service";
 
 export type ProjectViewSource = {
   view: ProjectViewId;

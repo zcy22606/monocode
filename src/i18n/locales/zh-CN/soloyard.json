@@ -15,7 +15,8 @@
     "evidence": "证据",
     "issue": "Issue",
     "doc": "文档",
-    "decision": "决策"
+    "decision": "决策",
+    "service": "服务"
   },
   "placeholder": {
     "project": "项目",
@@ -122,5 +123,46 @@
     "listSeparator": "、",
     "sentBackComment": "打回：{{reason}}",
     "sentBackMessage": "{{ident}} 验收没通过：{{reason}}\n\n请修改后重新自查，再把 issue 改回 in_review 并评论说明。"
+  },
+  "services": {
+    "empty": "还没有服务。这个工作区里跑过的服务会出现在这里，也可以点「+」添加。",
+    "openInBrowser": "打开 http://localhost:{{port}}",
+    "stop": "停止",
+    "restart": "重启",
+    "self": "Soloyard",
+    "selfHint": "这是 Soloyard 自己，停掉会关闭应用。",
+    "uptime": {
+      "s": "{{count}} 秒",
+      "m": "{{count}} 分钟",
+      "h": "{{count}} 小时",
+      "d": "{{count}} 天"
+    },
+    "log": {
+      "notRunning": "没有在运行，或者还没开始监听端口。",
+      "noLog": "这个服务的输出在 Soloyard 之外的终端里，这里看不到日志。在 Soloyard 里重启一次，之后的日志就能看到了。"
+    },
+    "title": "服务",
+    "running": "运行中",
+    "history": "最近运行",
+    "add": "添加服务",
+    "addTitle": "添加服务",
+    "addDescription": "添加的服务会出现在「最近运行」里，随时一键启动。",
+    "scripts": "package.json 里的脚本",
+    "noScripts": "这个项目里没找到 package.json 脚本。",
+    "added": "已添加",
+    "custom": "自定义命令",
+    "commandPlaceholder": "命令，比如 PORT=3000 npm run dev",
+    "dirPlaceholder": "相对项目的目录（默认项目根目录）",
+    "cancel": "取消",
+    "addCount_other": "添加 {{count}} 个",
+    "start": "启动",
+    "remove": "从历史中移除",
+    "neverRun": "未运行",
+    "ago": {
+      "s": "{{count}} 秒前",
+      "m": "{{count}} 分钟前",
+      "h": "{{count}} 小时前",
+      "d": "{{count}} 天前"
+    }
   }
 }
