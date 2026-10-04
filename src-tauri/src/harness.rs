@@ -2096,10 +2096,17 @@ fn validate_configured_harness_binary_identity(
     }
 }
 
+/// Like `resolve_claude`, prefers whatever `codex` the user's own shell resolves; the fixed
+/// paths are a fallback for a GUI launch. Trying `~/.local/bin/codex` first picked the ChatGPT
+/// app's wrapper (pinned to an older bundled CLI) over a newer Homebrew/npm install.
 fn resolve_codex() -> Option<PathBuf> {
     let home = dirs_home().map(PathBuf::from);
     let mut candidates: Vec<PathBuf> = Vec::new();
 
+    // Soloyard: shell first (upstream did the same for Claude).
+    if let Some(from_shell) = which_via_login_shell("codex") {
+        candidates.push(from_shell);
+    }
     if let Some(home) = &home {
         candidates.push(home.join(".local/bin/codex"));
         candidates.push(home.join(".bun/bin/codex"));
@@ -2111,9 +2118,6 @@ fn resolve_codex() -> Option<PathBuf> {
     candidates.push(PathBuf::from("/usr/local/bin/codex"));
     candidates.push(PathBuf::from("/usr/bin/codex"));
     candidates.push(PathBuf::from("/snap/bin/codex"));
-    if let Some(from_shell) = which_via_login_shell("codex") {
-        candidates.push(from_shell);
-    }
 
     // Last resort: the Codex app bundles its own CLI, but never puts it on
     // PATH. It is pinned to the app release (often a prerelease), so a real
