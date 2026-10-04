@@ -17,6 +17,7 @@ import {
   type WorkspaceTab,
 } from "./layout";
 import type { ReleaseNotesTabSource } from "../../../app/model/releaseNotes";
+import { sanitizeProjectView } from "../../soloyard/model/projectViews";
 import {
   clampDockSize,
   isDockSide,
@@ -78,12 +79,24 @@ export function collectWorkspaceSnapshot(
   memory: ProjectReturnMemory,
   projectTerminals: ProjectTerminalDock[] = [],
   lastDockSide?: DockSide,
+  keepTab?: (tab: WorkspaceTab) => boolean,
 ): WorkspaceSnapshot {
+  // Tabs left out (another worktree's, say) do not reopen, and neither do
+  // sessions that only they showed.
+  const kept = keepTab ? tabs.filter(keepTab) : tabs;
+  const keptIds = new Set(kept.flatMap((tab) => leafIds(tab.layout)));
+  const droppedIds = new Set(
+    tabs
+      .filter((tab) => !kept.includes(tab))
+      .flatMap((tab) => leafIds(tab.layout))
+      .filter((id) => !keptIds.has(id)),
+  );
   const snapshot = withoutInboxSessions({
-    tabs: withoutAgentTabs(tabs)
+    tabs: withoutAgentTabs(kept)
       .map(sanitizeTab)
       .filter((tab): tab is WorkspaceTab => tab != null),
     sessions: sessions
+      .filter((session) => !droppedIds.has(session.id))
       .map(sessionStub)
       .filter((stub): stub is WorkspaceSessionStub => stub != null),
     activeTabId,
@@ -548,6 +561,7 @@ function sanitizeFile(raw: unknown): FilePaneTab | null {
   if (typeof value.path !== "string" || !value.path) return null;
   if (typeof value.cwd !== "string" || !value.cwd) return null;
   const plan = sanitizePlan(value.plan);
+  const projectView = sanitizeProjectView(value.projectView); // Soloyard
   const hasReleaseNotes = "releaseNotes" in value;
   const releaseNotes = sanitizeReleaseNotes(value.releaseNotes);
   const hasCommit = "commit" in value;
@@ -614,6 +628,7 @@ function sanitizeFile(raw: unknown): FilePaneTab | null {
       : {}),
     ...(plan ? { plan } : {}),
     ...(releaseNotes ? { releaseNotes } : {}),
+    ...(projectView ? { projectView } : {}), // Soloyard
     ...(commit ? { commit } : {}),
     ...(sessionChanges ? { sessionChanges, review: true } : {}),
     ...(value.review === true ? { review: true } : {}),

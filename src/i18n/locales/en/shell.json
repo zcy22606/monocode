@@ -242,7 +242,8 @@
       "noCredit": "No banked resets are available.",
       "alreadyRedeemed": "That reset was already used."
     },
-    "expired": "expired"
+    "expired": "expired",
+    "usedLabel": "{{title}} used"
   },
   "sidebar": {
     "tabs": {
@@ -250,7 +251,8 @@
       "inbox": "Inbox",
       "files": "Explorer",
       "changes": "Changes",
-      "project": "Project"
+      "project": "Project",
+      "services": "Services"
     },
     "remoteChangeOffline": "Connect this project's machine to change its sessions.",
     "updateFailed": "Could not update this session.\n\n{{error}}",

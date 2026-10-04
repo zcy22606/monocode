@@ -19,7 +19,9 @@
     "left": "{{percent}} left",
     "used": "{{percent}} used",
     "window": "{{window}} window",
-    "limitRemaining": "{{title}} limit remaining"
+    "limitRemaining": "{{title}} limit remaining",
+    "full": "Full",
+    "limitUsed": "{{title}} limit used"
   },
   "identity": {
     "personal": "Personal"

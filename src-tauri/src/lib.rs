@@ -16,6 +16,9 @@ mod harness_updates;
 mod history_import; // Soloyard
 mod i18n; // Soloyard
 mod soloyard_bridge; // Soloyard
+mod soloyard_missing_worktree; // Soloyard
+#[cfg(unix)]
+mod soloyard_services; // Soloyard
 mod inbox_media;
 mod jira;
 mod linear;
@@ -262,6 +265,18 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             soloyard_bridge::soloyard_call, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_services_list, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_service_stop, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_service_restart, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_service_start, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_package_scripts, // Soloyard
+            #[cfg(unix)]
+            soloyard_services::soloyard_service_log, // Soloyard
             remote::remote_machines,
             remote::remote_connect,
             remote::remote_disconnect,

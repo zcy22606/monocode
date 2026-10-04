@@ -13,6 +13,7 @@ import type {
 } from "../model/accountUsage";
 import { RefreshCw } from "../../../shared/ui/icons";
 import { i18n, t, useTranslation } from "../../../i18n";
+import { useShowRemainingUsage } from "../../settings/model/displayPrefs";
 
 const STATUS_DOT: Record<AccountStatusTone, string> = {
   ready: "bg-emerald-400",
@@ -149,8 +150,10 @@ export function UsageMeter({
   className?: string;
 }) {
   const { t } = useTranslation("providers");
+  const showRemaining = useShowRemainingUsage();
   const pct = clampUsedPercent(window.usedPercent);
   const remaining = 100 - pct;
+  const shown = showRemaining ? remaining : pct;
   const full = pct >= 100 && (window.resetsAt == null || window.resetsAt > now);
   const reset =
     window.resetsAt == null
@@ -176,20 +179,24 @@ export function UsageMeter({
         <span
           className={`shrink-0 tabular-nums ${full ? "font-medium text-red-400" : "text-content/60"}`}
         >
-          {t("usage.left", { percent: formatUsagePercent(remaining) })}
+          {showRemaining
+            ? t("usage.left", { percent: formatUsagePercent(remaining) })
+            : full
+              ? t("usage.full")
+              : formatUsagePercent(pct)}
         </span>
       </div>
       <div
         className="mt-1.5 h-1 overflow-hidden rounded-full bg-content/10"
         role="progressbar"
-        aria-label={t("usage.limitRemaining", { title })}
+        aria-label={showRemaining ? t("usage.limitRemaining", { title }) : t("usage.limitUsed", { title })}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={Math.round(remaining)}
+        aria-valuenow={Math.round(shown)}
       >
         <span
           className={`block h-full rounded-full transition-[width] duration-300 ${barClass(pct)}`}
-          style={{ width: `${remaining}%` }}
+          style={{ width: `${shown}%` }}
         />
       </div>
     </div>

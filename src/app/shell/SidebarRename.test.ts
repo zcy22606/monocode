@@ -708,7 +708,7 @@ describe("sidebar reorder affordances", () => {
     act(() => render());
 
     const tabs = container.querySelectorAll<HTMLElement>('[role="tab"]');
-    expect(tabs).toHaveLength(4); // Soloyard adds the Project tab
+    expect(tabs).toHaveLength(5); // Soloyard adds the Project and Services tabs
     for (const tab of tabs) {
       expect(tab.className).not.toContain("cursor-grab");
       expect(tab.parentElement?.className).not.toContain("cursor-grab");
@@ -1409,6 +1409,7 @@ describe("collapsed rail Inbox actions", () => {
       "Project",
       "Explorer",
       "Changes",
+      "Services", // Soloyard
       "Search",
       "Inbox",
       "Notes",
@@ -1423,7 +1424,7 @@ describe("collapsed rail Inbox actions", () => {
       Array.from(workspaceTabs.querySelectorAll('[role="tab"]'), (button) =>
         button.getAttribute("aria-label"),
       ),
-    ).toEqual(["Sessions", "Project", "Explorer", "Changes"]);
+    ).toEqual(["Sessions", "Project", "Explorer", "Changes", "Services"]); // Soloyard: + Services
     const sessionsTab = workspaceTabs.querySelector<HTMLButtonElement>(
       '[aria-label="Sessions"]',
     )!;

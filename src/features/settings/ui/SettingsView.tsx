@@ -227,6 +227,12 @@ import {
 } from "../../providers/model/providerAccountIdentity";
 import { ProviderAccountSubtitle } from "../../providers/ui/ProviderAccountSubtitle";
 import {
+  saveMaskEmails,
+  saveShowRemainingUsage,
+  useMaskEmails,
+  useShowRemainingUsage,
+} from "../model/displayPrefs";
+import {
   accountStatus,
   accountUsageKey,
   useProviderAccountUsage,
@@ -3256,6 +3262,8 @@ function ProvidersPage({
     <>
       <ProviderAccountsSettings />
 
+      <UsageDisplaySettings />
+
       <Group
         id="agent-clis"
         title={t("index.agent-clis")}
@@ -3328,6 +3336,38 @@ function ProvidersPage({
         </Row>
       </Group>
     </>
+  );
+}
+
+function UsageDisplaySettings() {
+  const { t } = useTranslation("settings");
+  const showRemainingUsage = useShowRemainingUsage();
+  const maskEmails = useMaskEmails();
+  return (
+    <Group title={t("providers.usagePrivacy")}>
+      <Row
+        id="show-remaining-usage"
+        label={t("index.show-remaining-usage")}
+        description={t("providers.show-remaining-usage")}
+      >
+        <Toggle
+          label={t("index.show-remaining-usage")}
+          on={showRemainingUsage}
+          onChange={saveShowRemainingUsage}
+        />
+      </Row>
+      <Row
+        id="mask-emails"
+        label={t("index.mask-emails")}
+        description={t("providers.mask-emails")}
+      >
+        <Toggle
+          label={t("index.mask-emails")}
+          on={maskEmails}
+          onChange={saveMaskEmails}
+        />
+      </Row>
+    </Group>
   );
 }
 

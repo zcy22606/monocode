@@ -95,12 +95,14 @@ import SparklesIcon from "@hugeicons/core-free-icons/SparklesIcon";
 import SquareIcon from "@hugeicons/core-free-icons/SquareIcon";
 import SquareLock02Icon from "@hugeicons/core-free-icons/SquareLock02Icon";
 import StarIcon from "@hugeicons/core-free-icons/StarIcon";
+import UnfoldMoreIcon from "@hugeicons/core-free-icons/UnfoldMoreIcon";
 import Tick02Icon from "@hugeicons/core-free-icons/Tick02Icon";
 import TickDouble02Icon from "@hugeicons/core-free-icons/TickDouble02Icon";
 import UndoIcon from "@hugeicons/core-free-icons/UndoIcon";
 import UngroupItemsIcon from "@hugeicons/core-free-icons/UngroupItemsIcon";
 import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WholeWordIcon from "@hugeicons/core-free-icons/WholeWordIcon";
+import ServerStack01Icon from "@hugeicons/core-free-icons/ServerStack01Icon"; // Soloyard
 import Wrench01Icon from "@hugeicons/core-free-icons/Wrench01Icon";
 import { forwardRef, type Ref } from "react";
 
@@ -172,6 +174,7 @@ export const ChevronLeft = wrap(ArrowLeft01Icon, "ChevronLeft");
 export const ChevronRight = wrap(ArrowRight01Icon, "ChevronRight");
 export const CornerDownRight = wrap(ArrowTurnForwardIcon, "CornerDownRight");
 export const ChevronUp = wrap(ArrowUp01Icon, "ChevronUp");
+export const ChevronsUpDown = wrap(UnfoldMoreIcon, "ChevronsUpDown");
 export const CircleAlert = wrap(AlertCircleIcon, "CircleAlert");
 export const CircleDashed = wrap(CircleDashedIcon, "CircleDashed");
 export const CircleDot = wrap(CircleDotIcon, "CircleDot");
@@ -273,6 +276,7 @@ export const WholeWord = wrap(WholeWordIcon, "WholeWord");
 export const Wrench = wrap(Wrench01Icon, "Wrench");
 export const X = wrap(Cancel01Icon, "X");
 export const Zap = wrap(FlashIcon, "Zap");
+export const Server = wrap(ServerStack01Icon, "Server"); // Soloyard
 
 // Soloyard: session link kinds (kept in one block at the end to stay clear of upstream edits).
 import Link01Icon from "@hugeicons/core-free-icons/Link01Icon";

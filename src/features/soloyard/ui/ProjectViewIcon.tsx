@@ -6,6 +6,7 @@ import {
   File,
   ListBullet,
   RefreshCw,
+  Server,
   SlidersHorizontal,
   type IconComponent,
 } from "../../../shared/ui/icons";
@@ -24,6 +25,7 @@ export const PROJECT_VIEW_ICONS: Record<ProjectViewId, IconComponent> = {
   features: ListBullet,
   scope: SlidersHorizontal,
   evidence: Eye,
+  service: Server,
 };
 
 export function ProjectViewIcon({ view, className = "size-3.5 shrink-0" }: { view: ProjectViewId; className?: string }) {

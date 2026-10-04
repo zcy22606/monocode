@@ -99,7 +99,9 @@
     "azuredevops": "ADO",
     "jira": "Jira",
     "linear": "Linear",
-    "show-archived": "在侧栏显示已归档"
+    "show-archived": "在侧栏显示已归档",
+    "show-remaining-usage": "显示剩余额度",
+    "mask-emails": "隐藏账号邮箱"
   },
   "keybindings": {
     "command": {
@@ -499,7 +501,10 @@
     "useByDefault": "设为默认",
     "hiddenGlobally": "已全局隐藏",
     "showInPicker": "在选择器中显示",
-    "showInPickerLabel": "在模型选择器中显示 {{provider}}"
+    "showInPickerLabel": "在模型选择器中显示 {{provider}}",
+    "usagePrivacy": "用量与隐私",
+    "show-remaining-usage": "用量条显示每项额度还剩多少，而不是已经用了多少。",
+    "mask-emails": "在设置和用量弹窗里把账号邮箱模糊处理，点一下才显示，截图时不会露出来。"
   },
   "archive": {
     "projects": {

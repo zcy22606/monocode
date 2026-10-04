@@ -16,7 +16,9 @@ export type ProjectViewId =
   | "evidence"
   | "issue"
   | "doc"
-  | "decision";
+  | "decision"
+  /** 「服务」分页打开的日志标签，itemId 是「目录 + 命令」（services/history.ts 的 entryKey）。 */
+  | "service";
 
 export type ProjectViewSource = {
   view: ProjectViewId;
@@ -33,8 +35,7 @@ export const NAV_VIEWS: NavView[] = [
   { id: "cycles", group: "work" },
   { id: "docs", group: "work" },
   { id: "decisions", group: "plan" },
-  { id: "features", group: "plan" },
-  { id: "scope", group: "plan" },
+  // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
   { id: "evidence", group: "plan" },
 ];
 
@@ -69,6 +70,21 @@ export function projectViewFile(request: OpenProjectViewRequest): FilePaneTab {
     path: request.title.split("/").join("∕"),
     cwd: request.cwd,
     projectView: { view: request.view, itemId: request.itemId },
+  };
+}
+
+const VIEW_IDS: readonly ProjectViewId[] = [
+  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service",
+];
+
+/** 恢复标签布局时校验 projectView 字段（底座的快照解析对标签字段走白名单）。不认识的返回 undefined。 */
+export function sanitizeProjectView(raw: unknown): ProjectViewSource | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Record<string, unknown>;
+  if (!VIEW_IDS.includes(value.view as ProjectViewId)) return undefined;
+  return {
+    view: value.view as ProjectViewId,
+    ...(typeof value.itemId === "string" && value.itemId ? { itemId: value.itemId } : {}),
   };
 }
 
