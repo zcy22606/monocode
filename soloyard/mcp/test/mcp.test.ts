@@ -79,3 +79,37 @@ test('MCP：握手、按目录 / worktree 找项目、建 / 改 issue、不许 a
     s.close() // 断言失败也要关掉子进程，否则测试一直等它退出
   }
 })
+
+test('MCP：迭代表、建迭代、建功能、挪功能；不许 agent 标「不做」或挪进已完成的迭代', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app') })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    assert.equal((await s.tool('create_iteration', { project: 'APP', tag: 'v1.0', name: 'MVP' })).data.tag, 'v1.0')
+    await s.tool('create_iteration', { project: 'APP', tag: 'v0.1', before: 'v1.0' })
+    assert.match((await s.tool('create_iteration', { project: 'APP', tag: '1.0' })).error.error, /已经有了/)
+
+    const created = (await s.tool('create_features', { project: 'APP', to: 'v1.0', features: [{ name: '登录' }, { name: '导出' }] })).data
+    assert.deepEqual(created.map((f: any) => f.code), ['F-001', 'F-002'])
+    assert.match((await s.tool('move_features', { project: 'APP', codes: ['F-002'], to: 'cut' })).error.error, /不做/)
+    assert.equal((await s.tool('move_features', { project: 'APP', codes: ['F-002'], to: 'v0.1' })).data.moved, 1)
+
+    const plan = (await s.tool('get_iteration_plan', { project: 'APP' })).data
+    assert.deepEqual(plan.iterations.map((i: any) => [i.tag, i.features]), [['v0.1', 1], ['v1.0', 1]])
+    assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v1.0' })).data.map((f: any) => f.name), ['登录'])
+    assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', moved: true })).data, [], 'agent 建的功能没有 AI 安排，不算挪过')
+
+    // 用户在应用里完成了 v0.1：锁定后 agent 也挪不进去
+    const db2 = openDb(dbPath)
+    const v01 = db2.prepare("SELECT id FROM soloyard_iterations WHERE tag = 'v0.1'").get() as { id: number }
+    db2.prepare("UPDATE soloyard_iterations SET status = 'done' WHERE id = ?").run(v01.id)
+    db2.close()
+    assert.match((await s.tool('move_features', { project: 'APP', codes: ['F-001'], to: 'v0.1' })).error.error, /锁定/)
+  } finally {
+    s.close()
+  }
+})

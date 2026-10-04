@@ -8,6 +8,7 @@
 import { createInterface } from 'node:readline'
 import { openDb } from './db.ts'
 import * as repo from './repo.ts'
+import * as it from './iterations.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -36,6 +37,21 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   sessionContext: { run: (sessionId: string, message?: string) => repo.sessionContext(db, sessionId, message) },
   linkCandidates: { run: (projectId: number, kind: string, q?: string) => repo.linkCandidates(db, projectId, kind, q) },
   findProjectByPath: { run: (p: string) => repo.findProjectByPath(db, p) ?? null },
+  iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
+  createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },
+  updateIteration: { write: true, run: (id: number, patch: Partial<it.IterationInput>) => it.updateIteration(db, actor, id, patch) },
+  moveIteration: { write: true, run: (id: number, beforeId: number | null) => it.moveIteration(db, actor, id, beforeId) },
+  deleteIteration: { write: true, run: (id: number, moveTo: it.Target) => it.deleteIteration(db, actor, id, moveTo) },
+  startIteration: { write: true, run: (id: number, featureIds: number[]) => it.startIteration(db, actor, id, featureIds) },
+  finishIteration: { write: true, run: (id: number, moves: Record<string, it.Target>) => it.finishIteration(db, actor, id, moves) },
+  reopenIteration: { write: true, run: (id: number) => it.reopenIteration(db, actor, id) },
+  generateIterations: { write: true, run: (projectId: number) => it.generateIterations(db, actor, projectId) },
+  moveFeatures: { write: true, run: (ids: number[], target: it.Target) => it.moveFeatures(db, actor, ids, target) },
+  createFeature: { write: true, run: (projectId: number, input: { name: string }, target: it.Target) => it.createFeature(db, actor, projectId, input, target) },
+  renameFeature: { write: true, run: (id: number, name: string) => it.renameFeature(db, actor, id, name) },
+  deleteFeature: { write: true, run: (id: number) => it.deleteFeature(db, actor, id) },
+  createFeatureIssue: { write: true, run: (featureId: number) => it.createFeatureIssue(db, actor, featureId) },
+  revertBatch: { write: true, run: (batch: string) => it.revertBatch(db, actor, batch) },
   undo: { write: true, run: () => repo.undoLast(db, actor) },
   redo: { write: true, run: () => repo.redoLast(db, actor) },
 }

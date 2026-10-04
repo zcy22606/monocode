@@ -75,6 +75,23 @@ const MIGRATIONS: string[] = [
   CREATE INDEX soloyard_changes_entity ON soloyard_changes(entity, entity_id);
   CREATE INDEX soloyard_session_links_target ON soloyard_session_links(kind, target);
   `,
+  // 迭代 = 带版本号的规划表（功能全景 + 减法 + 迭代合一）。tag 是版本号（v1.0）；version 列照例是乐观锁。
+  // 功能不在任何迭代时落在 bucket：pending 待定 / split 另立项 / cut 不做；迭代被删（SET NULL）就自然回到 bucket。
+  // ai_plan = AI 原本的安排（版本号或 bucket），界面据此标「AI：v1.0」。
+  `
+  CREATE TABLE soloyard_iterations (
+    id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES soloyard_projects(id) ON DELETE CASCADE,
+    tag TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', goal TEXT NOT NULL DEFAULT '', target_date TEXT,
+    status TEXT NOT NULL DEFAULT 'planned', sort REAL NOT NULL DEFAULT 0, summary_json TEXT, started_at TEXT, completed_at TEXT,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1);
+  ALTER TABLE soloyard_features ADD COLUMN iteration_id INTEGER REFERENCES soloyard_iterations(id) ON DELETE SET NULL;
+  ALTER TABLE soloyard_features ADD COLUMN bucket TEXT NOT NULL DEFAULT 'pending';
+  ALTER TABLE soloyard_features ADD COLUMN ai_plan TEXT;
+  ALTER TABLE soloyard_features ADD COLUMN sort REAL NOT NULL DEFAULT 0;
+  ALTER TABLE soloyard_issues ADD COLUMN iteration_id INTEGER REFERENCES soloyard_iterations(id) ON DELETE SET NULL;
+  CREATE INDEX soloyard_iterations_project ON soloyard_iterations(project_id, sort);
+  CREATE INDEX soloyard_features_iteration ON soloyard_features(project_id, iteration_id);
+  `,
 ]
 
 export function openDb(path: string): DB {

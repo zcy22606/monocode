@@ -14,10 +14,14 @@ const T = (entity: string) => `soloyard_${entity}`
 /** 每个实体允许 update 改的列；不在表里的键一律忽略，防止 agent 改 id / version。 */
 const WRITABLE: Record<string, string[]> = {
   projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json'],
-  issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'sort_key', 'completed_at'],
+  issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at'],
   acceptance: ['text', 'done', 'sort'],
+  iterations: ['tag', 'name', 'goal', 'target_date', 'status', 'sort', 'summary_json', 'started_at', 'completed_at'],
+  features: ['name', 'backbone', 'module', 'layer', 'level', 'tier', 'data_json', 'iteration_id', 'bucket', 'sort', 'ai_plan'],
+  documents: ['kind', 'title', 'body_md', 'blocks_json'],
+  decisions: ['title', 'door', 'status', 'data_json'],
 }
-const VERSIONED = new Set(['projects', 'ideas', 'documents', 'decisions', 'features', 'milestones', 'cycles', 'issues'])
+const VERSIONED = new Set(['projects', 'ideas', 'documents', 'decisions', 'features', 'milestones', 'cycles', 'issues', 'iterations'])
 
 export const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'] as const
 
@@ -152,7 +156,7 @@ export function projectForPath(db: DB, path: string): Row {
 
 export type NewIssue = {
   title: string; body_md?: string; status?: string; priority?: number; labels?: string[]; due_date?: string
-  cycle_id?: number; milestone_id?: number; parent_id?: number; feature_id?: number; acceptance?: string[]; blocked_by?: number[]
+  cycle_id?: number; milestone_id?: number; parent_id?: number; feature_id?: number; iteration_id?: number; acceptance?: string[]; blocked_by?: number[]
 }
 
 export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue, batch?: string) {
@@ -162,7 +166,7 @@ export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue
     const id = insert(db, actor, 'issues', {
       project_id: projectId, number: p.issue_seq, title: i.title, body_md: i.body_md ?? '', status: i.status ?? 'backlog',
       priority: i.priority ?? 0, labels: JSON.stringify(i.labels ?? []), due_date: i.due_date ?? null, cycle_id: i.cycle_id ?? null,
-      milestone_id: i.milestone_id ?? null, parent_id: i.parent_id ?? null, feature_id: i.feature_id ?? null, sort_key: Date.now(),
+      milestone_id: i.milestone_id ?? null, parent_id: i.parent_id ?? null, feature_id: i.feature_id ?? null, iteration_id: i.iteration_id ?? null, sort_key: Date.now(),
     }, batch)
     i.acceptance?.forEach((text, sort) => insert(db, actor, 'acceptance', { issue_id: id, text, sort }, batch))
     for (const b of i.blocked_by ?? []) db.prepare('INSERT OR IGNORE INTO soloyard_issue_deps (issue_id, blocked_by_id) VALUES (?, ?)').run(id, b)

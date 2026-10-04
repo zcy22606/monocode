@@ -40,6 +40,7 @@
 - **数据**：`soloyard/core/`（Node，零依赖，`node:sqlite`）是唯一的数据实现，表在 `monocode.db` 里、`soloyard_` 前缀、迁移记在 `soloyard_migrations`。
   - 界面经 `src-tauri/src/soloyard_bridge.rs` 拉起常驻的 `soloyard/core/src/sidecar.ts`，前端用 `src/features/soloyard/data/api.ts`（`useSoloyard` / `mutateSoloyard`），我们的数据变了会收到 `soloyard:changed` 自动刷新。
   - agent 经 `soloyard/mcp/server.ts`（零依赖 stdio MCP）读写同一个库；`soloyard/core/src/import-legacy.ts` 是原型库的一次性导入。
+- **迭代**（功能全景 + 减法 + 迭代合一）：带版本号的规划表，功能在某个迭代或待定 / 另立项 / 不做（`soloyard_iterations`、`soloyard_features.iteration_id / bucket / ai_plan`，逻辑在 `soloyard/core/src/iterations.ts`）。开始迭代时给勾选的功能各建一个 issue（issue 跟着功能走），完成时处理没做完的功能并锁定；删除 / 开始 / 完成 / 生成返回 batch，界面按 batch 整批撤销。agent 经 MCP 只能看、建迭代、建 / 挪功能，不能开始 / 完成 / 删除迭代或标「不做」。
 - **Issues**：列表 / 看板、视图配置和筛选（`model/issueView.ts` 的字段注册表——加新维度只注册一个字段）、行内新建、详情标签、Start work（开新会话，开工提示词填进输入框，模型 / 工作区由用户选）、验收（Accept / Send back）。
 - **会话关联**（SOL-5）：输入框顶栏分支后面的关联按钮（`ui/session/SessionLinks.tsx`），可挂文件夹、文件、issue、文档、功能、决策，存在 `soloyard_session_links`。按需注入：关联对象进输入框的 @ 候选（`model/sessionMentions.ts`，写法 `@link/SOL-5`），发送时只把 @ 到的内容附成 `<soloyard_context>`（`model/sessionContext.ts`）；关联的文件夹自动给 Claude 加 `--add-dir`、给 Codex 加 `writableRoots`。上游挂载：`Composer.tsx`（顶栏插槽 + @ 候选）、`SessionPane.tsx`、`App.tsx`、`claude.ts`、`codex.ts`。
 - 请底座做事（开会话、切会话、发消息、开标签）一律用窗口事件（`model/appActions.ts`、`model/projectViews.ts`），App.tsx 里各只有一个监听。
