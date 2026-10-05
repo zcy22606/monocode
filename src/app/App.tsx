@@ -56,7 +56,7 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { onOpenProjectView, projectViewFile } from "../features/soloyard/model/projectViews";
+import { onOpenProjectView, projectViewFile, setActiveProjectView } from "../features/soloyard/model/projectViews";
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { listen } from "@tauri-apps/api/event";
@@ -1607,6 +1607,8 @@ function Workspace({
   }, [activeSkillCwd, active?.id, active?.harness]);
 
   const activeFile = activeTab ? focusedFileTab(activeTab) : undefined;
+  // Soloyard: highlight the Project sidebar item for the focused project-view tab.
+  useEffect(() => setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView), [activeFile]);
   const sidebarCwd =
     activeFile?.projectCwd ?? activeFile?.cwd ?? active?.cwd ?? projectCwd;
   const sidebarCwdRef = useRef(sidebarCwd);

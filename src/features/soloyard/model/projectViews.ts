@@ -2,6 +2,7 @@
  * Soloyard：侧栏「Project」分页里的竖排视图，点一项在右边开成顶层标签（同一项只开一个）。
  * 现在只有布局和交互，内容是占位，等交互确认后再接数据。
  */
+import { useSyncExternalStore } from "react";
 import { t } from "../../../i18n";
 import type { FilePaneTab } from "../../workspace/model/layout";
 
@@ -38,6 +39,30 @@ export const NAV_VIEWS: NavView[] = [
   // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
   { id: "evidence", group: "plan" },
 ];
+
+/** 详情 / 旧标签在侧栏里归到哪一项（issue 详情 → Issues，旧的功能全景 / 减法 → 迭代……）。 */
+const NAV_OF: Partial<Record<ProjectViewId, ProjectViewId>> = { issue: "issues", doc: "docs", decision: "decisions", features: "cycles", scope: "cycles" };
+
+/**
+ * 当前聚焦的标签是哪个项目视图：App 在活动标签变化时写入，侧栏「Project」分页据此高亮（和会话列表高亮当前会话一样）。
+ * 放模块里而不是层层传 props，上游的 App / Sidebar 只多一行。
+ */
+let activeView: { cwd: string; nav: ProjectViewId } | null = null;
+const activeListeners = new Set<() => void>();
+export function setActiveProjectView(cwd: string | undefined, source: ProjectViewSource | undefined) {
+  const next = cwd && source ? { cwd: cwd.replace(/\/+$/, ""), nav: NAV_OF[source.view] ?? source.view } : null;
+  if (next?.cwd === activeView?.cwd && next?.nav === activeView?.nav) return;
+  activeView = next;
+  activeListeners.forEach((l) => l());
+}
+/** 这个目录下当前高亮的侧栏项；不是这个目录、或当前不是项目视图时为 null。 */
+export function useActiveProjectNav(cwd: string): ProjectViewId | null {
+  const view = useSyncExternalStore(
+    (l) => (activeListeners.add(l), () => activeListeners.delete(l)),
+    () => activeView,
+  );
+  return view && view.cwd === cwd.replace(/\/+$/, "") ? view.nav : null;
+}
 
 /** 渲染时调用，跟着当前语言走。 */
 export const viewLabel = (view: ProjectViewId) => t(`soloyard:view.${view}`);
