@@ -23,6 +23,7 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
+- 给迭代里的功能建 issue 用 create_feature_issues（按功能编号，一个功能一个 issue），迭代表才会显示完成；create_issues 建的是不挂功能的 issue。
 - 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。
   开始 / 完成 / 删除迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
@@ -74,6 +75,15 @@ function agentTarget(projectId: number, to: string): iter.Target {
   if (to === 'cut') throw new Error('不能由 agent 把功能标成「不做」：这是用户的减法决定，可以挪到 pending 待定并说明理由')
   if (to === 'pending' || to === 'split') return to
   return iterationByTag(projectId, to).id
+}
+/** 功能编号 → id，找不到就报错。 */
+function featureIds(projectId: number, codes: string[]) {
+  const byCode = new Map(iter.iterationPlan(db, projectId).features.map((f) => [f.code, f.id]))
+  return codes.map((c) => {
+    const id = byCode.get(c)
+    if (id == null) throw new Error(`找不到功能 ${c}（用 get_iteration_plan 查编号）`)
+    return id
+  })
 }
 const featureBrief = (f: Json) => ({ code: f.code, name: f.name, level: f.level ?? undefined, issue: f.issue_ident ? `${f.issue_ident} (${f.issue_status})` : undefined })
 
@@ -183,14 +193,23 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     } },
     run: ({ project: ref, codes, to }) => {
       const pid = project(ref).id
-      const byCode = new Map(iter.iterationPlan(db, pid).features.map((f) => [f.code, f.id]))
-      const ids = (codes as string[]).map((c) => {
-        const id = byCode.get(c)
-        if (id == null) throw new Error(`找不到功能 ${c}`)
-        return id
-      })
+      const ids = featureIds(pid, codes)
       iter.moveFeatures(db, actor, ids, agentTarget(pid, to))
       return { moved: ids.length, to }
+    },
+  },
+  {
+    name: 'create_feature_issues', description: '按功能编号给功能建 issue（迭代表靠功能的 issue 显示完成）。一个功能只有一个 issue：已经有了就返回现有的（existing=true），不重复建。issue 跟着功能所在的迭代走。一次事务。',
+    inputSchema: { type: 'object', required: ['project', 'codes'], properties: {
+      project: projectRef, codes: { type: 'array', items: { type: 'string' }, description: '功能编号，如 ACCT-001' },
+    } },
+    run: ({ project: ref, codes }) => {
+      const pid = project(ref).id
+      return tx(db, () => featureIds(pid, codes).map((fid, i) => {
+        const existing = !!db.prepare('SELECT 1 FROM soloyard_issues WHERE feature_id = ?').get(fid)
+        const { ident, title, status } = repo.getIssue(db, iter.createFeatureIssue(db, actor, fid))!
+        return { feature: codes[i], ident, title, status, existing }
+      }))
     },
   },
   {

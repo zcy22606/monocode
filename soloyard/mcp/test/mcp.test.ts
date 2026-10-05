@@ -114,6 +114,36 @@ test('MCP：迭代表、建迭代、建功能、挪功能；不许 agent 标「�
   }
 })
 
+test('MCP：按功能编号建 issue，迭代表显示它的状态；已有就返回现有的；编号不存在报错', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app') })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    await s.tool('create_iteration', { project: 'APP', tag: 'v1.0' })
+    await s.tool('create_features', { project: 'APP', to: 'v1.0', features: [{ name: '登录' }, { name: '导出' }] })
+
+    const first = (await s.tool('create_feature_issues', { project: 'APP', codes: ['F-001'] })).data
+    assert.deepEqual(first, [{ feature: 'F-001', ident: 'APP-1', title: '登录', status: 'todo', existing: false }])
+    await s.tool('update_issue', { issue: 'APP-1', status: 'in_review' })
+    const again = (await s.tool('create_feature_issues', { project: 'APP', codes: ['F-001', 'F-002'] })).data
+    assert.deepEqual(again.map((i: any) => [i.feature, i.ident, i.existing]), [['F-001', 'APP-1', true], ['F-002', 'APP-2', false]])
+
+    const v1 = (await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v1.0' })).data
+    assert.deepEqual(v1.map((f: any) => [f.code, f.issue]), [['F-001', 'APP-1 (in_review)'], ['F-002', 'APP-2 (todo)']])
+    const listed = (await s.tool('list_issues', { project: 'APP' })).data
+    assert.equal(listed.length, 2, '挂在迭代功能上的 issue 出现在 Issues 列表里')
+
+    assert.match((await s.tool('create_feature_issues', { project: 'APP', codes: ['F-002', 'NOPE-9'] })).error.error, /找不到功能 NOPE-9/)
+    assert.equal((await s.tool('list_issues', { project: 'APP' })).data.length, 2, '报错时整批不建')
+  } finally {
+    s.close()
+  }
+})
+
 test('agent 经 MCP 建的 issue，界面的数据进程 1 秒内广播 changed', async (t) => {
   const dir = mkdtempSync(join(tmpdir(), 'soloyard-live-'))
   const file = join(dir, 'monocode.db')
