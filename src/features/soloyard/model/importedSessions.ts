@@ -10,6 +10,7 @@ export function useImportedSessions(onImported: (ids: string[]) => void) {
     const unlisten = listen<string[]>("soloyard:sessions-imported", ({ payload }) =>
       latest.current(payload),
     );
-    return () => void unlisten.then((fn) => fn());
+    unlisten.catch(() => undefined); // 测试环境没有 Tauri
+    return () => void unlisten.then((fn) => fn(), () => undefined);
   }, []);
 }

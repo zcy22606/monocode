@@ -18,6 +18,7 @@ mod i18n; // Soloyard
 mod soloyard_agents; // Soloyard
 mod soloyard_bridge; // Soloyard
 mod soloyard_missing_worktree; // Soloyard
+mod soloyard_project_repos; // Soloyard
 #[cfg(unix)]
 mod soloyard_services; // Soloyard
 mod inbox_media;

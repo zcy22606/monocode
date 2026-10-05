@@ -37,7 +37,9 @@ let listening = false;
 function listenForChanges() {
   if (listening) return;
   listening = true;
-  void listen("soloyard:changed", refreshSoloyard);
+  listen("soloyard:changed", refreshSoloyard).catch(() => {
+    listening = false; // 测试环境没有 Tauri
+  });
 }
 
 /** 写操作：写完立刻刷新（数据进程也会广播，这里先刷让界面不等那一秒）。 */

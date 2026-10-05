@@ -17,7 +17,8 @@
     "doc": "文档",
     "decision": "决策",
     "service": "服务",
-    "brainstorm": "头脑风暴"
+    "brainstorm": "头脑风暴",
+    "repos": "仓库"
   },
   "placeholder": {
     "project": "项目",
@@ -404,6 +405,64 @@
       "action": "删除",
       "title": "删除「{{title}}」",
       "body": "会话和工作文件夹 {{folder}} 里的所有文件会一起删除，删除后不能恢复。"
+    }
+  },
+  "repos": {
+    "intro": "这个项目由哪些仓库组成。每个新会话都会带上它们的位置和说明（项目地图），并能读写所有仓库，不用再自己交代。",
+    "root": "根目录",
+    "rootIsRepo": "git 仓库",
+    "rootNotRepo": "不是 git 仓库",
+    "rootHint": "在根目录开的会话能改所有仓库，适合联调、排查跨仓库的问题。",
+    "members": "成员仓库",
+    "addFolder": "添加文件夹…",
+    "pickFolders": "把仓库加入这个项目",
+    "empty": "还没有成员仓库。加入下面扫描到的，或者放在别处的文件夹（比如白标前端）。",
+    "worktreeHint": "工作树自动归到它所属的仓库下。",
+    "found": "根目录下还没加入的仓库",
+    "addAll": "全部加入",
+    "add": "加入",
+    "remove": "移出项目",
+    "descriptionPlaceholder": "一句话说明它是干什么的",
+    "worktreeCount_other": "{{count}} 个工作树",
+    "instructions": "项目说明",
+    "instructionsHint": "每个会话都会带上",
+    "instructionsPlaceholder": "agent 每次都该知道的：仓库之间的关系、约定、雷区。仓库自己的规矩照旧写在各仓库的 CLAUDE.md / AGENTS.md 里。",
+    "map": {
+      "title": "项目地图",
+      "hint": "会话启动时作为系统提示交给 agent",
+      "edit": "编辑",
+      "previewHint": "在根目录开的新会话会收到这些。",
+      "empty": "加入仓库或写项目说明后，这里会显示出来。"
+    },
+    "where": {
+      "title": "在哪干活",
+      "root": "项目根目录",
+      "rootHint": "{{root}} · 跨仓库，所有仓库都能改",
+      "inRepo": "在一个仓库里",
+      "direct": "直接在 {{name}} 里",
+      "newWorktree": "新建工作树",
+      "newWorktreeHint": "从 {{branch}} 开新分支，发第一条消息时创建",
+      "worktrees": "已有的工作树",
+      "locked": "会话开始时定下，不能再改"
+    },
+    "count_other": "{{count}} 个仓库",
+    "chips": {
+      "all": "全部",
+      "root": "根目录"
+    },
+    "draft_other": "让 agent 起草 {{count}} 个说明",
+    "drafting": "agent 正在读 README…",
+    "draftHint": "agent 读每个仓库的 README 和最近的提交来起草，起草完可以直接改。",
+    "merge": {
+      "banner": "{{parent}} 里还有 {{count}} 个仓库：{{names}}。合成一个项目后，会话放在一起看，新会话也会自动知道这些仓库。",
+      "action": "合成 {{name}} 项目",
+      "later": "以后再说",
+      "title": "合成 {{name}} 项目",
+      "description": "根目录 {{parent}}。勾选的仓库成为这个项目的成员。",
+      "current": "当前项目",
+      "addOther": "添加其他文件夹…",
+      "note": "现有的会话和 issue 原样保留；这些仓库里以前单独列出的会话也会归进来。",
+      "confirm_other": "合成项目（{{count}} 个仓库）"
     }
   }
 }

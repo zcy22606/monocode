@@ -21,7 +21,9 @@ export type ProjectViewId =
   /** 「服务」分页打开的日志标签，itemId 是「目录 + 命令」（services/history.ts 的 entryKey）。 */
   | "service"
   /** 头脑风暴：不属于任何项目，侧栏收件箱下面进入。 */
-  | "brainstorm";
+  | "brainstorm"
+  /** 项目由哪些仓库组成、项目说明、项目地图预览。 */
+  | "repos";
 
 export type ProjectViewSource = {
   view: ProjectViewId;
@@ -37,6 +39,7 @@ export const NAV_VIEWS: NavView[] = [
   { id: "issues", group: "work" },
   { id: "cycles", group: "work" },
   { id: "docs", group: "work" },
+  { id: "repos", group: "work" },
   { id: "decisions", group: "plan" },
   // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
   { id: "evidence", group: "plan" },
@@ -106,7 +109,7 @@ export function projectViewFile(request: OpenProjectViewRequest): FilePaneTab {
 }
 
 const VIEW_IDS: readonly ProjectViewId[] = [
-  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service", "brainstorm",
+  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service", "brainstorm", "repos",
 ];
 
 /** 恢复标签布局时校验 projectView 字段（底座的快照解析对标签字段走白名单）。不认识的返回 undefined。 */

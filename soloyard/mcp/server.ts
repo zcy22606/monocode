@@ -12,6 +12,7 @@ import { createInterface } from 'node:readline'
 import { openDb, tx } from '../core/src/db.ts'
 import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
+import { projectRepos } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
@@ -97,7 +98,9 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef } },
     run: ({ project: ref }) => {
       const p = project(ref)
-      return { ...p, open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
+      const root = (db.prepare('SELECT path FROM soloyard_project_paths WHERE project_id = ? ORDER BY length(path) LIMIT 1').get(p.id) as { path?: string } | undefined)?.path
+      const repos = root ? projectRepos(db, root)?.repos.map(({ name, path, description, branch }) => ({ name, path, description, branch })) ?? [] : []
+      return { ...p, ...(repos.length ? { root, repos } : {}), open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
     },
   },
   {

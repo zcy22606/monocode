@@ -22,6 +22,8 @@ import { SessionLinksButton } from "../../soloyard/ui/session/SessionLinks"; // 
 import { useSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
 import { useIsBrainstormCwd } from "../../soloyard/model/brainstorm"; // Soloyard
 import { BrainstormFolderChip } from "../../soloyard/ui/brainstorm/BrainstormFolderChip"; // Soloyard
+import { ProjectMapChip, WorkDirChip } from "../../soloyard/ui/session/WorkDirChip"; // Soloyard
+import { useIsMultiRepo } from "../../soloyard/model/repos"; // Soloyard
 import { SessionReview } from "./SessionReview";
 import { PromptOutline } from "./PromptOutline";
 import {
@@ -332,6 +334,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
   const soloyardLinks = !remoteSession && !session.inboxAsk; // Soloyard
   const soloyardMentions = useSoloyardMentions(session.id); // Soloyard
   const brainstorm = useIsBrainstormCwd(session.cwd); // Soloyard: brainstorm sessions show their workspace folder instead of project / checkout / branch
+  const multiRepo = useIsMultiRepo(session.cwd); // Soloyard: multi-repo projects pick root / repo / worktree in their own chip
   const isEmpty = session.blocks.length === 0;
   const recallLastTurnRef = useRef<(() => void) | null>(null);
   const remote = remoteSession;
@@ -560,6 +563,8 @@ const LocalSessionPane = memo(function LocalSessionPane({
         soloyardLinks ? ( // Soloyard
           <>
             {brainstorm ? <BrainstormFolderChip sessionId={session.id} cwd={session.cwd} title={session.title} harness={session.harness} locked={!isEmpty} /> : null}
+            {multiRepo ? <WorkDirChip sessionId={session.id} cwd={session.cwd} workCwd={session.worktreeCwd} newWorktree={session.workspaceMode === "worktree"} locked={!isEmpty} /> : null}
+            <ProjectMapChip cwd={session.cwd} workCwd={session.worktreeCwd} />
             <SessionLinksButton sessionId={session.id} cwd={session.cwd} onOpenFile={onOpenFile} />
           </>
         ) : undefined
@@ -589,7 +594,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
         brainstorm || // Soloyard
         (hideProjectPicker ? !showDeckProjectPicker : false)
       }
-      hideBranchPicker={!!session.inboxAsk || managed || brainstorm /* Soloyard */}
+      hideBranchPicker={!!session.inboxAsk || managed || brainstorm || multiRepo /* Soloyard */}
       hideTopBar={!!session.inboxAsk}
       context={session.context}
       quoteRequest={quoteRequest}

@@ -5,7 +5,7 @@ import {
   parseCodexRateLimits,
 } from "../../../../features/providers/model/rateLimits";
 import type { RuntimeMode } from "../../../../features/sessions/model/session";
-import { withSoloyardWritableRoots } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
+import { soloyardCodexInstructions, withSoloyardWritableRoots } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
 import { questionPromptTitle, type UserQuestionReply } from "../../../../features/sessions/model/userQuestion";
 import {
   killChild,
@@ -562,6 +562,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
               model,
               serviceTier,
             }),
+            ...soloyardCodexInstructions(input.sessionId), // Soloyard: 项目地图
           },
         );
         threadId = opened.thread?.id ?? resume.threadId;
@@ -575,13 +576,16 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
     if (!threadId) {
       const opened = await rpc.request<{ thread?: { id?: string } }>(
         "thread/start",
-        buildThreadStartParams({
-          cwd: input.cwd,
-          runtimeMode: input.runtimeMode,
-          controlsAgents: input.controlsAgents,
-          model,
-          serviceTier,
-        }),
+        {
+          ...buildThreadStartParams({
+            cwd: input.cwd,
+            runtimeMode: input.runtimeMode,
+            controlsAgents: input.controlsAgents,
+            model,
+            serviceTier,
+          }),
+          ...soloyardCodexInstructions(input.sessionId), // Soloyard: 项目地图
+        },
       );
       threadId = opened.thread?.id?.trim();
     }
