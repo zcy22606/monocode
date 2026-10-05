@@ -20,6 +20,8 @@ import { DiscussionEmpty } from "./DiscussionEmpty";
 import { LinkedWorkItemUpdateNotice } from "../../inbox/ui/LinkedWorkItemUpdateNotice";
 import { SessionLinksButton } from "../../soloyard/ui/session/SessionLinks"; // Soloyard
 import { useSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
+import { useIsBrainstormCwd } from "../../soloyard/model/brainstorm"; // Soloyard
+import { BrainstormFolderChip } from "../../soloyard/ui/brainstorm/BrainstormFolderChip"; // Soloyard
 import { SessionReview } from "./SessionReview";
 import { PromptOutline } from "./PromptOutline";
 import {
@@ -329,6 +331,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
   const title = sessionDisplayTitle(session.title, session.harness);
   const soloyardLinks = !remoteSession && !session.inboxAsk; // Soloyard
   const soloyardMentions = useSoloyardMentions(session.id); // Soloyard
+  const brainstorm = useIsBrainstormCwd(session.cwd); // Soloyard: brainstorm sessions show their workspace folder instead of project / checkout / branch
   const isEmpty = session.blocks.length === 0;
   const recallLastTurnRef = useRef<(() => void) | null>(null);
   const remote = remoteSession;
@@ -555,7 +558,10 @@ const LocalSessionPane = memo(function LocalSessionPane({
     <Composer
       soloyardLinks={
         soloyardLinks ? ( // Soloyard
-          <SessionLinksButton sessionId={session.id} cwd={session.cwd} onOpenFile={onOpenFile} />
+          <>
+            {brainstorm ? <BrainstormFolderChip sessionId={session.id} cwd={session.cwd} title={session.title} harness={session.harness} locked={!isEmpty} /> : null}
+            <SessionLinksButton sessionId={session.id} cwd={session.cwd} onOpenFile={onOpenFile} />
+          </>
         ) : undefined
       }
       soloyardMentions={soloyardMentions}
@@ -580,9 +586,10 @@ const LocalSessionPane = memo(function LocalSessionPane({
       recents={recents}
       hideProjectPicker={
         !!session.inboxAsk ||
+        brainstorm || // Soloyard
         (hideProjectPicker ? !showDeckProjectPicker : false)
       }
-      hideBranchPicker={!!session.inboxAsk || managed}
+      hideBranchPicker={!!session.inboxAsk || managed || brainstorm /* Soloyard */}
       hideTopBar={!!session.inboxAsk}
       context={session.context}
       quoteRequest={quoteRequest}

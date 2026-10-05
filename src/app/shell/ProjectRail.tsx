@@ -70,6 +70,7 @@ import { LiveAgentsPreview } from "../../features/sessions/ui/LiveAgentsPreview"
 import { ProjectLogoIcon } from "../../features/projects/ui/ProjectLogoIcon";
 import { ProjectMascot } from "../../features/projects/ui/ProjectMascot";
 import { RailAction, RailSearch } from "./RailAction";
+import { BrainstormRailAction } from "../../features/soloyard/ui/brainstorm/BrainstormRailAction"; // Soloyard
 import { DevModeSlot, TabVisitNav } from "./TitleBar";
 import { SidebarUpdateFooter } from "./SidebarUpdate";
 import type { InstalledUpdate } from "../model/updateNotice";
@@ -387,6 +388,8 @@ export function ProjectRail({
               dot={inboxUnseen}
               ariaLabel={inboxUnseen ? t("common.inboxNew") : t("common.inbox")}
             />
+            {/* Soloyard: brainstorm sessions live in the app's own workspace, not in a project. */}
+            <BrainstormRailAction />
             {notesEnabled ? (
               <RailAction
                 label={t("common.notes")}

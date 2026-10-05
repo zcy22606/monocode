@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Server,
   SlidersHorizontal,
+  Sparkles,
   type IconComponent,
 } from "../../../shared/ui/icons";
 import type { ProjectViewId } from "../model/projectViews";
@@ -26,6 +27,7 @@ export const PROJECT_VIEW_ICONS: Record<ProjectViewId, IconComponent> = {
   scope: SlidersHorizontal,
   evidence: Eye,
   service: Server,
+  brainstorm: Sparkles,
 };
 
 export function ProjectViewIcon({ view, className = "size-3.5 shrink-0" }: { view: ProjectViewId; className?: string }) {

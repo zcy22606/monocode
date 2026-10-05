@@ -56,7 +56,8 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { onOpenProjectView, projectViewFile, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { BRAINSTORM_CWD, onOpenProjectView, projectViewFile, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { listen } from "@tauri-apps/api/event";
@@ -1607,10 +1608,18 @@ function Workspace({
   }, [activeSkillCwd, active?.id, active?.harness]);
 
   const activeFile = activeTab ? focusedFileTab(activeTab) : undefined;
+  // Soloyard: a brainstorm session isn't a project; the sidebar stays on the current project.
+  const brainstormActive = !activeFile && isBrainstormCwd(active?.cwd);
   // Soloyard: highlight the Project sidebar item for the focused project-view tab.
-  useEffect(() => setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView), [activeFile]);
+  useEffect(
+    () =>
+      brainstormActive
+        ? setActiveProjectView(BRAINSTORM_CWD, { view: "brainstorm" })
+        : setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView),
+    [activeFile, brainstormActive],
+  );
   const sidebarCwd =
-    activeFile?.projectCwd ?? activeFile?.cwd ?? active?.cwd ?? projectCwd;
+    activeFile?.projectCwd ?? activeFile?.cwd ?? (brainstormActive ? undefined : active?.cwd) ?? projectCwd;
   const sidebarCwdRef = useRef(sidebarCwd);
   sidebarCwdRef.current = sidebarCwd;
   const [sidebarTabSelection, setSidebarTabSelection] = useState<{
@@ -7502,8 +7511,25 @@ function Workspace({
           // Open (and hydrate) the session first, then submit into it.
           void onSelectHistorySession(sessionId).then(() => submitSessionRef.current(sessionId, text, []));
         },
+        // Retarget a conversation in place (brainstorm folder rename / promote to project). The provider
+        // resumes by session id from the new directory, so only the live harness process is dropped.
+        moveSession: ({ sessionId, cwd }) => {
+          const session = sessionsRef.current.find((s) => s.id === sessionId);
+          if (!session) return "session not open";
+          if (session.busy) return "busy";
+          for (const harness of sessionChildHarnesses(session)) void forgetHarnessSession(harness, sessionId);
+          setSessions((prev) =>
+            prev.map((s) => (s.id === sessionId ? { ...s, cwd, branch: undefined, worktreeCwd: undefined, worktreeRemoved: undefined } : s)),
+          );
+          if (!isBrainstormCwd(cwd)) {
+            setProjectCwd(cwd);
+            setRecents(rememberProject(cwd));
+          }
+          return undefined;
+        },
+        deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),
       }),
-    [appendTab, onSelectHistorySession, sessionDefaults?.runtimeMode],
+    [appendTab, onSelectHistorySession, onRemoveHistorySession, sessionDefaults?.runtimeMode],
   );
   const saveDraftRef = useRef(onSaveDraft);
   saveDraftRef.current = onSaveDraft;

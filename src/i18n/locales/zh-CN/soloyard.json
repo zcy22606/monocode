@@ -16,7 +16,8 @@
     "issue": "Issue",
     "doc": "文档",
     "decision": "决策",
-    "service": "服务"
+    "service": "服务",
+    "brainstorm": "头脑风暴"
   },
   "placeholder": {
     "project": "项目",
@@ -345,5 +346,48 @@
     "legacyDescription": "原型留下的，指向原型。清理会移除下面的 MCP 服务、技能软链和 SessionStart 钩子（钩子文件先备份为 *.soloyard.bak）。",
     "legacyMcp": "{{agent}} 里的 indie-desk MCP",
     "legacyCleanup": "清理"
+  },
+  "brainstorm": {
+    "start": "开始新的头脑风暴",
+    "untitled": "新的头脑风暴（还没聊）",
+    "prompt": "我们来头脑风暴。先陪我把想法聊透：问清楚给谁用、他们现在怎么解决、为什么会换，不急着下结论。\n聊出值得做的方向时，把它整理成想法卡（一句话、给谁、解决什么、和现有做法比好在哪）存到当前文件夹。\n要查竞品或用户声音时先问我要不要查。我说「立项」时，再按 product-thinking 的立项流程走。",
+    "promote": "提升为项目",
+    "promoteDialog": {
+      "title": "提升为项目",
+      "name": "项目名称",
+      "location": "放在哪个文件夹下",
+      "pick": "选择位置…",
+      "folder": "文件夹名",
+      "folderInvalid": "文件夹名只能用英文字母、数字、点、短横线和下划线",
+      "willDo": "确认后会：",
+      "stepFolder": "新建项目文件夹 {{path}}",
+      "stepProject": "在 Soloyard 里新建项目「{{name}}」",
+      "stepSession": "会话搬到项目文件夹，原会话接着聊",
+      "stepCleanup": "清理这次头脑风暴的临时文件夹",
+      "namePlaceholder": "例如：小红书选题助手",
+      "files": "工作文件夹里的产物",
+      "noFiles": "工作文件夹里还没有文件。",
+      "stepFiles_other": "把工作文件夹里的 {{count}} 个文件整理进项目（文档、决策、证据写进数据库）",
+      "folderExists": "{{path}} 已经存在，换一个文件夹名或位置",
+      "busy": "Agent 还在运行，等它停下再提升"
+    },
+    "empty": {
+      "body": "还没有头脑风暴。点右上角的 + 开始一个，会话开在 Soloyard 自己的工作区里，不用先建项目。"
+    },
+    "folderChip": {
+      "title": "工作区文件夹名",
+      "tooltip": "头脑风暴的工作区文件夹：{{path}}（发第一条消息前可以改名）",
+      "locked": "头脑风暴的工作区文件夹：{{path}}。会话开始后不能改名，项目文件夹在提升为项目时再定。",
+      "required": "文件夹名不能为空",
+      "exists": "已经有叫 {{name}} 的头脑风暴文件夹了",
+      "hint": "默认用开始时间命名。只在发第一条消息之前能改。"
+    },
+    "draft": "还没发第一条消息",
+    "moved": "头脑风暴已经移到左侧：点收件箱下面的「头脑风暴」开始，历史在侧栏列表里。这个旧标签可以关掉了。",
+    "remove": {
+      "action": "删除",
+      "title": "删除「{{title}}」",
+      "body": "会话和工作文件夹 {{folder}} 里的所有文件会一起删除，删除后不能恢复。"
+    }
   }
 }

@@ -209,6 +209,18 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
   return rows.map((r) => ({ ...r, labels: JSON.parse(r.labels) as string[] }))
 }
 
+/** 往项目里加一份文档（头脑风暴提升为项目时，把工作文件夹里的 markdown 收进来）。 */
+export function addDocument(db: DB, actor: Actor, projectId: number, d: { title: string; body_md: string; kind?: string }) {
+  return insert(db, actor, 'documents', { project_id: projectId, kind: d.kind ?? 'free', slug: null, title: d.title, body_md: d.body_md })
+}
+
+/** 某个目录下面的底座会话（头脑风暴：应用工作区下每次一个子文件夹）。会话第一次发送后才入库。 */
+export function listSessionsUnder(db: DB, root: string): Row[] {
+  if (!hasBaseSessions(db) || !root) return []
+  return db.prepare(`SELECT id, cwd, harness, title, updated_at FROM sessions
+    WHERE cwd LIKE ? ESCAPE '\\' AND archived = 0 ORDER BY updated_at DESC`).all(root.replace(/[\\%_]/g, '\\$&') + '/%') as Row[]
+}
+
 /** 同一个库里有没有底座的会话表；单测的内存库里没有。 */
 function hasBaseSessions(db: DB) {
   return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'sessions'").get()

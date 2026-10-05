@@ -34,6 +34,7 @@ import {
   Zap,
 } from "../../shared/ui/icons";
 import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
+import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import {
   memo,
@@ -2211,6 +2212,7 @@ function SidebarComponent({
           onClose={() => setLinkingSession(null)}
         />
       ) : null}
+      <BrainstormSidebar activeSessionId={activeSessionId} />{/* Soloyard: brainstorm sessions list over the workspace panel */}
       <div
         role="separator"
         aria-orientation="vertical"

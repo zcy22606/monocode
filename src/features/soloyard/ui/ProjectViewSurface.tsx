@@ -6,6 +6,7 @@ import { IssueDetail } from "./issues/IssueDetail";
 import { IssuesView } from "./issues/IssuesView";
 import { IterationsView } from "./iterations/IterationsView";
 import { ServiceLog } from "../services/ServiceLog";
+import { startNewBrainstorm } from "../model/brainstorm";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
 const SAMPLES = {
@@ -18,6 +19,7 @@ const DETAIL_VIEWS: ProjectViewId[] = ["issue", "doc", "decision"];
 /** Project 分页打开的标签内容：已经做好的视图走真实数据，其余还是占位。 */
 export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
   if (source.view === "service") return <ServiceLog cwd={cwd} itemId={source.itemId ?? ""} />;
+  if (source.view === "brainstorm") return <BrainstormMoved />;
   return <ProjectDataView cwd={cwd} source={source} title={title} />;
 }
 
@@ -69,6 +71,19 @@ function Placeholder({ cwd, source, title }: { cwd: string; source: ProjectViewS
         ) : null}
         <p className="text-[12px] text-content/40">{t(samples ? "placeholder.noteSamples" : "placeholder.note")}</p>
       </div>
+    </div>
+  );
+}
+
+/** 早期原型留下的「头脑风暴」标签：头脑风暴已经改成左侧入口 + 侧栏列表。 */
+function BrainstormMoved() {
+  const { t } = useTranslation("soloyard");
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+      <p className="max-w-sm text-[12px] leading-relaxed text-content/55">{t("brainstorm.moved")}</p>
+      <button type="button" onClick={() => void startNewBrainstorm()} className="rounded-md bg-content/10 px-3 py-1.5 text-[12px] text-content hover:bg-content/15">
+        {t("brainstorm.start")}
+      </button>
     </div>
   );
 }

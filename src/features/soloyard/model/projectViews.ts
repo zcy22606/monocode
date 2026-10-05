@@ -19,7 +19,9 @@ export type ProjectViewId =
   | "doc"
   | "decision"
   /** 「服务」分页打开的日志标签，itemId 是「目录 + 命令」（services/history.ts 的 entryKey）。 */
-  | "service";
+  | "service"
+  /** 头脑风暴：不属于任何项目，侧栏收件箱下面进入。 */
+  | "brainstorm";
 
 export type ProjectViewSource = {
   view: ProjectViewId;
@@ -64,6 +66,11 @@ export function useActiveProjectNav(cwd: string): ProjectViewId | null {
   return view && view.cwd === cwd.replace(/\/+$/, "") ? view.nav : null;
 }
 
+/** 头脑风暴不属于任何项目：标签挂在 ~ 下，侧栏的「头脑风暴」据此高亮。 */
+export const BRAINSTORM_CWD = "~";
+export const openBrainstorm = () => openProjectView({ cwd: BRAINSTORM_CWD, view: "brainstorm", title: viewLabel("brainstorm") });
+export const useBrainstormActive = () => useActiveProjectNav(BRAINSTORM_CWD) === "brainstorm";
+
 /** 渲染时调用，跟着当前语言走。 */
 export const viewLabel = (view: ProjectViewId) => t(`soloyard:view.${view}`);
 
@@ -99,7 +106,7 @@ export function projectViewFile(request: OpenProjectViewRequest): FilePaneTab {
 }
 
 const VIEW_IDS: readonly ProjectViewId[] = [
-  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service",
+  "overview", "issues", "cycles", "docs", "decisions", "features", "scope", "evidence", "issue", "doc", "decision", "service", "brainstorm",
 ];
 
 /** 恢复标签布局时校验 projectView 字段（底座的快照解析对标签字段走白名单）。不认识的返回 undefined。 */

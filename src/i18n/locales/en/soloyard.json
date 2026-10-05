@@ -16,7 +16,8 @@
     "issue": "Issue",
     "doc": "Doc",
     "decision": "Decision",
-    "service": "Service"
+    "service": "Service",
+    "brainstorm": "Brainstorm"
   },
   "placeholder": {
     "project": "Project",
@@ -357,5 +358,49 @@
     "legacyDescription": "Left by the prototype and points at it. Clean up removes the MCP servers, skill links and SessionStart hooks below (hook files are backed up as *.soloyard.bak).",
     "legacyMcp": "indie-desk MCP in {{agent}}",
     "legacyCleanup": "Clean up"
+  },
+  "brainstorm": {
+    "start": "New brainstorm",
+    "untitled": "New brainstorm (not started)",
+    "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they solve it today, why they'd switch. Don't rush to conclusions.\nWhen a direction is worth pursuing, write it up as an idea card (one line, who, what problem, why better than today) in the current folder.\nAsk me before researching competitors or user voices. When I say \"start the project\", follow product-thinking's project brief workflow.",
+    "promote": "Promote to project",
+    "promoteDialog": {
+      "title": "Promote to project",
+      "name": "Project name",
+      "location": "Parent folder",
+      "pick": "Choose location…",
+      "folder": "Folder name",
+      "folderInvalid": "Folder names can only use letters, digits, dots, dashes and underscores",
+      "willDo": "This will:",
+      "stepFolder": "Create the project folder {{path}}",
+      "stepProject": "Create the Soloyard project “{{name}}”",
+      "stepSession": "Move the session to the project folder and keep the conversation going",
+      "stepCleanup": "Clean up this brainstorm's temporary folder",
+      "namePlaceholder": "e.g. Xiaohongshu topic assistant",
+      "files": "Artifacts in the working folder",
+      "noFiles": "The working folder has no files yet.",
+      "stepFiles_one": "Bring the {{count}} file in the working folder into the project (docs, decisions and evidence go to the database)",
+      "stepFiles_other": "Bring the {{count}} files in the working folder into the project (docs, decisions and evidence go to the database)",
+      "folderExists": "{{path}} already exists. Choose another folder name or location.",
+      "busy": "The agent is still running. Wait for it to stop before promoting."
+    },
+    "empty": {
+      "body": "No brainstorms yet. Click + to start one; the session runs in Soloyard's own workspace, no project needed."
+    },
+    "folderChip": {
+      "title": "Workspace folder name",
+      "tooltip": "Brainstorm workspace folder: {{path}} (can be renamed before the first message)",
+      "locked": "Brainstorm workspace folder: {{path}}. It can't be renamed once the session has started; the project folder is chosen when promoting to a project.",
+      "required": "Folder name is required",
+      "exists": "A brainstorm folder named {{name}} already exists",
+      "hint": "Named after the start time by default. Can only be changed before the first message."
+    },
+    "draft": "No message sent yet",
+    "moved": "Brainstorm moved to the left: click Brainstorm under Inbox to start one; past ones are listed in the sidebar. You can close this old tab.",
+    "remove": {
+      "action": "Delete",
+      "title": "Delete “{{title}}”",
+      "body": "The session and everything in its working folder {{folder}} will be deleted. This can't be undone."
+    }
   }
 }

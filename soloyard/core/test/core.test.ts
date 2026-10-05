@@ -179,3 +179,15 @@ test('导入原型库：整体搬项目、id 重新编号、迭代 → cycle、�
   assert.equal(r.findProjectByPath(db, '/home/play')!.key, 'IND')
   assert.equal(r.findProjectByPath(db, '/home/play/other'), undefined, '不含子目录的父目录不吞子目录')
 })
+
+test('头脑风暴：按目录列会话（转义通配符、排除归档），提升时建项目和收文档', () => {
+  const db = openDb(':memory:')
+  db.exec("CREATE TABLE sessions (id TEXT, cwd TEXT, harness TEXT, title TEXT, updated_at INTEGER, archived INTEGER DEFAULT 0)")
+  db.exec("INSERT INTO sessions VALUES ('a','/r/ws/2026-1','claude','x',2,0),('b','/r/ws_x/2','claude','y',1,0),('c','/r/ws','claude','z',3,0),('d','/r/ws/k','codex','w',4,1)")
+  assert.deepEqual(r.listSessionsUnder(db, '/r/ws').map((s) => s.id), ['a'])
+  const pid = r.createProject(db, 'user', { name: '小红书选题助手', path: '/work/xhs' })
+  assert.equal(r.findProjectByPath(db, '/work/xhs')!.id, pid)
+  r.addDocument(db, 'user', pid, { title: '想法卡', body_md: '# 想法卡' })
+  r.addDocument(db, 'user', pid, { title: '竞品速查', body_md: '…' })
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM soloyard_documents WHERE project_id = ?').get(pid) as { n: number }).n, 2)
+})

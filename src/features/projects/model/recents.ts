@@ -1,5 +1,6 @@
 import { pathKey, prettyCwd, slash } from "../../../shared/lib/paths";
 import { REMOTE_PATH_PREFIX } from "../../../shared/lib/remotePaths";
+import { isBrainstormCwd } from "../../soloyard/model/brainstorm"; // Soloyard
 
 const KEY = "monocode.recentProjects";
 const RAIL_ORDER_KEY = "monocode.projectRailOrder";
@@ -65,6 +66,7 @@ function save(next: RecentProject[]) {
 export function rememberProject(path: string): RecentProject[] {
   const normalized = normalize(path);
   if (normalized === "~") return loadRecents();
+  if (isBrainstormCwd(normalized)) return loadRecents(); // Soloyard: brainstorm folders aren't projects
   dropArchived(normalized);
   const prev = loadRecents().filter((p) => !sameProjectPath(p.path, normalized));
   const next = [{ path: normalized, openedAt: Date.now() }, ...prev].slice(
@@ -321,7 +323,7 @@ export function collectRailProjects(
     const path = normalize(item.path);
     map.set(pathKey(path), { path, openedAt: item.openedAt });
   }
-  if (currentCwd && looksLikeProject(currentCwd)) {
+  if (currentCwd && looksLikeProject(currentCwd) && !isBrainstormCwd(currentCwd) /* Soloyard */) {
     const path = normalize(currentCwd);
     const key = pathKey(path);
     if (!map.has(key)) {
