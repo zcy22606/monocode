@@ -74,10 +74,11 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke px-4">
-        <h1 className="text-[13px] font-medium text-content">{t("view.issues")}</h1>
+      {/* 窄的时候「筛选」「显示」只留图标（悬停有提示），按钮都不换行 */}
+      <header className="@container/issues flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b border-stroke px-4">
+        <h1 className="shrink-0 text-[13px] font-medium text-content">{t("view.issues")}</h1>
         <span className="text-[12px] text-content/40">{visibleCount}</span>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <ToolbarButton
             label={t("issues.filter")}
             active={view.filters.length > 0}
@@ -185,7 +186,7 @@ function ToolbarButton({ label, active, onClick, children }: { label: string; ac
       className={`flex h-7 items-center gap-1 rounded-md px-2 text-[12px] ${active ? "bg-selection text-content" : "text-content/60 hover:bg-content/10 hover:text-content"}`}
     >
       {children}
-      {label}
+      <span className="hidden @md/issues:inline">{label}</span>
     </button>
   );
 }

@@ -3,7 +3,7 @@
  * 减法 = 把功能挪到别的迭代或特殊列；开始迭代 = 给勾选的功能各建一个 issue；完成迭代 = 处理没做完的功能并锁定。
  * 数据在 soloyard/core/src/iterations.ts；多步操作返回 batch，顶部的「撤销」按 batch 整批回滚。
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import { ChevronDown, ChevronRight, ListFilter, MoreHorizontal, Plus, Search, Trash2, X } from "../../../../shared/ui/icons";
@@ -35,9 +35,21 @@ const ESSENTIAL = new Set(["必备", "常见"]);
 const NO_BACKBONE = "—";
 
 type Layout = "board" | "list";
-type Menu = { anchor: HTMLElement; kind: "iteration"; id: number } | { anchor: HTMLElement; kind: "backbones" } | { anchor: HTMLElement; kind: "move"; id: number };
+type Menu = { anchor: HTMLElement; kind: "iteration"; id: number } | { anchor: HTMLElement; kind: "backbones" | "toolbar" } | { anchor: HTMLElement; kind: "move"; id: number };
 /** 顶部提示条：多步操作后的撤销，或操作失败的原因。 */
 type Notice = { kind: "undo"; batch: string; message: string } | { kind: "error"; message: string };
+
+/** 元素当前宽度（ResizeObserver）。 */
+function useWidth<T extends HTMLElement>() {
+  const [width, setWidth] = useState(Number.POSITIVE_INFINITY);
+  const ref = useCallback((node: T | null) => {
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width] as const;
+}
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -65,6 +77,15 @@ function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: Solo
   const [finishing, setFinishing] = useState<Iteration | null>(null);
   const [newFeature, setNewFeature] = useState<Target | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  // 工具栏放不下时，从低优先级开始收进「⋯」菜单：新建功能 → 骨干筛选 → 看板 / 列表；计数最先隐藏
+  const [headerRef, headerWidth] = useWidth<HTMLElement>();
+  const fits = {
+    count: headerWidth >= 760,
+    newFeature: headerWidth >= 700,
+    backbones: headerWidth >= 600,
+    layout: headerWidth >= 460,
+  };
+  const allFit = fits.newFeature && fits.backbones && fits.layout;
   const setLayout = (next: Layout) => {
     setLayoutState(next);
     localStorage.setItem(LAYOUT_KEY, next);
@@ -162,59 +183,75 @@ function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: Solo
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke px-4">
-        <h1 className="text-[13px] font-medium text-content">{t("view.cycles")}</h1>
-        <span className="text-[12px] text-content/40">{t("iterations.counts", { iterations: iterations.length, features: features.length })}</span>
-        <div className="ml-auto flex items-center gap-1">
+      <header ref={headerRef} className="flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b border-stroke px-4">
+        <h1 className="shrink-0 text-[13px] font-medium text-content">{t("view.cycles")}</h1>
+        {fits.count ? <span className="min-w-0 truncate text-[12px] text-content/40">{t("iterations.counts", { iterations: iterations.length, features: features.length })}</span> : null}
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <label className="relative flex h-7 items-center">
             <Search className="pointer-events-none absolute left-2 size-3 text-content/40" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("iterations.search")} className="h-7 w-44 rounded-md bg-content/5 pl-6 pr-2 text-[12px] text-content outline-none placeholder:text-content/40" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("iterations.search")} className={`h-7 rounded-md bg-content/5 pl-6 pr-2 text-[12px] text-content outline-none placeholder:text-content/40 ${fits.backbones ? "w-44" : "w-28"}`} />
           </label>
-          <button
-            type="button"
-            onClick={(e) => setMenu({ anchor: e.currentTarget, kind: "backbones" })}
-            className={`flex h-7 items-center gap-1 rounded-md px-2 text-[12px] ${backbones.size ? "bg-selection text-content" : "text-content/60 hover:bg-content/10 hover:text-content"}`}
-          >
-            <ListFilter className="size-3.5" />
-            {backbones.size ? `${t("iterations.backbones")} · ${backbones.size}` : t("iterations.allBackbones")}
-          </button>
-          <div className="flex rounded-md bg-content/5 p-0.5">
-            {(["board", "list"] as const).map((l) => (
-              <button key={l} type="button" aria-pressed={layout === l} onClick={() => setLayout(l)} className={`h-6 rounded px-2 text-[12px] ${layout === l ? "bg-selection text-content" : "text-content/60 hover:text-content"}`}>
-                {t(`iterations.layout.${l}`)}
-              </button>
-            ))}
-          </div>
-          <button type="button" onClick={() => setNewFeature("pending")} className="flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-content/70 hover:bg-content/10 hover:text-content">
-            <Plus className="size-3.5" />
-            {t("iterations.newFeature.action")}
-          </button>
+          {fits.backbones ? (
+            <button
+              type="button"
+              onClick={(e) => setMenu({ anchor: e.currentTarget, kind: "backbones" })}
+              className={`flex h-7 items-center gap-1 rounded-md px-2 text-[12px] ${backbones.size ? "bg-selection text-content" : "text-content/60 hover:bg-content/10 hover:text-content"}`}
+            >
+              <ListFilter className="size-3.5" />
+              {backbones.size ? `${t("iterations.backbones")} · ${backbones.size}` : t("iterations.allBackbones")}
+            </button>
+          ) : null}
+          {fits.layout ? (
+            <div className="flex rounded-md bg-content/5 p-0.5">
+              {(["board", "list"] as const).map((l) => (
+                <button key={l} type="button" aria-pressed={layout === l} onClick={() => setLayout(l)} className={`h-6 rounded px-2 text-[12px] ${layout === l ? "bg-selection text-content" : "text-content/60 hover:text-content"}`}>
+                  {t(`iterations.layout.${l}`)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {fits.newFeature ? (
+            <button type="button" onClick={() => setNewFeature("pending")} className="flex h-7 items-center gap-1 rounded-md px-2 text-[12px] text-content/70 hover:bg-content/10 hover:text-content">
+              <Plus className="size-3.5" />
+              {t("iterations.newFeature.action")}
+            </button>
+          ) : null}
           <button type="button" onClick={() => setForm({})} className="flex h-7 items-center gap-1 rounded-md bg-content/10 px-2 text-[12px] text-content hover:bg-content/15">
             <Plus className="size-3.5" />
             {t("iterations.newIteration")}
           </button>
+          {allFit ? null : (
+            <button
+              type="button"
+              aria-label={t("iterations.more")}
+              onClick={(e) => setMenu({ anchor: e.currentTarget, kind: "toolbar" })}
+              className={`grid size-7 place-items-center rounded-md hover:bg-content/10 hover:text-content ${backbones.size && !fits.backbones ? "bg-selection text-content" : "text-content/60"}`}
+            >
+              <MoreHorizontal className="size-3.5" />
+            </button>
+          )}
         </div>
       </header>
       {notice ? (
         <div className={`flex shrink-0 items-center gap-2 border-b border-stroke px-4 py-1.5 text-[12px] ${notice.kind === "error" ? "bg-red-500/10 text-red-300" : "bg-content/5 text-content/70"}`}>
-          <span role={notice.kind === "error" ? "alert" : "status"}>{notice.message}</span>
+          <span role={notice.kind === "error" ? "alert" : "status"} className="min-w-0 truncate" title={notice.message}>{notice.message}</span>
           {notice.kind === "undo" ? (
-            <button type="button" onClick={() => void undo(notice.batch)} className="ml-auto rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
+            <button type="button" onClick={() => void undo(notice.batch)} className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
               {t("iterations.undo")}
             </button>
           ) : null}
-          <button type="button" aria-label={t("iterations.close")} onClick={() => setNotice(null)} className={`rounded p-0.5 opacity-60 hover:bg-content/10 hover:opacity-100 ${notice.kind === "undo" ? "" : "ml-auto"}`}>
+          <button type="button" aria-label={t("iterations.close")} onClick={() => setNotice(null)} className={`shrink-0 rounded p-0.5 opacity-60 hover:bg-content/10 hover:opacity-100 ${notice.kind === "undo" ? "" : "ml-auto"}`}>
             <X className="size-3.5" />
           </button>
         </div>
       ) : null}
       {!iterations.length && features.length ? (
         <div className="flex shrink-0 items-center gap-3 border-b border-stroke bg-accent/5 px-4 py-2 text-[12px] text-content/70">
-          <span>{t("iterations.empty.generateHint", { count: features.length })}</span>
+          <span className="min-w-0 line-clamp-2">{t("iterations.empty.generateHint", { count: features.length })}</span>
           <button
             type="button"
             onClick={() => void actBatch(t("iterations.notice.generated"), "generateIterations", project.id).catch((e: unknown) => setNotice({ kind: "error", message: errorText(e) }))}
-            className="ml-auto shrink-0 rounded-md bg-content px-2.5 py-1 font-medium text-background-base hover:bg-content/80"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-md bg-content px-2.5 py-1 font-medium text-background-base hover:bg-content/80"
           >
             {t("iterations.empty.generate")}
           </button>
@@ -225,8 +262,8 @@ function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: Solo
       ) : null}
       {overcut.length ? (
         <div className="flex shrink-0 items-center gap-2 border-b border-stroke bg-amber-400/5 px-4 py-1.5 text-[12px] text-amber-300">
-          {t("iterations.overcut", { count: overcut.length })}
-          <button type="button" onClick={() => setShowOvercut(!showOvercut)} className="ml-auto rounded px-2 py-0.5 hover:bg-amber-400/10">
+          <span className="min-w-0 truncate" title={t("iterations.overcut", { count: overcut.length })}>{t("iterations.overcut", { count: overcut.length })}</span>
+          <button type="button" onClick={() => setShowOvercut(!showOvercut)} className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-0.5 hover:bg-amber-400/10">
             {showOvercut ? t("iterations.hide") : t("iterations.show")}
           </button>
         </div>
@@ -295,6 +332,27 @@ function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: Solo
           />
         );
       })() : null}
+      {menu?.kind === "toolbar" ? (
+        <ExplorerMenu
+          anchor={menu.anchor}
+          ariaLabel={t("iterations.more")}
+          width={200}
+          items={[
+            ...(fits.layout ? [] : (["board", "list"] as const).map((l) => ({ kind: "item" as const, id: `layout:${l}`, label: t(`iterations.layout.${l}`), checked: layout === l }))),
+            ...(fits.backbones ? [] : [{ kind: "item" as const, id: "backbones", label: backbones.size ? `${t("iterations.backbones")} · ${backbones.size}` : t("iterations.allBackbones") }]),
+            ...(fits.newFeature ? [] : [{ kind: "item" as const, id: "newFeature", label: t("iterations.newFeature.action") }]),
+          ]}
+          onPick={(id) => {
+            const anchor = menu.anchor;
+            setMenu(null);
+            if (id.startsWith("layout:")) setLayout(id.slice(7) as Layout);
+            // 骨干是多选：在同一个位置接着打开骨干菜单
+            if (id === "backbones") setMenu({ anchor, kind: "backbones" });
+            if (id === "newFeature") setNewFeature("pending");
+          }}
+          onClose={() => setMenu(null)}
+        />
+      ) : null}
       {menu?.kind === "backbones" ? (
         <ExplorerMenu
           anchor={menu.anchor}
@@ -570,7 +628,8 @@ function List({ columns, byColumn, aiWas, selected, onSelect, header, backboneLa
   const { t } = useTranslation("soloyard");
   const { isOpen, toggle } = useGroups(columns);
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
+    // 窄的时候次要列按宽度依次隐藏（骨干 → AI 原安排 → 普及层级 → 覆盖），功能名始终可见，不出横向滚动
+    <div className="@container/list min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-none">
       {columns.map((col) => {
         const features = byColumn.get(encodeTarget(col.target)) ?? [];
         const open = isOpen(col.target, "*");
@@ -588,16 +647,16 @@ function List({ columns, byColumn, aiWas, selected, onSelect, header, backboneLa
                   const was = aiWas(f);
                   return (
                     <div key={f.id} role="button" tabIndex={0} onClick={() => onSelect(f.id)} onKeyDown={(e) => e.key === "Enter" && onSelect(f.id)}
-                      className={`flex h-8 cursor-default items-center gap-3 px-8 text-[12px] hover:bg-content/5 ${selected === f.id ? "bg-content/5" : ""}`}>
+                      className={`flex h-8 cursor-default items-center gap-3 px-4 text-[12px] hover:bg-content/5 @2xl/list:px-8 ${selected === f.id ? "bg-content/5" : ""}`}>
                       <span className="w-20 shrink-0 font-mono text-[11px] text-content/40">{f.code}</span>
                       {f.issue_status ? <StatusIcon status={f.issue_status} /> : <span className="size-3.5 shrink-0" />}
                       <span className="min-w-0 flex-1 truncate text-content/90">{f.name}</span>
-                      <span className="w-40 shrink-0 truncate text-[11px] text-content/40">{backboneLabel(f.backbone ?? NO_BACKBONE)}</span>
-                      <span className="w-14 shrink-0 text-[11px] text-content/45">{f.level ?? ""}</span>
-                      <span className="w-10 shrink-0 text-[11px] text-content/45">{f.prevalence ?? ""}</span>
-                      <span className="w-20 shrink-0 truncate text-[11px] text-amber-300">{was ? t("iterations.aiWas", { version: was }) : ""}</span>
+                      <span className="hidden w-40 shrink-0 truncate text-[11px] text-content/40 @3xl/list:block">{backboneLabel(f.backbone ?? NO_BACKBONE)}</span>
+                      <span className="hidden w-14 shrink-0 text-[11px] text-content/45 @xl/list:block">{f.level ?? ""}</span>
+                      <span className="hidden w-10 shrink-0 text-[11px] text-content/45 @lg/list:block">{f.prevalence ?? ""}</span>
+                      <span className="hidden w-20 shrink-0 truncate text-[11px] text-amber-300 @2xl/list:block">{was ? t("iterations.aiWas", { version: was }) : ""}</span>
                       {locked ? <span className="w-[42px] shrink-0" /> : (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onMove(e.currentTarget, f.id); }} className="rounded px-1.5 py-0.5 text-[11px] text-content/50 hover:bg-content/10 hover:text-content">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onMove(e.currentTarget, f.id); }} className="shrink-0 whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] text-content/50 hover:bg-content/10 hover:text-content">
                           {t("iterations.moveTo")}
                         </button>
                       )}

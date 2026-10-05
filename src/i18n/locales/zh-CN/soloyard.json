@@ -296,7 +296,8 @@
       "started_other": "已开始 {{iteration}}，建了 {{count}} 个 issue",
       "finished_other": "已完成 {{iteration}}，{{count}} 个没做完的功能已移走",
       "featureDeleted": "已删除功能「{{name}}」"
-    }
+    },
+    "more": "更多"
   },
   "links": {
     "title": "关联",
