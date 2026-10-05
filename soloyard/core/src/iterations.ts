@@ -258,6 +258,24 @@ export function createFeatureIssue(db: DB, actor: Actor, featureId: number) {
 }
 
 /**
+ * 把 issue 收回功能表的「待定」：有功能就挪功能，没有就用 issue 标题建一个功能挂上。
+ * 功能不在迭代里时 issue 不进 Issues 列表；以后把功能排进迭代，issue 连同历史一起回来。返回功能 id。
+ */
+export function parkIssue(db: DB, actor: Actor, issueId: number) {
+  return tx(db, () => {
+    const issue = getRow(db, 'issues', issueId)
+    if (!issue) throw new Error(`找不到 issue ${issueId}`)
+    if (issue.feature_id) {
+      moveFeatures(db, actor, [issue.feature_id], 'pending')
+      return issue.feature_id as number
+    }
+    const featureId = createFeature(db, actor, issue.project_id, { name: issue.title }, 'pending')
+    update(db, actor, 'issues', issueId, { feature_id: featureId, iteration_id: null })
+    return featureId
+  })
+}
+
+/**
  * 还没有迭代时，按功能全景的 AI 分层生成第一版迭代表：骨架 → v0.1，v1 → v1.0，
  * 后续里的必备 / 常见 / 差异化 / 无先例 → v1.1、其余 → v2.0，不建议 → 不做，另立项 → 另立项，没分层 → 待定。
  * 每个功能的 ai_plan 记下这个安排。ponytail: 规则写死；product-thinking 直接产出版本表后改为按它导入。

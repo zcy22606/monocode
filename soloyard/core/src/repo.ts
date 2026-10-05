@@ -185,9 +185,12 @@ export function updateIssue(db: DB, actor: Actor, id: number, patch: Row, expect
 
 export type IssueFilter = { projectId?: number; status?: string[]; ready?: boolean; q?: string; includeSubIssues?: boolean }
 
+/** 收起的 issue：它的功能不在任何迭代里（待定 / 另立项 / 不做），不进 Issues 列表；功能排进迭代就回来。 */
+const PARKED = 'EXISTS (SELECT 1 FROM soloyard_features f WHERE f.id = i.feature_id AND f.iteration_id IS NULL)'
+
 /** 列 issue（筛选、分组、排序在界面做；这里只按项目 / 状态 / 关键词粗筛）。ready = 未开始且前置都已完成。 */
 export function listIssues(db: DB, f: IssueFilter = {}) {
-  const where: string[] = []
+  const where: string[] = [`NOT ${PARKED}`]
   const args: any[] = []
   if (!f.includeSubIssues) where.push('i.parent_id IS NULL')
   if (f.projectId != null) { where.push('i.project_id = ?'); args.push(f.projectId) }
@@ -202,7 +205,7 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
       (SELECT COUNT(*) FROM soloyard_session_links l WHERE l.kind = 'issue' AND l.target = CAST(i.id AS TEXT)
         ${hasBaseSessions(db) ? 'AND l.session_id IN (SELECT id FROM sessions)' : ''}) AS sessions
     FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id
-    ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY i.sort_key`).all(...args) as Row[]
+    WHERE ${where.join(' AND ')} ORDER BY i.sort_key`).all(...args) as Row[]
   return rows.map((r) => ({ ...r, labels: JSON.parse(r.labels) as string[] }))
 }
 
@@ -237,7 +240,7 @@ export function listProjects(db: DB): Row[] {
 }
 
 export function getIssue(db: DB, id: number) {
-  const issue = db.prepare("SELECT i.*, p.key || '-' || i.number AS ident FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.id = ?").get(id) as Row | undefined
+  const issue = db.prepare(`SELECT i.*, p.key || '-' || i.number AS ident, ${PARKED} AS parked FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.id = ?`).get(id) as Row | undefined
   if (!issue) return undefined
   const sessionIds = (db.prepare("SELECT session_id FROM soloyard_session_links WHERE kind = 'issue' AND target = ? ORDER BY created_at DESC").all(String(id)) as Row[]).map((r) => r.session_id as string)
   return {

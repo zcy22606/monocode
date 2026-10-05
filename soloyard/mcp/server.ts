@@ -177,7 +177,7 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     },
   },
   {
-    name: 'move_features', description: '把功能挪到别的迭代（版本号）、pending 待定或 split 另立项；已建的 issue 跟着走。已完成的迭代锁定，进出都不行。不能挪到「不做」。',
+    name: 'move_features', description: '把功能挪到别的迭代（版本号）、pending 待定或 split 另立项；已建的 issue 跟着走（挪出迭代时 issue 不再出现在 list_issues 里，排回迭代才回来）。已完成的迭代锁定，进出都不行。不能挪到「不做」。',
     inputSchema: { type: 'object', required: ['project', 'codes', 'to'], properties: {
       project: projectRef, codes: { type: 'array', items: { type: 'string' }, description: '功能编号，如 ACCT-001' }, to: str('版本号，或 pending / split'),
     } },

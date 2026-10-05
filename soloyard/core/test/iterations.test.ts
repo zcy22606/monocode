@@ -144,3 +144,24 @@ test('导入 product-thinking：建版本、按 plan 放功能；重新导入保
   assert.equal(kept.status, 'decided')
   assert.deepEqual(JSON.parse(kept.data_json).user, { option: 'A' }, '用户的决定不被冲掉')
 })
+
+test('issue 移到功能表：收进待定、不进列表；功能排进迭代后回来', () => {
+  const { db, p } = setup()
+  const listed = (id: number) => r.listIssues(db, { projectId: p.id }).some((i) => i.id === id)
+  // 没挂功能的 issue：按标题建一个待定功能挂上
+  const loose = r.createIssue(db, 'user', p.id, { title: '导出 CSV', status: 'todo' })
+  const fid = it.parkIssue(db, 'user', loose)
+  assert.equal(where(db, p.id, fid), 'pending')
+  assert.equal(plan(db, p.id).features.find((x) => x.id === fid)!.name, '导出 CSV')
+  assert.equal(listed(loose), false)
+  assert.equal(r.getIssue(db, loose)!.parked, 1)
+  // 排回迭代：issue 回到列表，跟着迭代走
+  const v1 = it.createIteration(db, 'user', p.id, { tag: 'v1.0' })
+  it.moveFeatures(db, 'user', [fid], v1)
+  assert.equal(listed(loose), true)
+  assert.equal(r.getIssue(db, loose)!.iteration_id, v1)
+  // 已挂功能的 issue：挪的是功能
+  assert.equal(it.parkIssue(db, 'user', loose), fid)
+  assert.equal(r.getIssue(db, loose)!.iteration_id, null)
+  assert.equal(listed(loose), false)
+})
