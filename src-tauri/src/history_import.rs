@@ -1,8 +1,8 @@
 //! Soloyard：把在终端里跑过的 Claude Code / Codex 会话导进项目侧栏。
 //!
 //! 打开项目（列会话）时按项目目录增量导入：只读 agent 的转录文件，转成文本 block 写进 sessions 表，
-//! 带上 provider_session_id，点开后发消息就续接原会话。处理过的文件记在 history_files（按 mtime）。
-//! 已经在 MonoCode 里开过的会话（同一个 provider_session_id）不重复导入。
+//! 带上 provider_session_id，点开后发消息就续接原会话。处理过的文件记在 history_files_v2（按 mtime）。
+//! 已经在 MonoCode 里开过的会话（同一个 provider_session_id）不重复导入，只把之后在终端里接着聊的部分追加上去。
 
 use std::collections::HashMap;
 use std::fs;
@@ -34,8 +34,10 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
     if cwd.is_empty() || cwd == "~" || cwd.starts_with("remote://") {
         return Ok(0);
     }
+    // v2：以前「在 MonoCode 里接着聊过」的会话直接跳过、记成处理完了；换张表让它们重扫一遍，补上终端里的新内容
     conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS history_files (
+        "DROP TABLE IF EXISTS history_files;
+         CREATE TABLE IF NOT EXISTS history_files_v2 (
            path TEXT PRIMARY KEY, mtime INTEGER NOT NULL, harness TEXT NOT NULL, cwd TEXT,
            done INTEGER NOT NULL DEFAULT 0, session_id TEXT, written_updated_at INTEGER)",
     )
@@ -59,7 +61,7 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
         let Some(mtime) = mtime_millis(&path) else { continue };
         let row: Option<(i64, Option<String>, i64, Option<String>, Option<i64>)> = conn
             .query_row(
-                "SELECT mtime, cwd, done, session_id, written_updated_at FROM history_files WHERE path = ?1",
+                "SELECT mtime, cwd, done, session_id, written_updated_at FROM history_files_v2 WHERE path = ?1",
                 params![key],
                 |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
             )
@@ -98,8 +100,14 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
             (None, _) => uuid::Uuid::new_v4().to_string(),
             // 我们导入的，且导入后没在 MonoCode 里续聊过：用终端里的新内容刷新
             (Some((id, updated)), Some(ours)) if id == ours && Some(*updated) == row.as_ref().and_then(|r| r.4) => id.clone(),
-            // MonoCode 自己开的，或者导入后已经在 MonoCode 里接着聊了：以 MonoCode 的记录为准
-            _ => {
+            // MonoCode 自己开的，或者导入后已经在 MonoCode 里接着聊了：保留 MonoCode 的记录，
+            // 之后又在终端里接着聊的部分追加上去
+            (Some((id, updated)), _) => {
+                match append_newer(conn, id, *updated, &parsed)? {
+                    // 正在应用里跑：不记这次的 mtime，下次列会话再看
+                    None => continue,
+                    Some(appended) => imported += usize::from(appended),
+                }
                 remember(conn, &key, mtime, harness, Some(cwd), 1, prev_ours, row.as_ref().and_then(|r| r.4))?;
                 continue;
             }
@@ -136,6 +144,33 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
     Ok(imported)
 }
 
+/// 转录里比应用记录新的部分（从第一条更晚的用户消息起）接到会话后面。会话正在应用里跑时不动：
+/// 那时转录里的新消息是应用自己发的，等回合结束应用存盘后，它们都早于 updated_at。
+fn append_newer(conn: &Connection, id: &str, updated_at: i64, parsed: &Parsed) -> Result<Option<bool>, String> {
+    let running: bool = conn
+        .query_row("SELECT EXISTS(SELECT 1 FROM in_flight_sessions WHERE session_id = ?1)", [id], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+    if running {
+        return Ok(None);
+    }
+    let start = parsed
+        .blocks
+        .iter()
+        .position(|b| b["role"] == "user" && b["startedAt"].as_i64().is_some_and(|at| at > updated_at));
+    let Some(start) = start else { return Ok(Some(false)) };
+    let blocks_json: String = conn
+        .query_row("SELECT blocks_json FROM sessions WHERE id = ?1", [id], |r| r.get(0))
+        .map_err(|e| e.to_string())?;
+    let mut blocks: Vec<Value> = serde_json::from_str(&blocks_json).unwrap_or_default();
+    blocks.extend_from_slice(&parsed.blocks[start..]);
+    conn.execute(
+        "UPDATE sessions SET blocks_json = ?2, updated_at = ?3 WHERE id = ?1",
+        params![id, Value::Array(blocks).to_string(), parsed.updated_at.max(updated_at)],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(Some(true))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn remember(
     conn: &Connection,
@@ -148,7 +183,7 @@ fn remember(
     written_updated_at: Option<i64>,
 ) -> Result<(), String> {
     conn.execute(
-        "INSERT OR REPLACE INTO history_files (path, mtime, harness, cwd, done, session_id, written_updated_at)
+        "INSERT OR REPLACE INTO history_files_v2 (path, mtime, harness, cwd, done, session_id, written_updated_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         params![path, mtime, harness, cwd, done, session_id, written_updated_at],
     )
@@ -232,6 +267,7 @@ fn is_noise(text: &str) -> bool {
     let t = text.trim_start();
     t.is_empty()
         || t.starts_with("Caveat:")
+        || t.starts_with("[Request interrupted by user")
         || t.starts_with("# AGENTS.md instructions")
         || t.strip_prefix('<').is_some_and(|rest| {
             // <command-name>、<environment_context> 这类 agent 自动注入的标签开头
@@ -440,6 +476,26 @@ mod tests {
         assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0);
         let n: i64 = conn.query_row("SELECT COUNT(*) FROM sessions WHERE provider_session_id = ?1", params![c2], |r| r.get(0)).unwrap();
         assert_eq!(n, 1);
+
+        // 在 MonoCode 里聊过、后来又回终端接着聊：只追加比应用记录新的部分；应用里正在跑时不动
+        let c3 = "55555555-5555-4555-8555-555555555555";
+        let t = |s: &str| millis(s).unwrap();
+        conn.execute("INSERT INTO sessions (id, cwd, harness, model, runtime_mode, title, provider_session_id, blocks_json, created_at, updated_at) VALUES ('app', ?1, 'claude', 'claude:opus', 'supervised', 'app', ?2, '[{\"id\":\"x\",\"role\":\"tool\"}]', 1, ?3)", params![cwd, c3, t("2026-09-03T00:00:00Z")]).unwrap();
+        let line = |ts: &str, role: &str, text: &str| json!({"type":role,"sessionId":c3,"cwd":cwd,"timestamp":ts,"message":{"content":[{"type":"text","text":text}]}});
+        let mut lines = vec![line("2026-09-02T00:00:00Z", "user", "应用里问的"), line("2026-09-02T00:00:01Z", "assistant", "应用里答的")];
+        write(&dir.join(format!("{c3}.jsonl")), &lines);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0, "nothing newer than the app record");
+        conn.execute("INSERT INTO in_flight_sessions (session_id, cwd, sort_index) VALUES ('app', ?1, 0)", params![cwd]).unwrap();
+        lines.extend([line("2026-09-04T00:00:00Z", "user", "终端里接着问"), line("2026-09-04T00:00:01Z", "assistant", "终端里答"), line("2026-09-04T00:00:02Z", "assistant", "补一句")]);
+        write(&dir.join(format!("{c3}.jsonl")), &lines);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0, "running in the app");
+        conn.execute("DELETE FROM in_flight_sessions", []).unwrap();
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 1);
+        let (blocks, updated): (String, i64) = conn.query_row("SELECT blocks_json, updated_at FROM sessions WHERE id = 'app'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        let blocks: Vec<Value> = serde_json::from_str(&blocks).unwrap();
+        let texts: Vec<&str> = blocks.iter().map(|b| b["text"].as_str().unwrap_or("")).collect();
+        assert_eq!(texts, ["", "终端里接着问", "终端里答\n\n补一句"]);
+        assert_eq!(updated, t("2026-09-04T00:00:02Z"));
         fs::remove_dir_all(&home).ok();
     }
 }
