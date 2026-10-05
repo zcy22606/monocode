@@ -244,6 +244,11 @@
     "loading": "正在加载工作副本…",
     "detachedHead": "游离 {{head}}",
     "openTabs_other": "{{count}} 个打开的标签",
-    "openTabsBusy_other": "{{count}} 个打开的标签，运行中"
+    "openTabsBusy_other": "{{count}} 个打开的标签，运行中",
+    "creating": "正在创建工作树",
+    "search": "搜索工作副本",
+    "searchPlaceholder": "搜索或新建工作树…",
+    "noMatches": "没有匹配的工作副本",
+    "create": "新建工作树 {{name}}"
   }
 }

@@ -259,6 +259,11 @@
     "openTabs_one": "{{count}} open tab",
     "openTabs_other": "{{count}} open tabs",
     "openTabsBusy_one": "{{count}} open tab, working",
-    "openTabsBusy_other": "{{count}} open tabs, working"
+    "openTabsBusy_other": "{{count}} open tabs, working",
+    "creating": "Creating worktree",
+    "search": "Search working copies",
+    "searchPlaceholder": "Search or create a worktree...",
+    "noMatches": "No matching working copies",
+    "create": "Create worktree {{name}}"
   }
 }
