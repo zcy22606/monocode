@@ -6,7 +6,8 @@ set -eu
 cd "$(dirname "$0")/.."
 npm run tauri build -- --config src-tauri/tauri.prod.conf.json
 APP=target/release/bundle/macos/Soloyard.app
-if pgrep -f "/Applications/Soloyard.app/Contents/MacOS/" >/dev/null; then
+# ps 的 comm 列：pgrep -f 读不到正式版的命令行，会漏判
+if ps -axo comm | grep -q "^/Applications/Soloyard.app/Contents/MacOS/"; then
   echo "正式版正在运行：退出它（会中断里面正在跑的会话）后再运行一次本脚本，或手动替换："
   echo "  rm -rf /Applications/Soloyard.app && cp -R \"$PWD/$APP\" /Applications/"
   exit 1
