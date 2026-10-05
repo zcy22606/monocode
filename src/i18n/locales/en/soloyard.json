@@ -483,6 +483,17 @@
       "note": "Existing sessions and issues stay as they are; sessions previously listed under these repositories move here too.",
       "confirm_one": "Merge ({{count}} repo)",
       "confirm_other": "Merge ({{count}} repos)"
+    },
+    "setup": {
+      "banner_one": "{{name}} holds {{count}} git repository. Make it a multi-repo project so sessions group by repo and new sessions know about it.",
+      "banner_other": "{{name}} holds {{count}} git repositories. Make it a multi-repo project so sessions group by repo and new sessions know about them.",
+      "action": "Set up repositories",
+      "title": "Make {{name}} a multi-repo project",
+      "description_one": "Found {{count}} git repository in {{root}}. Checked ones become members of this project.",
+      "description_other": "Found {{count}} git repositories in {{root}}. Checked ones become members of this project.",
+      "note": "You can add or remove repositories later on the Repositories page of the Project tab.",
+      "confirm_one": "Add {{count}} repository",
+      "confirm_other": "Add {{count}} repositories"
     }
   }
 }

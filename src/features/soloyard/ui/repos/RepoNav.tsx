@@ -1,7 +1,7 @@
 /**
  * Soloyard：多仓库项目在侧栏里的样子。
  * - 项目行尾的「N 个仓库」、选中项目下面的根目录 / 各仓库行（带会话数，点一下只看它的会话）——挂在 ProjectRail；
- * - 会话列表算各仓库的会话数、单仓库项目旁边还有别的仓库时的「合成项目」提示——挂在 Sidebar。
+ * - 会话列表算各仓库的会话数、打开项目时识别仓库并提示设成多仓库项目——挂在 Sidebar。
  */
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "../../../../i18n";
@@ -83,24 +83,41 @@ export function useOnRepoMembersChanged(cwd: string | undefined, onChange: () =>
   }, [members]);
 }
 
-const dismissKey = (cwd: string) => `soloyard.mergeDismissed:${cwd}`;
-type Suggestion = { parent: string; repos: RepoCandidate[] };
+type Suggestion = { kind: "root" | "parent"; root: string; current?: string; repos: RepoCandidate[] };
 const basename = (path: string) => path.replace(/\/+$/, "").split("/").pop() || path;
+const clean = (path: string) => path.replace(/\/+$/, "");
+/** 自动弹过一次就不再自动弹（关掉后留着提示条）；点「以后再说」连提示条也不显示。 */
+const seenKey = (cwd: string) => `soloyard.repoSetup.seen:${clean(cwd)}`;
+const dismissKey = (cwd: string) => `soloyard.repoSetup.dismissed:${clean(cwd)}`;
 
-/** 单仓库项目的上级目录里还有别的仓库：提示合成一个多仓库项目。 */
-export function MergeProjectBanner({ cwd }: { cwd: string }) {
+/**
+ * 打开项目时识别仓库：普通文件夹下有 git 仓库（openroboto），或者单个仓库的上级目录里还有别的仓库
+ * （hackquest-api-v2）——第一次自动弹窗让用户勾选，关掉后会话列表顶上留一条提示。
+ */
+export function RepoSetupPrompt({ cwd }: { cwd: string }) {
   const { t } = useTranslation("soloyard");
-  const { data: suggestion } = useSoloyard<Suggestion | null>("parentSuggestion", cwd);
+  const { data: suggestion } = useSoloyard<Suggestion | null>("setupSuggestion", cwd);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(dismissKey(cwd)) === "1");
   const [open, setOpen] = useState(false);
-  if (!suggestion || dismissed || localStorage.getItem(dismissKey(cwd)) === "1") return null;
-  const others = suggestion.repos.filter((r) => r.path !== cwd.replace(/\/+$/, ""));
+  useEffect(() => setDismissed(localStorage.getItem(dismissKey(cwd)) === "1"), [cwd]);
+  useEffect(() => {
+    if (!suggestion || localStorage.getItem(seenKey(cwd)) === "1" || localStorage.getItem(dismissKey(cwd)) === "1") return;
+    localStorage.setItem(seenKey(cwd), "1");
+    setOpen(true);
+  }, [cwd, suggestion]);
+  if (!suggestion || dismissed) return null;
+  const name = basename(suggestion.root);
+  const others = suggestion.repos.filter((r) => r.path !== suggestion.current);
+  const text =
+    suggestion.kind === "root"
+      ? t("repos.setup.banner", { name, count: suggestion.repos.length })
+      : t("repos.merge.banner", { parent: name, count: others.length, names: others.map((r) => r.name).join("、") });
   return (
     <div className="mx-2 mt-2 shrink-0 rounded-lg border border-accent/25 bg-accent/8 px-3 py-2.5 text-[12px] text-content/80">
-      <p>{t("repos.merge.banner", { parent: basename(suggestion.parent), count: others.length, names: others.map((r) => r.name).join("、") })}</p>
+      <p>{text}</p>
       <div className="mt-2 flex gap-1.5">
         <button type="button" onClick={() => setOpen(true)} className="rounded-md bg-content px-2.5 py-1 text-[12px] font-medium text-background-base hover:bg-content/80">
-          {t("repos.merge.action", { name: basename(suggestion.parent) })}
+          {suggestion.kind === "root" ? t("repos.setup.action") : t("repos.merge.action", { name })}
         </button>
         <button
           type="button"
@@ -113,19 +130,20 @@ export function MergeProjectBanner({ cwd }: { cwd: string }) {
           {t("repos.merge.later")}
         </button>
       </div>
-      {open ? <MergeDialog cwd={cwd} suggestion={suggestion} onClose={() => setOpen(false)} /> : null}
+      {open ? <SetupDialog cwd={cwd} suggestion={suggestion} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }
 
-function MergeDialog({ cwd, suggestion, onClose }: { cwd: string; suggestion: Suggestion; onClose: () => void }) {
+function SetupDialog({ cwd, suggestion, onClose }: { cwd: string; suggestion: Suggestion; onClose: () => void }) {
   const { t } = useTranslation("soloyard");
-  const current = cwd.replace(/\/+$/, "");
+  const current = suggestion.current;
   const [picked, setPicked] = useState(() => new Set(suggestion.repos.map((r) => r.path)));
   const [extra, setExtra] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string>();
-  const name = basename(suggestion.parent);
+  const name = basename(suggestion.root);
+  const isRoot = suggestion.kind === "root";
   const toggle = (path: string) =>
     setPicked((prev) => {
       const next = new Set(prev);
@@ -136,9 +154,9 @@ function MergeDialog({ cwd, suggestion, onClose }: { cwd: string; suggestion: Su
   const submit = async () => {
     setRunning(true);
     try {
-      await mutateSoloyard("mergeIntoParent", current, suggestion.parent, [...picked, ...extra]);
+      await mutateSoloyard("mergeIntoParent", current ?? clean(cwd), suggestion.root, [...picked, ...extra]);
       onClose();
-      requestOpenProject(suggestion.parent);
+      if (!isRoot) requestOpenProject(suggestion.root);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setRunning(false);
@@ -167,35 +185,41 @@ function MergeDialog({ cwd, suggestion, onClose }: { cwd: string; suggestion: Su
       </button>
     );
   };
-  const count = new Set([current, ...picked, ...extra]).size;
+  const rel = (path: string) => (path.startsWith(suggestion.root + "/") ? path.slice(suggestion.root.length + 1) : path);
+  const count = new Set([...(current ? [current] : []), ...picked, ...extra]).size;
   return (
-    <Modal title={t("repos.merge.title", { name })} description={t("repos.merge.description", { parent: suggestion.parent })} size="md" onClose={() => !running && onClose()}>
+    <Modal
+      title={isRoot ? t("repos.setup.title", { name }) : t("repos.merge.title", { name })}
+      description={isRoot ? t("repos.setup.description", { root: suggestion.root, count: suggestion.repos.length }) : t("repos.merge.description", { parent: suggestion.root })}
+      size="md"
+      onClose={() => !running && onClose()}
+    >
       <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-col">
-          {suggestion.repos.map((r) => row(r.path, r.name, `${r.name}${r.branch ? ` · ${r.branch}` : ""}`, r.path === current))}
+        <div className="flex max-h-[50vh] flex-col overflow-y-auto">
+          {suggestion.repos.map((r) => row(r.path, r.name, `${rel(r.path)}${r.branch ? ` · ${r.branch}` : ""}`, r.path === current))}
           {extra.map((p) => row(p, basename(p), p))}
-          <button
-            type="button"
-            disabled={running}
-            onClick={async () => {
-              const paths = await pickFolders(t("repos.pickFolders"));
-              setExtra((x) => [...x, ...paths.filter((p) => !x.includes(p) && !picked.has(p))]);
-            }}
-            className="mt-1 flex h-7 w-fit items-center gap-1 rounded-md px-2 text-[12px] text-content/60 hover:bg-content/8 hover:text-content"
-          >
-            <Plus className="size-3.5" />
-            {t("repos.merge.addOther")}
-          </button>
         </div>
-        <p className="text-[11.5px] text-content/50">{t("repos.merge.note")}</p>
+        <button
+          type="button"
+          disabled={running}
+          onClick={async () => {
+            const paths = await pickFolders(t("repos.pickFolders"));
+            setExtra((x) => [...x, ...paths.filter((p) => !x.includes(p) && !picked.has(p))]);
+          }}
+          className="flex h-7 w-fit items-center gap-1 rounded-md px-2 text-[12px] text-content/60 hover:bg-content/8 hover:text-content"
+        >
+          <Plus className="size-3.5" />
+          {t("repos.merge.addOther")}
+        </button>
+        <p className="text-[11.5px] text-content/50">{isRoot ? t("repos.setup.note") : t("repos.merge.note")}</p>
         {error ? <p role="alert" className="text-[12px] text-red-400/90">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <button type="button" disabled={running} onClick={onClose} className="rounded-md px-3 py-1.5 text-[12px] text-content/70 hover:bg-content/8 hover:text-content disabled:opacity-40">
             {t("iterations.cancel")}
           </button>
-          <button type="button" disabled={running} onClick={() => void submit()} className="inline-flex items-center gap-1.5 rounded-md bg-content px-3 py-1.5 text-[12px] font-medium text-background-base hover:bg-content/80 disabled:opacity-40">
+          <button type="button" disabled={running || !count} onClick={() => void submit()} className="inline-flex items-center gap-1.5 rounded-md bg-content px-3 py-1.5 text-[12px] font-medium text-background-base hover:bg-content/80 disabled:opacity-40">
             {running ? <Loader className="size-3.5 animate-spin" /> : null}
-            {t("repos.merge.confirm", { count })}
+            {isRoot ? t("repos.setup.confirm", { count }) : t("repos.merge.confirm", { count })}
           </button>
         </div>
       </div>

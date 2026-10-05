@@ -463,6 +463,14 @@
       "addOther": "添加其他文件夹…",
       "note": "现有的会话和 issue 原样保留；这些仓库里以前单独列出的会话也会归进来。",
       "confirm_other": "合成项目（{{count}} 个仓库）"
+    },
+    "setup": {
+      "banner_other": "{{name}} 里有 {{count}} 个 git 仓库。设成多仓库项目后，会话按仓库归类，新会话也会自动知道这些仓库。",
+      "action": "设置仓库",
+      "title": "把 {{name}} 设成多仓库项目",
+      "description_other": "在 {{root}} 里找到 {{count}} 个 git 仓库，勾选的会成为这个项目的成员仓库。",
+      "note": "以后可以在 Project 分页的「仓库」页增删。",
+      "confirm_other": "加入 {{count}} 个仓库"
     }
   }
 }

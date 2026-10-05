@@ -36,7 +36,7 @@ import {
 import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
 import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
-import { MergeProjectBanner, RepoCountsPublisher } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
+import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
 import { useProjectRepos } from "../../features/soloyard/model/repos"; // Soloyard
 import {
@@ -1831,9 +1831,9 @@ function SidebarComponent({
         ) : null}
         {tab === "sessions" && cwd && cwd !== "~" ? (
           <>
-            {/* Soloyard: per-repo session counts for the rail; offer to merge a lone repo with its siblings */}
+            {/* Soloyard: per-repo session counts for the rail; spot repos when a project opens and offer a multi-repo setup */}
             <RepoCountsPublisher cwd={cwd} sessions={projectSessionsInFocus} />
-            <MergeProjectBanner cwd={cwd} />
+            <RepoSetupPrompt key={cwd} cwd={cwd} />
           </>
         ) : null}
         <div

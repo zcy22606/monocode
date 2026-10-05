@@ -94,7 +94,10 @@ export function memberRepoPaths(db: DB): string[] {
 /** 根目录下（最多三层）还没加入任何项目的 git 仓库。不进 node_modules、隐藏目录，也不进仓库内部。 */
 export function scanRepos(db: DB, projectId: number): RepoCandidate[] {
   const root = projectRoot(db, projectId)
-  if (!root) return []
+  return root ? scanUnder(db, root) : []
+}
+
+function scanUnder(db: DB, root: string): RepoCandidate[] {
   const taken = new Set(memberRepoPaths(db))
   const found: RepoCandidate[] = []
   const walk = (dir: string, depth: number) => {
@@ -238,7 +241,26 @@ export function mergeIntoParent(db: DB, actor: Actor, cwd: string, parent: strin
       projectId = own.project_id
     } else projectId = projectForPath(db, root).id
     const members = new Set(memberRepoPaths(db))
-    for (const path of new Set([from, ...paths.map(clean)])) if (!members.has(path)) addProjectRepo(db, actor, projectId, path)
+    const picked = from === root ? paths.map(clean) : [from, ...paths.map(clean)] // 根目录自己不算成员
+    for (const path of new Set(picked)) if (path !== root && !members.has(path)) addProjectRepo(db, actor, projectId, path)
     return projectId
   })
+}
+
+export type SetupSuggestion = { kind: 'root' | 'parent'; root: string; current?: string; repos: RepoCandidate[] }
+
+/**
+ * 打开一个项目时要不要提示设成多仓库项目：
+ * - parent：它是独立仓库，上级目录里还有别的仓库（hackquest-api-v2）——合成到上级目录；
+ * - root：它是普通文件夹，下面有 git 仓库，而且还没有成员仓库（openroboto）——把这些仓库加进来。
+ */
+export function setupSuggestion(db: DB, cwd: string): SetupSuggestion | null {
+  const path = clean(cwd)
+  const parent = parentSuggestion(db, path)
+  if (parent) return { kind: 'parent', root: parent.parent, current: path, repos: parent.repos }
+  if (ownGitDir(path) || path === '/' || path === homedir() || memberRepoPaths(db).includes(path)) return null
+  const own = db.prepare('SELECT project_id FROM soloyard_project_paths WHERE path = ?').get(path) as Row | undefined
+  if (own && db.prepare('SELECT 1 FROM soloyard_project_repos WHERE project_id = ?').get(own.project_id)) return null
+  const repos = scanUnder(db, path)
+  return repos.length ? { kind: 'root', root: path, repos } : null
 }

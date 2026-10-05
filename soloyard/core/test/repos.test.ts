@@ -116,3 +116,17 @@ test('a lone repo next to sibling repos suggests merging into the parent; its is
   assert.equal(r.listIssues(db, { projectId: own.id }).length, 1)
   assert.equal(repos.parentSuggestion(db, api), null, 'already merged')
 })
+
+test('opening a plain folder full of repos suggests making it a multi-repo project', () => {
+  const w = workspace()
+  const db = openDb(':memory:')
+  const s = repos.setupSuggestion(db, w.root)!
+  assert.equal(s.kind, 'root')
+  assert.deepEqual(s.repos.map((c) => c.path), [w.backend, w.web])
+  assert.equal(repos.setupSuggestion(db, w.backend), null, 'a repo without sibling repos at its level')
+
+  const id = repos.mergeIntoParent(db, 'user', w.root, w.root, [w.backend])
+  assert.deepEqual(repos.projectRepos(db, w.root)!.repos.map((r) => r.path), [w.backend], 'the root itself is not a member')
+  assert.equal(r.findProjectByPath(db, w.root)?.id, id)
+  assert.equal(repos.setupSuggestion(db, w.root), null, 'already has members')
+})
