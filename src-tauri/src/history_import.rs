@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Value};
+use tauri::{AppHandle, Emitter};
 
 use crate::session_store::{upsert_session, SessionUpsert};
 
@@ -19,20 +20,26 @@ const MAX_TEXT: usize = 20_000;
 /// 列项目会话前调用；出错只记日志，不影响列表。
 /// 开发版默认不导入：终端历史是同一批 Claude / Codex 会话，正式版已经导入，两边都能接着聊会冲突。
 /// 要在开发版里测这个功能时设 `SOLOYARD_DEV_HISTORY_IMPORT=1`。
-pub fn import_for_project(conn: &Connection, cwd: &str) {
+/// 改了的会话发 `soloyard:sessions-imported`：前端内存里已经载入的那份要换成新的，不然显示旧记录、存盘时还会写回去。
+pub fn import_for_project(app: &AppHandle, conn: &Connection, cwd: &str) {
     if cfg!(debug_assertions) && std::env::var_os("SOLOYARD_DEV_HISTORY_IMPORT").is_none() {
         return;
     }
     let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else { return };
-    if let Err(error) = import_with_home(conn, &home, cwd) {
-        eprintln!("history import failed for {cwd}: {error}");
+    match import_with_home(conn, &home, cwd) {
+        Ok(ids) if !ids.is_empty() => {
+            let _ = app.emit("soloyard:sessions-imported", &ids);
+        }
+        Ok(_) => {}
+        Err(error) => eprintln!("history import failed for {cwd}: {error}"),
     }
 }
 
-pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Result<usize, String> {
+/// 返回新建或补了内容的会话 id。
+pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Result<Vec<String>, String> {
     let cwd = cwd.trim_end_matches('/');
     if cwd.is_empty() || cwd == "~" || cwd.starts_with("remote://") {
-        return Ok(0);
+        return Ok(Vec::new());
     }
     // v2：以前「在 MonoCode 里接着聊过」的会话直接跳过、记成处理完了；换张表让它们重扫一遍，补上终端里的新内容
     conn.execute_batch(
@@ -55,7 +62,7 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
     walk_codex(&home.join(".codex/sessions"), 4, &mut candidates);
     let codex_titles = codex_titles(home);
 
-    let mut imported = 0;
+    let mut imported = Vec::new();
     for (path, harness) in candidates {
         let key = path.to_string_lossy().to_string();
         let Some(mtime) = mtime_millis(&path) else { continue };
@@ -106,7 +113,8 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
                 match append_newer(conn, id, *updated, &parsed)? {
                     // 正在应用里跑：不记这次的 mtime，下次列会话再看
                     None => continue,
-                    Some(appended) => imported += usize::from(appended),
+                    Some(true) => imported.push(id.clone()),
+                    Some(false) => {}
                 }
                 remember(conn, &key, mtime, harness, Some(cwd), 1, prev_ours, row.as_ref().and_then(|r| r.4))?;
                 continue;
@@ -138,8 +146,8 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
             params![target, parsed.started_at, parsed.updated_at],
         )
         .map_err(|e| e.to_string())?;
-        remember(conn, &key, mtime, harness, Some(cwd), 1, Some(target), Some(parsed.updated_at))?;
-        imported += 1;
+        remember(conn, &key, mtime, harness, Some(cwd), 1, Some(target.clone()), Some(parsed.updated_at))?;
+        imported.push(target);
     }
     Ok(imported)
 }
@@ -455,8 +463,8 @@ mod tests {
 
         let conn = Connection::open_in_memory().unwrap();
         crate::session_store::migrate(&conn).unwrap();
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 2);
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0, "unchanged files are skipped");
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 2);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "unchanged files are skipped");
 
         let (title, model, blocks, updated): (String, String, String, i64) = conn
             .query_row("SELECT title, model, blocks_json, updated_at FROM sessions WHERE provider_session_id = ?1", params![c1], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))
@@ -473,7 +481,7 @@ mod tests {
         let c2 = "44444444-4444-4444-8444-444444444444";
         conn.execute("INSERT INTO sessions (id, cwd, harness, model, runtime_mode, title, provider_session_id, created_at, updated_at) VALUES ('mono', ?1, 'claude', 'claude:sonnet', 'supervised', 'mine', ?2, 1, 1)", params![cwd, c2]).unwrap();
         write(&dir.join(format!("{c2}.jsonl")), &[json!({"type":"user","sessionId":c2,"cwd":cwd,"message":{"content":"hi"}})]);
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0);
         let n: i64 = conn.query_row("SELECT COUNT(*) FROM sessions WHERE provider_session_id = ?1", params![c2], |r| r.get(0)).unwrap();
         assert_eq!(n, 1);
 
@@ -484,13 +492,13 @@ mod tests {
         let line = |ts: &str, role: &str, text: &str| json!({"type":role,"sessionId":c3,"cwd":cwd,"timestamp":ts,"message":{"content":[{"type":"text","text":text}]}});
         let mut lines = vec![line("2026-09-02T00:00:00Z", "user", "应用里问的"), line("2026-09-02T00:00:01Z", "assistant", "应用里答的")];
         write(&dir.join(format!("{c3}.jsonl")), &lines);
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0, "nothing newer than the app record");
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "nothing newer than the app record");
         conn.execute("INSERT INTO in_flight_sessions (session_id, cwd, sort_index) VALUES ('app', ?1, 0)", params![cwd]).unwrap();
         lines.extend([line("2026-09-04T00:00:00Z", "user", "终端里接着问"), line("2026-09-04T00:00:01Z", "assistant", "终端里答"), line("2026-09-04T00:00:02Z", "assistant", "补一句")]);
         write(&dir.join(format!("{c3}.jsonl")), &lines);
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 0, "running in the app");
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "running in the app");
         conn.execute("DELETE FROM in_flight_sessions", []).unwrap();
-        assert_eq!(import_with_home(&conn, &home, cwd).unwrap(), 1);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 1);
         let (blocks, updated): (String, i64) = conn.query_row("SELECT blocks_json, updated_at FROM sessions WHERE id = 'app'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
         let blocks: Vec<Value> = serde_json::from_str(&blocks).unwrap();
         let texts: Vec<&str> = blocks.iter().map(|b| b["text"].as_str().unwrap_or("")).collect();
@@ -511,10 +519,10 @@ mod bench {
             let conn = rusqlite::Connection::open_in_memory().unwrap();
             crate::session_store::migrate(&conn).unwrap();
             let t = std::time::Instant::now();
-            let n = super::import_with_home(&conn, &home, cwd).unwrap();
+            let n = super::import_with_home(&conn, &home, cwd).unwrap().len();
             let first = t.elapsed();
             let t = std::time::Instant::now();
-            super::import_with_home(&conn, &home, cwd).unwrap();
+            super::import_with_home(&conn, &home, cwd).unwrap().len();
             println!("{cwd}: imported {n} in {first:?}, second pass {:?}", t.elapsed());
         }
     }

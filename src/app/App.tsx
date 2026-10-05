@@ -61,6 +61,7 @@ import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Solo
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
+import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -3928,6 +3929,23 @@ function Workspace({
       (sessionLoadEpochs.current.get(sessionId) ?? 0) + 1,
     );
   }, []);
+
+  // Soloyard: terminal turns were imported into these sessions; swap in the new transcript of idle loaded ones.
+  useImportedSessions((ids) => {
+    for (const id of ids) {
+      invalidateLoadedSession(id);
+      const current = sessionsRef.current.find((s) => s.id === id);
+      if (!current || current.busy || pendingPersist.current.has(id) || removingSessionIds.current.has(id) || switchingWorktrees.current.has(id)) continue;
+      void getSession(id).then((loaded) => {
+        const latest = sessionsRef.current.find((s) => s.id === id);
+        if (!loaded || latest !== current) return;
+        const next = { ...latest, blocks: loaded.blocks };
+        lastPersisted.current.set(id, persistFingerprint(next));
+        sessionsRef.current = sessionsRef.current.map((s) => (s.id === id ? next : s));
+        setSessions(sessionsRef.current);
+      });
+    }
+  });
 
   const loadStoredSession = useCallback(
     (sessionId: string): Promise<Session | null> => {

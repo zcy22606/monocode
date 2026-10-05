@@ -253,6 +253,7 @@ fn generated_image_paths(blocks: &Value) -> Vec<String> {
 
 #[tauri::command(async)]
 pub fn session_list_by_project(
+    app: AppHandle, // Soloyard
     store: State<'_, SessionStore>,
     cwd: String,
 ) -> Result<Vec<SessionSummary>, String> {
@@ -260,7 +261,7 @@ pub fn session_list_by_project(
         return Err("cwd is required".into());
     }
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
-    crate::history_import::import_for_project(&conn, &cwd); // Soloyard
+    crate::history_import::import_for_project(&app, &conn, &cwd); // Soloyard
     crate::soloyard_missing_worktree::detach_for_project(&conn, &cwd); // Soloyard
     list_by_project(&conn, &cwd).map_err(|e| e.to_string())
 }
