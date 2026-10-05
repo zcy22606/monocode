@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import { Popover } from "../../../../shared/ui/Popover";
 import { ChevronDown, ChevronRight, ListFilter, MessageSquare, Plus, Search, SlidersHorizontal, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
-import { STATUSES, statusLabel, type Issue } from "../../model/issues";
+import { priorityLabel, statusLabel, type Issue } from "../../model/issues";
+import { EMPTY_SELECTION, selectIssue, type IssueSelection } from "../../model/issueSelection";
 import {
   DEFAULT_VIEW,
   ISSUE_FIELDS,
@@ -20,11 +21,14 @@ import {
   type IssueViewConfig,
 } from "../../model/issueView";
 import { openProjectView } from "../../model/projectViews";
-import { PriorityIcon, StatusIcon } from "./IssueIcons";
+import { NoticeBar, errorText, type Notice } from "../NoticeBar";
+import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
 
 const shortDate = (iso: string, lang: string) => new Date(iso).toLocaleDateString(lang, { month: "short", day: "numeric" });
 
-type MenuState = { anchor: HTMLElement; kind: "filter" } | { anchor: HTMLElement; kind: "status"; issue: Issue };
+/** 改状态 / 优先级：带 issue 是改这一条，不带是改多选的那些。 */
+type MenuState = { anchor: HTMLElement; kind: "filter" } | { anchor: HTMLElement; kind: "status" | "priority"; issue?: Issue };
+type Mods = Pick<MouseEvent, "shiftKey" | "metaKey" | "ctrlKey">;
 
 /** Issues 标签：工具栏（搜索、筛选、显示设置）+ 列表 / 看板。视图配置每个项目各存一份。 */
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
@@ -35,6 +39,8 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   const [displayAnchor, setDisplayAnchor] = useState<HTMLElement | null>(null);
   const [creatingIn, setCreatingIn] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [selection, setSelection] = useState<IssueSelection>(EMPTY_SELECTION);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   const setView = (patch: Partial<IssueViewConfig>) => {
     const next = { ...view, ...patch };
@@ -45,10 +51,14 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   const groupField = view.groupBy ? ISSUE_FIELDS[view.groupBy].group : undefined;
   const openIssue = (issue: Issue) =>
     openProjectView({ cwd, view: "issue", itemId: String(issue.id), title: `${issue.ident} ${issue.title}` });
-  const create = async (title: string, groupKey: string | null) => {
-    const patch = groupKey && groupKey !== "all" ? (groupField?.patchFor?.(groupKey) ?? {}) : {};
-    await mutateSoloyard("createIssue", project.id, { title, ...patch });
-  };
+  const groupPatch = (groupKey: string) => (groupKey !== "all" ? (groupField?.patchFor?.(groupKey) ?? {}) : {});
+  const inlineCreate = (groupKey: string) => (
+    <InlineCreate
+      defaultPriority={groupPatch(groupKey).priority ?? 0}
+      onCreate={(title, priority) => mutateSoloyard<void>("createIssue", project.id, { title, ...groupPatch(groupKey), priority })}
+      onDone={() => setCreatingIn(null)}
+    />
+  );
   const move = (issueId: number, groupKey: string) => {
     const issue = issues.find((entry) => entry.id === issueId);
     const patch = issue && groupField?.patchFor?.(groupKey, issue);
@@ -71,14 +81,52 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
       checked: view.filters.some((f) => f.field === field.id && f.values.includes(option.key)),
     })),
   }));
-  const visibleCount = new Set(groups.flatMap((g) => g.issues.map((i) => i.id))).size;
+  // 多选只算看得见的：筛掉 / 隐藏的不参与批量操作
+  const order = [...new Set(groups.flatMap((g) => g.issues.map((i) => i.id)))];
+  const selected = issues.filter((i) => selection.ids.has(i.id) && order.includes(i.id));
+  const toAccept = selected.filter((i) => i.status === "in_review");
+  const select = (issue: Issue, e: Mods, toggle = false) =>
+    setSelection((s) => selectIssue(s, issue.id, order, { shift: e.shiftKey, toggle: toggle || e.metaKey || e.ctrlKey }));
+  const rowClick = (issue: Issue, e: Mods) => {
+    if (e.shiftKey || e.metaKey || e.ctrlKey) return select(issue, e);
+    setSelection(EMPTY_SELECTION);
+    openIssue(issue);
+  };
+  /** 批量改：一个 batch，提示条里能整批撤销。 */
+  const bulk = async (ids: number[], patch: Partial<Issue>, message: string) => {
+    try {
+      const batch = await mutateSoloyard<string | null>("updateIssues", ids, patch);
+      setNotice(batch ? { kind: "undo", batch, message } : null);
+    } catch (e) {
+      setNotice({ kind: "error", message: errorText(e) });
+    }
+  };
+  const undo = async (batch: string) => {
+    try {
+      await mutateSoloyard("revertBatch", batch);
+      setNotice(null);
+    } catch (e) {
+      setNotice({ kind: "error", message: errorText(e) });
+    }
+  };
+  const rowProps = {
+    view,
+    selectedIds: selection.ids,
+    selecting: selected.length > 0,
+    creatingIn,
+    setCreatingIn,
+    inlineCreate,
+    onRowClick: rowClick,
+    onCheck: (issue: Issue, e: Mods) => select(issue, e, true),
+    onPropertyClick: (anchor: HTMLElement, kind: "status" | "priority", issue: Issue) => setMenu({ anchor, kind, issue }),
+  };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col" onKeyDown={(e) => e.key === "Escape" && selection.ids.size && setSelection(EMPTY_SELECTION)}>
       {/* 窄的时候「筛选」「显示」只留图标（悬停有提示），按钮都不换行 */}
       <header className="@container/issues flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b border-stroke px-4">
         <h1 className="shrink-0 text-[13px] font-medium text-content">{t("view.issues")}</h1>
-        <span className="text-[12px] text-content/40">{visibleCount}</span>
+        <span className="text-[12px] text-content/40">{order.length}</span>
         <label className="ml-auto flex h-7 w-48 min-w-20 shrink items-center gap-1.5 rounded-md border border-stroke px-2 text-content/50 focus-within:border-content/30">
           <Search className="size-3.5 shrink-0" />
           <input
@@ -140,31 +188,48 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
           ))}
         </div>
       ) : null}
+      {selected.length ? (
+        <div className="flex shrink-0 items-center gap-1 whitespace-nowrap border-b border-stroke bg-selection/50 px-4 py-1 text-[12px]">
+          <span className="mr-1 text-content/70">{t("issues.bulk.selected", { count: selected.length })}</span>
+          <button
+            type="button"
+            disabled={!toAccept.length}
+            title={t("issues.bulk.acceptHint")}
+            onClick={() => void bulk(toAccept.map((i) => i.id), { status: "done" }, t("issues.bulk.accepted", { count: toAccept.length }))}
+            className="flex h-6 items-center gap-1.5 rounded-md bg-accent px-2 font-medium text-white hover:opacity-90 disabled:bg-content/10 disabled:text-content/40 disabled:hover:opacity-100"
+          >
+            {t("issues.bulk.accept", { count: toAccept.length })}
+          </button>
+          {(["status", "priority"] as const).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={(e) => setMenu({ anchor: e.currentTarget, kind })}
+              className="flex h-6 items-center gap-1 rounded-md px-2 text-content/70 hover:bg-content/10 hover:text-content"
+            >
+              {t(`field.${kind}`)}
+              <ChevronDown className="size-3" />
+            </button>
+          ))}
+          <button type="button" aria-label={t("issues.bulk.clear")} title={t("issues.bulk.clear")} onClick={() => setSelection(EMPTY_SELECTION)} className="ml-auto rounded p-0.5 text-content/50 hover:bg-content/10 hover:text-content">
+            <X className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+      {notice ? <NoticeBar notice={notice} onUndo={(batch) => void undo(batch)} onClose={() => setNotice(null)} /> : null}
       {error ? <p className="p-4 text-[12px] text-red-400">{error}</p> : null}
-      {query.trim() && !visibleCount && creatingIn === null ? (
+      {query.trim() && !order.length && creatingIn === null ? (
         <p className="px-4 py-10 text-center text-[13px] text-content/50">{t("issues.noMatches", { query: query.trim() })}</p>
       ) : view.layout === "list" ? (
         <ListView
           groups={groups}
-          view={view}
           grouped={!!view.groupBy}
-          creatingIn={creatingIn}
-          setCreatingIn={setCreatingIn}
-          onCreate={create}
-          onOpen={openIssue}
-          onStatusClick={(anchor, issue) => setMenu({ anchor, kind: "status", issue })}
+          allSelected={order.length > 0 && selected.length === order.length}
+          onSelectAll={(all) => setSelection(all ? { ids: new Set(order), anchor: null } : EMPTY_SELECTION)}
+          {...rowProps}
         />
       ) : (
-        <BoardView
-          groups={groups}
-          view={view}
-          canMove={!!groupField?.patchFor}
-          creatingIn={creatingIn}
-          setCreatingIn={setCreatingIn}
-          onCreate={create}
-          onMove={move}
-          onOpen={openIssue}
-        />
+        <BoardView groups={groups} canMove={!!groupField?.patchFor} onMove={move} {...rowProps} />
       )}
       {menu?.kind === "filter" ? (
         <ExplorerMenu
@@ -179,15 +244,17 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
           onClose={() => setMenu(null)}
         />
       ) : null}
-      {menu?.kind === "status" ? (
+      {menu && menu.kind !== "filter" ? (
         <ExplorerMenu
           anchor={menu.anchor}
-          items={STATUSES.map((s) => ({ kind: "item" as const, id: s, label: statusLabel(s), checked: menu.issue.status === s }))}
-          ariaLabel={t("issues.changeStatus")}
+          items={menu.kind === "status" ? statusMenuItems(menu.issue?.status) : priorityMenuItems(menu.issue?.priority)}
+          ariaLabel={menu.kind === "status" ? t("issues.changeStatus") : t("issues.changePriority")}
           width={180}
           onPick={(id) => {
             setMenu(null);
-            void mutateSoloyard("updateIssue", menu.issue.id, { status: id });
+            const patch: Partial<Issue> = menu.kind === "status" ? { status: id as Issue["status"] } : { priority: Number(id) };
+            if (menu.issue) void mutateSoloyard("updateIssue", menu.issue.id, patch);
+            else void bulk(selected.map((i) => i.id), patch, t("issues.bulk.updated", { count: selected.length }));
           }}
           onClose={() => setMenu(null)}
         />
@@ -291,32 +358,130 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
   );
 }
 
-function InlineCreate({ onCreate, onDone }: { onCreate: (title: string) => Promise<void>; onDone: () => void }) {
+/** 行内新建：标题 + 优先级（默认取所在分组的；连续新建时沿用上一次选的）。 */
+function InlineCreate({ defaultPriority, onCreate, onDone }: { defaultPriority: number; onCreate: (title: string, priority: number) => Promise<void>; onDone: () => void }) {
   const { t } = useTranslation("soloyard");
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState(defaultPriority);
+  const [picker, setPicker] = useState<HTMLElement | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  const closePicker = () => {
+    setPicker(null);
+    input.current?.focus();
+  };
+  return (
+    <div className="flex h-9 w-full items-center gap-2 border-b border-stroke bg-content/5 px-4">
+      <button
+        type="button"
+        aria-label={t("issues.priorityAria", { priority: priorityLabel(priority) })}
+        title={t("issues.changePriority")}
+        onMouseDown={(e) => e.preventDefault()} // 不抢输入框焦点：标题为空时失焦会关掉新建
+        onClick={(e) => setPicker(e.currentTarget)}
+        className="rounded p-0.5 hover:bg-content/10"
+      >
+        <PriorityIcon priority={priority} />
+      </button>
+      <input
+        ref={input}
+        autoFocus
+        value={title}
+        placeholder={t("issues.createPlaceholder")}
+        onChange={(e) => setTitle(e.target.value)}
+        onBlur={() => !title.trim() && !picker && onDone()}
+        onKeyDown={async (e) => {
+          if (e.key === "Escape") onDone();
+          if (e.key === "Enter" && title.trim()) {
+            await onCreate(title.trim(), priority);
+            setTitle("");
+          }
+        }}
+        className="h-full min-w-0 flex-1 bg-transparent text-[13px] text-content outline-none placeholder:text-content/40"
+      />
+      {picker ? (
+        <ExplorerMenu
+          anchor={picker}
+          items={priorityMenuItems(priority)}
+          ariaLabel={t("issues.changePriority")}
+          width={180}
+          onPick={(id) => {
+            setPriority(Number(id));
+            closePicker();
+          }}
+          onClose={closePicker}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/** 行 / 卡片上的勾选框：多选时一直显示，平时悬停才显示。 */
+function SelectBox({ issue, checked, selecting, onCheck }: { issue: Issue; checked: boolean; selecting: boolean; onCheck: (issue: Issue, e: Mods) => void }) {
+  const { t } = useTranslation("soloyard");
   return (
     <input
-      autoFocus
-      value={title}
-      placeholder={t("issues.createPlaceholder")}
-      onChange={(e) => setTitle(e.target.value)}
-      onBlur={() => !title.trim() && onDone()}
-      onKeyDown={async (e) => {
-        if (e.key === "Escape") onDone();
-        if (e.key === "Enter" && title.trim()) {
-          await onCreate(title.trim());
-          setTitle("");
-        }
+      type="checkbox"
+      readOnly
+      checked={checked}
+      aria-label={t("issues.selectAria", { ident: issue.ident })}
+      title={t("issues.selectHint")}
+      onClick={(e) => {
+        e.stopPropagation();
+        onCheck(issue, e);
       }}
-      className="h-9 w-full border-b border-stroke bg-content/5 px-4 text-[13px] text-content outline-none placeholder:text-content/40"
+      onKeyDown={(e) => e.stopPropagation()} // 空格 / 回车只勾选，不打开 issue
+      className={`shrink-0 accent-[var(--color-accent)] ${checked || selecting ? "" : "opacity-0 focus-visible:opacity-100 group-hover/row:opacity-100"}`}
     />
   );
 }
 
+/** 行 / 卡片上可点的状态、优先级图标：点开菜单直接改，不进详情。 */
+function PropertyButton({ issue, kind, onClick, className = "" }: { issue: Issue; kind: "status" | "priority"; onClick: (anchor: HTMLElement, kind: "status" | "priority", issue: Issue) => void; className?: string }) {
+  const { t } = useTranslation("soloyard");
+  const label = kind === "status" ? t("issues.statusAria", { status: statusLabel(issue.status) }) : t("issues.priorityAria", { priority: priorityLabel(issue.priority) });
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(e.currentTarget, kind, issue);
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+      className={`shrink-0 rounded p-0.5 hover:bg-content/10 ${className}`}
+    >
+      {kind === "status" ? <StatusIcon status={issue.status} /> : <PriorityIcon priority={issue.priority} />}
+    </button>
+  );
+}
+
 /** 行 / 卡片上的属性小标签，按视图配置显示。 */
-function Properties({ issue, view }: { issue: Issue; view: IssueViewConfig }) {
+/** 列表的列宽：表头和每行共用，才能对齐。 */
+const COL = { priority: "w-12", id: "w-16", status: "w-12", labels: "w-40", sessions: "w-12", date: "w-14" };
+
+function Properties({ issue, view, list = false }: { issue: Issue; view: IssueViewConfig; list?: boolean }) {
   const { t, i18n } = useTranslation("soloyard");
   const show = (id: FieldId) => view.properties.includes(id);
+  if (list) {
+    return (
+      <>
+        {show("labels") ? (
+          <span className={`${COL.labels} flex shrink-0 justify-end gap-1 overflow-hidden`} title={issue.labels.join(", ") || undefined}>
+            {issue.labels.map((label) => (
+              <span key={label} className="h-5 shrink-0 rounded-full border border-stroke px-2 text-[11px] leading-[18px] text-content/60">{label}</span>
+            ))}
+          </span>
+        ) : null}
+        {show("sessions") ? (
+          <span className={`${COL.sessions} flex shrink-0 items-center justify-end gap-0.5 text-[11px] text-content/50`} title={issue.sessions ? t("issues.linkedSessions", { count: issue.sessions }) : undefined}>
+            {issue.sessions ? <><MessageSquare className="size-3" />{issue.sessions}</> : null}
+          </span>
+        ) : null}
+        {show("created") ? <span className={`${COL.date} shrink-0 text-right text-[11px] text-content/40`}>{shortDate(issue.created_at, i18n.language)}</span> : null}
+        {show("updated") ? <span className={`${COL.date} shrink-0 text-right text-[11px] text-content/40`}>{shortDate(issue.updated_at, i18n.language)}</span> : null}
+      </>
+    );
+  }
   return (
     <>
       {show("labels")
@@ -336,13 +501,49 @@ function Properties({ issue, view }: { issue: Issue; view: IssueViewConfig }) {
   );
 }
 
+/** 列表的表头：每列叫什么；最左边的勾选框是全选 / 全不选。 */
+function ListHeader({ view, allSelected, someSelected, onSelectAll }: { view: IssueViewConfig; allSelected: boolean; someSelected: boolean; onSelectAll: (all: boolean) => void }) {
+  const { t } = useTranslation("soloyard");
+  const show = (id: FieldId) => view.properties.includes(id);
+  const cell = (id: FieldId, width: string, right = false) =>
+    show(id) ? <span className={`${width} shrink-0 truncate ${right ? "text-right" : ""}`}>{t(`field.${id}`)}</span> : null;
+  return (
+    <div className="flex h-8 shrink-0 select-none items-center gap-3 border-b border-stroke pl-2 pr-4 text-[11px] text-content/40">
+      <input
+        type="checkbox"
+        readOnly
+        checked={allSelected}
+        ref={(el) => {
+          if (el) el.indeterminate = someSelected && !allSelected;
+        }}
+        aria-label={t("issues.selectAll")}
+        title={t("issues.selectAll")}
+        onClick={() => onSelectAll(!allSelected)}
+        className="shrink-0 accent-[var(--color-accent)]"
+      />
+      {cell("priority", COL.priority)}
+      {cell("id", COL.id)}
+      {cell("status", COL.status)}
+      <span className="min-w-0 flex-1 truncate">{t("field.title")}</span>
+      {cell("labels", COL.labels, true)}
+      {cell("sessions", COL.sessions, true)}
+      {cell("created", COL.date, true)}
+      {cell("updated", COL.date, true)}
+    </div>
+  );
+}
+
 type ViewProps = {
   groups: IssueGroup[];
   view: IssueViewConfig;
+  selectedIds: Set<number>;
+  selecting: boolean;
   creatingIn: string | null;
   setCreatingIn: (key: string | null) => void;
-  onCreate: (title: string, groupKey: string | null) => Promise<void>;
-  onOpen: (issue: Issue) => void;
+  inlineCreate: (groupKey: string) => ReactNode;
+  onRowClick: (issue: Issue, e: Mods) => void;
+  onCheck: (issue: Issue, e: Mods) => void;
+  onPropertyClick: (anchor: HTMLElement, kind: "status" | "priority", issue: Issue) => void;
 };
 
 function GroupIcon({ view, groupKey }: { view: IssueViewConfig; groupKey: string }) {
@@ -351,7 +552,7 @@ function GroupIcon({ view, groupKey }: { view: IssueViewConfig; groupKey: string
   return null;
 }
 
-function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, onOpen, onStatusClick }: ViewProps & { grouped: boolean; onStatusClick: (anchor: HTMLElement, issue: Issue) => void }) {
+function ListView({ groups, view, grouped, selectedIds, selecting, allSelected, onSelectAll, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick }: ViewProps & { grouped: boolean; allSelected: boolean; onSelectAll: (all: boolean) => void }) {
   const { t } = useTranslation("soloyard");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const show = (id: FieldId) => view.properties.includes(id);
@@ -359,76 +560,69 @@ function ListView({ groups, view, grouped, creatingIn, setCreatingIn, onCreate, 
     return <p className="px-4 py-10 text-center text-[13px] text-content/50">{t("issues.empty")}</p>;
   }
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
-      {creatingIn !== null && !groups.some((g) => g.key === creatingIn) ? (
-        <InlineCreate onCreate={(t) => onCreate(t, creatingIn)} onDone={() => setCreatingIn(null)} />
-      ) : null}
-      {groups.map((group) => {
-        const open = !collapsed.has(group.key);
-        return (
-          <section key={group.key}>
-            {grouped ? (
-              <div className="group sticky top-0 z-10 flex h-9 items-center gap-2 border-b border-stroke bg-background-base px-4 text-[12px] text-content/70">
-                <button
-                  type="button"
-                  aria-expanded={open}
-                  onClick={() => setCollapsed((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(group.key)) next.delete(group.key);
-                    else next.add(group.key);
-                    return next;
-                  })}
-                  className="flex items-center gap-2"
-                >
-                  {open ? <ChevronDown className="size-3 text-content/40" /> : <ChevronRight className="size-3 text-content/40" />}
-                  <GroupIcon view={view} groupKey={group.key} />
-                  <span className="font-medium text-content">{group.label}</span>
-                  <span className="text-content/40">{group.issues.length}</span>
-                </button>
-                <button type="button" aria-label={t("issues.newIn", { group: group.label })} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 opacity-0 hover:bg-content/10 hover:text-content group-hover:opacity-100">
-                  <Plus className="size-3.5" />
-                </button>
-              </div>
-            ) : null}
-            {creatingIn === group.key ? <InlineCreate onCreate={(t) => onCreate(t, group.key)} onDone={() => setCreatingIn(null)} /> : null}
-            {open
-              ? group.issues.map((issue) => (
-                  <div
-                    key={issue.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onOpen(issue)}
-                    onKeyDown={(e) => e.key === "Enter" && onOpen(issue)}
-                    className="flex h-9 cursor-default items-center gap-3 border-b border-stroke/60 px-4 text-[13px] text-content/90 hover:bg-content/5"
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ListHeader view={view} allSelected={allSelected} someSelected={selecting} onSelectAll={onSelectAll} />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
+        {creatingIn !== null && !groups.some((g) => g.key === creatingIn) ? (
+          inlineCreate(creatingIn)
+        ) : null}
+        {groups.map((group) => {
+          const open = !collapsed.has(group.key);
+          return (
+            <section key={group.key}>
+              {grouped ? (
+                <div className="group sticky top-0 z-10 flex h-9 items-center gap-2 border-b border-stroke bg-background-base px-4 text-[12px] text-content/70">
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setCollapsed((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(group.key)) next.delete(group.key);
+                      else next.add(group.key);
+                      return next;
+                    })}
+                    className="flex items-center gap-2"
                   >
-                    {show("priority") ? <PriorityIcon priority={issue.priority} /> : null}
-                    {show("id") ? <span className="w-16 shrink-0 font-mono text-[12px] text-content/40">{issue.ident}</span> : null}
-                    {show("status") ? (
-                      <button
-                        type="button"
-                        aria-label={t("issues.statusAria", { status: statusLabel(issue.status) })}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onStatusClick(e.currentTarget, issue);
-                        }}
-                        className="rounded p-0.5 hover:bg-content/10"
-                      >
-                        <StatusIcon status={issue.status} />
-                      </button>
-                    ) : null}
-                    <span className="min-w-0 flex-1 truncate">{issue.title}</span>
-                    <Properties issue={issue} view={view} />
-                  </div>
-                ))
-              : null}
-          </section>
-        );
-      })}
+                    {open ? <ChevronDown className="size-3 text-content/40" /> : <ChevronRight className="size-3 text-content/40" />}
+                    <GroupIcon view={view} groupKey={group.key} />
+                    <span className="font-medium text-content">{group.label}</span>
+                    <span className="text-content/40">{group.issues.length}</span>
+                  </button>
+                  <button type="button" aria-label={t("issues.newIn", { group: group.label })} onClick={() => setCreatingIn(group.key)} className="ml-auto rounded p-1 text-content/40 opacity-0 hover:bg-content/10 hover:text-content group-hover:opacity-100">
+                    <Plus className="size-3.5" />
+                  </button>
+                </div>
+              ) : null}
+              {creatingIn === group.key ? inlineCreate(group.key) : null}
+              {open
+                ? group.issues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={selectedIds.has(issue.id)}
+                      onClick={(e) => onRowClick(issue, e)}
+                      onKeyDown={(e) => e.key === "Enter" && onRowClick(issue, e)}
+                      className={`group/row flex h-9 cursor-default select-none items-center gap-3 border-b border-stroke/60 pl-2 pr-4 text-[13px] text-content/90 ${selectedIds.has(issue.id) ? "bg-selection" : "hover:bg-content/5"}`}
+                    >
+                      <SelectBox issue={issue} checked={selectedIds.has(issue.id)} selecting={selecting} onCheck={onCheck} />
+                      {show("priority") ? <span className={`${COL.priority} shrink-0`}><PropertyButton issue={issue} kind="priority" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
+                      {show("id") ? <span className={`${COL.id} shrink-0 font-mono text-[12px] text-content/40`}>{issue.ident}</span> : null}
+                      {show("status") ? <span className={`${COL.status} shrink-0`}><PropertyButton issue={issue} kind="status" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
+                      <span className="min-w-0 flex-1 truncate">{issue.title}</span>
+                      <Properties issue={issue} view={view} list />
+                    </div>
+                  ))
+                : null}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
-function BoardView({ groups, view, canMove, creatingIn, setCreatingIn, onCreate, onMove, onOpen }: ViewProps & { canMove: boolean; onMove: (issueId: number, groupKey: string) => void }) {
+function BoardView({ groups, view, canMove, selectedIds, selecting, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick, onMove }: ViewProps & { canMove: boolean; onMove: (issueId: number, groupKey: string) => void }) {
   const { t } = useTranslation("soloyard");
   const [over, setOver] = useState<string | null>(null);
   const show = (id: FieldId) => view.properties.includes(id);
@@ -461,7 +655,7 @@ function BoardView({ groups, view, canMove, creatingIn, setCreatingIn, onCreate,
           <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
             {creatingIn === group.key ? (
               <div className="overflow-hidden rounded-md border border-stroke">
-                <InlineCreate onCreate={(t) => onCreate(t, group.key)} onDone={() => setCreatingIn(null)} />
+                {inlineCreate(group.key)}
               </div>
             ) : null}
             {group.issues.map((issue) => (
@@ -471,13 +665,15 @@ function BoardView({ groups, view, canMove, creatingIn, setCreatingIn, onCreate,
                 tabIndex={0}
                 draggable={canMove}
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", String(issue.id))}
-                onClick={() => onOpen(issue)}
-                onKeyDown={(e) => e.key === "Enter" && onOpen(issue)}
-                className="flex cursor-default flex-col gap-1.5 rounded-md border border-stroke bg-background-base p-2.5 text-[13px] hover:border-content/20"
+                aria-selected={selectedIds.has(issue.id)}
+                onClick={(e) => onRowClick(issue, e)}
+                onKeyDown={(e) => e.key === "Enter" && onRowClick(issue, e)}
+                className={`group/row flex cursor-default select-none flex-col gap-1.5 rounded-md border p-2.5 text-[13px] ${selectedIds.has(issue.id) ? "border-accent/60 bg-selection" : "border-stroke bg-background-base hover:border-content/20"}`}
               >
                 <div className="flex items-center gap-2 text-[11px] text-content/40">
+                  <SelectBox issue={issue} checked={selectedIds.has(issue.id)} selecting={selecting} onCheck={onCheck} />
                   {show("id") ? <span className="font-mono">{issue.ident}</span> : null}
-                  {show("priority") ? <span className="ml-auto"><PriorityIcon priority={issue.priority} /></span> : null}
+                  {show("priority") ? <PropertyButton issue={issue} kind="priority" onClick={onPropertyClick} className="-m-0.5 ml-auto" /> : null}
                 </div>
                 <div className="flex items-start gap-2 text-content/90">
                   {show("status") && view.groupBy !== "status" ? <StatusIcon status={issue.status} className="mt-0.5" /> : null}

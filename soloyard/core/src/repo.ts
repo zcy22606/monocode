@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { basename } from 'node:path'
 import type { DB } from './db.ts'
@@ -175,15 +176,27 @@ export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue
 }
 
 /** 改 issue；状态变成 done 时记 completed_at，离开 done 时清掉。 */
-export function updateIssue(db: DB, actor: Actor, id: number, patch: Row, expectedVersion?: number) {
+export function updateIssue(db: DB, actor: Actor, id: number, patch: Row, expectedVersion?: number, batch?: string) {
   const p = { ...patch }
   if (Array.isArray(p.labels)) p.labels = JSON.stringify(p.labels)
   if (p.status === 'done') p.completed_at = now()
   else if (p.status) p.completed_at = null
-  return update(db, actor, 'issues', id, p, expectedVersion)
+  return update(db, actor, 'issues', id, p, expectedVersion, batch)
 }
 
-export type IssueFilter = { projectId?: number; status?: string[]; ready?: boolean; q?: string; includeSubIssues?: boolean }
+/** 批量改 issue（列表多选）：一个 batch，界面按 batch 整批撤销（iterations.revertBatch）。一条都没变返回 null。 */
+export function updateIssues(db: DB, actor: Actor, ids: number[], patch: Row): string | null {
+  const batch = `update-issues:${randomUUID()}`
+  return tx(db, () => {
+    for (const id of ids) updateIssue(db, actor, id, patch, undefined, batch)
+    return db.prepare('SELECT 1 FROM soloyard_changes WHERE batch = ? LIMIT 1').get(batch) ? batch : null
+  })
+}
+
+export type IssueFilter = { projectId?: number; status?: string[]; priority?: number[]; ready?: boolean; q?: string; includeSubIssues?: boolean }
+
+/** 优先级的先后：紧急 → 低，0「无」排最后（和界面 issueView.ts 的 byPriority 一致）。 */
+export const priorityRank = (p: number) => (p === 0 ? 9 : p)
 
 /** 收起的 issue：它的功能不在任何迭代里（待定 / 另立项 / 不做），不进 Issues 列表；功能排进迭代就回来。 */
 const PARKED = 'EXISTS (SELECT 1 FROM soloyard_features f WHERE f.id = i.feature_id AND f.iteration_id IS NULL)'
@@ -195,6 +208,7 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
   if (!f.includeSubIssues) where.push('i.parent_id IS NULL')
   if (f.projectId != null) { where.push('i.project_id = ?'); args.push(f.projectId) }
   if (f.status?.length) { where.push(`i.status IN (${f.status.map(() => '?').join(',')})`); args.push(...f.status) }
+  if (f.priority?.length) { where.push(`i.priority IN (${f.priority.map(() => '?').join(',')})`); args.push(...f.priority) }
   if (f.q) { where.push("(i.title LIKE ? OR i.body_md LIKE ? OR p.key || '-' || i.number LIKE ?)"); args.push(`%${f.q}%`, `%${f.q}%`, `${f.q}%`) }
   if (f.ready) where.push(`i.status IN ('backlog','todo') AND NOT EXISTS (
     SELECT 1 FROM soloyard_issue_deps d JOIN soloyard_issues b ON b.id = d.blocked_by_id WHERE d.issue_id = i.id AND b.status NOT IN ('done','canceled'))`)
@@ -205,7 +219,7 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
       (SELECT COUNT(*) FROM soloyard_session_links l WHERE l.kind = 'issue' AND l.target = CAST(i.id AS TEXT)
         ${hasBaseSessions(db) ? 'AND l.session_id IN (SELECT id FROM sessions)' : ''}) AS sessions
     FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id
-    WHERE ${where.join(' AND ')} ORDER BY i.sort_key`).all(...args) as Row[]
+    WHERE ${where.join(' AND ')} ORDER BY i.sort_key, i.id`).all(...args) as Row[]
   return rows.map((r) => ({ ...r, labels: JSON.parse(r.labels) as string[] }))
 }
 

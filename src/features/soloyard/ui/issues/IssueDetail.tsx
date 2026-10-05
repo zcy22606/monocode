@@ -6,8 +6,8 @@ import { MessageSquare, Play, Plus, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useProjectForPath, useSoloyard } from "../../data/api";
 import { requestOpenSession, requestSendToSession, requestStartWork } from "../../model/appActions";
 import { startWorkPrompt } from "../../model/startWork";
-import { PRIORITIES, STATUSES, priorityLabel, statusLabel, type IssueDetail as Detail } from "../../model/issues";
-import { PriorityIcon, StatusIcon } from "./IssueIcons";
+import { priorityLabel, statusLabel, type IssueDetail as Detail } from "../../model/issues";
+import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
 
 const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -195,11 +195,7 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
       {picker ? (
         <ExplorerMenu
           anchor={picker.anchor}
-          items={
-            picker.kind === "status"
-              ? STATUSES.map((s) => ({ kind: "item" as const, id: s, label: statusLabel(s), checked: issue.status === s }))
-              : PRIORITIES.map((p) => ({ kind: "item" as const, id: String(p), label: priorityLabel(p), checked: issue.priority === p }))
-          }
+          items={picker.kind === "status" ? statusMenuItems(issue.status) : priorityMenuItems(issue.priority)}
           ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : t("issues.changePriority")}
           width={180}
           onPick={(id) => {

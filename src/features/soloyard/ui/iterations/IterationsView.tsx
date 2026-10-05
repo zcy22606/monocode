@@ -25,6 +25,7 @@ import {
 } from "../../model/iterations";
 import { openProjectView } from "../../model/projectViews";
 import { StatusIcon } from "../issues/IssueIcons";
+import { NoticeBar, errorText, type Notice } from "../NoticeBar";
 import { DeleteIterationDialog, FinishIterationDialog, IterationFormDialog, NewFeatureDialog, StartIterationDialog } from "./IterationDialogs";
 
 const FEATURE_DRAG = "application/x-soloyard-feature";
@@ -37,7 +38,6 @@ const NO_BACKBONE = "—";
 type Layout = "board" | "list";
 type Menu = { anchor: HTMLElement; kind: "iteration"; id: number } | { anchor: HTMLElement; kind: "backbones" | "toolbar" } | { anchor: HTMLElement; kind: "move"; id: number };
 /** 顶部提示条：多步操作后的撤销，或操作失败的原因。 */
-type Notice = { kind: "undo"; batch: string; message: string } | { kind: "error"; message: string };
 
 /** 元素当前宽度（ResizeObserver）。 */
 function useWidth<T extends HTMLElement>() {
@@ -51,7 +51,6 @@ function useWidth<T extends HTMLElement>() {
   return [ref, width] as const;
 }
 
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export function IterationsView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
@@ -232,19 +231,7 @@ function Iterations({ plan, project, cwd }: { plan: IterationPlan; project: Solo
           )}
         </div>
       </header>
-      {notice ? (
-        <div className={`flex shrink-0 items-center gap-2 border-b border-stroke px-4 py-1.5 text-[12px] ${notice.kind === "error" ? "bg-red-500/10 text-red-300" : "bg-content/5 text-content/70"}`}>
-          <span role={notice.kind === "error" ? "alert" : "status"} className="min-w-0 truncate" title={notice.message}>{notice.message}</span>
-          {notice.kind === "undo" ? (
-            <button type="button" onClick={() => void undo(notice.batch)} className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
-              {t("iterations.undo")}
-            </button>
-          ) : null}
-          <button type="button" aria-label={t("iterations.close")} onClick={() => setNotice(null)} className={`shrink-0 rounded p-0.5 opacity-60 hover:bg-content/10 hover:opacity-100 ${notice.kind === "undo" ? "" : "ml-auto"}`}>
-            <X className="size-3.5" />
-          </button>
-        </div>
-      ) : null}
+      {notice ? <NoticeBar notice={notice} onUndo={(batch) => void undo(batch)} onClose={() => setNotice(null)} /> : null}
       {!iterations.length && features.length ? (
         <div className="flex shrink-0 items-center gap-3 border-b border-stroke bg-accent/5 px-4 py-2 text-[12px] text-content/70">
           <span className="min-w-0 line-clamp-2">{t("iterations.empty.generateHint", { count: features.length })}</span>

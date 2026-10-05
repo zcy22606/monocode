@@ -1,5 +1,12 @@
+import type { ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import type { IssueStatus } from "../../model/issues";
-import { priorityLabel, statusLabel } from "../../model/issues";
+import { PRIORITIES, STATUSES, priorityLabel, statusLabel } from "../../model/issues";
+
+/** 改状态 / 优先级的菜单项（详情页、列表行、看板卡片、多选操作栏共用）；current 不传时不打勾。 */
+export const statusMenuItems = (current?: IssueStatus): ExplorerMenuItem[] =>
+  STATUSES.map((s) => ({ kind: "item", id: s, label: statusLabel(s), checked: current === s }));
+export const priorityMenuItems = (current?: number): ExplorerMenuItem[] =>
+  PRIORITIES.map((p) => ({ kind: "item", id: String(p), label: priorityLabel(p), checked: current === p }));
 
 const STATUS_TONE: Record<IssueStatus, string> = {
   backlog: "text-content/40",
@@ -44,6 +51,9 @@ export function StatusIcon({ status, className = "" }: { status: IssueStatus; cl
   );
 }
 
+/** 高 → 低：橙、黄、蓝；「无」保持灰。紧急是红底的「!」。 */
+const PRIORITY_TONE: Record<number, string> = { 2: "text-orange-400", 3: "text-yellow-400", 4: "text-blue-400" };
+
 export function PriorityIcon({ priority }: { priority: number }) {
   const label = priorityLabel(priority);
   if (priority === 1) {
@@ -54,7 +64,7 @@ export function PriorityIcon({ priority }: { priority: number }) {
     );
   }
   return (
-    <svg viewBox="0 0 14 14" className="size-3.5 shrink-0 text-content/60" role="img" aria-label={label}>
+    <svg viewBox="0 0 14 14" className={`size-3.5 shrink-0 ${PRIORITY_TONE[priority] ?? "text-content/60"}`} role="img" aria-label={label}>
       {priority === 0 ? (
         <path d="M3 7h1.5M6.25 7h1.5M9.5 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       ) : (
