@@ -750,6 +750,8 @@ function Detail({ feature: f, iterations, backboneLabel, onMove, onRename, onCre
             <StatusIcon status={f.issue_status} />
             <span className="font-mono">{f.issue_ident}</span>
           </button>
+        ) : typeof where !== "number" ? (
+          <p className="text-[12px] text-content/50">{t("iterations.parkedIssue")}</p>
         ) : (
           <>
             <p className="text-[12px] text-content/50">{t("iterations.noIssue")}</p>

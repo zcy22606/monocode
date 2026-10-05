@@ -78,7 +78,13 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               {priorityLabel(issue.priority)}
             </PropertyButton>
             <Labels labels={issue.labels} onChange={(labels) => update({ labels })} />
+            {!issue.parked ? (
+              <button type="button" onClick={() => void mutateSoloyard("parkIssue", issue.id)} title={t("detail.parkHint")} className="ml-auto h-7 rounded-md px-2 text-[12px] text-content/50 hover:bg-content/10 hover:text-content">
+                {t("detail.park")}
+              </button>
+            ) : null}
           </div>
+          {issue.parked ? <p className="text-[12px] text-content/50">{t("detail.parked")}</p> : null}
         </header>
 
         {issue.status === "in_review" ? (

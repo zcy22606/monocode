@@ -23,6 +23,8 @@ export type Issue = {
 };
 
 export type IssueDetail = Omit<Issue, "sessions" | "children"> & {
+  /** 功能不在任何迭代里：收在功能表，不进 Issues 列表。 */
+  parked: number;
   acceptance: { id: number; text: string; done: number; sort: number }[];
   children: { id: number; ident: string; title: string; status: IssueStatus }[];
   blockedBy: { id: number; ident: string; title: string; status: IssueStatus }[];

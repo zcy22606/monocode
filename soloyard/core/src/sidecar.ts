@@ -51,6 +51,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   renameFeature: { write: true, run: (id: number, name: string) => it.renameFeature(db, actor, id, name) },
   deleteFeature: { write: true, run: (id: number) => it.deleteFeature(db, actor, id) },
   createFeatureIssue: { write: true, run: (featureId: number) => it.createFeatureIssue(db, actor, featureId) },
+  parkIssue: { write: true, run: (issueId: number) => it.parkIssue(db, actor, issueId) },
   revertBatch: { write: true, run: (batch: string) => it.revertBatch(db, actor, batch) },
   undo: { write: true, run: () => repo.undoLast(db, actor) },
   redo: { write: true, run: () => repo.redoLast(db, actor) },
