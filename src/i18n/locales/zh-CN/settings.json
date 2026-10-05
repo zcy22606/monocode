@@ -101,7 +101,8 @@
     "linear": "Linear",
     "show-archived": "在侧栏显示已归档",
     "show-remaining-usage": "显示剩余额度",
-    "mask-emails": "隐藏账号邮箱"
+    "mask-emails": "隐藏账号邮箱",
+    "diff-colors": "差异配色"
   },
   "keybindings": {
     "command": {
@@ -430,6 +431,12 @@
       "red": "红色",
       "orange": "橙色",
       "green": "绿色"
+    },
+    "diff-colors": "新增和删除行的颜色。色盲友好和高对比度用蓝色和橙色代替绿色和红色；高对比度还会加深底色和文字。",
+    "diffPalettes": {
+      "default": "默认",
+      "colorblind": "色盲友好",
+      "highContrast": "高对比度"
     }
   },
   "providers": {

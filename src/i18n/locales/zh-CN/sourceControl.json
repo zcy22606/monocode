@@ -208,7 +208,9 @@
     "viewAsTree": "以树形查看",
     "discardChanges": "丢弃更改",
     "unstageChanges": "取消暂存",
-    "stageChanges": "暂存更改"
+    "stageChanges": "暂存更改",
+    "stageFolder": "暂存 {{path}} 中的更改",
+    "unstageFolder": "取消暂存 {{path}} 中的更改"
   },
   "sync": {
     "diverged": "与 {{upstream}} 已分叉",

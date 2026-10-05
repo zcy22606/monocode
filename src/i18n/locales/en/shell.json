@@ -219,7 +219,7 @@
     },
     "used": "{{percent}} used",
     "remainingLabel": "{{title}} remaining",
-    "remaining": "{{percent}}% remaining",
+    "remaining": "{{percent}} remaining",
     "window": "{{window}} window",
     "bankedResets": "Banked resets",
     "resetsAvailable_one": "{{count}} reset available",

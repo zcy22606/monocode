@@ -311,7 +311,8 @@
     "selectAll": "Select all that apply",
     "other": "Other",
     "typeAnswer": "Type your answer",
-    "numbered": "Question {{number}}"
+    "numbered": "Question {{number}}",
+    "back": "Back"
   },
   "outline": {
     "emptyMessage": "Empty message",
@@ -498,7 +499,9 @@
     "cancelEdit": "Cancel edit",
     "saveDraft": "Save draft",
     "send": "Send",
-    "stop": "Stop"
+    "stop": "Stop",
+    "dropNothing": "Nothing to attach from that drop — the file may have been moved, renamed, or deleted.",
+    "dropNoFile": "This drag did not provide a file. Save the image, then drag the saved file here."
   },
   "transcript": {
     "loadEarlier": "Load earlier messages",

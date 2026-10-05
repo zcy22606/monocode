@@ -29,7 +29,13 @@
 3. 不加新依赖，除非先问用户。（已同意：`i18next`、`react-i18next`）
 4. 数据存在应用自己的库 `monocode.db`：我们的表都用 `soloyard_` 前缀，用自己的迁移记录，不碰上游的 `schema_migrations` 和上游表结构。
 
-**定期审查上游**：隔一段时间看一次 `upstream/main` 的新提交，挑有价值的修复和功能合并进来（`git fetch upstream` 后在新分支上合并、跑测试，再交给用户确认）。
+**定期审查上游**：隔一段时间看一次 `upstream/main` 的新提交，挑有价值的修复和功能合并进来（`git fetch upstream` 后在新分支上合并、跑测试，再交给用户确认）。做法：
+- **合并前先汇报**：把新提交按「修复 / 新功能 / 纯动画 / 和我们冲突的」分组列给用户，附上要不要的看法，用户挑定了再合。
+- 在新 worktree 里合并（`git worktree add -b upstream-sync/<日期> ../monocode-worktrees/upstream-sync-<日期> indie-desk`），不动主 checkout 和正在跑的开发版；`node_modules` 软链主 checkout 的，`CARGO_TARGET_DIR` 指向主 checkout 的 `src-tauri/target` 省得重编。
+- 冲突大多是我们改成 i18n 的地方：保留 `t(...)`，把上游新逻辑合进来；上游重写了整块的文件，取上游版本再把 i18n 补回去。
+- 上游新加的界面文字（包括自动合并进来的）都要补 key（en 一字不差 + zh-CN），用 `git diff indie-desk` 扫新增行里的字符串。
+- 跑类型检查、`npx vitest run`、`npm run test:host`、数据层测试、`cargo test`；和 indie-desk 上同样失败的算已有问题，单独说明。
+- 不 commit、不合进 indie-desk，结果写进 SOL 的 issue 等用户确认。
 
 ## 低优先级任务（记着，先不做）
 

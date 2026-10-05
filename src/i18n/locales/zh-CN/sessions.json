@@ -305,7 +305,8 @@
     "selectAll": "可多选",
     "other": "其他",
     "typeAnswer": "输入你的回答",
-    "numbered": "问题 {{number}}"
+    "numbered": "问题 {{number}}",
+    "back": "上一题"
   },
   "outline": {
     "emptyMessage": "空消息",
@@ -481,7 +482,9 @@
     "cancelEdit": "取消编辑",
     "saveDraft": "保存草稿",
     "send": "发送",
-    "stop": "停止"
+    "stop": "停止",
+    "dropNothing": "拖进来的内容没有可附加的文件——文件可能已被移动、重命名或删除。",
+    "dropNoFile": "这次拖拽没有带文件。请先把图片保存下来，再把保存的文件拖进来。"
   },
   "transcript": {
     "loadEarlier": "加载更早的消息",

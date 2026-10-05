@@ -185,6 +185,7 @@
   },
   "comments": {
     "count_other": "{{count}} 条评论",
+    "commitCount_other": "{{count}} 个提交",
     "truncated": "最新评论 · 更多请到 {{provider}} 查看",
     "replyingTo": "回复 {{author}}",
     "fallbackAuthor": "评论",
@@ -361,5 +362,27 @@
       "interrupted": { "label": "已中断", "summary": "跟踪已中断" },
       "agent-error": { "label": "Agent 已停止", "summary": "Agent 未能完成" }
     }
+  },
+  "timeline": {
+    "activity": "动态",
+    "approved": "批准了",
+    "requestedChanges": "要求修改",
+    "reviewDismissed": "的审查被驳回",
+    "reviewed": "审查了",
+    "addedCommits_other": "添加了 {{count}} 个提交",
+    "showMore": "展开",
+    "showLess": "收起"
+  },
+  "overview": {
+    "noDescription": "没有描述",
+    "mediaOnly": "描述里只有图片或视频",
+    "showFullDescription": "展开完整描述",
+    "showLess": "收起",
+    "images_other": "{{count}} 张图片",
+    "changedFiles": "更改的文件",
+    "files_other": "{{count}} 个文件",
+    "viewAll": "查看全部 {{count}} 个",
+    "viewDiff": "查看差异",
+    "noFileChanges": "没有文件更改"
   }
 }

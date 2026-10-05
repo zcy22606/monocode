@@ -101,7 +101,8 @@
     "linear": "Linear",
     "show-archived": "Show archived in the sidebar",
     "show-remaining-usage": "Show remaining usage",
-    "mask-emails": "Mask account emails"
+    "mask-emails": "Mask account emails",
+    "diff-colors": "Diff colors"
   },
   "keybindings": {
     "command": {
@@ -431,6 +432,12 @@
       "red": "Red",
       "orange": "Orange",
       "green": "Green"
+    },
+    "diff-colors": "Colors for added and removed lines. Colorblind and High contrast use blue and orange instead of green and red; High contrast adds stronger tints and text.",
+    "diffPalettes": {
+      "default": "Default",
+      "colorblind": "Colorblind",
+      "highContrast": "High contrast"
     }
   },
   "providers": {

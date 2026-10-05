@@ -189,6 +189,8 @@
   "comments": {
     "count_one": "{{count}} comment",
     "count_other": "{{count}} comments",
+    "commitCount_one": "{{count}} commit",
+    "commitCount_other": "{{count}} commits",
     "truncated": "Latest comments · more on {{provider}}",
     "replyingTo": "Replying to {{author}}",
     "fallbackAuthor": "comment",
@@ -374,5 +376,30 @@
       "interrupted": { "label": "Interrupted", "summary": "Tracking interrupted" },
       "agent-error": { "label": "Agent stopped", "summary": "Agent could not finish" }
     }
+  },
+  "timeline": {
+    "activity": "Activity",
+    "approved": "approved",
+    "requestedChanges": "requested changes",
+    "reviewDismissed": "had a review dismissed",
+    "reviewed": "reviewed",
+    "addedCommits_one": "added a commit",
+    "addedCommits_other": "added {{count}} commits",
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
+  "overview": {
+    "noDescription": "No description",
+    "mediaOnly": "Description is media only",
+    "showFullDescription": "Show full description",
+    "showLess": "Show less",
+    "images_one": "{{count}} image",
+    "images_other": "{{count}} images",
+    "changedFiles": "Changed files",
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files",
+    "viewAll": "View all {{count}}",
+    "viewDiff": "View diff",
+    "noFileChanges": "No file changes"
   }
 }

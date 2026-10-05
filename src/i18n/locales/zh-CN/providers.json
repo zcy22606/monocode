@@ -18,6 +18,7 @@
     "resetsIn": "{{duration}} 后重置",
     "left": "剩余 {{percent}}",
     "used": "已用 {{percent}}",
+    "remaining": "剩余 {{percent}}",
     "window": "{{window}} 窗口",
     "limitRemaining": "{{title}} 剩余额度",
     "full": "已满",
