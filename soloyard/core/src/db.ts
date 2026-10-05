@@ -92,6 +92,15 @@ const MIGRATIONS: string[] = [
   CREATE INDEX soloyard_iterations_project ON soloyard_iterations(project_id, sort);
   CREATE INDEX soloyard_features_iteration ON soloyard_features(project_id, iteration_id);
   `,
+  // 多仓库项目：项目根目录（soloyard_project_paths）下面 / 别处的成员仓库，每个一句说明；一个目录只属于一个项目。
+  // instructions = 项目说明，每个会话启动时随「项目地图」带给 agent。
+  `
+  CREATE TABLE soloyard_project_repos (
+    id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES soloyard_projects(id) ON DELETE CASCADE,
+    path TEXT NOT NULL UNIQUE, description TEXT NOT NULL DEFAULT '', sort INTEGER NOT NULL DEFAULT 0);
+  CREATE INDEX soloyard_project_repos_project ON soloyard_project_repos(project_id, sort);
+  ALTER TABLE soloyard_projects ADD COLUMN instructions TEXT NOT NULL DEFAULT '';
+  `,
 ]
 
 export function openDb(path: string): DB {

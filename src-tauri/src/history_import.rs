@@ -22,11 +22,21 @@ const MAX_TEXT: usize = 20_000;
 /// 要在开发版里测这个功能时设 `SOLOYARD_DEV_HISTORY_IMPORT=1`。
 /// 改了的会话发 `soloyard:sessions-imported`：前端内存里已经载入的那份要换成新的，不然显示旧记录、存盘时还会写回去。
 pub fn import_for_project(app: &AppHandle, conn: &Connection, cwd: &str) {
+    run(app, cwd, |home| import_with_home(conn, home, cwd));
+}
+
+/// 多仓库项目：根目录、成员仓库、它们的工作树（scopes）以及这些目录下任何子目录里开的终端会话，
+/// 都导到根项目下——会话 cwd 记成根目录，实际目录记进 worktree_cwd。
+pub fn import_tree(app: &AppHandle, conn: &Connection, root: &str, scopes: &[String]) {
+    run(app, root, |home| import_scoped(conn, home, scopes, root, true));
+}
+
+fn run(app: &AppHandle, cwd: &str, import: impl FnOnce(&Path) -> Result<Vec<String>, String>) {
     if cfg!(debug_assertions) && std::env::var_os("SOLOYARD_DEV_HISTORY_IMPORT").is_none() {
         return;
     }
     let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else { return };
-    match import_with_home(conn, &home, cwd) {
+    match import(&home) {
         Ok(ids) if !ids.is_empty() => {
             let _ = app.emit("soloyard:sessions-imported", &ids);
         }
@@ -38,9 +48,19 @@ pub fn import_for_project(app: &AppHandle, conn: &Connection, cwd: &str) {
 /// 返回新建或补了内容的会话 id。
 pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Result<Vec<String>, String> {
     let cwd = cwd.trim_end_matches('/');
+    import_scoped(conn, home, &[cwd.to_string()], cwd, false)
+}
+
+/// scopes 里的目录（nested 时连同子目录）开的会话导进来，cwd 记成 store_cwd；实际目录不同就记进 worktree_cwd。
+fn import_scoped(conn: &Connection, home: &Path, scopes: &[String], store_cwd: &str, nested: bool) -> Result<Vec<String>, String> {
+    let cwd = store_cwd.trim_end_matches('/');
     if cwd.is_empty() || cwd == "~" || cwd.starts_with("remote://") {
         return Ok(Vec::new());
     }
+    let scopes: Vec<&str> = scopes.iter().map(|s| s.trim_end_matches('/')).filter(|s| !s.is_empty()).collect();
+    let matches = |dir: Option<&str>| {
+        dir.is_some_and(|dir| scopes.iter().any(|s| dir == *s || (nested && dir.starts_with(&format!("{s}/")))))
+    };
     // v2：以前「在 MonoCode 里接着聊过」的会话直接跳过、记成处理完了；换张表让它们重扫一遍，补上终端里的新内容
     conn.execute_batch(
         "DROP TABLE IF EXISTS history_files;
@@ -51,12 +71,30 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
     .map_err(|e| e.to_string())?;
 
     let mut candidates: Vec<(PathBuf, &str)> = Vec::new();
-    // ponytail: Claude 对超长路径会截断加 hash，这里只按完整编码找目录；碰到再补
-    let claude_dir = home.join(".claude/projects").join(claude_dir_name(cwd));
-    for entry in fs::read_dir(&claude_dir).into_iter().flatten().flatten() {
-        let path = entry.path();
-        if path.extension().is_some_and(|ext| ext == "jsonl") {
-            candidates.push((path, "claude"));
+    // ponytail: Claude 对超长路径会截断加 hash，这里只按完整编码找目录；碰到再补。
+    // 子目录的编码以上级目录的编码 + "-" 开头（同名前缀的兄弟目录也会进来，下面按转录里的 cwd 筛掉）
+    let encoded: Vec<String> = scopes.iter().map(|s| claude_dir_name(s)).collect();
+    let projects = home.join(".claude/projects");
+    let claude_dirs: Vec<PathBuf> = if nested {
+        fs::read_dir(&projects)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .filter(|e| {
+                let name = e.file_name().to_string_lossy().into_owned();
+                encoded.iter().any(|enc| name == *enc || name.starts_with(&format!("{enc}-")))
+            })
+            .map(|e| e.path())
+            .collect()
+    } else {
+        encoded.iter().map(|enc| projects.join(enc)).collect()
+    };
+    for dir in claude_dirs {
+        for entry in fs::read_dir(&dir).into_iter().flatten().flatten() {
+            let path = entry.path();
+            if path.extension().is_some_and(|ext| ext == "jsonl") {
+                candidates.push((path, "claude"));
+            }
         }
     }
     walk_codex(&home.join(".codex/sessions"), 4, &mut candidates);
@@ -75,24 +113,26 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
             .optional()
             .map_err(|e| e.to_string())?;
         if let Some((m, row_cwd, done, _, _)) = &row {
-            if *m == mtime && (row_cwd.as_deref() != Some(cwd) || *done == 1) {
+            if *m == mtime && (!matches(row_cwd.as_deref()) || *done == 1) {
                 continue;
             }
         }
         // Codex 文件不按目录分，先只读第一行拿 cwd，不是这个项目的记下来下次跳过
         let file_cwd = if harness == "codex" { codex_cwd(&path) } else { None };
-        if harness == "codex" && file_cwd.as_deref() != Some(cwd) {
+        if harness == "codex" && !matches(file_cwd.as_deref()) {
             remember(conn, &key, mtime, harness, file_cwd.as_deref(), 0, row.as_ref().and_then(|r| r.3.clone()), None)?;
             continue;
         }
         let Some(parsed) = (if harness == "claude" { parse_claude(&path) } else { parse_codex(&path, &codex_titles) }) else {
-            remember(conn, &key, mtime, harness, Some(cwd), 1, None, None)?;
+            remember(conn, &key, mtime, harness, file_cwd.as_deref().or(Some(cwd)), 1, None, None)?;
             continue;
         };
-        if parsed.cwd.as_deref() != Some(cwd) {
+        if !matches(parsed.cwd.as_deref()) {
             remember(conn, &key, mtime, harness, parsed.cwd.as_deref(), 0, None, None)?;
             continue;
         }
+        let work = parsed.cwd.clone().unwrap_or_else(|| cwd.to_string());
+        let worktree_cwd = (work != cwd).then(|| work.clone());
         let prev_ours = row.as_ref().and_then(|r| r.3.clone());
         let existing: Option<(String, i64)> = conn
             .query_row(
@@ -116,7 +156,7 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
                     Some(true) => imported.push(id.clone()),
                     Some(false) => {}
                 }
-                remember(conn, &key, mtime, harness, Some(cwd), 1, prev_ours, row.as_ref().and_then(|r| r.4))?;
+                remember(conn, &key, mtime, harness, Some(&work), 1, prev_ours, row.as_ref().and_then(|r| r.4))?;
                 continue;
             }
         };
@@ -134,7 +174,7 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
             context_used: None,
             context_window: None,
             branch: parsed.branch,
-            worktree_cwd: None,
+            worktree_cwd,
             worktree_removed: false,
             linked_work_item: None,
             automation_id: None,
@@ -146,7 +186,7 @@ pub(crate) fn import_with_home(conn: &Connection, home: &Path, cwd: &str) -> Res
             params![target, parsed.started_at, parsed.updated_at],
         )
         .map_err(|e| e.to_string())?;
-        remember(conn, &key, mtime, harness, Some(cwd), 1, Some(target.clone()), Some(parsed.updated_at))?;
+        remember(conn, &key, mtime, harness, Some(&work), 1, Some(target.clone()), Some(parsed.updated_at))?;
         imported.push(target);
     }
     Ok(imported)
@@ -504,6 +544,45 @@ mod tests {
         let texts: Vec<&str> = blocks.iter().map(|b| b["text"].as_str().unwrap_or("")).collect();
         assert_eq!(texts, ["", "终端里接着问", "终端里答\n\n补一句"]);
         assert_eq!(updated, t("2026-09-04T00:00:02Z"));
+        fs::remove_dir_all(&home).ok();
+    }
+}
+
+#[cfg(test)]
+mod tree_tests {
+    use super::*;
+
+    #[test]
+    fn multi_repo_projects_take_sessions_from_any_subfolder_or_worktree() {
+        let home = std::env::temp_dir().join(format!("hist-tree-{}", uuid::Uuid::new_v4()));
+        let root = "/ws/openroboto";
+        let session = |cwd: &str, id: &str, text: &str| {
+            let dir = home.join(".claude/projects").join(claude_dir_name(cwd));
+            fs::create_dir_all(&dir).unwrap();
+            let line = json!({"type":"user","sessionId":id,"cwd":cwd,"timestamp":"2026-09-01T00:00:00Z","message":{"content":text}});
+            fs::write(dir.join(format!("{id}.jsonl")), line.to_string()).unwrap();
+        };
+        session(&format!("{root}/rebuild/backend/.trellis/tasks"), "11111111-1111-4111-8111-111111111111", "赛季排名");
+        session("/elsewhere/wt-rotate", "22222222-2222-4222-8222-222222222222", "手动轮换");
+        session("/ws/openroboto-old", "33333333-3333-4333-8333-333333333333", "同名前缀的兄弟目录");
+
+        let conn = Connection::open_in_memory().unwrap();
+        crate::session_store::migrate(&conn).unwrap();
+        let scopes = [root.to_string(), format!("{root}/rebuild/backend"), "/elsewhere/wt-rotate".to_string()];
+        assert_eq!(import_scoped(&conn, &home, &scopes, root, true).unwrap().len(), 2);
+        let mut rows: Vec<(String, Option<String>, String)> = conn
+            .prepare("SELECT cwd, worktree_cwd, title FROM sessions ORDER BY title")
+            .unwrap()
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .collect::<rusqlite::Result<_>>()
+            .unwrap();
+        rows.sort();
+        assert_eq!(rows, vec![
+            (root.to_string(), Some("/elsewhere/wt-rotate".to_string()), "手动轮换".to_string()),
+            (root.to_string(), Some(format!("{root}/rebuild/backend/.trellis/tasks")), "赛季排名".to_string()),
+        ]);
+        assert_eq!(import_scoped(&conn, &home, &scopes, root, true).unwrap().len(), 0, "unchanged files are skipped");
         fs::remove_dir_all(&home).ok();
     }
 }

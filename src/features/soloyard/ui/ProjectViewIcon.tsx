@@ -4,6 +4,7 @@ import {
   DashboardSquare,
   Eye,
   File,
+  FolderTree,
   ListBullet,
   RefreshCw,
   Server,
@@ -28,6 +29,7 @@ export const PROJECT_VIEW_ICONS: Record<ProjectViewId, IconComponent> = {
   evidence: Eye,
   service: Server,
   brainstorm: Sparkles,
+  repos: FolderTree,
 };
 
 export function ProjectViewIcon({ view, className = "size-3.5 shrink-0" }: { view: ProjectViewId; className?: string }) {

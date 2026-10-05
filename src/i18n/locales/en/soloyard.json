@@ -17,7 +17,8 @@
     "doc": "Doc",
     "decision": "Decision",
     "service": "Service",
-    "brainstorm": "Brainstorm"
+    "brainstorm": "Brainstorm",
+    "repos": "Repositories"
   },
   "placeholder": {
     "project": "Project",
@@ -420,6 +421,68 @@
       "action": "Delete",
       "title": "Delete “{{title}}”",
       "body": "The session and everything in its working folder {{folder}} will be deleted. This can't be undone."
+    }
+  },
+  "repos": {
+    "intro": "Which repositories this project is made of. Every new session gets their locations and descriptions as a project map, plus access to all of them — no need to explain them again.",
+    "root": "Root folder",
+    "rootIsRepo": "Git repository",
+    "rootNotRepo": "Not a git repository",
+    "rootHint": "A session started in the root can change every repository — good for cross-repo debugging and integration.",
+    "members": "Repositories",
+    "addFolder": "Add folder…",
+    "pickFolders": "Add repositories to this project",
+    "empty": "No repositories yet. Add the ones found below, or folders that live elsewhere (like white-label front ends).",
+    "worktreeHint": "Worktrees are grouped under the repository they belong to.",
+    "found": "Repositories under the root, not added yet",
+    "addAll": "Add all",
+    "add": "Add",
+    "remove": "Remove from project",
+    "descriptionPlaceholder": "One line on what it does",
+    "worktreeCount_one": "{{count}} worktree",
+    "worktreeCount_other": "{{count}} worktrees",
+    "instructions": "Project instructions",
+    "instructionsHint": "Every session gets these",
+    "instructionsPlaceholder": "What an agent should always know: how the repositories relate, conventions, things not to break. Repo-specific rules stay in each repo's CLAUDE.md / AGENTS.md.",
+    "map": {
+      "title": "Project map",
+      "hint": "Given to the agent as system instructions when the session starts",
+      "edit": "Edit",
+      "previewHint": "What a new session started in the root receives.",
+      "empty": "Add repositories or project instructions and they show up here."
+    },
+    "where": {
+      "title": "Where to work",
+      "root": "Project root",
+      "rootHint": "{{root}} · across repositories, every one is writable",
+      "inRepo": "In one repository",
+      "direct": "Directly in {{name}}",
+      "newWorktree": "New worktree",
+      "newWorktreeHint": "A new branch from {{branch}}, created on the first message",
+      "worktrees": "Existing worktrees",
+      "locked": "Set when the conversation started"
+    },
+    "count_one": "{{count}} repo",
+    "count_other": "{{count}} repos",
+    "chips": {
+      "all": "All",
+      "root": "Root"
+    },
+    "draft_one": "Draft {{count}} description with an agent",
+    "draft_other": "Draft {{count}} descriptions with an agent",
+    "drafting": "Reading READMEs…",
+    "draftHint": "The agent reads each repository's README and recent commits; edit the drafts as you like.",
+    "merge": {
+      "banner": "{{parent}} also holds {{count}} other repos: {{names}}. Merge them into one project to see their sessions together, and new sessions will know about all of them.",
+      "action": "Merge into {{name}}",
+      "later": "Not now",
+      "title": "Merge into the {{name}} project",
+      "description": "Root folder {{parent}}. Checked repositories become members of this project.",
+      "current": "Current project",
+      "addOther": "Add another folder…",
+      "note": "Existing sessions and issues stay as they are; sessions previously listed under these repositories move here too.",
+      "confirm_one": "Merge ({{count}} repo)",
+      "confirm_other": "Merge ({{count}} repos)"
     }
   }
 }

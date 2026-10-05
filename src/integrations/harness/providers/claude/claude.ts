@@ -6,7 +6,7 @@ import type {
   TaskListMeta,
 } from "../../../../features/sessions/model/session";
 import { loadClaudeHooks } from "../../../../features/settings/model/settings";
-import { soloyardClaudeAddDirArgs } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
+import { soloyardClaudeAddDirArgs, soloyardClaudeSystemPromptArgs } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
 import {
   killChild,
   resolveClaudeBinary,
@@ -541,7 +541,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
   await spawnChild(
     input.sessionId,
     path,
-    [...buildClaudeSpawnArgs(launch), ...soloyardClaudeAddDirArgs(input.sessionId)], // Soloyard: 关联的文件夹
+    [...buildClaudeSpawnArgs(launch), ...soloyardClaudeAddDirArgs(input.sessionId), ...soloyardClaudeSystemPromptArgs(input.sessionId)], // Soloyard: 关联的文件夹 + 项目地图
     input.cwd,
     { provider: "claude", id: input.providerAccountId ?? "default" },
     "claude",

@@ -36,6 +36,9 @@ import {
 import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
 import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
+import { MergeProjectBanner, RepoCountsPublisher } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
+import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
+import { useProjectRepos } from "../../features/soloyard/model/repos"; // Soloyard
 import {
   memo,
   useEffect,
@@ -635,7 +638,7 @@ function SidebarComponent({
     : pending && sessions.length === 0;
   const worktreeFocus = useWorktreeFocus(cwd);
   const focusedWorktree = remoteProject ? undefined : worktreeFocus;
-  const listedSessions = mergeFolderSessionSummaries(
+  const projectSessionsInFocus = mergeFolderSessionSummaries(
     projectSessions,
     remoteProject ? [] : openSessions,
     sessionFolders,
@@ -643,6 +646,10 @@ function SidebarComponent({
     (session) =>
       !session.orchestrationLeadId && inWorktreeFocus(session, focusedWorktree),
   );
+  // Soloyard: a multi-repo project can narrow its sessions to the root or one member repo.
+  const projectRepos = useProjectRepos(cwd);
+  const repoFilter = useRepoFilter(cwd);
+  const listedSessions = projectSessionsInFocus.filter((session) => matchesRepoFilter(projectRepos, repoFilter, session));
   const visibleSessions = [
     ...filterSessionsByQuery(
       filterSessionsByStatus(
@@ -1816,6 +1823,13 @@ function SidebarComponent({
               <ListFilter className="size-3" strokeWidth={1.75} />
             </SessionsHeaderButton>
           </div>
+        ) : null}
+        {tab === "sessions" && cwd && cwd !== "~" ? (
+          <>
+            {/* Soloyard: per-repo session counts for the rail; offer to merge a lone repo with its siblings */}
+            <RepoCountsPublisher cwd={cwd} sessions={projectSessionsInFocus} />
+            <MergeProjectBanner cwd={cwd} />
+          </>
         ) : null}
         <div
           ref={(el) => {

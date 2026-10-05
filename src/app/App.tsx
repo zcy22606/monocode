@@ -62,6 +62,7 @@ import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
+import { useOnRepoMembersChanged } from "../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -1975,6 +1976,8 @@ function Workspace({
   useEffect(() => {
     void refreshHistory(sidebarCwd);
   }, [sidebarCwd, refreshHistory]);
+  // Soloyard: adding / removing member repos re-lists, which moves their sessions under the root project.
+  useOnRepoMembersChanged(sidebarCwd, () => void refreshHistory(sidebarCwd));
 
   useEffect(() => {
     if (!inboxViewOpen) return;
@@ -3930,7 +3933,8 @@ function Workspace({
     );
   }, []);
 
-  // Soloyard: terminal turns were imported into these sessions; swap in the new transcript of idle loaded ones.
+  // Soloyard: terminal turns were imported into these sessions, or they moved under a multi-repo project root;
+  // swap in the stored transcript and place of idle loaded ones.
   useImportedSessions((ids) => {
     for (const id of ids) {
       invalidateLoadedSession(id);
@@ -3939,7 +3943,7 @@ function Workspace({
       void getSession(id).then((loaded) => {
         const latest = sessionsRef.current.find((s) => s.id === id);
         if (!loaded || latest !== current) return;
-        const next = { ...latest, blocks: loaded.blocks };
+        const next = { ...latest, blocks: loaded.blocks, cwd: loaded.cwd, worktreeCwd: loaded.worktreeCwd, branch: loaded.branch };
         lastPersisted.current.set(id, persistFingerprint(next));
         sessionsRef.current = sessionsRef.current.map((s) => (s.id === id ? next : s));
         setSessions(sessionsRef.current);
@@ -6268,8 +6272,10 @@ function Workspace({
       if (isPreparingHandoff(current)) return false;
       saveRecentModelChoice(current.harness, current.model);
       const initialWorkCwd = sessionWorkCwd(current);
+      // Soloyard: a multi-repo session marks "new worktree in this member repo" with worktreeCwd + workspaceMode.
+      const soloyardRepo = current.worktreeCwd && current.workspaceMode === "worktree" ? current.worktreeCwd : undefined;
       const createDraftWorktree =
-        !current.worktreeCwd && current.workspaceMode === "worktree";
+        (!current.worktreeCwd || !!soloyardRepo) && current.workspaceMode === "worktree";
       const accountProvider = supportsProviderAccounts(current.harness)
         ? current.harness
         : undefined;
@@ -6785,7 +6791,7 @@ function Workspace({
         let workCwd = initialWorkCwd;
         if (createDraftWorktree) {
           const tree = await createWorktree(
-            current.cwd,
+            soloyardRepo ?? current.cwd, // Soloyard
             temporaryWorktreeBranchName(),
             current.worktreeBase || "HEAD",
             false,
@@ -6824,7 +6830,7 @@ function Workspace({
               const branch = fragment ? namedWorktreeBranch(fragment) : null;
               if (!branch) return;
               const renamed = await renameWorktreeBranch(
-                current.cwd,
+                soloyardRepo ?? current.cwd, // Soloyard
                 tree.path,
                 branch,
               );
@@ -7106,8 +7112,8 @@ function Workspace({
             const cli = `${shellPath(await invoke<string>("app_cli_path"))} app`;
             sendText += `\n\n<monocode_app>\nThe user's Operator command enables app access in this thread, including later turns without the command. You can start session tabs or split session panes right or down, list and create project worktrees, choose a new session's checkout, read and continue other project sessions, save unsent drafts, organize session folders, and read or write saved notes through its local CLI. Run \`${cli} --help\` for exact commands and JSON fields, then use it as needed for the user's request. When reading another session, start with its latest two or three user/assistant exchanges. Request older exchanges with nextBefore or a larger excerpt only if needed. The CLI uses a session credential already in your environment; never print it. New sessions inherit this session's permission mode unless runtimeMode is set explicitly. For a new session with a draft, call sessions.start with its prompt and draft:true; do not submit a seed prompt. The returned ID can be used as besideSessionId to split its pane again or moved into a folder immediately. A normal sessions.start submits its prompt but returns after acceptance, so do not wait for that agent to finish before organizing it.\n</monocode_app>`;
           }
-          // Soloyard: linked items referenced with @link/… ride along with this turn.
-          if (!rawCommand) sendText += await soloyardTurnContext(sessionId, sendText);
+          // Soloyard: linked items referenced with @link/… ride along with this turn; the project map is cached for the spawn.
+          if (!rawCommand) sendText += await soloyardTurnContext(sessionId, sendText, current.cwd, workCwd);
           await sendTurn(sendText);
           acceptEditedResend();
           if (proposalDraft && !providerFailureSeen) {
@@ -7565,8 +7571,23 @@ function Workspace({
           return undefined;
         },
         deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),
+        // Multi-repo project: a blank session picks the root, a member repo, one of its worktrees, or a new worktree.
+        setWorkDir: ({ sessionId, workCwd, branch, newWorktree }) => {
+          const session = sessionsRef.current.find((s) => s.id === sessionId);
+          if (!session) return "session not open";
+          if (session.busy || !isBlankSession(session)) return "busy";
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.id === sessionId
+                ? { ...s, worktreeCwd: workCwd, branch, worktreeRemoved: undefined, workspaceMode: newWorktree ? "worktree" : undefined, worktreeBase: newWorktree ? "HEAD" : undefined }
+                : s,
+            ),
+          );
+          return undefined;
+        },
+        openProject: (path) => onSelectProject(path),
       }),
-    [appendTab, onSelectHistorySession, onRemoveHistorySession, sessionDefaults?.runtimeMode],
+    [appendTab, onSelectHistorySession, onRemoveHistorySession, onSelectProject, sessionDefaults?.runtimeMode],
   );
   const saveDraftRef = useRef(onSaveDraft);
   saveDraftRef.current = onSaveDraft;

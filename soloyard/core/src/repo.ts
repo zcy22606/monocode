@@ -14,7 +14,8 @@ const T = (entity: string) => `soloyard_${entity}`
 
 /** 每个实体允许 update 改的列；不在表里的键一律忽略，防止 agent 改 id / version。 */
 const WRITABLE: Record<string, string[]> = {
-  projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json'],
+  projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json', 'instructions'],
+  project_repos: ['description', 'sort'],
   issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at'],
   acceptance: ['text', 'done', 'sort'],
   iterations: ['tag', 'name', 'goal', 'target_date', 'status', 'sort', 'summary_json', 'started_at', 'completed_at'],
@@ -136,14 +137,16 @@ export function findProject(db: DB, idOrKey: number | string): Row | undefined {
     : (db.prepare('SELECT * FROM soloyard_projects WHERE key = ?').get(String(idOrKey).toUpperCase()) as Row | undefined)
 }
 
-/** 包含这个路径的项目（关联目录是它本身或它的上级，取最具体的那个）；不新建。 */
+/** 包含这个路径的项目（关联目录或成员仓库是它本身或它的上级，取最具体的那个）；不新建。 */
 export function findProjectByPath(db: DB, path: string): Row | undefined {
   const clean = path.replace(/\/+$/, '')
-  const rows = db.prepare('SELECT p.*, pp.path AS matched, pp.recursive FROM soloyard_project_paths pp JOIN soloyard_projects p ON p.id = pp.project_id').all() as Row[]
+  const rows = db.prepare(`SELECT p.*, pp.path AS matched, pp.recursive, 0 AS member FROM soloyard_project_paths pp JOIN soloyard_projects p ON p.id = pp.project_id
+    UNION ALL SELECT p.*, r.path AS matched, 1 AS recursive, 1 AS member FROM soloyard_project_repos r JOIN soloyard_projects p ON p.id = r.project_id`).all() as Row[]
   return rows
     // 子目录只在关联目录标了「含子目录」时才算（~/Playground 这种父目录通常不含）
     .filter((r) => clean === r.matched || (r.recursive && clean.startsWith(r.matched.replace(/\/+$/, '') + '/')))
-    .sort((a, b) => b.matched.length - a.matched.length)[0]
+    // 同样具体时成员仓库优先：仓库并进多仓库项目后，它原来自己的项目（如果还在）让位
+    .sort((a, b) => b.matched.length - a.matched.length || Number(!!b.member) - Number(!!a.member))[0]
 }
 
 /** 这个文件夹对应的项目；还没有就按文件夹名建一个（第一次打开 Project 分页时）。 */

@@ -14,7 +14,7 @@ import {
   Settings,
   Zap,
 } from "../../shared/ui/icons";
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useDragResize } from "../../shared/hooks/useDragResize";
 import { useLockOverscroll } from "../../shared/hooks/useLockOverscroll";
 import { useProjectDiffStats } from "../../features/source-control/hooks/useProjectDiffStats";
@@ -71,6 +71,8 @@ import { ProjectLogoIcon } from "../../features/projects/ui/ProjectLogoIcon";
 import { ProjectMascot } from "../../features/projects/ui/ProjectMascot";
 import { RailAction, RailSearch } from "./RailAction";
 import { BrainstormRailAction } from "../../features/soloyard/ui/brainstorm/BrainstormRailAction"; // Soloyard
+import { useWithoutMemberRepos } from "../../features/soloyard/model/repos"; // Soloyard
+import { RepoCountBadge, RepoRailChildren } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { DevModeSlot, TabVisitNav } from "./TitleBar";
 import { SidebarUpdateFooter } from "./SidebarUpdate";
 import type { InstalledUpdate } from "../model/updateNotice";
@@ -215,9 +217,10 @@ export function ProjectRail({
     setInboxMenu(null);
   }, [visible]);
   const notificationPreferences = useProjectNotificationPreferences();
+  const railRecents = useWithoutMemberRepos(recents); // Soloyard: member repos open from their multi-repo project
   const allProjects = useMemo(
-    () => collectRailProjects(recents, cwd),
-    [cwd, recents],
+    () => collectRailProjects(railRecents, cwd),
+    [cwd, railRecents],
   );
   const notificationProjects = useNotificationProjects([...allProjects.keys()]);
   const menuTrigger = useRef<HTMLElement | null>(null);
@@ -230,8 +233,8 @@ export function ProjectRail({
     for (const path of project.paths) muteStatuses.set(pathKey(path), status);
   }
   const sections = useMemo(
-    () => projectRailSections(recents, cwd, railOrder, pinnedPaths),
-    [cwd, pinnedPaths, railOrder, recents],
+    () => projectRailSections(railRecents, cwd, railOrder, pinnedPaths),
+    [cwd, pinnedPaths, railOrder, railRecents],
   );
   const groupedProjectSections = useMemo(() => {
     const byGroup = new Map<string, RecentProject[]>(
@@ -629,8 +632,8 @@ function ProjectSection({
       ) : null}
       <div className="flex flex-col gap-px px-2">
         {items.map((item) => (
+          <Fragment key={item.path}>
           <ProjectCard
-            key={item.path}
             item={item}
             muteStatus={muteStatuses.get(pathKey(item.path)) ?? undefined}
             selected={!searchActive && sameProjectPath(item.path, cwd)}
@@ -648,6 +651,9 @@ function ProjectSection({
             groupLogos={groupLogos}
             groupMascots={groupMascots}
           />
+          {/* Soloyard: a selected multi-repo project lists its root and member repos */}
+          {!searchActive && sameProjectPath(item.path, cwd) ? <RepoRailChildren cwd={item.path} /> : null}
+          </Fragment>
         ))}
       </div>
     </div>
@@ -816,8 +822,8 @@ function ProjectGroupSection({
       {expanded ? (
         <div data-project-group-items className="flex flex-col gap-px p-1">
           {items.map((item) => (
+            <Fragment key={item.path}>
             <ProjectCard
-              key={item.path}
               item={item}
               muteStatus={muteStatuses.get(pathKey(item.path)) ?? undefined}
               selected={!searchActive && sameProjectPath(item.path, cwd)}
@@ -835,6 +841,9 @@ function ProjectGroupSection({
               groupLogos={groupLogos}
               groupMascots={groupMascots}
             />
+            {/* Soloyard: a selected multi-repo project lists its root and member repos */}
+            {!searchActive && sameProjectPath(item.path, cwd) ? <RepoRailChildren cwd={item.path} /> : null}
+            </Fragment>
           ))}
         </div>
       ) : null}
@@ -1032,6 +1041,7 @@ function ProjectCard({
             <BellOff className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
           </span>
         ) : null}
+        <RepoCountBadge path={item.path} />{/* Soloyard */}
       </button>
       <button
         type="button"

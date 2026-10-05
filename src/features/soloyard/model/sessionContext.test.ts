@@ -5,6 +5,8 @@ vi.mock("../data/api", () => ({ soloyardCall: call }));
 
 import {
   soloyardClaudeAddDirArgs,
+  soloyardClaudeSystemPromptArgs,
+  soloyardCodexInstructions,
   soloyardTurnContext,
   withSoloyardWritableRoots,
 } from "./sessionContext";
@@ -13,7 +15,7 @@ describe("soloyardTurnContext", () => {
   it("appends only what the message @-references, and refreshes extra dirs every turn", async () => {
     call.mockResolvedValue({ dirs: ["/x/lib"], text: "Issue SOL-5: links" });
     const text = await soloyardTurnContext("s", "look at @link/SOL-5");
-    expect(call).toHaveBeenCalledWith("sessionContext", "s", "look at @link/SOL-5");
+    expect(call).toHaveBeenCalledWith("sessionContext", "s", "look at @link/SOL-5", undefined, undefined);
     expect(text).toContain("<soloyard_context>");
     expect(text).toContain("Issue SOL-5: links");
     expect(soloyardClaudeAddDirArgs("s")).toEqual(["--add-dir", "/x/lib"]);
@@ -21,6 +23,19 @@ describe("soloyardTurnContext", () => {
     call.mockResolvedValue({ dirs: [], text: "" });
     expect(await soloyardTurnContext("s", "no references")).toBe("");
     expect(soloyardClaudeAddDirArgs("s")).toEqual([]);
+  });
+
+  it("caches the project map for the next spawn: Claude system prompt, Codex developer instructions", async () => {
+    call.mockResolvedValue({ dirs: ["/ws"], text: "", map: "# Soloyard project: ws" });
+    await soloyardTurnContext("m", "hi", "/ws", "/ws/backend");
+    expect(call).toHaveBeenCalledWith("sessionContext", "m", "hi", "/ws", "/ws/backend");
+    expect(soloyardClaudeSystemPromptArgs("m")).toEqual(["--append-system-prompt", "# Soloyard project: ws"]);
+    expect(soloyardCodexInstructions("m")).toEqual({ developerInstructions: "# Soloyard project: ws" });
+
+    call.mockResolvedValue({ dirs: [], text: "" });
+    await soloyardTurnContext("m", "hi", "/ws", "/ws");
+    expect(soloyardClaudeSystemPromptArgs("m")).toEqual([]);
+    expect(soloyardCodexInstructions("m")).toEqual({});
   });
 
   it("never blocks sending when the data process is down", async () => {

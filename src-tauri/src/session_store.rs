@@ -262,8 +262,11 @@ pub fn session_list_by_project(
     }
     let conn = store.conn.lock().map_err(|_| "Session store is locked")?;
     crate::history_import::import_for_project(&app, &conn, &cwd); // Soloyard
+    crate::soloyard_project_repos::adopt_members(&app, &conn, &cwd); // Soloyard
     crate::soloyard_missing_worktree::detach_for_project(&conn, &cwd); // Soloyard
-    list_by_project(&conn, &cwd).map_err(|e| e.to_string())
+    let mut rows = list_by_project(&conn, &cwd).map_err(|e| e.to_string())?;
+    crate::soloyard_project_repos::label_rows(&conn, &cwd, &mut rows); // Soloyard
+    Ok(rows)
 }
 
 #[tauri::command(async)]

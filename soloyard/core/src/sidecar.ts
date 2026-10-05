@@ -9,6 +9,7 @@ import { createInterface } from 'node:readline'
 import { openDb } from './db.ts'
 import * as repo from './repo.ts'
 import * as it from './iterations.ts'
+import * as repos from './repos.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -38,7 +39,24 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   sessionsUnder: { run: (root: string) => repo.listSessionsUnder(db, root) },
   createProjectAt: { write: true, run: (name: string, path: string) => repo.createProject(db, actor, { name, path }) },
   addDocument: { write: true, run: (projectId: number, d: { title: string; body_md: string; kind?: string }) => repo.addDocument(db, actor, projectId, d) },
-  sessionContext: { run: (sessionId: string, message?: string) => repo.sessionContext(db, sessionId, message) },
+  // 关联的文件夹 + 项目的成员仓库（--add-dir / 可写目录），@ 到的关联内容，以及项目地图（系统提示）
+  sessionContext: {
+    run: (sessionId: string, message?: string, cwd?: string, workCwd?: string) => {
+      const links = repo.sessionContext(db, sessionId, message)
+      const project = repos.projectSessionContext(db, cwd, workCwd)
+      return { ...links, dirs: [...new Set([...links.dirs, ...project.dirs])], map: project.map }
+    },
+  },
+  projectRepos: { run: (path: string) => repos.projectRepos(db, path) },
+  projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd).map },
+  memberRepoPaths: { run: () => repos.memberRepoPaths(db) },
+  parentSuggestion: { run: (cwd: string) => repos.parentSuggestion(db, cwd) },
+  mergeIntoParent: { write: true, run: (cwd: string, parent: string, paths: string[]) => repos.mergeIntoParent(db, actor, cwd, parent, paths) },
+  scanRepos: { run: (projectId: number) => repos.scanRepos(db, projectId) },
+  addProjectRepo: { write: true, run: (projectId: number, path: string, description?: string) => repos.addProjectRepo(db, actor, projectId, path, description) },
+  updateProjectRepo: { write: true, run: (id: number, patch: { description?: string; sort?: number }) => repos.updateProjectRepo(db, actor, id, patch) },
+  removeProjectRepo: { write: true, run: (id: number) => repos.removeProjectRepo(db, actor, id) },
+  setProjectInstructions: { write: true, run: (projectId: number, text: string) => repos.setProjectInstructions(db, actor, projectId, text) },
   linkCandidates: { run: (projectId: number, kind: string, q?: string) => repo.linkCandidates(db, projectId, kind, q) },
   findProjectByPath: { run: (p: string) => repo.findProjectByPath(db, p) ?? null },
   listProjects: { run: () => repo.listProjects(db) },
