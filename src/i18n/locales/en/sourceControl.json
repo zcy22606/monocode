@@ -217,7 +217,9 @@
     "viewAsTree": "View as Tree",
     "discardChanges": "Discard Changes",
     "unstageChanges": "Unstage Changes",
-    "stageChanges": "Stage Changes"
+    "stageChanges": "Stage Changes",
+    "stageFolder": "Stage Changes in {{path}}",
+    "unstageFolder": "Unstage Changes in {{path}}"
   },
   "sync": {
     "diverged": "Diverged from {{upstream}}",

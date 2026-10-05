@@ -209,15 +209,17 @@ export function formatRateLimitWindowChipLabel(
 export function rateLimitWindowTooltip(
   window: RateLimitWindow,
   now = Date.now(),
+  showRemaining = false,
 ): string {
-  const used = t("usage.used", {
+  const pct = clampUsedPercent(window.usedPercent);
+  const usage = t(showRemaining ? "usage.remaining" : "usage.used", {
     ns: "providers",
-    percent: formatUsagePercent(window.usedPercent),
+    percent: formatUsagePercent(showRemaining ? 100 - pct : pct),
   });
   if (window.resetsAt == null) {
-    return `${used} · ${t("usage.window", { ns: "providers", window: formatWindowLabel(window.windowMinutes) })}`;
+    return `${usage} · ${t("usage.window", { ns: "providers", window: formatWindowLabel(window.windowMinutes) })}`;
   }
-  return `${used} · ${formatResetCountdown(window.resetsAt - now)}`;
+  return `${usage} · ${formatResetCountdown(window.resetsAt - now)}`;
 }
 
 /** When a used-up window resets; the later one when several are spent. */

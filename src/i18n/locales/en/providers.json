@@ -18,6 +18,7 @@
     "resetsIn": "Resets in {{duration}}",
     "left": "{{percent}} left",
     "used": "{{percent}} used",
+    "remaining": "{{percent}} remaining",
     "window": "{{window}} window",
     "limitRemaining": "{{title}} limit remaining",
     "full": "Full",

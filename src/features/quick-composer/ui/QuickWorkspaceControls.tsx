@@ -150,7 +150,7 @@ export function QuickWorkspaceControls({
       ? t("workspace.newWorktree")
       : t("workspace.currentCheckout");
   return (
-    <div className="flex min-w-0 items-center gap-2 pl-1.5">
+    <div className="flex min-w-0 items-center gap-2">
       <button
         type="button"
         disabled={disabled}

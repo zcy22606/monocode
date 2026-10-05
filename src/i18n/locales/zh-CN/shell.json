@@ -215,7 +215,7 @@
     },
     "used": "已用 {{percent}}",
     "remainingLabel": "{{title}}剩余",
-    "remaining": "剩余 {{percent}}%",
+    "remaining": "剩余 {{percent}}",
     "window": "{{window}} 窗口",
     "bankedResets": "储存的重置",
     "resetsAvailable_other": "{{count}} 次重置可用",
