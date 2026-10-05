@@ -7,6 +7,7 @@ import { test } from 'node:test'
 import { DatabaseSync } from 'node:sqlite'
 import { openDb } from '../src/db.ts'
 import * as r from '../src/repo.ts'
+import * as it from '../src/iterations.ts'
 
 test('文件夹对应项目；issue 编号、更新、并发保护、撤销重做', () => {
   const db = openDb(':memory:')
@@ -29,6 +30,21 @@ test('文件夹对应项目；issue 编号、更新、并发保护、撤销重�
   assert.equal(r.getIssue(db, a)!.status, 'backlog')
   r.redoLast(db)
   assert.equal(r.getIssue(db, a)!.status, 'done')
+})
+
+test('批量改 issue：一个 batch、通过记 completed_at、整批撤销；没变化不出 batch；按优先级筛选', () => {
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, '/work/bulk')
+  const a = r.createIssue(db, 'user', p.id, { title: 'A', status: 'in_review', priority: 2 })
+  const b = r.createIssue(db, 'user', p.id, { title: 'B', status: 'in_review' })
+  const c = r.createIssue(db, 'user', p.id, { title: 'C', priority: 4 })
+  const batch = r.updateIssues(db, 'user', [a, b], { status: 'done' })!
+  assert.ok(batch)
+  assert.ok([a, b].every((id) => r.getIssue(db, id)!.status === 'done' && r.getIssue(db, id)!.completed_at))
+  it.revertBatch(db, 'user', batch)
+  assert.ok([a, b].every((id) => r.getIssue(db, id)!.status === 'in_review' && !r.getIssue(db, id)!.completed_at), '整批撤回')
+  assert.equal(r.updateIssues(db, 'user', [a], { status: 'in_review' }), null, '没变化不出 batch')
+  assert.deepEqual(r.listIssues(db, { projectId: p.id, priority: [0, 4] }).map((i) => i.id), [b, c])
 })
 
 test('验收项、评论、会话关联', () => {

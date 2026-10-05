@@ -72,6 +72,10 @@ test('MCP：握手、按目录 / worktree 找项目、建 / 改 issue、不许 a
     const conflict = (await s.tool('update_issue', { issue: 'APP-2', title: 'x', expected_version: 99 })).error
     assert.match(conflict.error, /version_conflict/)
     assert.equal(conflict.latest.version, 1)
+    await s.tool('create_issues', { project: 'APP', issues: [{ title: 'C', priority: 3 }, { title: 'D', priority: 1 }, { title: 'E', priority: 3 }] })
+    const ranked = (await s.tool('list_issues', { project: 'APP' })).data
+    assert.deepEqual(ranked.map((i: any) => i.title), ['D', 'C', 'E', 'A', 'B'], '紧急 → 低，同优先级按原顺序，无优先级最后')
+    assert.deepEqual((await s.tool('list_issues', { project: 'APP', priority: [3, 0] })).data.map((i: any) => i.title), ['C', 'E', 'A', 'B'])
     const detail = (await s.tool('get_issue', { issue: 'APP-1' })).data
     assert.equal(detail.comments[0].actor, 'agent:test')
     assert.equal(detail.acceptance[0].text, '能跑')

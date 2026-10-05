@@ -50,7 +50,8 @@
     "id": "ID",
     "sessions": "Sessions",
     "noLabels": "No labels",
-    "allIssues": "All issues"
+    "allIssues": "All issues",
+    "title": "Title"
   },
   "issues": {
     "filter": "Filter",
@@ -78,7 +79,22 @@
     "linkedSessions_other": "{{count}} linked sessions",
     "empty": "No issues yet. Click “New issue” to add one.",
     "newIn": "New issue in {{group}}",
-    "statusAria": "Status: {{status}}"
+    "statusAria": "Status: {{status}}",
+    "priorityAria": "Priority: {{priority}}",
+    "selectAria": "Select {{ident}}",
+    "bulk": {
+      "selected_one": "{{count}} selected",
+      "selected_other": "{{count}} selected",
+      "accept": "Accept ({{count}})",
+      "acceptHint": "Mark the selected In Review issues as Done",
+      "accepted_one": "Accepted {{count}} issue",
+      "accepted_other": "Accepted {{count}} issues",
+      "updated_one": "Updated {{count}} issue",
+      "updated_other": "Updated {{count}} issues",
+      "clear": "Clear selection"
+    },
+    "selectHint": "Select (⌘-click or Shift-click a row also selects)",
+    "selectAll": "Select all"
   },
   "detail": {
     "deleted": "This issue was deleted.",

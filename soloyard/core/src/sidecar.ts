@@ -27,6 +27,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   projectLabels: { run: (projectId: number) => repo.projectLabels(db, projectId) },
   createIssue: { write: true, run: (projectId: number, i: repo.NewIssue) => repo.createIssue(db, actor, projectId, i) },
   updateIssue: { write: true, run: (id: number, patch: repo.Row, expected?: number) => repo.updateIssue(db, actor, id, patch, expected) },
+  updateIssues: { write: true, run: (ids: number[], patch: repo.Row) => repo.updateIssues(db, actor, ids, patch) },
   addAcceptance: { write: true, run: (issueId: number, text: string) => repo.addAcceptance(db, actor, issueId, text) },
   updateAcceptance: { write: true, run: (id: number, patch: repo.Row) => repo.updateAcceptance(db, actor, id, patch) },
   removeAcceptance: { write: true, run: (id: number) => repo.removeAcceptance(db, actor, id) },

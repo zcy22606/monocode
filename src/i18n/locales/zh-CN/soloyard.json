@@ -50,7 +50,8 @@
     "id": "编号",
     "sessions": "会话",
     "noLabels": "无标签",
-    "allIssues": "全部 issue"
+    "allIssues": "全部 issue",
+    "title": "标题"
   },
   "issues": {
     "filter": "筛选",
@@ -77,7 +78,19 @@
     "linkedSessions_other": "关联了 {{count}} 个会话",
     "empty": "还没有 issue。点「新建 issue」添加一个。",
     "newIn": "在「{{group}}」里新建 issue",
-    "statusAria": "状态：{{status}}"
+    "statusAria": "状态：{{status}}",
+    "priorityAria": "优先级：{{priority}}",
+    "selectAria": "选择 {{ident}}",
+    "bulk": {
+      "selected_other": "已选 {{count}} 个",
+      "accept": "通过（{{count}}）",
+      "acceptHint": "把选中的待验收 issue 标为已完成",
+      "accepted_other": "已通过 {{count}} 个 issue",
+      "updated_other": "已修改 {{count}} 个 issue",
+      "clear": "取消选择"
+    },
+    "selectHint": "选择（也可以 ⌘ 点击或 Shift 点击整行）",
+    "selectAll": "全选"
   },
   "detail": {
     "deleted": "这个 issue 已被删除。",

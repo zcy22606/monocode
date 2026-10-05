@@ -91,9 +91,13 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     },
   },
   {
-    name: 'list_issues', description: '列出项目的 issue。ready=true 只列可开工的（未开始且前置都已完成）',
-    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, status: { type: 'array', items: STATUS }, ready: { type: 'boolean' }, q: str('标题 / 描述关键词') } },
-    run: ({ project: ref, status, ready, q }) => repo.listIssues(db, { projectId: project(ref).id, status, ready, q })
+    name: 'list_issues', description: '列出项目的 issue，按优先级排（紧急 → 低，无优先级最后）。ready=true 只列可开工的（未开始且前置都已完成）',
+    inputSchema: { type: 'object', required: ['project'], properties: {
+      project: projectRef, status: { type: 'array', items: STATUS }, ready: { type: 'boolean' }, q: str('标题 / 描述关键词'),
+      priority: { type: 'array', items: { type: 'number' }, description: '只列这些优先级：0 无 / 1 紧急 / 2 高 / 3 中 / 4 低' },
+    } },
+    run: ({ project: ref, status, priority, ready, q }) => repo.listIssues(db, { projectId: project(ref).id, status, priority, ready, q })
+      .sort((a, b) => repo.priorityRank(a.priority) - repo.priorityRank(b.priority)) // 稳定排序：同优先级保持原来的顺序
       .map(({ id, ident, title, status, priority, labels, version }) => ({ id, ident, title, status, priority, labels, version })),
   },
   {
