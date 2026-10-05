@@ -17,7 +17,12 @@ use crate::session_store::{upsert_session, SessionUpsert};
 const MAX_TEXT: usize = 20_000;
 
 /// 列项目会话前调用；出错只记日志，不影响列表。
+/// 开发版默认不导入：终端历史是同一批 Claude / Codex 会话，正式版已经导入，两边都能接着聊会冲突。
+/// 要在开发版里测这个功能时设 `SOLOYARD_DEV_HISTORY_IMPORT=1`。
 pub fn import_for_project(conn: &Connection, cwd: &str) {
+    if cfg!(debug_assertions) && std::env::var_os("SOLOYARD_DEV_HISTORY_IMPORT").is_none() {
+        return;
+    }
     let Some(home) = std::env::var_os("HOME").map(PathBuf::from) else { return };
     if let Err(error) = import_with_home(conn, &home, cwd) {
         eprintln!("history import failed for {cwd}: {error}");

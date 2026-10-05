@@ -648,7 +648,9 @@ const DEV_BUNDLE_DEFAULT_NAME: &str = "MonoCode";
 #[cfg(debug_assertions)]
 const DEV_BUNDLE_NAME_ENV: &str = "MONOCODE_DEV_APP_NAME";
 #[cfg(debug_assertions)]
-const DEV_BUNDLE_ID: &str = "dev.indiedesk.desktop";
+// Soloyard: the dev build has its own identity (data dir, WebKit storage); the release build keeps
+// dev.indiedesk.desktop via tauri.prod.conf.json so daily-use data stays with it.
+const DEV_BUNDLE_ID: &str = "dev.indiedesk.desktop.dev";
 #[cfg(debug_assertions)]
 const DEV_ICNS: &[u8] = include_bytes!("../icons/icon.icns");
 #[cfg(debug_assertions)]
@@ -715,7 +717,7 @@ fn dev_bundle_plist(app_name: &str) -> Vec<u8> {
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.indiedesk.desktop</string>
+	<string>dev.indiedesk.desktop.dev</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

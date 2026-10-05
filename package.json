@@ -20,6 +20,7 @@
     "check:rust": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test",
     "set-version": "node scripts/bump-version.mjs",
     "tauri": "tauri",
+    "soloyard:release": "sh scripts/soloyard-release.sh",
     "tauri:stable": "tauri dev --no-watch --config src-tauri/tauri.stable.conf.json",
     "setup:linux:deb": "bash scripts/install-linux-deps-debian.sh",
     "setup:linux:fedora": "bash scripts/install-linux-deps-fedora.sh",

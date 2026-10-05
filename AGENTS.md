@@ -6,8 +6,11 @@
 
 - **Soloyard**：独立开发者的桌面工作台——一个人带着 AI agent，从想法做到上线。用户做决策和减法，agent 干活。主线是项目管理：想法 → 立项 → 功能全景 → 迭代 → issue → 开 agent 会话干活 → 验收。agent 执行、编排、worktree 用底座现成的能力。
 - **底座**：本项目基于开源项目 MonoCode（`hardbeat920/monocode`，MIT，单人维护，更新很快）fork 开发。fork 在 `zcy22606/monocode`，开发分支 `indie-desk`，`upstream` remote 已配好。
-- 应用标识 `dev.indiedesk.desktop`（数据目录跟着它；改成 Soloyard 命名留到改名任务 SOL-6，必须连同数据库和 WebKit 存储一起迁移，**不要单独改标识**，否则会话、worktree 记录、项目列表都会"消失"）。用户本机装着官方 MonoCode（`com.monocode.desktop`），**绝不能读写它的数据目录**。
-- **重启开发版会中断里面正在跑的 agent 会话**。要重启（改了 Rust、改了数据层）先问用户有没有会话在跑。
+- **两个版本，数据分开**：
+  - **正式版**（用户日常用）：`/Applications/Soloyard.app`，标识 `dev.indiedesk.desktop`（用户的真实数据都在这个数据目录），用 `npm run soloyard:release` 构建并安装（`src-tauri/tauri.prod.conf.json` 覆盖标识）。运行时只跑打包进应用的数据层和 MCP 脚本，仓库里改着的代码碰不到它。agent 的 MCP `soloyard` 由正式版的设置注册，读写正式版的库。
+  - **开发版**：`npm run tauri dev`，名字 Soloyard Dev，标识 `dev.indiedesk.desktop.dev`（`tauri.conf.json` 和 `macos.rs` 的 `DEV_BUNDLE_ID` 必须一致），数据目录独立；它在设置里注册的 MCP 叫 `soloyard-dev`，指向开发版自己的库。
+  - 改成 Soloyard 命名的标识留到改名任务 SOL-6，必须连同数据库和 WebKit 存储一起迁移，**不要单独改正式版的标识**，否则会话、worktree 记录、项目列表都会"消失"。用户本机装着官方 MonoCode（`com.monocode.desktop`），**绝不能读写它的数据目录**。
+- **重启任何一个版本都会中断里面正在跑的 agent 会话**。日常改功能只重启开发版；更新正式版（重新构建安装）前先问用户。
 - 相关资料（只读参考）：
   - 设计与决策：`~/Playground/proof/prototypes/indie-desk-v0/`（`docs/`、`research/decisions.json`；D-19 = 基于 MonoCode fork）
   - 旧的 Electron 原型：`~/Playground/indie-desk`（数据层 core / MCP / 技能的来源）。**不要照搬它的界面**，每个功能的交互和 UI 先和用户讨论定了再做。
@@ -51,7 +54,8 @@
 
 ```bash
 npm install
-npm run tauri dev                                   # 开发版；前端热更新，改 Rust 要重启
+npm run tauri dev                                   # 开发版（Soloyard Dev）；前端热更新，改 Rust 要重启
+npm run soloyard:release                            # 构建正式版并装到 /Applications（正式版在跑时会提示先退出）
 npx tsc --noEmit -p tsconfig.json                   # 前端类型检查
 npx vitest run                                      # 前端测试
 cargo test --manifest-path src-tauri/Cargo.toml     # Rust 测试（用 debug；上游有测试在 --release 下编译不过）

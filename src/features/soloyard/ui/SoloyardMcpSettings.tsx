@@ -12,7 +12,8 @@ import {
 /** Soloyard：设置 → MCP 顶部，Claude Code / Codex 接入 Soloyard MCP，清理原型 indie-desk 的残留。 */
 
 type Provider = "claude" | "codex";
-type Status = { server: string; installed: Provider[]; legacyFiles: string[] };
+/** name：这个版本注册用的 MCP 名字（正式版 soloyard / 开发版 soloyard-dev，各自读写自己的库）。 */
+type Status = { name: string; server: string; installed: Provider[]; legacyFiles: string[] };
 
 const PROVIDERS: Provider[] = ["claude", "codex"];
 const BUTTON =
@@ -91,7 +92,7 @@ export function SoloyardMcpSettings({ cwd }: { cwd: string }) {
       <div className="overflow-hidden rounded-xl border border-content/10 bg-content/3">
         {PROVIDERS.map((provider) => {
           const installed = status?.installed.includes(provider) ?? false;
-          const connected = has(provider, "soloyard");
+          const connected = !!status && has(provider, status.name);
           return (
             <div
               key={provider}
@@ -120,7 +121,7 @@ export function SoloyardMcpSettings({ cwd }: { cwd: string }) {
                 onClick={() =>
                   void run(provider, () =>
                     connected
-                      ? invoke("soloyard_mcp_remove", { provider, name: "soloyard" })
+                      ? invoke("soloyard_mcp_remove", { provider, name: status?.name })
                       : invoke("soloyard_mcp_connect", { provider }),
                   )
                 }

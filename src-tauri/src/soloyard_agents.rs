@@ -9,12 +9,12 @@ use std::time::Duration;
 
 use serde::Serialize;
 use serde_json::{json, Value};
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 use crate::harness::{add_mcp_via_cli, mcp_command, resolve_mcp_binary, HarnessHost};
 
-// ponytail: 开发期直接指向仓库里的源码（同 soloyard_bridge）；打包分发时改成随应用带的脚本和 Node。
-const SERVER: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../soloyard/mcp/server.ts");
+/// 正式版注册成 `soloyard`、读写正式版的库；开发版注册成 `soloyard-dev`、读写开发版自己的库，两边互不覆盖。
+const MCP_NAME: &str = if cfg!(debug_assertions) { "soloyard-dev" } else { "soloyard" };
 const LEGACY_HOOK: &str = "indie-desk/packages/mcp/src/hook.ts";
 const PROVIDERS: [&str; 2] = ["claude", "codex"];
 
@@ -96,15 +96,18 @@ fn node() -> Result<String, String> {
     }
 }
 
-fn server() -> Result<String, String> {
-    std::fs::canonicalize(SERVER)
+fn server(app: &AppHandle) -> Result<String, String> {
+    let path = crate::soloyard_bridge::soloyard_script(app, "mcp/server.ts")?;
+    std::fs::canonicalize(&path)
         .map(|p| p.display().to_string())
-        .map_err(|e| format!("{SERVER}: {e}"))
+        .map_err(|e| format!("{}: {e}", path.display()))
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SoloyardAgents {
+    /// 这个版本注册用的 MCP 名字（正式版 soloyard / 开发版 soloyard-dev）
+    name: &'static str,
     server: String,
     /// 找得到 CLI 的 provider（claude / codex）
     installed: Vec<&'static str>,
@@ -113,21 +116,28 @@ pub struct SoloyardAgents {
 }
 
 #[tauri::command(async)]
-pub fn soloyard_agents_status(host: State<'_, HarnessHost>) -> Result<SoloyardAgents, String> {
+pub fn soloyard_agents_status(app: AppHandle, host: State<'_, HarnessHost>) -> Result<SoloyardAgents, String> {
     let installed = PROVIDERS
         .into_iter()
         .filter(|p| resolve_mcp_binary(p, host.runtime_binary_path(p).as_deref()).is_ok())
         .collect();
     Ok(SoloyardAgents {
-        server: server()?,
+        name: MCP_NAME,
+        server: server(&app)?,
         installed,
         legacy_files: legacy_files(&home()?),
     })
 }
 
 #[tauri::command(async)]
-pub fn soloyard_mcp_connect(host: State<'_, HarnessHost>, provider: String) -> Result<(), String> {
-    connect(&provider, host.runtime_binary_path(&provider).as_deref())
+pub fn soloyard_mcp_connect(app: AppHandle, host: State<'_, HarnessHost>, provider: String) -> Result<(), String> {
+    let server = server(&app)?;
+    // 开发版的 MCP 指向开发版自己的库；正式版用 server.ts 的默认库（正式版数据目录）
+    let db = cfg!(debug_assertions)
+        .then(|| app.path().app_data_dir().map(|d| d.join("monocode.db").display().to_string()))
+        .transpose()
+        .map_err(|e| e.to_string())?;
+    connect(&provider, &server, db.as_deref(), host.runtime_binary_path(&provider).as_deref())
 }
 
 /// 删用户级的 soloyard 或原型的 indie-desk。
@@ -144,24 +154,28 @@ pub fn soloyard_mcp_remove(
     )
 }
 
-fn connect(provider: &str, binary: Option<&str>) -> Result<(), String> {
+fn connect(provider: &str, server: &str, db: Option<&str>, binary: Option<&str>) -> Result<(), String> {
     let actor = match provider {
         "claude" => "agent:claude-code",
         "codex" => "agent:codex",
         _ => return Err("Unsupported MCP provider".into()),
     };
+    let mut env = json!({ "SOLOYARD_ACTOR": actor });
+    if let Some(db) = db {
+        env["SOLOYARD_DB"] = json!(db);
+    }
     let config = json!({
         "type": "stdio",
         "command": node()?,
-        "args": ["--no-warnings", server()?],
-        "env": { "SOLOYARD_ACTOR": actor },
+        "args": ["--no-warnings", server],
+        "env": env,
     });
     let home = home()?.display().to_string();
-    add_mcp_via_cli(provider, "user", &home, "soloyard", &config, binary)
+    add_mcp_via_cli(provider, "user", &home, MCP_NAME, &config, binary)
 }
 
 fn remove(provider: &str, name: &str, binary: Option<&str>) -> Result<(), String> {
-    if !matches!(name, "soloyard" | "indie-desk") {
+    if name != MCP_NAME && name != "indie-desk" {
         return Err("Unsupported MCP server".into());
     }
     let mut args = vec!["mcp".to_owned(), "remove".into(), name.into()];
@@ -278,12 +292,13 @@ mod tests {
                 })
                 .collect::<Vec<_>>()
         };
+        let server = concat!(env!("CARGO_MANIFEST_DIR"), "/../soloyard/mcp/server.ts");
         for provider in PROVIDERS {
-            connect(provider, None).unwrap();
+            connect(provider, server, Some("/tmp/soloyard-test.db"), None).unwrap();
         }
-        assert_eq!(discover(), ["claude:soloyard", "codex:soloyard"]);
+        assert_eq!(discover(), [format!("claude:{MCP_NAME}"), format!("codex:{MCP_NAME}")]);
         for provider in PROVIDERS {
-            remove(provider, "soloyard", None).unwrap();
+            remove(provider, MCP_NAME, None).unwrap();
         }
         assert!(discover().is_empty());
 

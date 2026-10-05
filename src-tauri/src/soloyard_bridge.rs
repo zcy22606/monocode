@@ -14,8 +14,17 @@ use std::time::Duration;
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter, Manager};
 
-// ponytail: 开发期直接跑仓库里的源码；打包分发时改成随应用带的脚本和 Node。
-const SCRIPT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../soloyard/core/src/sidecar.ts");
+/**
+ * Soloyard 脚本（数据进程、MCP 服务）的位置：开发版跑仓库里的源码；正式版跑打包时复制进应用的那份
+ * （tauri.conf.json 的 bundle.resources），这样改着的代码和数据库迁移碰不到日常用的正式版数据。
+ * Node 两边都用登录 shell 里的。
+ */
+pub fn soloyard_script(app: &AppHandle, rel: &str) -> Result<std::path::PathBuf, String> {
+    if cfg!(debug_assertions) {
+        return Ok(std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../soloyard")).join(rel));
+    }
+    Ok(app.path().resource_dir().map_err(|e| e.to_string())?.join("soloyard").join(rel))
+}
 
 struct Sidecar {
     child: Child,
@@ -34,7 +43,7 @@ fn start(app: &AppHandle) -> Result<Sidecar, String> {
     let mut child = Command::new("/bin/zsh")
         .arg("-lc")
         .arg(r#"exec node --no-warnings "$0" "$1""#)
-        .arg(SCRIPT)
+        .arg(soloyard_script(app, "core/src/sidecar.ts")?)
         .arg(&db)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
