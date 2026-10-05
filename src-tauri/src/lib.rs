@@ -266,6 +266,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             soloyard_bridge::soloyard_call, // Soloyard
+            soloyard_missing_worktree::soloyard_missing_worktrees, // Soloyard
             #[cfg(unix)]
             soloyard_services::soloyard_services_list, // Soloyard
             #[cfg(unix)]

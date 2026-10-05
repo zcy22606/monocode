@@ -46,6 +46,15 @@ fn try_detach(conn: &Connection, column: &str, value: &str) -> rusqlite::Result<
     Ok(())
 }
 
+/// 已经打开着的会话（比如 agent 自己在回合里删了工作树）：前端问哪些工作树目录没了，自己摘下来。
+#[tauri::command]
+pub fn soloyard_missing_worktrees(paths: Vec<String>) -> Vec<String> {
+    paths
+        .into_iter()
+        .filter(|path| is_gone(&crate::fs::expand_home(path)))
+        .collect()
+}
+
 /// 上一级目录还在、工作树目录没了才算删掉；整块盘没挂上时不动会话。
 fn is_gone(path: &Path) -> bool {
     !path.to_string_lossy().starts_with("remote://")
@@ -86,6 +95,8 @@ mod tests {
         };
         assert_eq!(state("s-gone"), (1, None));
         assert_eq!(state("s-alive"), (0, Some("p".into())));
+        let paths = [&gone, &alive].map(|path| path.to_string_lossy().into_owned());
+        assert_eq!(soloyard_missing_worktrees(paths.to_vec()), vec![paths[0].clone()]);
         std::fs::remove_dir_all(&root).unwrap();
     }
 }

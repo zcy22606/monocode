@@ -60,6 +60,7 @@ import { BRAINSTORM_CWD, onOpenProjectView, projectViewFile, setActiveProjectVie
 import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
+import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -2014,6 +2015,18 @@ function Workspace({
       })
       .catch(() => undefined);
   }, []);
+
+  // Soloyard: detach open sessions whose worktree folder was deleted outside the app, like an in-app removal.
+  useMissingWorktrees(sessions, (gone) => {
+    const detach = <T extends { id: string; cwd: string; worktreeCwd?: string; worktreeRemoved?: boolean }>(entry: T) =>
+      gone.has(entry.id) && !entry.worktreeRemoved && entry.worktreeCwd && !removingSessionIds.current.has(entry.id) && !switchingWorktrees.current.has(entry.id)
+        ? detachSessionWorktree(entry, entry.cwd, entry.worktreeCwd)
+        : entry;
+    sessionsRef.current = sessionsRef.current.map(detach);
+    setSessions(sessionsRef.current);
+    setHistory((current) => current.map(detach));
+    for (const session of sessionsRef.current) if (gone.has(session.id)) persistSession(session);
+  });
 
   useEffect(() => {
     const liveIds = new Set(sessions.map((session) => session.id));
