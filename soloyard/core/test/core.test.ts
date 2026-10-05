@@ -131,6 +131,8 @@ test('sidecar：请求 / 回应 / 写后广播 changed / 版本冲突带 latest'
   const p = (await call(1, 'projectForPath', '/x/demo')).result
   const issueId = (await call(2, 'createIssue', p.id, { title: '第一个' })).result
   assert.equal((await call(3, 'listIssues', { projectId: p.id })).result[0].ident, 'DEM-1')
+  // 全局搜索靠它把 issue 映射回项目目录
+  assert.equal((await call(6, 'listProjects')).result[0].paths, '/x/demo')
   assert.ok(lines.some((l) => l.event === 'changed'))
   const conflict = await call(4, 'updateIssue', issueId, { title: 'x' }, 99)
   assert.match(conflict.error, /version conflict/)

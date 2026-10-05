@@ -54,6 +54,9 @@
     "allIssues": "全部 issue"
   },
   "issues": {
+    "search": "搜索 issue",
+    "clearSearch": "清除搜索",
+    "noMatches": "没有和「{{query}}」匹配的 issue。",
     "filter": "筛选",
     "display": "显示",
     "newIssue": "新建 issue",

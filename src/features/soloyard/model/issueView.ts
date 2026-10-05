@@ -137,11 +137,27 @@ export const DEFAULT_VIEW: IssueViewConfig = {
 
 export type IssueGroup = { key: string; label: string; issues: Issue[] };
 
-/** 筛选 → 排序 → 分组。没有分组时返回一个 key 为 "all" 的组。 */
-export function applyView(issues: Issue[], view: IssueViewConfig): IssueGroup[] {
+/**
+ * 关键词搜索：编号精确匹配（SOL-17 / 17 / #17），标题、描述不分大小写包含。
+ * Issues 页的搜索框和全局搜索共用这一个。
+ */
+export function matchesIssueQuery(issue: Pick<Issue, "ident" | "number" | "title" | "body_md">, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return (
+    issue.ident.toLowerCase() === needle ||
+    String(issue.number) === needle.replace(/^#/, "") ||
+    issue.title.toLowerCase().includes(needle) ||
+    issue.body_md.toLowerCase().includes(needle)
+  );
+}
+
+/** 筛选（含搜索词）→ 排序 → 分组。没有分组时返回一个 key 为 "all" 的组。搜索词不存进视图配置。 */
+export function applyView(issues: Issue[], view: IssueViewConfig, query = ""): IssueGroup[] {
   const visible = issues.filter(
     (issue) =>
       (view.showCompleted || !isCompleted(issue.status)) &&
+      matchesIssueQuery(issue, query) &&
       view.filters.every((f) => !f.values.length || ISSUE_FIELDS[f.field]?.filter?.matches(issue, f.values) !== false),
   );
   const compare = ISSUE_FIELDS[view.orderBy]?.compare;

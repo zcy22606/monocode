@@ -15,8 +15,9 @@ import type {
 import type { RankedFile } from "../../files/model/fileIndex";
 import type { ProjectSearchMatch } from "./search";
 import { transcriptBlockText } from "../../sessions/model/transcriptFind";
+import type { IssueHit } from "../../soloyard/model/issueSearch"; // Soloyard
 
-export type SearchScope = "all" | "conversations" | "files" | "projects";
+export type SearchScope = "all" | "conversations" | "files" | "projects" | "issues"; // Soloyard: issues
 
 export type ConversationHit = {
   id: string;
@@ -79,7 +80,8 @@ export type AppSearchHit =
   | MessageHit
   | FileHit
   | ContentHit
-  | ProjectHit;
+  | ProjectHit
+  | IssueHit; // Soloyard
 
 export type GroupedHits = {
   conversations: ConversationHit[];
@@ -87,6 +89,7 @@ export type GroupedHits = {
   files: FileHit[];
   content: ContentHit[];
   projects: ProjectHit[];
+  issues: IssueHit[]; // Soloyard
 };
 
 const ALL_LIMITS: Record<keyof GroupedHits, number> = {
@@ -95,6 +98,7 @@ const ALL_LIMITS: Record<keyof GroupedHits, number> = {
   files: 10,
   content: 12,
   projects: 6,
+  issues: 8, // Soloyard
 };
 
 const SCOPE_LIMITS: Record<SearchScope, Record<keyof GroupedHits, number>> = {
@@ -105,6 +109,7 @@ const SCOPE_LIMITS: Record<SearchScope, Record<keyof GroupedHits, number>> = {
     files: 0,
     content: 0,
     projects: 0,
+    issues: 0, // Soloyard
   },
   files: {
     conversations: 0,
@@ -112,6 +117,7 @@ const SCOPE_LIMITS: Record<SearchScope, Record<keyof GroupedHits, number>> = {
     files: 40,
     content: 48,
     projects: 0,
+    issues: 0, // Soloyard
   },
   projects: {
     conversations: 0,
@@ -119,7 +125,10 @@ const SCOPE_LIMITS: Record<SearchScope, Record<keyof GroupedHits, number>> = {
     files: 0,
     content: 0,
     projects: 24,
+    issues: 0, // Soloyard
   },
+  // Soloyard
+  issues: { conversations: 0, messages: 0, files: 0, content: 0, projects: 0, issues: 40 },
 };
 
 export function asHarness(value: string): HarnessId {
@@ -397,12 +406,14 @@ export function groupHits(
     files: [],
     content: [],
     projects: [],
+    issues: [], // Soloyard
   };
   for (const hit of hits) {
     if (hit.kind === "conversation") grouped.conversations.push(hit);
     else if (hit.kind === "message") grouped.messages.push(hit);
     else if (hit.kind === "file") grouped.files.push(hit);
     else if (hit.kind === "content") grouped.content.push(hit);
+    else if (hit.kind === "issue") grouped.issues.push(hit); // Soloyard（顺序已由 searchIssueHits 排好）
     else grouped.projects.push(hit);
   }
   grouped.conversations.sort(byScoreThenRecency);
@@ -417,6 +428,7 @@ export function groupHits(
     files: grouped.files.slice(0, limits.files),
     content: grouped.content.slice(0, limits.content),
     projects: grouped.projects.slice(0, limits.projects),
+    issues: grouped.issues.slice(0, limits.issues), // Soloyard
   };
 }
 
@@ -427,6 +439,7 @@ export function flattenGrouped(grouped: GroupedHits): AppSearchHit[] {
     ...grouped.files,
     ...grouped.content,
     ...grouped.projects,
+    ...grouped.issues, // Soloyard
   ];
 }
 

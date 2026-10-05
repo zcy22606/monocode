@@ -40,6 +40,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   sessionContext: { run: (sessionId: string, message?: string) => repo.sessionContext(db, sessionId, message) },
   linkCandidates: { run: (projectId: number, kind: string, q?: string) => repo.linkCandidates(db, projectId, kind, q) },
   findProjectByPath: { run: (p: string) => repo.findProjectByPath(db, p) ?? null },
+  listProjects: { run: () => repo.listProjects(db) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
   createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },
   updateIteration: { write: true, run: (id: number, patch: Partial<it.IterationInput>) => it.updateIteration(db, actor, id, patch) },

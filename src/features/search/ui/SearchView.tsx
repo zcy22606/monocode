@@ -50,8 +50,10 @@ import {
   type SessionSummary,
 } from "../../sessions/data/sessionStore";
 import { useTranslation } from "../../../i18n";
+import { openIssueHit, useIssueSearchHits } from "../../soloyard/model/issueSearch"; // Soloyard
+import { StatusIcon } from "../../soloyard/ui/issues/IssueIcons"; // Soloyard
 
-const SCOPES: SearchScope[] = ["all", "conversations", "files", "projects"];
+const SCOPES: SearchScope[] = ["all", "conversations", "files", "projects", "issues"]; // Soloyard: issues
 
 type Props = {
   open: boolean;
@@ -192,6 +194,7 @@ export function SearchView({
     () => (trimmed ? searchRecentProjects(recents, trimmed) : []),
     [recents, trimmed],
   );
+  const issueHits = useIssueSearchHits(open, trimmed); // Soloyard
 
   useEffect(() => {
     if (!open || !trimmed) {
@@ -302,6 +305,7 @@ export function SearchView({
           fileHits,
           contentHits,
           projectHits,
+          issueHits, // Soloyard
         ),
         scope,
       ),
@@ -309,6 +313,7 @@ export function SearchView({
   }, [
     contentHits,
     fileHits,
+    issueHits, // Soloyard
     liveMessageHits,
     projectHits,
     remoteHits,
@@ -341,6 +346,8 @@ export function SearchView({
       onOpenSession(hit.sessionId);
     } else if (hit.kind === "message") {
       onOpenSession(hit.sessionId, hit.blockId, trimmed);
+    } else if (hit.kind === "issue") {
+      openIssueHit(hit); // Soloyard
     } else onOpenProject(hit.path);
     onClose();
   };
@@ -630,6 +637,14 @@ function rowCopy(
       icon: <FileTypeIcon name={hit.name} isDir={false} size={16} />,
       title: <Highlight text={hit.preview} query={query} />,
       meta: `${hit.relative}:${hit.line}`,
+    };
+  }
+  // Soloyard
+  if (hit.kind === "issue") {
+    return {
+      icon: <StatusIcon status={hit.status} />,
+      title: <Highlight text={hit.title} query={query} />,
+      meta: hit.ident,
     };
   }
   return {

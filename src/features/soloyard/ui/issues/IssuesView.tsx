@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import { Popover } from "../../../../shared/ui/Popover";
-import { ChevronDown, ChevronRight, ListFilter, MessageSquare, Plus, SlidersHorizontal, X } from "../../../../shared/ui/icons";
+import { ChevronDown, ChevronRight, ListFilter, MessageSquare, Plus, Search, SlidersHorizontal, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
 import { STATUSES, statusLabel, type Issue } from "../../model/issues";
 import {
@@ -26,7 +26,7 @@ const shortDate = (iso: string, lang: string) => new Date(iso).toLocaleDateStrin
 
 type MenuState = { anchor: HTMLElement; kind: "filter" } | { anchor: HTMLElement; kind: "status"; issue: Issue };
 
-/** Issues 标签：工具栏（筛选、显示设置）+ 列表 / 看板。视图配置每个项目各存一份。 */
+/** Issues 标签：工具栏（搜索、筛选、显示设置）+ 列表 / 看板。视图配置每个项目各存一份。 */
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
   const { data: issues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id });
@@ -34,13 +34,14 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [displayAnchor, setDisplayAnchor] = useState<HTMLElement | null>(null);
   const [creatingIn, setCreatingIn] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   const setView = (patch: Partial<IssueViewConfig>) => {
     const next = { ...view, ...patch };
     setViewState(next);
     saveIssueView(project.id, next);
   };
-  const groups = applyView(issues, view);
+  const groups = applyView(issues, view, query);
   const groupField = view.groupBy ? ISSUE_FIELDS[view.groupBy].group : undefined;
   const openIssue = (issue: Issue) =>
     openProjectView({ cwd, view: "issue", itemId: String(issue.id), title: `${issue.ident} ${issue.title}` });
@@ -78,7 +79,29 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
       <header className="@container/issues flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b border-stroke px-4">
         <h1 className="shrink-0 text-[13px] font-medium text-content">{t("view.issues")}</h1>
         <span className="text-[12px] text-content/40">{visibleCount}</span>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
+        <label className="ml-auto flex h-7 w-48 min-w-20 shrink items-center gap-1.5 rounded-md border border-stroke px-2 text-content/50 focus-within:border-content/30">
+          <Search className="size-3.5 shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && query) {
+                e.stopPropagation();
+                setQuery("");
+              }
+            }}
+            placeholder={t("issues.search")}
+            aria-label={t("issues.search")}
+            spellCheck={false}
+            className="min-w-0 flex-1 bg-transparent text-[12px] text-content outline-none placeholder:text-content/40"
+          />
+          {query ? (
+            <button type="button" aria-label={t("issues.clearSearch")} onClick={() => setQuery("")} className="rounded p-0.5 hover:bg-content/10 hover:text-content">
+              <X className="size-3" />
+            </button>
+          ) : null}
+        </label>
+        <div className="flex shrink-0 items-center gap-1">
           <ToolbarButton
             label={t("issues.filter")}
             active={view.filters.length > 0}
@@ -118,7 +141,9 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
         </div>
       ) : null}
       {error ? <p className="p-4 text-[12px] text-red-400">{error}</p> : null}
-      {view.layout === "list" ? (
+      {query.trim() && !visibleCount && creatingIn === null ? (
+        <p className="px-4 py-10 text-center text-[13px] text-content/50">{t("issues.noMatches", { query: query.trim() })}</p>
+      ) : view.layout === "list" ? (
         <ListView
           groups={groups}
           view={view}

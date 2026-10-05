@@ -9,6 +9,7 @@
     "all": "All",
     "conversations": "Conversations",
     "files": "Files",
-    "projects": "Projects"
+    "projects": "Projects",
+    "issues": "Issues"
   }
 }

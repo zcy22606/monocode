@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import type { Issue } from "./issues";
-import { DEFAULT_VIEW, ISSUE_FIELDS, applyView, loadIssueView, saveIssueView } from "./issueView";
+import { DEFAULT_VIEW, ISSUE_FIELDS, applyView, loadIssueView, matchesIssueQuery, saveIssueView } from "./issueView";
 
 const issue = (number: number, patch: Partial<Issue>): Issue => ({
   id: number, project_id: 1, number, ident: `APP-${number}`, title: `t${number}`, body_md: "", status: "todo",
@@ -44,6 +44,22 @@ describe("applyView", () => {
     expect(ISSUE_FIELDS.status.group!.patchFor!("in_review")).toEqual({ status: "in_review" });
     expect(ISSUE_FIELDS.labels.group!.patchFor!("api", issues[0])).toEqual({ labels: ["ui", "api"] });
     expect(ISSUE_FIELDS.labels.group!.patchFor!("__none__", issues[2])).toEqual({ labels: [] });
+  });
+});
+
+describe("issue search", () => {
+  it("matches the exact number or ident, and title / description case-insensitively", () => {
+    const one = issue(17, { title: "Search Box", body_md: "Filter by keyword" });
+    for (const q of ["17", "#17", "app-17", " APP-17 ", "search", "KEYWORD", ""]) expect(matchesIssueQuery(one, q)).toBe(true);
+    for (const q of ["1", "APP-1", "app", "board"]) expect(matchesIssueQuery(one, q)).toBe(false);
+  });
+
+  it("stacks with filters and narrows every group (list and board share applyView)", () => {
+    const withText = [...issues.slice(0, 3), issue(4, { status: "todo", priority: 1, title: "fix ui crash" })];
+    const groups = applyView(withText, { ...DEFAULT_VIEW, filters: [{ field: "labels", values: ["ui"] }] }, "t");
+    expect(groups.map((g) => [g.key, g.issues.map((i) => i.number)])).toEqual([["todo", [1]], ["done", [3]]]);
+    expect(applyView(withText, DEFAULT_VIEW, "crash").flatMap((g) => g.issues.map((i) => i.number))).toEqual([4]);
+    expect(applyView(withText, { ...DEFAULT_VIEW, layout: "board" }, "3").flatMap((g) => g.issues.map((i) => i.number))).toEqual([3]);
   });
 });
 

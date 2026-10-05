@@ -54,6 +54,9 @@
     "allIssues": "All issues"
   },
   "issues": {
+    "search": "Search issues",
+    "clearSearch": "Clear search",
+    "noMatches": "No issues match “{{query}}”.",
     "filter": "Filter",
     "display": "Display",
     "newIssue": "New issue",
