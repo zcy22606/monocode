@@ -472,5 +472,11 @@
       "note": "以后可以在 Project 分页的「仓库」页增删。",
       "confirm_other": "加入 {{count}} 个仓库"
     }
+  },
+  "recentSessions": {
+    "label": "最近会话",
+    "remove": "从最近会话移除",
+    "more_other": "还有 {{count}} 个",
+    "showLess": "收起"
   }
 }
