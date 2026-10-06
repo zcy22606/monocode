@@ -6,7 +6,7 @@ import { DEFAULT_VIEW, ISSUE_FIELDS, applyView, loadIssueView, matchesIssueQuery
 const issue = (number: number, patch: Partial<Issue>): Issue => ({
   id: number, project_id: 1, number, ident: `APP-${number}`, title: `t${number}`, body_md: "", status: "todo",
   priority: 0, labels: [], created_at: `2026-10-0${number}`, updated_at: `2026-10-0${number}`, completed_at: null,
-  version: 1, children: 0, children_done: 0, sessions: 0, ...patch,
+  version: 1, children: 0, children_done: 0, sessions: 0, repo_path: null, ...patch,
 });
 
 const issues = [
@@ -72,5 +72,23 @@ describe("issue view persistence", () => {
     expect(view.properties).toEqual(["id"]);
     saveIssueView(7, { ...view, groupBy: null });
     expect(loadIssueView(7).groupBy).toBeNull();
+  });
+});
+
+describe("repo field", () => {
+  const repoIssues = [issue(1, { repo_path: "/ws/web" }), issue(2, { repo_path: "/ws/backend" }), issue(3, {}), issue(4, { repo_path: "/ws/backend" })];
+  it("groups by member repo (by name) with the project root last; moving into a group sets or clears the repo", () => {
+    const groups = applyView(repoIssues, { ...DEFAULT_VIEW, groupBy: "repo", orderBy: "id" });
+    expect(groups.map((g) => [g.label, g.issues.map((i) => i.number)])).toEqual([
+      ["backend", [2, 4]],
+      ["web", [1]],
+      ["Project root", [3]],
+    ]);
+    expect(ISSUE_FIELDS.repo.group!.patchFor!("/ws/web")).toEqual({ repo_path: "/ws/web" });
+    expect(ISSUE_FIELDS.repo.group!.patchFor!("__root__")).toEqual({ repo_path: null });
+  });
+  it("filters by repo, including issues at the project root", () => {
+    const view = { ...DEFAULT_VIEW, groupBy: null, orderBy: "id" as const, filters: [{ field: "repo" as const, values: ["/ws/backend", "__root__"] }] };
+    expect(applyView(repoIssues, view)[0].issues.map((i) => i.number)).toEqual([2, 3, 4]);
   });
 });

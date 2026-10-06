@@ -1,5 +1,5 @@
 import { t } from "../../../i18n";
-import type { IssueDetail } from "./issues";
+import { repoName, type IssueDetail } from "./issues";
 
 type ProjectInfo = { name: string; goal?: string };
 
@@ -16,6 +16,7 @@ export function startWorkPrompt(issue: IssueDetail, project: ProjectInfo, cwd: s
     lines.push(t("soloyard:prompt.acceptance"), ...issue.acceptance.map((a) => `- [${a.done ? "x" : " "}] ${a.text}`), "");
   }
   const context = [t("soloyard:prompt.project", { name: project.name, cwd })];
+  if (issue.repo_path) context.push(t("soloyard:prompt.repo", { name: repoName(issue.repo_path), path: issue.repo_path }));
   if (project.goal?.trim()) context.push(t("soloyard:prompt.goal", { goal: project.goal.trim() }));
   if (issue.labels.length) context.push(t("soloyard:prompt.labels", { labels: issue.labels.join(sep) }));
   if (issue.blockedBy.some((b) => b.status !== "done" && b.status !== "canceled")) {

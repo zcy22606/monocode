@@ -264,3 +264,19 @@ export function setupSuggestion(db: DB, cwd: string): SetupSuggestion | null {
   const repos = scanUnder(db, path)
   return repos.length ? { kind: 'root', root: path, repos } : null
 }
+
+/**
+ * issue 的仓库：agent 传仓库名（openroboto-backend）或路径都行，统一成项目里那个成员仓库的路径。
+ * 空 / null = 在项目根目录做；项目里没有这个仓库就报错，提示用 get_project 看仓库列表。
+ */
+export function resolveRepo(db: DB, projectId: number, ref: string | null | undefined): string | null {
+  const wanted = ref?.trim()
+  if (!wanted) return null
+  const rows = db.prepare('SELECT path FROM soloyard_project_repos WHERE project_id = ?').all(projectId) as Row[]
+  const hit = rows.find((r) => r.path === clean(wanted)) ?? rows.find((r) => basename(r.path) === wanted)
+  if (!hit) {
+    const names = rows.map((r) => basename(r.path)).join(', ')
+    throw new Error(`项目里没有仓库「${wanted}」${names ? `（有：${names}）` : '（这个项目还没有成员仓库）'}`)
+  }
+  return hit.path
+}

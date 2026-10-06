@@ -6,9 +6,9 @@
  * 只需要在 ISSUE_FIELDS 里注册一条。
  */
 import { t } from "../../../i18n";
-import { PRIORITIES, STATUSES, isCompleted, priorityLabel, statusLabel, type Issue } from "./issues";
+import { PRIORITIES, STATUSES, isCompleted, priorityLabel, repoName, statusLabel, type Issue } from "./issues";
 
-export type FieldId = "status" | "priority" | "labels" | "created" | "updated" | "id" | "sessions";
+export type FieldId = "status" | "priority" | "labels" | "repo" | "created" | "updated" | "id" | "sessions";
 
 export type FieldOption = { key: string; label: string };
 
@@ -35,6 +35,14 @@ export type IssueField = {
 };
 
 const NO_LABEL = "__none__";
+const NO_REPO = "__root__";
+/** 出现过的仓库（按名字排）+「项目根目录」。 */
+const repoOptions = (issues: Issue[]) => [
+  ...[...new Set(issues.flatMap((i) => (i.repo_path ? [i.repo_path] : [])))]
+    .sort((a, b) => repoName(a).localeCompare(repoName(b)))
+    .map((path) => ({ key: path, label: repoName(path) })),
+  { key: NO_REPO, label: t("soloyard:field.noRepo") },
+];
 const statusOptions = () => STATUSES.map((s) => ({ key: s, label: statusLabel(s) }));
 const priorityOptions = () => PRIORITIES.map((p) => ({ key: String(p), label: priorityLabel(p) }));
 const byPriority = (p: number) => (p === 0 ? 9 : p); // 无优先级排最后
@@ -89,6 +97,22 @@ export const ISSUE_FIELDS: Record<FieldId, IssueField> = {
     },
     display: true,
   },
+  // 多仓库项目：issue 在哪个成员仓库做（Start work 据此开会话）；拖到某组 = 改到那个仓库
+  repo: {
+    id: "repo",
+    label: () => t("soloyard:field.repo"),
+    group: {
+      options: repoOptions,
+      keysOf: (issue) => [issue.repo_path ?? NO_REPO],
+      patchFor: (key) => ({ repo_path: key === NO_REPO ? null : key }),
+    },
+    compare: (a, b) => (a.repo_path ? repoName(a.repo_path) : "").localeCompare(b.repo_path ? repoName(b.repo_path) : ""),
+    filter: {
+      options: repoOptions,
+      matches: (issue, values) => values.includes(issue.repo_path ?? NO_REPO),
+    },
+    display: true,
+  },
   created: {
     id: "created",
     label: () => t("soloyard:field.created"),
@@ -131,7 +155,7 @@ export const DEFAULT_VIEW: IssueViewConfig = {
   orderDesc: false,
   showCompleted: true,
   showEmptyGroups: false,
-  properties: ["id", "status", "priority", "labels", "created"],
+  properties: ["id", "status", "priority", "repo", "labels", "created"],
   filters: [],
 };
 

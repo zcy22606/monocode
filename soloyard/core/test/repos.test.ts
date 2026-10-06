@@ -130,3 +130,32 @@ test('opening a plain folder full of repos suggests making it a multi-repo proje
   assert.equal(r.findProjectByPath(db, w.root)?.id, id)
   assert.equal(repos.setupSuggestion(db, w.root), null, 'already has members')
 })
+
+test('issues can name the member repo they are worked in', () => {
+  const w = workspace()
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, w.root)
+  repos.addProjectRepo(db, 'user', p.id, w.backend)
+  assert.equal(repos.resolveRepo(db, p.id, 'backend'), w.backend, 'by name')
+  assert.equal(repos.resolveRepo(db, p.id, w.backend + '/'), w.backend, 'by path')
+  assert.equal(repos.resolveRepo(db, p.id, ''), null, 'empty = project root')
+  assert.throws(() => repos.resolveRepo(db, p.id, 'web'), /没有仓库「web」（有：backend）/)
+  const id = r.createIssue(db, 'user', p.id, { title: '手动轮换', repo_path: w.backend })
+  assert.equal(r.getIssue(db, id)!.repo_path, w.backend)
+  r.updateIssue(db, 'user', id, { repo_path: null })
+  assert.equal(r.getIssue(db, id)!.repo_path, null)
+})
+
+test('an issue lists its sub-issues with repo and whether they still wait on prerequisites, and knows its parent', () => {
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, '/ws')
+  const parent = r.createIssue(db, 'user', p.id, { title: '改协议' })
+  const proto = r.createIssue(db, 'user', p.id, { title: '协议', parent_id: parent, repo_path: '/ws/protocol' })
+  const backend = r.createIssue(db, 'user', p.id, { title: '后端', parent_id: parent, repo_path: '/ws/backend', blocked_by: [proto] })
+  const detail = r.getIssue(db, parent)!
+  assert.deepEqual(detail.children.map((c: any) => [c.title, c.repo_path, c.blocked]), [['协议', '/ws/protocol', 0], ['后端', '/ws/backend', 1]])
+  assert.equal(detail.parent, null)
+  assert.deepEqual({ ...r.getIssue(db, backend)!.parent }, { id: parent, ident: `${p.key}-1`, title: '改协议', status: 'backlog' })
+  r.updateIssue(db, 'user', proto, { status: 'done' })
+  assert.equal(r.getIssue(db, parent)!.children[1].blocked, 0, 'unblocked once the prerequisite is done')
+})

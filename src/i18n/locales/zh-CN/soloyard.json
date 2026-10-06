@@ -53,7 +53,9 @@
     "sessions": "会话",
     "noLabels": "无标签",
     "allIssues": "全部 issue",
-    "title": "标题"
+    "title": "标题",
+    "repo": "仓库",
+    "noRepo": "项目根目录"
   },
   "issues": {
     "search": "搜索 issue",
@@ -95,7 +97,10 @@
       "clear": "取消选择"
     },
     "selectHint": "选择（也可以 ⌘ 点击或 Shift 点击整行）",
-    "selectAll": "全选"
+    "selectAll": "全选",
+    "changeRepo": "改仓库",
+    "showSubIssues": "展开子任务",
+    "hideSubIssues": "收起子任务"
   },
   "detail": {
     "deleted": "这个 issue 已被删除。",
@@ -128,7 +133,21 @@
     "sendBackTo": "会记成评论，并发给「{{target}}」。",
     "sendBackNoSession": "会记成评论。没有关联的会话可以发送。",
     "latestSession": "最近的会话",
-    "cancel": "取消"
+    "cancel": "取消",
+    "subIssues": "子任务",
+    "addSubIssue": "添加子任务",
+    "blocked": "等前置",
+    "blockedHint": "还有前置 issue 没做完",
+    "parentHint": "打开主任务",
+    "parallel": "并行开工",
+    "parallelHint": "每个可开工的子任务各开一个会话，再在项目根目录开一个主会话",
+    "parallelTitle": "{{ident}} 并行开工",
+    "parallelDescription": "勾选的子任务各开一个会话，在它自己的仓库里新建工作树，直接开工；项目根目录再开一个主会话负责协调，最后联调。",
+    "parallelLead": "在项目根目录开主会话，协调和联调",
+    "parallelNotReady": "等前置",
+    "parallelStarted": "已开始",
+    "parallelDone": "已完成",
+    "parallelConfirm_other": "开 {{count}} 个会话"
   },
   "prompt": {
     "start": "开始处理 {{ident}}：{{title}}",
@@ -143,7 +162,20 @@
     "report": "2. 把 {{ident}} 改成 in_review，并加一条评论：改了什么、怎么验证的。不要改成 done，验收由我来做。",
     "listSeparator": "、",
     "sentBackComment": "打回：{{reason}}",
-    "sentBackMessage": "{{ident}} 验收没通过：{{reason}}\n\n请修改后重新自查，再把 issue 改回 in_review 并评论说明。"
+    "sentBackMessage": "{{ident}} 验收没通过：{{reason}}\n\n请修改后重新自查，再把 issue 改回 in_review 并评论说明。",
+    "repo": "仓库：{{name}}（{{path}}）。这个会话在这个仓库里干活；项目里的其他仓库见项目地图。",
+    "lead": {
+      "role": "你是 {{ident}}「{{title}}」的主会话，负责协调；子任务在各自的会话里做，你不要亲自去做。",
+      "inRepo": "在 {{repo}}（新工作树）",
+      "atRoot": "在项目根目录",
+      "started": "已经并行开工的子任务（各在自己的会话里做，做完会把自己的 issue 改成 in_review 并留评论）：",
+      "waiting": "还没开工的子任务：",
+      "blocked": "（等前置）",
+      "progress": "看进度用 Soloyard MCP：get_issue {{ident}} 看子任务状态，再对每个子任务 get_issue 看评论。",
+      "now": "现在：把 {{ident}} 改成 in_progress，简要说一下各子任务怎么分工、彼此要约定哪些接口，然后等我。",
+      "check": "我让你检查进度时：汇报每个子任务的状态，卡住的说明原因；有等前置的子任务前置做完了，提醒我开工。",
+      "integrate": "所有子任务都 in_review 后：在项目根目录联调——把每个子任务在各自仓库里的工作树分支合到一起，跑端到端检查，把结果写成 {{ident}} 的评论，再把 {{ident}} 改成 in_review。都不要改成 done，验收由我来做。"
+    }
   },
   "services": {
     "empty": "还没有服务。这个工作区里跑过的服务会出现在这里，也可以点「+」添加。",

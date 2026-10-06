@@ -8,6 +8,12 @@ export type StartWorkRequest = {
   /** 事先生成，先挂到 issue 上再开会话。 */
   sessionId: string;
   prompt: string;
+  /** 多仓库项目：在哪个成员仓库干活（不给 = 项目根目录）。 */
+  workCwd?: string;
+  /** 第一次发送时在 workCwd 里新建工作树。 */
+  newWorktree?: boolean;
+  /** 直接把提示词发出去（并行开工），而不是填进输入框等用户发。 */
+  send?: boolean;
 };
 
 /** 先打开会话（没开就打开），再把消息发进去。 */

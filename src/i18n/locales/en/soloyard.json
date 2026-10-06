@@ -53,7 +53,9 @@
     "sessions": "Sessions",
     "noLabels": "No labels",
     "allIssues": "All issues",
-    "title": "Title"
+    "title": "Title",
+    "repo": "Repository",
+    "noRepo": "Project root"
   },
   "issues": {
     "search": "Search issues",
@@ -99,7 +101,10 @@
       "clear": "Clear selection"
     },
     "selectHint": "Select (⌘-click or Shift-click a row also selects)",
-    "selectAll": "Select all"
+    "selectAll": "Select all",
+    "changeRepo": "Change repository",
+    "showSubIssues": "Show sub-issues",
+    "hideSubIssues": "Hide sub-issues"
   },
   "detail": {
     "deleted": "This issue was deleted.",
@@ -132,7 +137,22 @@
     "sendBackTo": "Saved as a comment and sent to “{{target}}”.",
     "sendBackNoSession": "Saved as a comment. No linked session to send it to.",
     "latestSession": "the latest session",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "subIssues": "Sub-issues",
+    "addSubIssue": "Add a sub-issue",
+    "blocked": "Waiting",
+    "blockedHint": "Some prerequisite issues are not done yet",
+    "parentHint": "Open the parent issue",
+    "parallel": "Start in parallel",
+    "parallelHint": "Start every ready sub-issue in its own session, plus a lead session at the project root",
+    "parallelTitle": "Start {{ident}} in parallel",
+    "parallelDescription": "Each checked sub-issue starts right away in its own session — in its repository, in a new worktree. A lead session at the project root coordinates and integrates at the end.",
+    "parallelLead": "Open a lead session at the project root to coordinate and integrate",
+    "parallelNotReady": "Not ready",
+    "parallelStarted": "Already started",
+    "parallelDone": "Done",
+    "parallelConfirm_one": "Start {{count}} session",
+    "parallelConfirm_other": "Start {{count}} sessions"
   },
   "prompt": {
     "start": "Start working on {{ident}}: {{title}}",
@@ -147,7 +167,20 @@
     "report": "2. Set {{ident}} to in_review and add a comment: what changed and how you verified it. Don't set it to done — I'll accept it.",
     "listSeparator": ", ",
     "sentBackComment": "Sent back: {{reason}}",
-    "sentBackMessage": "{{ident}} didn't pass review: {{reason}}\n\nPlease fix it, check again, then set the issue back to in_review and comment on what changed."
+    "sentBackMessage": "{{ident}} didn't pass review: {{reason}}\n\nPlease fix it, check again, then set the issue back to in_review and comment on what changed.",
+    "repo": "Repository: {{name}} ({{path}}). This session works there; other repositories in the project are listed in the project map.",
+    "lead": {
+      "role": "You are the lead session for {{ident}}: {{title}}. You coordinate; the sub-issues are done in their own sessions, so don't implement them yourself.",
+      "inRepo": "in {{repo}} (new worktree)",
+      "atRoot": "at the project root",
+      "started": "Sub-issues already started in parallel (each in its own session; when done it sets its issue to in_review and comments):",
+      "waiting": "Sub-issues not started yet:",
+      "blocked": " (waiting on prerequisites)",
+      "progress": "Track progress with the Soloyard MCP tools: get_issue {{ident}} for the sub-issue statuses, then get_issue on each sub-issue for its comments.",
+      "now": "Now: set {{ident}} to in_progress, briefly lay out how the sub-issues split the work and the interfaces they need to agree on, then wait for me.",
+      "check": "When I ask you to check progress: report each sub-issue's status and explain anything stuck. When a waiting sub-issue's prerequisites are done, tell me it can start.",
+      "integrate": "When every sub-issue is in_review: integrate at the project root — bring each sub-issue's worktree branch together in its repository, run the end-to-end checks, comment the results on {{ident}}, then set {{ident}} to in_review. Don't set anything to done — I'll accept it."
+    }
   },
   "services": {
     "empty": "No services yet. Services that run in this workspace show up here, or use + to add one.",
