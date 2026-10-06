@@ -19,7 +19,8 @@
     "emptyVisibilityLabel": "Project background visibility in empty chats",
     "sessionVisibility": "Session visibility",
     "sessionVisibilityLabel": "Project background visibility in sessions",
-    "removeImage": "Remove background image"
+    "removeImage": "Remove background image",
+    "lockedHint": "Shown behind {{name}}'s chat, dimmed with the Haze effect."
   },
   "fileDialog": {
     "chatBackground": "Choose chat background",
@@ -54,7 +55,10 @@
     "search": "Search projects",
     "searchPlaceholder": "Search projects...",
     "noResults": "No projects found",
-    "newProject": "New project"
+    "newProject": "New project",
+    "currentMonoLabel": "{{action}}, current mono {{name}}, {{status}}",
+    "searchMonosPlaceholder": "Search monos and projects...",
+    "newMono": "New mono"
   },
   "search": {
     "noFolder": "No project folder",

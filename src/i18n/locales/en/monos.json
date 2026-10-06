@@ -1,0 +1,166 @@
+{
+  "loading": "Loading…",
+  "projectsPhrase": {
+    "list": "{{list}} and {{last}}",
+    "separator": ", "
+  },
+  "status": {
+    "working": "Working",
+    "needsYou": "Needs you",
+    "idle": "Idle",
+    "approve": "Approve {{title}}",
+    "waitingForApproval": "Waiting for approval",
+    "usageLimitReached": "Usage limit reached",
+    "writingReply": "Writing a reply",
+    "thinking": "Thinking"
+  },
+  "activity": {
+    "label": "{{name}} activity",
+    "title": "Activity",
+    "working": "Working",
+    "finished": "Finished"
+  },
+  "header": {
+    "greeting": "I can see every session, note and folder in {{projects}}. Ask what’s going on, or hand me work.",
+    "greetingNoProjects": "Add the projects I should work on from my details, or just ask me something."
+  },
+  "intro": {
+    "title": "Meet Monos",
+    "experimental": "Experimental",
+    "body": "Agents of your own that live on the rail and work across your projects. They remember what matters and pick up habits they run on their own.",
+    "create": "Create your mono",
+    "later": "Not now"
+  },
+  "details": {
+    "label": "{{name}} details",
+    "title": "Details",
+    "model": "Model",
+    "projects": "Projects",
+    "habitsMax": "At most {{max}} habits"
+  },
+  "settings": {
+    "title": "Settings",
+    "soul": "Soul",
+    "soulDescription": "Defines who this bot is and the rules it follows. Always included in its context.",
+    "habits": "Habits",
+    "habitsDescription": "Recurring tasks this bot runs on its own.",
+    "memory": "Memory",
+    "memoryDescription": "Facts and preferences this bot remembers."
+  },
+  "reset": {
+    "label": "Reset conversation",
+    "title": "Reset {{name}}'s conversation?",
+    "body": "All messages in this Mono's conversation will be deleted and any active reply will be stopped. This can't be undone.",
+    "kept": "Its soul, memory and habits will be kept.",
+    "failure": "Could not reset the conversation.",
+    "description": "Clear all messages and start fresh",
+    "cancel": "Cancel",
+    "resetting": "Resetting…"
+  },
+  "habit": {
+    "today": "Today {{time}}",
+    "outcome": {
+      "posted": "Messaged you",
+      "quiet": "Nothing to report",
+      "failed": "Couldn't finish"
+    },
+    "alreadyRunning": "Already running",
+    "starting": "Starting",
+    "startingEllipsis": "Starting…",
+    "runNow": "Run now",
+    "pause": "Pause",
+    "resume": "Resume",
+    "remove": "Remove",
+    "runs": "Runs",
+    "paused": "Paused",
+    "next": "Next",
+    "whatItDoes": "What it does",
+    "recentRuns": "Recent runs",
+    "notRunYet": "It hasn't run yet.",
+    "runningNow": "Running now"
+  },
+  "habits": {
+    "empty": "No habits yet",
+    "upcoming": "Upcoming",
+    "done": "Done"
+  },
+  "newHabit": {
+    "title": "New habit",
+    "create": "Create",
+    "name": "Name",
+    "couldNotAdd": "Could not add the habit.",
+    "kind": {
+      "daily": "Daily",
+      "weekdays": "Weekdays",
+      "weekly": "Weekly",
+      "hourly": "Hourly"
+    },
+    "repeats": "Repeats",
+    "on": "on",
+    "day": "Day",
+    "at": "at",
+    "minute": "Minute",
+    "time": "Time",
+    "instructionsPlaceholder": "What it should do on each run, and when it's worth telling you about."
+  },
+  "soul": {
+    "label": "{{name}} soul",
+    "placeholder": "Who it is, and what it should always keep in mind"
+  },
+  "memory": {
+    "ambiguous": "This memory changed or is ambiguous. Check it before trying again.",
+    "conflict": "Memory kept changing while saving. Your edit was not saved; try again.",
+    "add": "Add memory",
+    "empty": "Nothing remembered yet",
+    "new": "New memory",
+    "placeholder": "Something it should remember",
+    "edit": "Edit memory",
+    "editFact": "Edit",
+    "forget": "Forget: {{text}}"
+  },
+  "panel": {
+    "back": "Back",
+    "mascot": "Mascot",
+    "color": "Color",
+    "colors": {
+      "blue": "Blue",
+      "coral": "Coral",
+      "yellow": "Yellow",
+      "green": "Green",
+      "pink": "Pink",
+      "purple": "Purple",
+      "teal": "Teal",
+      "orange": "Orange",
+      "indigo": "Indigo"
+    },
+    "conflict": "{{author}} changed this while you were editing.",
+    "useTheirs": "Use theirs",
+    "keepMine": "Keep mine",
+    "linesNotLoading_one": "{{count}} line not loading",
+    "linesNotLoading_other": "{{count}} lines not loading",
+    "linesUsed": "{{lines}} / {{max}} lines"
+  },
+  "composer": {
+    "nothingToAttach": "Nothing to attach from that drop — the file may have been moved, renamed, or deleted.",
+    "dropToAttach": "Drop files to attach",
+    "attachFiles": "Attach files",
+    "message": "Message {{name}}",
+    "send": "Send",
+    "readingAttachments": "Reading attachments…"
+  },
+  "projects": {
+    "remove": "Remove {{name}}",
+    "add": "Add project",
+    "addLabel": "Add a project",
+    "allTaken": "It already works on every project."
+  },
+  "sidebar": {
+    "resizeDetails": "Resize Mono details",
+    "resizeActivity": "Resize Mono activity",
+    "hide": "Hide {{title}}"
+  },
+  "usageLimit": {
+    "chooseModel": "Choose another model",
+    "chooseAccount": "Choose another account"
+  }
+}

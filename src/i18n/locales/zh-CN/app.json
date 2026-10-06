@@ -106,5 +106,15 @@
     "chooseChat": "请选择这个项目里的对话。",
     "chatBusy": "这个对话正忙，请选择其他对话或新建一个。",
     "sessionTitle": "修复 CI #{{number}}：{{title}}"
+  },
+  "mono": {
+    "conversationUnavailable": "这个 Mono 的对话已不存在。",
+    "alreadyResetting": "这个对话正在重置。",
+    "deleteConfirm": "删除 {{name}}？它的对话会被删除，习惯也会停止。此操作无法撤销。",
+    "habitStartFailed": "这个习惯的运行无法开始。",
+    "deliveryUnavailable": "暂时无法送达。等 Agent 就绪后重试。",
+    "habitApprovalTimeout": "没有人回应它的审批请求。",
+    "habitTimeout": "运行时间太长，已被停止。",
+    "habitUnfinished": "这次运行没有完成。"
   }
 }

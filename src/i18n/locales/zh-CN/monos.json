@@ -1,0 +1,165 @@
+{
+  "loading": "加载中…",
+  "projectsPhrase": {
+    "list": "{{list}} 和 {{last}}",
+    "separator": "、"
+  },
+  "status": {
+    "working": "工作中",
+    "needsYou": "需要你",
+    "idle": "空闲",
+    "approve": "批准 {{title}}",
+    "waitingForApproval": "等待批准",
+    "usageLimitReached": "已达用量上限",
+    "writingReply": "正在写回复",
+    "thinking": "思考中"
+  },
+  "activity": {
+    "label": "{{name}} 的活动",
+    "title": "活动",
+    "working": "工作中",
+    "finished": "已完成"
+  },
+  "header": {
+    "greeting": "我能看到 {{projects}} 里的每个会话、笔记和文件夹。问问进展如何，或者把活交给我。",
+    "greetingNoProjects": "在我的详情里添加要我负责的项目，或者直接问我点什么。"
+  },
+  "intro": {
+    "title": "认识 Monos",
+    "experimental": "实验性",
+    "body": "属于你自己的 Agent，住在侧栏上，跨项目干活。它们记得重要的事，还会养成习惯，自己按时去做。",
+    "create": "创建你的 Mono",
+    "later": "以后再说"
+  },
+  "details": {
+    "label": "{{name}} 的详情",
+    "title": "详情",
+    "model": "模型",
+    "projects": "项目",
+    "habitsMax": "最多 {{max}} 个习惯"
+  },
+  "settings": {
+    "title": "设置",
+    "soul": "灵魂",
+    "soulDescription": "定义它是谁、遵守哪些规则。始终放在它的上下文里。",
+    "habits": "习惯",
+    "habitsDescription": "它自己定期去做的事。",
+    "memory": "记忆",
+    "memoryDescription": "它记住的事实和偏好。"
+  },
+  "reset": {
+    "label": "重置对话",
+    "title": "重置 {{name}} 的对话？",
+    "body": "这个 Mono 对话里的所有消息都会被删除，正在进行的回复也会停止。此操作无法撤销。",
+    "kept": "它的灵魂、记忆和习惯会保留。",
+    "failure": "无法重置对话。",
+    "description": "清空所有消息，重新开始",
+    "cancel": "取消",
+    "resetting": "正在重置…"
+  },
+  "habit": {
+    "today": "今天 {{time}}",
+    "outcome": {
+      "posted": "给你发了消息",
+      "quiet": "没什么要报告的",
+      "failed": "没能完成"
+    },
+    "alreadyRunning": "已在运行",
+    "starting": "正在启动",
+    "startingEllipsis": "正在启动…",
+    "runNow": "立即运行",
+    "pause": "暂停",
+    "resume": "恢复",
+    "remove": "移除",
+    "runs": "运行",
+    "paused": "已暂停",
+    "next": "下次",
+    "whatItDoes": "做什么",
+    "recentRuns": "最近运行",
+    "notRunYet": "还没运行过。",
+    "runningNow": "正在运行"
+  },
+  "habits": {
+    "empty": "还没有习惯",
+    "upcoming": "即将运行",
+    "done": "已完成"
+  },
+  "newHabit": {
+    "title": "新建习惯",
+    "create": "创建",
+    "name": "名称",
+    "couldNotAdd": "无法添加习惯。",
+    "kind": {
+      "daily": "每天",
+      "weekdays": "工作日",
+      "weekly": "每周",
+      "hourly": "每小时"
+    },
+    "repeats": "重复",
+    "on": "于",
+    "day": "星期",
+    "at": "在",
+    "minute": "分钟",
+    "time": "时间",
+    "instructionsPlaceholder": "每次运行要做什么，以及什么情况下值得告诉你。"
+  },
+  "soul": {
+    "label": "{{name}} 的灵魂",
+    "placeholder": "它是谁，以及它应该始终记住什么"
+  },
+  "memory": {
+    "ambiguous": "这条记忆已经变了，或者有歧义。请先检查再重试。",
+    "conflict": "保存时记忆一直在变。你的修改没有保存，请重试。",
+    "add": "添加记忆",
+    "empty": "还没记住任何事",
+    "new": "新记忆",
+    "placeholder": "它应该记住的事",
+    "edit": "编辑记忆",
+    "editFact": "编辑",
+    "forget": "忘掉：{{text}}"
+  },
+  "panel": {
+    "back": "返回",
+    "mascot": "吉祥物",
+    "color": "颜色",
+    "colors": {
+      "blue": "蓝",
+      "coral": "珊瑚",
+      "yellow": "黄",
+      "green": "绿",
+      "pink": "粉",
+      "purple": "紫",
+      "teal": "青",
+      "orange": "橙",
+      "indigo": "靛蓝"
+    },
+    "conflict": "你编辑的时候，{{author}} 改动了它。",
+    "useTheirs": "用对方的",
+    "keepMine": "保留我的",
+    "linesNotLoading_other": "{{count}} 行未加载",
+    "linesUsed": "{{lines}} / {{max}} 行"
+  },
+  "composer": {
+    "nothingToAttach": "拖进来的内容里没有可附加的文件——文件可能已被移动、重命名或删除。",
+    "dropToAttach": "拖放文件以附加",
+    "attachFiles": "附加文件",
+    "message": "给 {{name}} 发消息",
+    "send": "发送",
+    "readingAttachments": "正在读取附件…"
+  },
+  "projects": {
+    "remove": "移除 {{name}}",
+    "add": "添加项目",
+    "addLabel": "添加项目",
+    "allTaken": "它已经在负责所有项目了。"
+  },
+  "sidebar": {
+    "resizeDetails": "调整 Mono 详情宽度",
+    "resizeActivity": "调整 Mono 活动宽度",
+    "hide": "隐藏{{title}}"
+  },
+  "usageLimit": {
+    "chooseModel": "换个模型",
+    "chooseAccount": "换个账号"
+  }
+}

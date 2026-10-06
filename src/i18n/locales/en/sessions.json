@@ -99,7 +99,9 @@
     "noResults": "No results",
     "previous": "Previous match",
     "next": "Next match",
-    "close": "Close find"
+    "close": "Close find",
+    "searching": "Searching…",
+    "searchFailed": "Search failed"
   },
   "linkWorkItem": {
     "invalid": "Enter a valid GitHub issue or pull request URL.",
@@ -202,7 +204,9 @@
     "resumeAtResetTitle": "Continue this session once the limit resets",
     "resumeAtReset": "Resume at reset",
     "dismiss": "Dismiss",
-    "dismissLabel": "Dismiss usage limit notice"
+    "dismissLabel": "Dismiss usage limit notice",
+    "reachedProvider": "{{provider}} usage limit reached",
+    "monoSaved": "Your conversation is saved. Choose another model or account to keep going."
   },
   "liveAgents": {
     "done": "Done",
@@ -388,7 +392,8 @@
     "copied": "Copied",
     "copyCode": "Copy code",
     "preview": "Markdown preview",
-    "source": "Markdown source"
+    "source": "Markdown source",
+    "writePlaceholder": "Write markdown…"
   },
   "monocodeCall": {
     "modelsList": "List models",
@@ -476,7 +481,19 @@
     "save": "Save queued message",
     "cancelEdit": "Cancel queued message edit",
     "steer": "Steer",
-    "remove": "Remove queued message"
+    "remove": "Remove queued message",
+    "sendFailed": "A message couldn't be sent",
+    "messagesPaused": "Messages paused",
+    "retry": "Retry",
+    "sending": "Sending…",
+    "waiting": "Waiting to send",
+    "sessionsFinished_one": "{{count}} sessions finished",
+    "sessionsFinished_other": "{{count}} sessions finished",
+    "session": {
+      "completed": "Session completed: {{title}}",
+      "failed": "Session failed: {{title}}",
+      "cancelled": "Session cancelled: {{title}}"
+    }
   },
   "composer": {
     "dropFiles": "Drop files to attach",
@@ -560,7 +577,17 @@
     "hideAgentWork": "Hide {{name}}'s work",
     "showAgentWork": "Show {{name}}'s work",
     "thinkingWith": "Thinking: {{text}}",
-    "interjection": "Interjection: {{label}}"
+    "interjection": "Interjection: {{label}}",
+    "backToLatest": "Back to latest messages",
+    "loadingEarlier": "Loading earlier messages…",
+    "loadEarlierScrollFailed": "Couldn't load earlier messages. Scroll up to retry.",
+    "loadEarlierFailed": "Couldn't load messages. Try again",
+    "yesterday": "Yesterday",
+    "notSent": "Not sent",
+    "notSentError": "Not sent · {{error}}",
+    "hideActivity": "Hide activity",
+    "showActivity": "Show activity",
+    "activityTrail": "Activity in chronological order"
   },
   "interjection": {
     "note": "{{label}} note",
@@ -581,5 +608,18 @@
     "cached": "{{value}} cached",
     "labelWith": "Turn metrics: {{label}}",
     "label": "Turn metrics"
+  },
+  "monoWork": {
+    "thinking": "Thinking…",
+    "pondering": "Pondering…",
+    "considering": "Considering…",
+    "workingThrough": "Working it through…",
+    "waitingApproval": "Waiting for approval…",
+    "runningCommand": "Running command…",
+    "editingFile": "Editing file…",
+    "readingFile": "Reading file…",
+    "exploringProject": "Exploring project…",
+    "runningAgent": "Running agent…",
+    "usingTool": "Using tool…"
   }
 }

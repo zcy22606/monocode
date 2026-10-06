@@ -6,6 +6,7 @@ import type common from "./locales/en/common.json";
 import type connections from "./locales/en/connections.json";
 import type files from "./locales/en/files.json";
 import type inbox from "./locales/en/inbox.json";
+import type monos from "./locales/en/monos.json";
 import type soloyard from "./locales/en/soloyard.json";
 import type notes from "./locales/en/notes.json";
 import type notifications from "./locales/en/notifications.json";
@@ -34,6 +35,7 @@ declare module "i18next" {
       connections: typeof connections;
       files: typeof files;
       inbox: typeof inbox;
+      monos: typeof monos;
       soloyard: typeof soloyard;
       notes: typeof notes;
       notifications: typeof notifications;

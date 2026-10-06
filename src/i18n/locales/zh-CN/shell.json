@@ -158,7 +158,8 @@
     "archiveAllDescription": "此标签页中的全部 {{n}} 个对话",
     "deleteAllDescription": "永久删除此标签页中的全部 {{n}} 个对话",
     "noProject": "没有项目",
-    "tabActions": "{{name}} 的标签页操作"
+    "tabActions": "{{name}} 的标签页操作",
+    "showMonoDetails": "显示 Mono 详情"
   },
   "footer": {
     "removedAccount": "这个对话使用的账号已被移除",
@@ -318,5 +319,15 @@
       "hoursMinutes": "{{hours}} 小时 {{minutes}} 分钟",
       "days": "{{days}} 天"
     }
+  },
+  "monoRail": {
+    "newMono": "新建 Mono",
+    "noProjects": "还没有项目",
+    "idle": "空闲",
+    "options": "Mono 选项",
+    "namedOptions": "{{name}} 选项",
+    "name": "Mono 名称",
+    "background": "背景图片",
+    "delete": "删除 Mono…"
   }
 }

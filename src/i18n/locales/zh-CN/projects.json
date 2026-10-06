@@ -19,7 +19,8 @@
     "emptyVisibilityLabel": "项目背景在空白对话中的可见度",
     "sessionVisibility": "会话可见度",
     "sessionVisibilityLabel": "项目背景在会话中的可见度",
-    "removeImage": "移除背景图片"
+    "removeImage": "移除背景图片",
+    "lockedHint": "显示在 {{name}} 的聊天背后，用「朦胧」效果调暗。"
   },
   "fileDialog": {
     "chatBackground": "选择对话背景",
@@ -53,7 +54,10 @@
     "search": "搜索项目",
     "searchPlaceholder": "搜索项目…",
     "noResults": "未找到项目",
-    "newProject": "新建项目"
+    "newProject": "新建项目",
+    "currentMonoLabel": "{{action}}，当前 Mono {{name}}，{{status}}",
+    "searchMonosPlaceholder": "搜索 Mono 和项目…",
+    "newMono": "新建 Mono"
   },
   "search": {
     "noFolder": "没有项目文件夹",

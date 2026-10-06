@@ -98,7 +98,9 @@
     "noResults": "无结果",
     "previous": "上一个匹配",
     "next": "下一个匹配",
-    "close": "关闭查找"
+    "close": "关闭查找",
+    "searching": "搜索中…",
+    "searchFailed": "搜索失败"
   },
   "linkWorkItem": {
     "invalid": "请输入有效的 GitHub issue 或 pull request 链接。",
@@ -200,7 +202,9 @@
     "resumeAtResetTitle": "额度重置后继续这个会话",
     "resumeAtReset": "重置后继续",
     "dismiss": "关闭",
-    "dismissLabel": "关闭用量上限提示"
+    "dismissLabel": "关闭用量上限提示",
+    "reachedProvider": "{{provider}} 已达到用量上限",
+    "monoSaved": "对话已保存。换一个模型或账号就能继续。"
   },
   "liveAgents": {
     "done": "已完成",
@@ -381,7 +385,8 @@
     "copied": "已复制",
     "copyCode": "复制代码",
     "preview": "Markdown 预览",
-    "source": "Markdown 源码"
+    "source": "Markdown 源码",
+    "writePlaceholder": "写 Markdown…"
   },
   "monocodeCall": {
     "modelsList": "列出模型",
@@ -459,7 +464,18 @@
     "save": "保存排队的消息",
     "cancelEdit": "取消编辑排队的消息",
     "steer": "插入引导",
-    "remove": "移除排队的消息"
+    "remove": "移除排队的消息",
+    "sendFailed": "有一条消息没能发送",
+    "messagesPaused": "消息已暂停",
+    "retry": "重试",
+    "sending": "发送中…",
+    "waiting": "等待发送",
+    "sessionsFinished_other": "{{count}} 个会话已结束",
+    "session": {
+      "completed": "会话已完成：{{title}}",
+      "failed": "会话失败：{{title}}",
+      "cancelled": "会话已取消：{{title}}"
+    }
   },
   "composer": {
     "dropFiles": "拖放文件以附加",
@@ -542,7 +558,17 @@
     "hideAgentWork": "隐藏 {{name}} 的工作过程",
     "showAgentWork": "显示 {{name}} 的工作过程",
     "thinkingWith": "思考：{{text}}",
-    "interjection": "插话：{{label}}"
+    "interjection": "插话：{{label}}",
+    "backToLatest": "回到最新消息",
+    "loadingEarlier": "正在加载更早的消息…",
+    "loadEarlierScrollFailed": "没能加载更早的消息。向上滚动重试。",
+    "loadEarlierFailed": "没能加载消息。重试",
+    "yesterday": "昨天",
+    "notSent": "未发送",
+    "notSentError": "未发送 · {{error}}",
+    "hideActivity": "隐藏活动",
+    "showActivity": "显示活动",
+    "activityTrail": "按时间顺序排列的活动"
   },
   "interjection": {
     "note": "{{label}}备注",
@@ -563,5 +589,18 @@
     "cached": "缓存 {{value}}",
     "labelWith": "本轮指标：{{label}}",
     "label": "本轮指标"
+  },
+  "monoWork": {
+    "thinking": "思考中…",
+    "pondering": "琢磨中…",
+    "considering": "斟酌中…",
+    "workingThrough": "梳理中…",
+    "waitingApproval": "等待批准…",
+    "runningCommand": "正在运行命令…",
+    "editingFile": "正在编辑文件…",
+    "readingFile": "正在读取文件…",
+    "exploringProject": "正在浏览项目…",
+    "runningAgent": "正在运行 Agent…",
+    "usingTool": "正在使用工具…"
   }
 }

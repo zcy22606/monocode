@@ -171,6 +171,8 @@ fn import_scoped(conn: &Connection, home: &Path, scopes: &[String], store_cwd: &
             provider_session_id: Some(parsed.provider_session_id),
             provider_account_id: None,
             blocks: Value::Array(parsed.blocks),
+            queued_messages: Vec::new(),
+            queue_status: None,
             context_used: None,
             context_window: None,
             branch: parsed.branch,

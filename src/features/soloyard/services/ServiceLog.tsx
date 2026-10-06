@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "../../../i18n";
 import { isLightScheme, SCHEME_CHANGE_EVENT } from "../../settings/model/appearance";
 import { fitTerminal } from "../../terminal/model/terminalLayout";
-import { monoFont, terminalTheme } from "../../terminal/ui/TerminalView";
+import { terminalFont, terminalTheme } from "../../terminal/ui/TerminalView";
 import { readServiceLog, serviceKey, useServices } from "./api";
 import { entryKey, parseEntryKey, useServiceHistory } from "./history";
 import { ServiceActions, ServiceLocation, StartButton } from "./ServicesNav";
@@ -32,7 +32,7 @@ export function ServiceLog({ cwd, itemId }: { cwd: string; itemId: string }) {
       disableStdin: true,
       convertEol: true,
       cursorInactiveStyle: "none",
-      fontFamily: monoFont(),
+      fontFamily: terminalFont(),
       fontSize: 12,
       scrollback: 10000,
       allowTransparency: true,

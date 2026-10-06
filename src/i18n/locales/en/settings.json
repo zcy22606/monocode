@@ -54,6 +54,10 @@
     "worktrees": {
       "label": "Worktrees",
       "description": "Manage additional worktrees for each project."
+    },
+    "monos": {
+      "label": "Monos",
+      "description": "The resident agent beside your tabs, and which projects have one."
     }
   },
   "index": {
@@ -102,7 +106,9 @@
     "show-archived": "Show archived in the sidebar",
     "show-remaining-usage": "Show remaining usage",
     "mask-emails": "Mask account emails",
-    "diff-colors": "Diff colors"
+    "diff-colors": "Diff colors",
+    "monos-enabled": "Show monos",
+    "mono-list": "Your monos"
   },
   "keybindings": {
     "command": {
@@ -151,12 +157,14 @@
       "TerminalNewTab": "Terminal: New Tab",
       "TerminalToggleDock": "Terminal: Toggle Dock",
       "EditorFind": "Editor: Find",
-      "EditorReplace": "Editor: Replace"
+      "EditorReplace": "Editor: Replace",
+      "AppToggleMono": "App: Toggle Mono"
     },
     "when": {
       "Always": "Always",
       "Anywhere": "Anywhere",
-      "Draftsessioncomposer": "Draft session composer"
+      "Draftsessioncomposer": "Draft session composer",
+      "Projectwithamono": "Project with a mono"
     },
     "disabled": "Disabled",
     "errors": {
@@ -571,5 +579,21 @@
     "removeScopeLabel": "Scope to remove {{name}} from",
     "showConfig": "Show config",
     "footer": "Claude Code status comes from its CLI. Other providers show configured entries. Sign in opens your browser when supported."
+  },
+  "monos": {
+    "enabledDescription": "Agents of your own on the project rail. Each works on the projects you give it, remembers what matters and picks up habits it runs on its own. Turn this off to hide them.",
+    "listDescription": "Add one with the plus beside Monos on the rail. Choose its projects from its details.",
+    "empty": "No monos yet.",
+    "worksOn": "Works on {{projects}}",
+    "noProjects": "No projects yet",
+    "reset": {
+      "label": "Reset Mono",
+      "title": "Reset {{name}} to its defaults?",
+      "body": "Its soul goes back to the default and its name to {{name}}. Changes to its soul can't be recovered.",
+      "kept": "Its conversation, projects, memory and habits will be kept.",
+      "failure": "Could not reset the Mono.",
+      "button": "Reset to defaults",
+      "buttonNamed": "Reset {{name}} to defaults"
+    }
   }
 }

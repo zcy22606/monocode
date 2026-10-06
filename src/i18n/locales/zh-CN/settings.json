@@ -54,6 +54,10 @@
     "worktrees": {
       "label": "工作树",
       "description": "管理每个项目的额外工作树。"
+    },
+    "monos": {
+      "label": "Monos",
+      "description": "标签页旁边的常驻 Agent，以及哪些项目有它。"
     }
   },
   "index": {
@@ -102,7 +106,9 @@
     "show-archived": "在侧栏显示已归档",
     "show-remaining-usage": "显示剩余额度",
     "mask-emails": "隐藏账号邮箱",
-    "diff-colors": "差异配色"
+    "diff-colors": "差异配色",
+    "monos-enabled": "显示 Mono",
+    "mono-list": "你的 Mono"
   },
   "keybindings": {
     "command": {
@@ -151,12 +157,14 @@
       "TerminalNewTab": "终端：新建标签页",
       "TerminalToggleDock": "终端：切换停靠",
       "EditorFind": "编辑器：查找",
-      "EditorReplace": "编辑器：替换"
+      "EditorReplace": "编辑器：替换",
+      "AppToggleMono": "应用：切换 Mono"
     },
     "when": {
       "Always": "始终",
       "Anywhere": "任何地方",
-      "Draftsessioncomposer": "草稿会话输入框"
+      "Draftsessioncomposer": "草稿会话输入框",
+      "Projectwithamono": "有 Mono 的项目"
     },
     "disabled": "已停用",
     "errors": {
@@ -568,5 +576,21 @@
     "removeScopeLabel": "要从哪个范围移除 {{name}}",
     "showConfig": "显示配置",
     "footer": "Claude Code 的状态来自它的 CLI，其他提供方显示已配置的条目。支持的话，「登录」会打开浏览器。"
+  },
+  "monos": {
+    "enabledDescription": "项目栏上属于你自己的 Agent。每个 Mono 处理你交给它的项目，记住要紧的事，还会养成自己定时运行的习惯。关闭后将隐藏它们。",
+    "listDescription": "点项目栏上 Monos 旁边的加号新建一个，再在它的详情里选择项目。",
+    "empty": "还没有 Mono。",
+    "worksOn": "负责 {{projects}}",
+    "noProjects": "还没有项目",
+    "reset": {
+      "label": "重置 Mono",
+      "title": "将 {{name}} 重置为默认设置？",
+      "body": "它的灵魂会恢复默认，名字会改回 {{name}}。对灵魂的修改无法恢复。",
+      "kept": "它的对话、项目、记忆和习惯都会保留。",
+      "failure": "无法重置 Mono。",
+      "button": "重置为默认设置",
+      "buttonNamed": "将 {{name}} 重置为默认设置"
+    }
   }
 }

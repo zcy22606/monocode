@@ -107,5 +107,15 @@
     "chooseChat": "Choose a chat from this project.",
     "chatBusy": "This chat is busy. Choose another chat or start a new one.",
     "sessionTitle": "Fix CI #{{number}}: {{title}}"
+  },
+  "mono": {
+    "conversationUnavailable": "This Mono's conversation is no longer available.",
+    "alreadyResetting": "This conversation is already being reset.",
+    "deleteConfirm": "Delete {{name}}? Its conversation will be deleted and its habits stop. This can’t be undone.",
+    "habitStartFailed": "The habit's run could not start.",
+    "deliveryUnavailable": "Delivery is unavailable. Retry when the agent is ready.",
+    "habitApprovalTimeout": "Nobody answered its approval request.",
+    "habitTimeout": "It took too long and was stopped.",
+    "habitUnfinished": "The run did not finish."
   }
 }

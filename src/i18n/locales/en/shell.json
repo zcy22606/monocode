@@ -161,7 +161,8 @@
     "archiveAllDescription": "All {{n}} conversations in this tab",
     "deleteAllDescription": "Permanently delete all {{n}} conversations in this tab",
     "noProject": "No project",
-    "tabActions": "Tab actions for {{name}}"
+    "tabActions": "Tab actions for {{name}}",
+    "showMonoDetails": "Show Mono details"
   },
   "footer": {
     "removedAccount": "This conversation uses a removed account",
@@ -325,5 +326,15 @@
       "hoursMinutes": "{{hours}}h {{minutes}}m",
       "days": "{{days}}d"
     }
+  },
+  "monoRail": {
+    "newMono": "New mono",
+    "noProjects": "No projects yet",
+    "idle": "idle",
+    "options": "Mono options",
+    "namedOptions": "{{name}} options",
+    "name": "Mono name",
+    "background": "Background image",
+    "delete": "Delete mono…"
   }
 }
