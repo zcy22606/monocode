@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HarnessEvent } from "../../integrations/harness/core/types";
 import {
+  BACKGROUND_FLUSH_MS,
   cancelScheduledFlush,
   HarnessEventQueue,
   scheduleHarnessFlush,
@@ -21,7 +22,7 @@ it("batches background-only work while allowing it to progress", () => {
   const flush = vi.fn();
   const handle = scheduleHarnessFlush(flush, false);
   expect(handle.kind).toBe("timeout");
-  vi.advanceTimersByTime(99);
+  vi.advanceTimersByTime(BACKGROUND_FLUSH_MS - 1); // Soloyard: was 99, delay raised to BACKGROUND_FLUSH_MS
   expect(flush).not.toHaveBeenCalled();
   vi.advanceTimersByTime(1);
   expect(flush).toHaveBeenCalledTimes(1);
@@ -36,7 +37,7 @@ it("promotes newly visible output to the next frame without a duplicate flush", 
   expect(foreground.kind).toBe("raf");
   expect(frame).toHaveBeenCalledTimes(1);
   cancelScheduledFlush(foreground);
-  vi.advanceTimersByTime(200);
+  vi.advanceTimersByTime(BACKGROUND_FLUSH_MS * 2); // Soloyard: was 200
   expect(flush).not.toHaveBeenCalled();
 });
 
@@ -44,7 +45,7 @@ it("does not depend on animation frames while the window is hidden", () => {
   vi.spyOn(document, "hidden", "get").mockReturnValue(true);
   const flush = vi.fn();
   expect(scheduleHarnessFlush(flush, true).kind).toBe("timeout");
-  vi.advanceTimersByTime(100);
+  vi.advanceTimersByTime(BACKGROUND_FLUSH_MS); // Soloyard: was 100
   expect(flush).toHaveBeenCalledTimes(1);
 });
 
@@ -74,7 +75,7 @@ describe("harness event queue", () => {
       queue.enqueue("back2", { type: "message.delta", text: ` c${i}` });
       queue.enqueue("front", { type: "message.delta", text: ` a${i}` });
       paint();
-      vi.advanceTimersByTime(16);
+      vi.advanceTimersByTime(16 * (BACKGROUND_FLUSH_MS / 100)); // Soloyard: was 16, scaled with the 5× slower background cadence
     }
     expect(
       apply.mock.calls.filter(([batch]) => batch.has("front")),
@@ -86,7 +87,7 @@ describe("harness event queue", () => {
       if (batch.has("front")) expect([...batch.keys()]).toEqual(["front"]);
       else expect([...batch.keys()]).toEqual(["back1", "back2"]);
     }
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(BACKGROUND_FLUSH_MS); // Soloyard: was 100
     for (const id of ["front", "back1", "back2"]) {
       const events = apply.mock.calls.flatMap(([batch]) => batch.get(id) ?? []);
       expect(events).toHaveLength(20);
@@ -113,7 +114,7 @@ describe("harness event queue", () => {
     queue.flushForeground();
     expect(apply).toHaveBeenCalledOnce();
     expect([...apply.mock.calls[0][0].keys()]).toEqual(["back1"]);
-    vi.advanceTimersByTime(59);
+    vi.advanceTimersByTime(BACKGROUND_FLUSH_MS - 41); // Soloyard: was 59
     expect(apply).toHaveBeenCalledOnce();
     vi.advanceTimersByTime(1);
     expect([...apply.mock.calls[1][0].keys()]).toEqual(["back2"]);
@@ -130,7 +131,7 @@ describe("harness event queue", () => {
     expect(frames.size).toBe(0);
     paint();
     expect(apply).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(BACKGROUND_FLUSH_MS); // Soloyard: was 100
     expect(apply.mock.calls[0][0].get("front")).toEqual([
       { type: "message.delta", text: "Still queued" },
     ]);
@@ -154,7 +155,7 @@ describe("harness event queue", () => {
       queue.enqueue("prompt", event);
       expect(apply).toHaveBeenCalledOnce();
       expect([...apply.mock.calls[0][0]]).toEqual([["prompt", [delta, event]]]);
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(BACKGROUND_FLUSH_MS); // Soloyard: was 100
       expect([...apply.mock.calls[1][0].keys()]).toEqual(["other"]);
     },
   );
@@ -166,7 +167,7 @@ describe("harness event queue", () => {
     queue.flush(); // The visibilitychange handler flushes before WebKit suspends.
     queue.enqueue("front", { type: "message.delta", text: "Now hidden" });
     expect(frames.size).toBe(0);
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(BACKGROUND_FLUSH_MS); // Soloyard: was 100
     expect(apply.mock.calls[1][0].get("front")).toEqual([
       { type: "message.delta", text: "Now hidden" },
     ]);

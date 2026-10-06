@@ -173,6 +173,7 @@ export function MonoRailSection({
                 });
               }}
             >
+              {/* Soloyard: group-focus-within, not the has-focus-visible group variant — that :has(:focus-visible) restyled the whole document on every keystroke in WebKit. */}
               <button
                 type="button"
                 title={[look.name, projects, status].filter(Boolean).join("\n")}
@@ -180,7 +181,7 @@ export function MonoRailSection({
                   ", ",
                 )}
                 aria-current={selected ? "true" : undefined}
-                className="flex min-w-0 flex-1 cursor-default items-center gap-2 text-left transition-[padding] duration-150 motion-reduce:transition-none group-hover:pr-6 group-has-[:focus-visible]:pr-6"
+                className="flex min-w-0 flex-1 cursor-default items-center gap-2 text-left transition-[padding] duration-150 motion-reduce:transition-none group-hover:pr-6 group-focus-within:pr-6"
               >
                 <MonoRailMascot
                   name={look.mascot}
@@ -203,7 +204,7 @@ export function MonoRailSection({
                 {unseen ? (
                   <span
                     aria-hidden
-                    className="size-1.5 shrink-0 rounded-full bg-content/60 group-hover:hidden group-has-[:focus-visible]:hidden"
+                    className="size-1.5 shrink-0 rounded-full bg-content/60 group-hover:hidden group-focus-within:hidden"
                   />
                 ) : null}
               </button>
@@ -218,7 +219,7 @@ export function MonoRailSection({
                   event.stopPropagation();
                   setMenu({ id: mono.id, anchor: event.currentTarget });
                 }}
-                className="absolute right-1 top-1/2 hidden size-6 -translate-y-1/2 place-items-center rounded-md text-content/55 hover:bg-content/8 hover:text-content group-hover:grid group-has-[:focus-visible]:grid"
+                className="absolute right-1 top-1/2 hidden size-6 -translate-y-1/2 place-items-center rounded-md text-content/55 hover:bg-content/8 hover:text-content group-hover:grid group-focus-within:grid"
               >
                 <MoreHorizontal className="size-4" strokeWidth={1.75} />
               </button>

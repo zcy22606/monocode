@@ -181,6 +181,8 @@ export function useAnimatedReorder<T extends string>(
 
       function onMove(ev: globalThis.PointerEvent) {
         if (ev.pointerId !== pointerId || settling) return;
+        // Soloyard: button already up but its pointerup never reached us — don't leave the item stuck to the cursor.
+        if (ev.type === "pointermove" && ev.pointerType === "mouse" && ev.buttons === 0) return stop(false);
         pointerPosition = ev[coordinate];
         if (!active) {
           if (Math.abs(pointerPosition - startPosition) < 5) return;
