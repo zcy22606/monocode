@@ -16,7 +16,7 @@ const T = (entity: string) => `soloyard_${entity}`
 const WRITABLE: Record<string, string[]> = {
   projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json', 'instructions'],
   project_repos: ['description', 'sort'],
-  issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at'],
+  issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at', 'repo_path'],
   acceptance: ['text', 'done', 'sort'],
   iterations: ['tag', 'name', 'goal', 'target_date', 'status', 'sort', 'summary_json', 'started_at', 'completed_at'],
   features: ['name', 'backbone', 'module', 'layer', 'level', 'tier', 'data_json', 'iteration_id', 'bucket', 'sort', 'ai_plan'],
@@ -161,6 +161,8 @@ export function projectForPath(db: DB, path: string): Row {
 export type NewIssue = {
   title: string; body_md?: string; status?: string; priority?: number; labels?: string[]; due_date?: string
   cycle_id?: number; milestone_id?: number; parent_id?: number; feature_id?: number; iteration_id?: number; acceptance?: string[]; blocked_by?: number[]
+  /** 在哪个成员仓库做（路径）；不填 = 项目根目录。 */
+  repo_path?: string | null
 }
 
 export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue, batch?: string) {
@@ -171,6 +173,7 @@ export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue
       project_id: projectId, number: p.issue_seq, title: i.title, body_md: i.body_md ?? '', status: i.status ?? 'backlog',
       priority: i.priority ?? 0, labels: JSON.stringify(i.labels ?? []), due_date: i.due_date ?? null, cycle_id: i.cycle_id ?? null,
       milestone_id: i.milestone_id ?? null, parent_id: i.parent_id ?? null, feature_id: i.feature_id ?? null, iteration_id: i.iteration_id ?? null, sort_key: Date.now(),
+      repo_path: i.repo_path ?? null,
     }, batch)
     i.acceptance?.forEach((text, sort) => insert(db, actor, 'acceptance', { issue_id: id, text, sort }, batch))
     for (const b of i.blocked_by ?? []) db.prepare('INSERT OR IGNORE INTO soloyard_issue_deps (issue_id, blocked_by_id) VALUES (?, ?)').run(id, b)
@@ -276,7 +279,14 @@ export function getIssue(db: DB, id: number) {
     ...issue,
     labels: JSON.parse(issue.labels) as string[],
     acceptance: db.prepare('SELECT * FROM soloyard_acceptance WHERE issue_id = ? ORDER BY sort, id').all(id) as Row[],
-    children: db.prepare("SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.parent_id = ? ORDER BY i.sort_key").all(id) as Row[],
+    // 子任务：带仓库、优先级，以及是不是还在等没做完的前置（并行开工时只能勾选不在等的）
+    children: db.prepare(`SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status, i.priority, i.repo_path,
+        EXISTS (SELECT 1 FROM soloyard_issue_deps d JOIN soloyard_issues b ON b.id = d.blocked_by_id
+          WHERE d.issue_id = i.id AND b.status NOT IN ('done','canceled')) AS blocked
+      FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.parent_id = ? ORDER BY i.sort_key, i.id`).all(id) as Row[],
+    parent: issue.parent_id
+      ? (db.prepare("SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.id = ?").get(issue.parent_id) as Row | undefined) ?? null
+      : null,
     blockedBy: db.prepare("SELECT b.id, p.key || '-' || b.number AS ident, b.title, b.status FROM soloyard_issue_deps d JOIN soloyard_issues b ON b.id = d.blocked_by_id JOIN soloyard_projects p ON p.id = b.project_id WHERE d.issue_id = ?").all(id) as Row[],
     comments: db.prepare('SELECT * FROM soloyard_comments WHERE issue_id = ? ORDER BY id').all(id) as Row[],
     sessions: baseSessions(db, sessionIds),

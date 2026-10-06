@@ -2,16 +2,20 @@ import { useState } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu } from "../../../files/ui/ExplorerMenu";
 import { AgentMarkdown } from "../../../sessions/ui/AgentMarkdown";
-import { MessageSquare, Play, Plus, X } from "../../../../shared/ui/icons";
+import { ArrowUp, GitBranch, MessageSquare, Play, Plus, GitMerge, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useProjectForPath, useSoloyard } from "../../data/api";
 import { requestOpenSession, requestSendToSession, requestStartWork } from "../../model/appActions";
 import { startWorkPrompt } from "../../model/startWork";
-import { priorityLabel, statusLabel, type IssueDetail as Detail } from "../../model/issues";
+import { priorityLabel, repoName, statusLabel, type IssueDetail as Detail } from "../../model/issues";
+import { useProjectRepos } from "../../model/repos";
+import { openProjectView } from "../../model/projectViews";
 import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
+import { ParallelStartDialog } from "./ParallelStartDialog";
+import { canStart } from "../../model/parallelStart";
 
 const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-type Picker = { anchor: HTMLElement; kind: "status" | "priority" };
+type Picker = { anchor: HTMLElement; kind: "status" | "priority" | "repo" };
 
 /** Issue 详情标签：标题、属性、描述、验收清单、关联会话、评论。 */
 export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) {
@@ -21,7 +25,9 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const [picker, setPicker] = useState<Picker | null>(null);
   const [editingBody, setEditingBody] = useState(false);
   const [sendingBack, setSendingBack] = useState(false);
+  const [parallel, setParallel] = useState(false);
   const { data: project } = useProjectForPath(cwd);
+  const repos = useProjectRepos(cwd)?.repos ?? [];
   if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
   if (issue === null) return <p className="p-6 text-[13px] text-content/50">{t("detail.deleted")}</p>;
   if (!issue) return null;
@@ -32,8 +38,12 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const startWork = async () => {
     const sessionId = crypto.randomUUID();
     await mutateSoloyard("linkSession", sessionId, "issue", String(issue.id));
-    requestStartWork({ cwd, sessionId, prompt: startWorkPrompt(issue, project ?? { name: cwd }, cwd) });
+    // 标了仓库的 issue 直接在那个仓库开会话，新建工作树（并行做几个 issue 互不干扰）；没标就在项目根目录
+    const repo = issue.repo_path ?? undefined;
+    requestStartWork({ cwd, sessionId, prompt: startWorkPrompt(issue, project ?? { name: cwd }, cwd), workCwd: repo, newWorktree: !!repo });
   };
+  const openIssue = (target: { id: number; ident: string; title: string }) =>
+    openProjectView({ cwd, view: "issue", itemId: String(target.id), title: `${target.ident} ${target.title}` });
   const sessions = issue.sessions.filter((s) => !s.missing); // 没发出去就关掉的会话不显示
   const latestSession = sessions[0];
   // 打回：原因记成评论，退回进行中，并发给最近的那个会话让 agent 接着改
@@ -50,6 +60,19 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
     <div className="h-full overflow-y-auto overscroll-none">
       <article className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-8">
         <header className="flex flex-col gap-2">
+          {issue.parent ? (
+            <button
+              type="button"
+              onClick={() => openIssue(issue.parent!)}
+              title={t("detail.parentHint")}
+              className="flex w-fit max-w-full items-center gap-1.5 rounded-md px-1 -ml-1 text-[12px] text-content/50 hover:bg-content/5 hover:text-content"
+            >
+              <ArrowUp className="size-3 shrink-0" />
+              <StatusIcon status={issue.parent.status} />
+              <span className="shrink-0 font-mono">{issue.parent.ident}</span>
+              <span className="truncate">{issue.parent.title}</span>
+            </button>
+          ) : null}
           <span className="font-mono text-[12px] text-content/40">{issue.ident}</span>
           <input
             key={issue.version}
@@ -69,6 +92,17 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               <Play className="size-3" />
               {t("detail.startWork")}
             </button>
+            {issue.children.some(canStart) ? (
+              <button
+                type="button"
+                onClick={() => setParallel(true)}
+                title={t("detail.parallelHint")}
+                className="flex h-7 items-center gap-1.5 rounded-md border border-accent/50 px-2.5 text-[12px] font-medium text-accent hover:bg-accent/10"
+              >
+                <GitMerge className="size-3" />
+                {t("detail.parallel")}
+              </button>
+            ) : null}
             <PropertyButton onClick={(el) => setPicker({ anchor: el, kind: "status" })}>
               <StatusIcon status={issue.status} />
               {statusLabel(issue.status)}
@@ -77,6 +111,12 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               <PriorityIcon priority={issue.priority} />
               {priorityLabel(issue.priority)}
             </PropertyButton>
+            {repos.length || issue.repo_path ? (
+              <PropertyButton onClick={(el) => setPicker({ anchor: el, kind: "repo" })}>
+                <GitBranch className="size-3.5 opacity-70" />
+                {issue.repo_path ? repoName(issue.repo_path) : t("field.noRepo")}
+              </PropertyButton>
+            ) : null}
             <Labels labels={issue.labels} onChange={(labels) => update({ labels })} />
             {!issue.parked ? (
               <button type="button" onClick={() => void mutateSoloyard("parkIssue", issue.id)} title={t("detail.parkHint")} className="ml-auto h-7 rounded-md px-2 text-[12px] text-content/50 hover:bg-content/10 hover:text-content">
@@ -132,6 +172,41 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
             </button>
           )}
         </Section>
+
+        {issue.children.length || !issue.parent ? (
+          <Section title={`${t("detail.subIssues")}${issue.children.length ? ` · ${issue.children.filter((c) => c.status === "done").length}/${issue.children.length}` : ""}`}>
+            {issue.children.length ? (
+              <ul className="flex flex-col">
+                {issue.children.map((child) => (
+                  <li key={child.id}>
+                    <button
+                      type="button"
+                      onClick={() => openIssue(child)}
+                      className="flex h-8 w-full items-center gap-2 rounded-md px-1 text-left text-[13px] hover:bg-content/5"
+                    >
+                      <StatusIcon status={child.status} />
+                      <span className="shrink-0 font-mono text-[12px] text-content/40">{child.ident}</span>
+                      <span className={`min-w-0 flex-1 truncate ${child.status === "done" || child.status === "canceled" ? "text-content/40" : "text-content/90"}`}>{child.title}</span>
+                      {child.blocked && child.status !== "done" && child.status !== "canceled" ? (
+                        <span className="shrink-0 rounded bg-content/10 px-1.5 text-[11px] text-content/50" title={t("detail.blockedHint")}>{t("detail.blocked")}</span>
+                      ) : null}
+                      {child.repo_path ? (
+                        <span className="flex shrink-0 items-center gap-1 text-[11.5px] text-content/50" title={child.repo_path}>
+                          <GitBranch className="size-3 opacity-70" />
+                          {repoName(child.repo_path)}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <AddLine
+              placeholder={t("detail.addSubIssue")}
+              onAdd={(title) => mutateSoloyard("createIssue", issue.project_id, { title, parent_id: issue.id, status: "todo" })}
+            />
+          </Section>
+        ) : null}
 
         <Section title={`${t("detail.acceptance")}${issue.acceptance.length ? ` · ${issue.acceptance.filter((a) => a.done).length}/${issue.acceptance.length}` : ""}`}>
           <ul className="flex flex-col">
@@ -192,15 +267,25 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
           <CommentBox onSend={(body) => mutateSoloyard("addComment", issue.id, body)} />
         </Section>
       </article>
+      {parallel ? <ParallelStartDialog issue={issue} project={project ?? { name: cwd }} cwd={cwd} onClose={() => setParallel(false)} /> : null}
       {picker ? (
         <ExplorerMenu
           anchor={picker.anchor}
-          items={picker.kind === "status" ? statusMenuItems(issue.status) : priorityMenuItems(issue.priority)}
-          ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : t("issues.changePriority")}
-          width={180}
+          items={
+            picker.kind === "status"
+              ? statusMenuItems(issue.status)
+              : picker.kind === "priority"
+                ? priorityMenuItems(issue.priority)
+                : [
+                    { kind: "item", id: "", label: t("field.noRepo"), checked: !issue.repo_path },
+                    ...repos.map((r) => ({ kind: "item" as const, id: r.path, label: r.name, checked: issue.repo_path === r.path })),
+                  ]
+          }
+          ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : picker.kind === "priority" ? t("issues.changePriority") : t("issues.changeRepo")}
+          width={picker.kind === "repo" ? 220 : 180}
           onPick={(id) => {
             setPicker(null);
-            void update(picker.kind === "status" ? { status: id } : { priority: Number(id) });
+            void update(picker.kind === "status" ? { status: id } : picker.kind === "priority" ? { priority: Number(id) } : { repo_path: id || null });
           }}
           onClose={() => setPicker(null)}
         />

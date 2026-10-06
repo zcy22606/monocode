@@ -172,3 +172,35 @@ test('agent 经 MCP 建的 issue，界面的数据进程 1 秒内广播 changed'
     db.close()
   }
 })
+
+test('MCP：多仓库项目里建 issue 标仓库（名字或路径），get_project 列仓库，list_issues 带仓库名，update_issue 能改回根目录', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-repos-')))
+  for (const name of ['backend', 'web']) execFileSync('git', ['init', '-q', join(dir, name)])
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  const pid = repo.createProject(db, 'user', { name: 'Ws', key: 'WS', path: dir })
+  for (const name of ['backend', 'web']) db.prepare('INSERT INTO soloyard_project_repos (project_id, path) VALUES (?, ?)').run(pid, join(dir, name))
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const project = (await s.tool('get_project', { project: join(dir, 'backend', 'src') })).data
+    assert.equal(project.key, 'WS')
+    assert.deepEqual(project.repos.map((r: any) => r.name), ['backend', 'web'])
+    const created = (await s.tool('create_issues', { project: 'WS', issues: [
+      { title: '改协议' },
+      { title: '后端接新协议', repo: 'backend', parent: 'WS-1' },
+      { title: '前端接新协议', repo: join(dir, 'web'), parent: 'WS-1', blocked_by: ['WS-2'] },
+    ] })).data
+    assert.deepEqual(created.map((i: any) => i.ident), ['WS-1', 'WS-2', 'WS-3'])
+    assert.equal((await s.tool('get_issue', { issue: 'WS-2' })).data.repo_path, join(dir, 'backend'))
+    const ready = (await s.tool('list_issues', { project: 'WS' })).data
+    assert.deepEqual(ready.map((i: any) => [i.ident, i.repo ?? null]), [['WS-1', null]], 'sub-issues stay under their parent')
+    const bad = await s.tool('create_issues', { project: 'WS', issues: [{ title: 'x', repo: 'nope' }] })
+    assert.match(bad.error.message ?? bad.error.error ?? JSON.stringify(bad.error), /没有仓库「nope」/)
+    await s.tool('update_issue', { issue: 'WS-2', repo: '' })
+    assert.equal((await s.tool('get_issue', { issue: 'WS-2' })).data.repo_path, null)
+  } finally {
+    s.close()
+  }
+})

@@ -101,6 +101,10 @@ const MIGRATIONS: string[] = [
   CREATE INDEX soloyard_project_repos_project ON soloyard_project_repos(project_id, sort);
   ALTER TABLE soloyard_projects ADD COLUMN instructions TEXT NOT NULL DEFAULT '';
   `,
+  // issue 在哪个成员仓库做（路径）；空 = 在项目根目录做。Start work 据此开会话。
+  `
+  ALTER TABLE soloyard_issues ADD COLUMN repo_path TEXT;
+  `,
 ]
 
 export function openDb(path: string): DB {

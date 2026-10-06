@@ -12,7 +12,7 @@ import { createInterface } from 'node:readline'
 import { openDb, tx } from '../core/src/db.ts'
 import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
-import { projectRepos } from '../core/src/repos.ts'
+import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
@@ -24,6 +24,7 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
+- 多仓库项目（get_project 返回 repos）：建 issue 时用 repo 标上在哪个仓库做，用户 Start work 会直接在那个仓库开会话；跨仓库的需求建主 issue（不标 repo），按仓库拆子 issue。
 - 给迭代里的功能建 issue 用 create_feature_issues（按功能编号，一个功能一个 issue），迭代表才会显示完成；create_issues 建的是不挂功能的 issue。
 - 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。
@@ -42,6 +43,7 @@ const newIssueSchema = {
     title: str('标题'), body_md: str('描述（markdown）'), status: STATUS, priority: { type: 'number', description: '0 无 / 1 紧急 / 2 高 / 3 中 / 4 低' },
     labels: { type: 'array', items: { type: 'string' } }, acceptance: { type: 'array', items: { type: 'string' }, description: '验收标准，一条一项' },
     parent: issueRef, blocked_by: { type: 'array', items: issueRef, description: '前置 issue' },
+    repo: str('在哪个成员仓库做：仓库名（如 openroboto-backend）或路径，见 get_project 的 repos。用户 Start work 时会直接在这个仓库里开会话。跨多个仓库的不填（在项目根目录做）'),
   },
 }
 
@@ -111,7 +113,7 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     } },
     run: ({ project: ref, status, priority, ready, q }) => repo.listIssues(db, { projectId: project(ref).id, status, priority, ready, q })
       .sort((a, b) => repo.priorityRank(a.priority) - repo.priorityRank(b.priority)) // 稳定排序：同优先级保持原来的顺序
-      .map(({ id, ident, title, status, priority, labels, version }) => ({ id, ident, title, status, priority, labels, version })),
+      .map(({ id, ident, title, status, priority, labels, version, repo_path }) => ({ id, ident, title, status, priority, labels, version, ...(repo_path ? { repo: repo_path.split('/').pop() } : {}) })),
   },
   {
     name: 'get_issue', description: '读一个 issue 的全部：描述、验收标准、子任务、前置、评论、关联会话',
@@ -119,12 +121,13 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     run: ({ issue }) => repo.getIssue(db, repo.findIssueId(db, issue)),
   },
   {
-    name: 'create_issues', description: '批量新建 issue（可带验收标准、父 issue、前置）。一次事务。',
+    name: 'create_issues', description: '批量新建 issue（可带验收标准、父 issue、前置、仓库）。多仓库项目里每个 issue 尽量标上在哪个仓库做；跨仓库的大需求建一个主 issue（不标仓库），按仓库拆成子 issue（parent），有先后的用 blocked_by。一次事务。',
     inputSchema: { type: 'object', required: ['project', 'issues'], properties: { project: projectRef, issues: { type: 'array', items: newIssueSchema } } },
     run: ({ project: ref, issues }) => {
       const pid = project(ref).id
-      const ids = tx(db, () => (issues as Json[]).map(({ parent, blocked_by, ...i }) => repo.createIssue(db, actor, pid, {
+      const ids = tx(db, () => (issues as Json[]).map(({ parent, blocked_by, repo: repoRef, ...i }) => repo.createIssue(db, actor, pid, {
         ...(i as repo.NewIssue),
+        repo_path: resolveRepo(db, pid, repoRef as string | undefined),
         parent_id: parent != null ? repo.findIssueId(db, parent) : undefined,
         blocked_by: (blocked_by ?? []).map((b: unknown) => repo.findIssueId(db, b as string)),
       })))
@@ -132,14 +135,17 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     },
   },
   {
-    name: 'update_issue', description: '修改 issue（状态、标题、描述、优先级、标签）。带 expected_version 时版本不符会拒绝并返回最新值。做完改 in_review，不要改 done。',
+    name: 'update_issue', description: '修改 issue（状态、标题、描述、优先级、标签、仓库）。带 expected_version 时版本不符会拒绝并返回最新值。做完改 in_review，不要改 done。',
     inputSchema: { type: 'object', required: ['issue'], properties: {
       issue: issueRef, expected_version: { type: 'number' }, status: STATUS, title: str('标题'), body_md: str('描述'),
       priority: { type: 'number' }, labels: { type: 'array', items: { type: 'string' } },
+      repo: str('改在哪个成员仓库做（仓库名或路径）；传空字符串 = 改回项目根目录'),
     } },
-    run: ({ issue, expected_version, ...patch }) => {
+    run: ({ issue, expected_version, repo: repoRef, ...patch }) => {
       if (patch.status === 'done') throw new Error('不能由 agent 改成 done：做完请改成 in_review 并评论，验收由用户来做')
-      return repo.updateIssue(db, actor, repo.findIssueId(db, issue), patch, expected_version)
+      const id = repo.findIssueId(db, issue)
+      if (repoRef !== undefined) patch.repo_path = resolveRepo(db, repo.getRow(db, 'issues', id)!.project_id, repoRef as string)
+      return repo.updateIssue(db, actor, id, patch, expected_version)
     },
   },
   {

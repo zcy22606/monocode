@@ -7541,13 +7541,20 @@ function Workspace({
           const session = {
             ...newDefaultSession(request.cwd, sessionDefaults?.runtimeMode),
             id: request.sessionId,
-            composerSeed: request.prompt,
+            ...(request.send ? {} : { composerSeed: request.prompt }),
+            // A multi-repo issue starts in its member repo, in a new worktree there when asked (see setWorkDir).
+            ...(request.workCwd
+              ? { worktreeCwd: request.workCwd, ...(request.newWorktree ? { workspaceMode: "worktree" as const, worktreeBase: "HEAD" } : {}) }
+              : {}),
           };
           const tab = newTab(session.id);
-          setSessions((prev) => [...prev, session]);
+          // Through the ref so several starts in one tick (parallel start) all land before their submits run.
+          sessionsRef.current = [...sessionsRef.current, session];
+          setSessions(sessionsRef.current);
           appendTab(tab, request.cwd);
           setActiveTabId(tab.id);
           setComposerFocused(true);
+          if (request.send) setTimeout(() => submitSessionRef.current(session.id, request.prompt, []), 0);
         },
         openSession: (sessionId) => void onSelectHistorySession(sessionId),
         sendToSession: ({ sessionId, text }) => {

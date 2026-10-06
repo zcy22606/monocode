@@ -1,10 +1,10 @@
-import { useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { Fragment, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "../../../../i18n";
 import { ExplorerMenu, type ExplorerMenuItem } from "../../../files/ui/ExplorerMenu";
 import { Popover } from "../../../../shared/ui/Popover";
-import { ChevronDown, ChevronRight, ListFilter, MessageSquare, Plus, Search, SlidersHorizontal, X } from "../../../../shared/ui/icons";
+import { ChevronDown, ChevronRight, GitBranch, ListFilter, MessageSquare, Plus, Search, SlidersHorizontal, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
-import { priorityLabel, statusLabel, type Issue } from "../../model/issues";
+import { priorityLabel, repoName, statusLabel, type Issue } from "../../model/issues";
 import { EMPTY_SELECTION, selectIssue, type IssueSelection } from "../../model/issueSelection";
 import {
   DEFAULT_VIEW,
@@ -33,7 +33,9 @@ type Mods = Pick<MouseEvent, "shiftKey" | "metaKey" | "ctrlKey">;
 /** Issues 标签：工具栏（搜索、筛选、显示设置）+ 列表 / 看板。视图配置每个项目各存一份。 */
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
-  const { data: issues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id });
+  const { data: allIssues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id, includeSubIssues: true });
+  // 子任务不单独占一行：折叠在主任务下面（主任务被筛掉时，子任务也不单独出现）
+  const { issues, subIssues } = useMemo(() => splitSubIssues(allIssues), [allIssues]);
   const [view, setViewState] = useState(() => loadIssueView(project.id));
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [displayAnchor, setDisplayAnchor] = useState<HTMLElement | null>(null);
@@ -109,8 +111,11 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
       setNotice({ kind: "error", message: errorText(e) });
     }
   };
+  // 只有标了仓库的 issue 时才占「仓库」这一列（单仓库项目不显示空列）
+  const hasRepos = allIssues.some((i) => i.repo_path);
   const rowProps = {
-    view,
+    subIssues,
+    view: hasRepos ? view : { ...view, properties: view.properties.filter((p) => p !== "repo") },
     selectedIds: selection.ids,
     selecting: selected.length > 0,
     creatingIn,
@@ -457,7 +462,7 @@ function PropertyButton({ issue, kind, onClick, className = "" }: { issue: Issue
 
 /** 行 / 卡片上的属性小标签，按视图配置显示。 */
 /** 列表的列宽：表头和每行共用，才能对齐。 */
-const COL = { priority: "w-12", id: "w-16", status: "w-12", labels: "w-40", sessions: "w-12", date: "w-14" };
+const COL = { priority: "w-12", id: "w-16", status: "w-12", repo: "w-36", labels: "w-40", sessions: "w-12", date: "w-14" };
 
 function Properties({ issue, view, list = false }: { issue: Issue; view: IssueViewConfig; list?: boolean }) {
   const { t, i18n } = useTranslation("soloyard");
@@ -465,6 +470,11 @@ function Properties({ issue, view, list = false }: { issue: Issue; view: IssueVi
   if (list) {
     return (
       <>
+        {show("repo") ? (
+          <span className={`${COL.repo} flex shrink-0 items-center justify-end gap-1 truncate text-[11.5px] text-content/55`} title={issue.repo_path ?? undefined}>
+            {issue.repo_path ? <><GitBranch className="size-3 shrink-0 opacity-70" /><span className="truncate">{repoName(issue.repo_path)}</span></> : null}
+          </span>
+        ) : null}
         {show("labels") ? (
           <span className={`${COL.labels} flex shrink-0 justify-end gap-1 overflow-hidden`} title={issue.labels.join(", ") || undefined}>
             {issue.labels.map((label) => (
@@ -484,6 +494,12 @@ function Properties({ issue, view, list = false }: { issue: Issue; view: IssueVi
   }
   return (
     <>
+      {show("repo") && issue.repo_path ? (
+        <span className="flex shrink-0 items-center gap-1 text-[11px] text-content/55" title={issue.repo_path}>
+          <GitBranch className="size-3 opacity-70" />
+          {repoName(issue.repo_path)}
+        </span>
+      ) : null}
       {show("labels")
         ? issue.labels.map((label) => (
             <span key={label} className="h-5 shrink-0 rounded-full border border-stroke px-2 text-[11px] leading-[18px] text-content/60">{label}</span>
@@ -525,6 +541,7 @@ function ListHeader({ view, allSelected, someSelected, onSelectAll }: { view: Is
       {cell("id", COL.id)}
       {cell("status", COL.status)}
       <span className="min-w-0 flex-1 truncate">{t("field.title")}</span>
+      {cell("repo", COL.repo, true)}
       {cell("labels", COL.labels, true)}
       {cell("sessions", COL.sessions, true)}
       {cell("created", COL.date, true)}
@@ -535,6 +552,8 @@ function ListHeader({ view, allSelected, someSelected, onSelectAll }: { view: Is
 
 type ViewProps = {
   groups: IssueGroup[];
+  /** 主任务 id → 它的子任务（列表里折叠在主任务下面，看板上只显示进度）。 */
+  subIssues: Map<number, Issue[]>;
   view: IssueViewConfig;
   selectedIds: Set<number>;
   selecting: boolean;
@@ -552,10 +571,57 @@ function GroupIcon({ view, groupKey }: { view: IssueViewConfig; groupKey: string
   return null;
 }
 
-function ListView({ groups, view, grouped, selectedIds, selecting, allSelected, onSelectAll, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick }: ViewProps & { grouped: boolean; allSelected: boolean; onSelectAll: (all: boolean) => void }) {
+function ListView({ groups, subIssues, view, grouped, selectedIds, selecting, allSelected, onSelectAll, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick }: ViewProps & { grouped: boolean; allSelected: boolean; onSelectAll: (all: boolean) => void }) {
   const { t } = useTranslation("soloyard");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const show = (id: FieldId) => view.properties.includes(id);
+  const toggleSubs = (id: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const row = (issue: Issue, sub = false) => {
+    const subs = sub ? [] : (subIssues.get(issue.id) ?? []);
+    const open = expanded.has(issue.id);
+    return (
+      <div
+        key={issue.id}
+        role="button"
+        tabIndex={0}
+        aria-selected={selectedIds.has(issue.id)}
+        onClick={(e) => (sub ? onRowClick(issue, { shiftKey: false, metaKey: false, ctrlKey: false }) : onRowClick(issue, e))}
+        onKeyDown={(e) => e.key === "Enter" && onRowClick(issue, e)}
+        className={`group/row flex h-9 cursor-default select-none items-center gap-3 border-b border-stroke/60 pr-4 text-[13px] text-content/90 ${sub ? "pl-8" : "pl-2"} ${selectedIds.has(issue.id) ? "bg-selection" : "hover:bg-content/5"}`}
+      >
+        {sub ? <span className="size-3.5 shrink-0" /> : <SelectBox issue={issue} checked={selectedIds.has(issue.id)} selecting={selecting} onCheck={onCheck} />}
+        {show("priority") ? <span className={`${COL.priority} shrink-0`}><PropertyButton issue={issue} kind="priority" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
+        {show("id") ? <span className={`${COL.id} shrink-0 font-mono text-[12px] text-content/40`}>{issue.ident}</span> : null}
+        {show("status") ? <span className={`${COL.status} shrink-0`}><PropertyButton issue={issue} kind="status" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
+        <span className="flex min-w-0 flex-1 items-center gap-1.5">
+          <span className="truncate">{issue.title}</span>
+          {subs.length ? (
+            <button
+              type="button"
+              aria-expanded={open}
+              title={t(open ? "issues.hideSubIssues" : "issues.showSubIssues")}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSubs(issue.id);
+              }}
+              className="flex h-5 shrink-0 items-center gap-0.5 rounded px-1 text-[11px] text-content/50 hover:bg-content/10 hover:text-content"
+            >
+              {open ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+              {subs.filter((s) => s.status === "done").length}/{subs.length}
+            </button>
+          ) : null}
+        </span>
+        <Properties issue={issue} view={view} list />
+      </div>
+    );
+  };
   if (!groups.length && creatingIn === null) {
     return <p className="px-4 py-10 text-center text-[13px] text-content/50">{t("issues.empty")}</p>;
   }
@@ -596,22 +662,10 @@ function ListView({ groups, view, grouped, selectedIds, selecting, allSelected, 
               {creatingIn === group.key ? inlineCreate(group.key) : null}
               {open
                 ? group.issues.map((issue) => (
-                    <div
-                      key={issue.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-selected={selectedIds.has(issue.id)}
-                      onClick={(e) => onRowClick(issue, e)}
-                      onKeyDown={(e) => e.key === "Enter" && onRowClick(issue, e)}
-                      className={`group/row flex h-9 cursor-default select-none items-center gap-3 border-b border-stroke/60 pl-2 pr-4 text-[13px] text-content/90 ${selectedIds.has(issue.id) ? "bg-selection" : "hover:bg-content/5"}`}
-                    >
-                      <SelectBox issue={issue} checked={selectedIds.has(issue.id)} selecting={selecting} onCheck={onCheck} />
-                      {show("priority") ? <span className={`${COL.priority} shrink-0`}><PropertyButton issue={issue} kind="priority" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
-                      {show("id") ? <span className={`${COL.id} shrink-0 font-mono text-[12px] text-content/40`}>{issue.ident}</span> : null}
-                      {show("status") ? <span className={`${COL.status} shrink-0`}><PropertyButton issue={issue} kind="status" onClick={onPropertyClick} className="-ml-0.5" /></span> : null}
-                      <span className="min-w-0 flex-1 truncate">{issue.title}</span>
-                      <Properties issue={issue} view={view} list />
-                    </div>
+                    <Fragment key={issue.id}>
+                      {row(issue)}
+                      {expanded.has(issue.id) ? (subIssues.get(issue.id) ?? []).map((sub) => row(sub, true)) : null}
+                    </Fragment>
                   ))
                 : null}
             </section>
@@ -622,7 +676,7 @@ function ListView({ groups, view, grouped, selectedIds, selecting, allSelected, 
   );
 }
 
-function BoardView({ groups, view, canMove, selectedIds, selecting, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick, onMove }: ViewProps & { canMove: boolean; onMove: (issueId: number, groupKey: string) => void }) {
+function BoardView({ groups, subIssues, view, canMove, selectedIds, selecting, creatingIn, setCreatingIn, inlineCreate, onRowClick, onCheck, onPropertyClick, onMove }: ViewProps & { canMove: boolean; onMove: (issueId: number, groupKey: string) => void }) {
   const { t } = useTranslation("soloyard");
   const [over, setOver] = useState<string | null>(null);
   const show = (id: FieldId) => view.properties.includes(id);
@@ -680,6 +734,11 @@ function BoardView({ groups, view, canMove, selectedIds, selecting, creatingIn, 
                   <span className="line-clamp-2">{issue.title}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
+                  {subIssues.get(issue.id)?.length ? (
+                    <span className="shrink-0 rounded-full border border-stroke px-1.5 text-[11px] text-content/55" title={t("detail.subIssues")}>
+                      {subIssues.get(issue.id)!.filter((s) => s.status === "done").length}/{subIssues.get(issue.id)!.length}
+                    </span>
+                  ) : null}
                   <Properties issue={issue} view={view} />
                 </div>
               </div>
@@ -689,4 +748,16 @@ function BoardView({ groups, view, canMove, selectedIds, selecting, creatingIn, 
       ))}
     </div>
   );
+}
+
+/** 列表的顶层是没有主任务（或主任务不在这个项目里）的 issue；子任务按主任务归组。 */
+export function splitSubIssues(all: Issue[]): { issues: Issue[]; subIssues: Map<number, Issue[]> } {
+  const ids = new Set(all.map((i) => i.id));
+  const subIssues = new Map<number, Issue[]>();
+  const issues: Issue[] = [];
+  for (const issue of all) {
+    if (issue.parent_id != null && ids.has(issue.parent_id)) subIssues.set(issue.parent_id, [...(subIssues.get(issue.parent_id) ?? []), issue]);
+    else issues.push(issue);
+  }
+  return { issues, subIssues };
 }
