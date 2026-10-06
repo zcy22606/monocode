@@ -3394,6 +3394,8 @@ const SessionCard = memo(function SessionCard({
     };
 
     const onMove = (ev: PointerEvent) => {
+      // Soloyard: button already up but its pointerup never reached us — don't leave the card stuck to the cursor.
+      if (ev.pointerType === "mouse" && ev.buttons === 0) return finish(false);
       lastX = ev.clientX;
       lastY = ev.clientY;
       if (!active) {

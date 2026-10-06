@@ -1856,13 +1856,6 @@ header[data-tauri-drag-region] button {
   display: none;
 }
 
-.agent-markdown
-  .markdown-code-shell:has(.markdown-code-fallback-label:empty)
-  [data-streamdown="code-block-header"]
-  + [data-streamdown="code-block-body"] {
-  border-top: 0;
-}
-
 .agent-markdown [data-streamdown="heading-1"] {
   font-size: 22px;
 }
@@ -1889,10 +1882,15 @@ header[data-tauri-drag-region] button {
   margin-top: 0.15rem;
 }
 
+/* Soloyard: the header/body divider sits on the header (was the body's border-top, cleared by
+   "header:has(span:empty) + body"). A :has() outside the subject makes WebKit restyle the whole
+   document on every <span> text change, i.e. constantly while sessions stream. */
 .agent-markdown [data-streamdown="code-block-header"] {
   height: auto;
   min-height: 36px;
   padding: 8px 10px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-content) 10%, transparent);
   color: color-mix(in srgb, var(--color-content) 65%, transparent);
 }
 
@@ -1908,6 +1906,7 @@ header[data-tauri-drag-region] button {
 
 .agent-markdown [data-streamdown="code-block-header"]:has(span:empty) {
   display: none;
+  border-bottom: 0; /* Soloyard: kept when the copy button re-shows the header */
 }
 
 .agent-markdown
@@ -1925,9 +1924,7 @@ header[data-tauri-drag-region] button {
 
 .agent-markdown [data-streamdown="code-block-body"] {
   padding: 10px 8px 10px 0;
-  border: 0;
-  border-top: 1px solid
-    color-mix(in srgb, var(--color-content) 10%, transparent);
+  border: 0; /* Soloyard: divider moved to the header's border-bottom */
   border-radius: 0;
   background: transparent;
   font-size: 12px;
@@ -1936,12 +1933,6 @@ header[data-tauri-drag-region] button {
   max-width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-}
-
-.agent-markdown
-  [data-streamdown="code-block-header"]:has(span:empty)
-  + [data-streamdown="code-block-body"] {
-  border-top: 0;
 }
 
 .agent-markdown [data-streamdown="code-block-body"] pre {
