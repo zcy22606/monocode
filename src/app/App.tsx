@@ -62,6 +62,7 @@ import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
+import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
 import { useOnRepoMembersChanged } from "../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -1821,6 +1822,7 @@ function Workspace({
     activeSessionId,
   );
 
+  useRecordRecentSessions(sessions); // Soloyard: recent sessions under the live agents panel
   const liveAgents = useMemo(
     () =>
       liveAgentsEnabled

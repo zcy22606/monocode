@@ -495,5 +495,12 @@
       "confirm_one": "Add {{count}} repository",
       "confirm_other": "Add {{count}} repositories"
     }
+  },
+  "recentSessions": {
+    "label": "Recent",
+    "remove": "Remove from recent",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more",
+    "showLess": "Show less"
   }
 }

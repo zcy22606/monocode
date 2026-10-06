@@ -16,6 +16,8 @@ import { Check, ChevronDown, ChevronUp, CircleAlert } from "../../../shared/ui/i
 import { HarnessIcon } from "./HarnessIcon";
 import { ProjectMascot } from "../../projects/ui/ProjectMascot";
 import { TerminalSpinner } from "./TerminalSpinner";
+import { useRecentSessions } from "../../soloyard/model/recentSessions"; // Soloyard
+import { RecentSessionRows } from "../../soloyard/ui/session/RecentSessionRows"; // Soloyard
 
 const LIVE_AGENT_MIN = 2;
 const LIVE_AGENT_CAP = 4;
@@ -53,6 +55,7 @@ export function LiveAgentsPreview({
   const [expanded, setExpanded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const lockList = useLockOverscroll<HTMLDivElement>();
+  const recents = useRecentSessions(); // Soloyard
   const ticking =
     agents.length >= LIVE_AGENT_MIN &&
     agents.some((agent) => !agent.done && agent.startedAt != null);
@@ -63,7 +66,7 @@ export function LiveAgentsPreview({
     return () => window.clearInterval(id);
   }, [ticking]);
 
-  if (agents.length < LIVE_AGENT_MIN) return null;
+  if (agents.length < LIVE_AGENT_MIN && !recents.length) return null; // Soloyard: recent sessions keep the panel up
 
   const extra = agents.length - LIVE_AGENT_CAP;
   const visible =
@@ -79,6 +82,8 @@ export function LiveAgentsPreview({
         {t("liveAgents.count", { count: agents.length })}
       </span>
       <div className="overflow-hidden rounded-lg bg-content/5">
+        {/* Soloyard: no live agents → only the recent sessions below */}
+        {agents.length ? (<>
         <div className="flex items-center gap-2 px-3.5 py-1.5">
           <span
             aria-hidden
@@ -126,6 +131,18 @@ export function LiveAgentsPreview({
             {expanded ? t("liveAgents.showLess") : t("liveAgents.more", { count: extra })}
           </button>
         ) : null}
+        </>) : null}
+        {/* Soloyard */}
+        <RecentSessionRows
+          recents={recents}
+          liveIds={new Set(agents.map((agent) => agent.id))}
+          activeSessionId={activeSessionId}
+          onSelect={onSelect}
+          groupLabels={groupLabels}
+          groupColors={groupColors}
+          groupCustomColors={groupCustomColors}
+          groupMascots={groupMascots}
+        />
       </div>
     </section>
   );
