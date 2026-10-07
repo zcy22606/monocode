@@ -108,7 +108,8 @@
     "mask-emails": "隐藏账号邮箱",
     "diff-colors": "差异配色",
     "monos-enabled": "显示 Mono",
-    "mono-list": "你的 Mono"
+    "mono-list": "你的 Mono",
+    "mono-menu-bar-icon": "菜单栏图标"
   },
   "keybindings": {
     "command": {
@@ -593,6 +594,7 @@
       "buttonNamed": "将 {{name}} 重置为默认设置"
     },
     "showSpawnedSessions": "在侧栏显示 Mono 开的会话",
-    "showSpawnedSessionsToggle": "在侧栏显示 {{name}} 开的会话"
+    "showSpawnedSessionsToggle": "在侧栏显示 {{name}} 开的会话",
+    "menuBarIconDescription": "从 macOS 菜单栏和 Mono 聊天，或打开快速输入。关掉后不显示这个图标。"
   }
 }

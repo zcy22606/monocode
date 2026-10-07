@@ -108,7 +108,8 @@
     "mask-emails": "Mask account emails",
     "diff-colors": "Diff colors",
     "monos-enabled": "Show monos",
-    "mono-list": "Your monos"
+    "mono-list": "Your monos",
+    "mono-menu-bar-icon": "Menu bar icon"
   },
   "keybindings": {
     "command": {
@@ -596,6 +597,7 @@
       "buttonNamed": "Reset {{name}} to defaults"
     },
     "showSpawnedSessions": "Show Mono spawned session on the sidebar",
-    "showSpawnedSessionsToggle": "Show sessions started by {{name}} in sidebar"
+    "showSpawnedSessionsToggle": "Show sessions started by {{name}} in sidebar",
+    "menuBarIconDescription": "Chat with a Mono or open the quick composer from the macOS menu bar. Turn this off to hide the icon."
   }
 }

@@ -323,7 +323,10 @@ import {
   loadModelControls,
   loadNotesEnabled,
   loadMonosEnabled,
+  loadMonoMenuBarIcon,
   loadKeybindingOverrides,
+  saveMonoMenuBarIcon,
+  subscribeMonoMenuBarIcon,
   loadQuickComposerEnabled,
   loadQuickComposerShortcut,
   loadTabAnimationsEnabled,
@@ -589,9 +592,7 @@ export function SettingsView({
               ) : null}
               {section === "chat" ? <ChatPage /> : null}
               {section === "keybindings" ? <KeybindingsPage /> : null}
-              {section === "monos" ? (
-                <MonosPage />
-              ) : null}
+              {section === "monos" ? <MonosPage /> : null}
               {section === "mcp" ? (
                 <>
                   <SoloyardMcpSettings cwd={cwd} /> {/* Soloyard */}
@@ -4066,6 +4067,11 @@ function MonosPage() {
     loadMonosEnabled,
     () => true,
   );
+  const menuBarIcon = useSyncExternalStore(
+    subscribeMonoMenuBarIcon,
+    loadMonoMenuBarIcon,
+    () => true,
+  );
   const snapshot = useSyncExternalStore(subscribeMonos, monosSnapshot);
   const monos = useMemo(() => listMonos(), [snapshot]);
 
@@ -4083,6 +4089,19 @@ function MonosPage() {
             onChange={saveMonosEnabled}
           />
         </Row>
+        {IS_MAC && (
+          <Row
+            id="mono-menu-bar-icon"
+            label={t("index.mono-menu-bar-icon")}
+            description={t("monos.menuBarIconDescription")}
+          >
+            <Toggle
+              label={t("index.mono-menu-bar-icon")}
+              on={menuBarIcon}
+              onChange={saveMonoMenuBarIcon}
+            />
+          </Row>
+        )}
       </Group>
       <Group
         id="mono-list"

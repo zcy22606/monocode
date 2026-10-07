@@ -92,6 +92,7 @@ fn zh(en: &str) -> Option<&'static str> {
         "Open MonoCode" => "打开 MonoCode",
         "Open floating chat" => "打开悬浮聊天",
         "Mono chat" => "Mono 聊天",
+        "Quick Composer" => "快速输入",
         _ => return None,
     })
 }

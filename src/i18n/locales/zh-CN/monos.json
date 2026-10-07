@@ -180,7 +180,9 @@
       "noArtifacts": "产物不可用。",
       "noCreate": "这里无法新建 Mono。",
       "unknownAction": "未知的聊天操作。"
-    }
+    },
+    "closeDocument": "关闭文档",
+    "closeDocumentTitle": "关闭（Escape）"
   },
   "sessionsPanel": {
     "label": "{{name}} 开过的会话",

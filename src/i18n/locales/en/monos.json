@@ -181,7 +181,9 @@
       "noArtifacts": "Artifacts are unavailable.",
       "noCreate": "New Monos are unavailable here.",
       "unknownAction": "Unknown chat action."
-    }
+    },
+    "closeDocument": "Close document",
+    "closeDocumentTitle": "Close (Escape)"
   },
   "sessionsPanel": {
     "label": "{{name}} sessions",
