@@ -1,15 +1,15 @@
 /**
  * 头脑风暴时的侧栏：盖在工作区面板上，样子和会话列表一样，只列头脑风暴会话（工作区下各子文件夹里的会话）。
  * 会话第一次发送后才入库，所以刚开的新头脑风暴先显示成一行「新的头脑风暴」。
- * 每行悬停出现删除：会话和工作文件夹一起删（先确认）。
+ * 每行悬停出现改名（双击 / F2 也行）和删除：删除时会话和工作文件夹一起删（先确认）。
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "../../../../i18n";
-import { Plus, Sparkles, Trash2 } from "../../../../shared/ui/icons";
+import { Pencil, Plus, Sparkles, Trash2 } from "../../../../shared/ui/icons";
 import { Modal } from "../../../../shared/ui/Modal";
 import { HarnessIcon } from "../../../sessions/ui/HarnessIcon";
 import { sessionDisplayTitle, type HarnessId } from "../../../sessions/model/session";
-import { requestOpenSession } from "../../model/appActions";
+import { requestOpenSession, requestRenameSession } from "../../model/appActions";
 import { deleteBrainstorm, listBrainstormSessions, startNewBrainstorm, useBrainstormRoot, type BrainstormSession } from "../../model/brainstorm";
 import { useBrainstormActive } from "../../model/projectViews";
 
@@ -43,6 +43,7 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
   const [rows, setRows] = useState<BrainstormSession[]>([]);
   const [error, setError] = useState("");
   const [removing, setRemoving] = useState<BrainstormSession | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const relative = useRelativeTime();
 
@@ -62,6 +63,15 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
       window.clearInterval(timer);
     };
   }, [root, activeSessionId, reload]);
+
+  const rename = (r: BrainstormSession, title: string) => {
+    setRenaming(null);
+    const trimmed = title.trim();
+    if (!trimmed || trimmed === titleOf(r)) return;
+    requestRenameSession(r.id, trimmed);
+    // 库里存的是带「harness · 」前缀的标题，列表显示时会去掉；先在本地改掉，等下次轮询拿到库里的
+    setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, title: trimmed } : x)));
+  };
 
   const draftActive = !!activeSessionId && !rows.some((r) => r.id === activeSessionId);
 
@@ -101,11 +111,30 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
             ) : null}
             {rows.map((r) => (
               <li key={r.id} className="group relative">
+                {renaming === r.id ? (
+                  <div className={`rounded-md px-2.5 py-2 ${r.id === activeSessionId ? "bg-selection" : ""}`}>
+                    <input
+                      autoFocus
+                      defaultValue={titleOf(r)}
+                      aria-label={t("brainstorm.rename")}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onBlur={(e) => rename(r, e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.currentTarget.blur();
+                        if (e.key === "Escape") setRenaming(null);
+                      }}
+                      className="w-full rounded bg-content/10 px-2 py-1 text-[13px] text-content outline-none ring-1 ring-accent/40"
+                    />
+                  </div>
+                ) : (
+                <>
                 <button
                   type="button"
                   aria-current={r.id === activeSessionId}
                   onClick={() => requestOpenSession(r.id)}
-                  className={`flex w-full flex-col gap-0.5 rounded-md px-2.5 py-2 pr-8 text-left ${r.id === activeSessionId ? "bg-selection" : "hover:bg-content/5"}`}
+                  onDoubleClick={() => setRenaming(r.id)}
+                  onKeyDown={(e) => e.key === "F2" && setRenaming(r.id)}
+                  className={`flex w-full flex-col gap-0.5 rounded-md px-2.5 py-2 pr-14 text-left ${r.id === activeSessionId ? "bg-selection" : "hover:bg-content/5"}`}
                 >
                   <span className="flex min-w-0 items-center gap-1.5">
                     <HarnessIcon harness={r.harness as "claude"} className="size-3 shrink-0" />
@@ -116,15 +145,28 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
                     <span className="ml-auto shrink-0">{relative(r.updated_at)}</span>
                   </span>
                 </button>
-                <button
-                  type="button"
-                  aria-label={t("brainstorm.remove.action")}
-                  title={t("brainstorm.remove.action")}
-                  onClick={() => setRemoving(r)}
-                  className="absolute right-1.5 top-2 hidden size-6 place-items-center rounded text-content/45 hover:bg-red-500/10 hover:text-red-400 focus-visible:grid group-hover:grid"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                <div className="absolute right-1.5 top-2 hidden items-center gap-0.5 focus-within:flex group-hover:flex">
+                  <button
+                    type="button"
+                    aria-label={t("brainstorm.rename")}
+                    title={t("brainstorm.rename")}
+                    onClick={() => setRenaming(r.id)}
+                    className="grid size-6 place-items-center rounded text-content/45 hover:bg-content/10 hover:text-content"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("brainstorm.remove.action")}
+                    title={t("brainstorm.remove.action")}
+                    onClick={() => setRemoving(r)}
+                    className="grid size-6 place-items-center rounded text-content/45 hover:bg-red-500/10 hover:text-red-400"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+                </>
+                )}
               </li>
             ))}
           </ul>

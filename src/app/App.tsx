@@ -8408,6 +8408,7 @@ function Workspace({
           return undefined;
         },
         deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),
+        renameSession: (sessionId, title) => void onRenameHistorySession(sessionId, title),
         // Multi-repo project: a blank session picks the root, a member repo, one of its worktrees, or a new worktree.
         setWorkDir: ({ sessionId, workCwd, branch, newWorktree }) => {
           const session = sessionsRef.current.find((s) => s.id === sessionId);
@@ -8424,7 +8425,7 @@ function Workspace({
         },
         openProject: (path) => onSelectProject(path),
       }),
-    [appendTab, onSelectHistorySession, onRemoveHistorySession, onSelectProject, sessionDefaults?.runtimeMode],
+    [appendTab, onSelectHistorySession, onRemoveHistorySession, onRenameHistorySession, onSelectProject, sessionDefaults?.runtimeMode],
   );
   const saveDraftRef = useRef(onSaveDraft);
   saveDraftRef.current = onSaveDraft;

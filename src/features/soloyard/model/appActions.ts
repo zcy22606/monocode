@@ -34,6 +34,7 @@ type Actions = {
   "soloyard:send-to-session": SendToSessionRequest;
   "soloyard:move-session": WithReply<MoveSessionRequest>;
   "soloyard:delete-session": WithReply<{ sessionId: string }>;
+  "soloyard:rename-session": { sessionId: string; title: string };
   "soloyard:set-work-dir": WithReply<SetWorkDirRequest>;
   "soloyard:open-project": { path: string };
 };
@@ -68,6 +69,8 @@ export const requestMoveSession = (request: MoveSessionRequest) => withReply("so
 export const requestSetWorkDir = (request: SetWorkDirRequest) => withReply("soloyard:set-work-dir", request);
 /** 删除会话（调用方已经确认过）。 */
 export const requestDeleteSession = (sessionId: string) => withReply("soloyard:delete-session", { sessionId });
+/** 改会话标题（头脑风暴列表用；底座会话列表自己有改名）。 */
+export const requestRenameSession = (sessionId: string, title: string) => emit("soloyard:rename-session", { sessionId, title });
 
 export type SoloyardAppHandlers = {
   startWork: (request: StartWorkRequest) => void;
@@ -76,6 +79,7 @@ export type SoloyardAppHandlers = {
   /** 返回出错原因，成功返回 undefined。 */
   moveSession: (request: MoveSessionRequest) => string | undefined;
   deleteSession: (sessionId: string) => Promise<boolean>;
+  renameSession: (sessionId: string, title: string) => void;
   setWorkDir: (request: SetWorkDirRequest) => string | undefined;
   openProject: (path: string) => void;
 };
@@ -88,6 +92,7 @@ export function onSoloyardAppActions(handlers: SoloyardAppHandlers): () => void 
     on("soloyard:move-session", ({ reply, ...request }) => reply(handlers.moveSession(request))),
     on("soloyard:set-work-dir", ({ reply, ...request }) => reply(handlers.setWorkDir(request))),
     on("soloyard:open-project", ({ path }) => handlers.openProject(path)),
+    on("soloyard:rename-session", ({ sessionId, title }) => handlers.renameSession(sessionId, title)),
     on("soloyard:delete-session", ({ reply, sessionId }) =>
       void handlers.deleteSession(sessionId).then(
         (ok) => reply(ok ? undefined : "cancelled"),
