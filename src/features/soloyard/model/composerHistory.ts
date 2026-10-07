@@ -42,7 +42,8 @@ type Key = { key: string; altKey: boolean; metaKey: boolean; ctrlKey: boolean; s
 type Field = { value: string; selectionStart: number; selectionEnd: number };
 
 /**
- * ↑ 只在光标处在第一行时翻历史，↓ 只在最后一行时往回翻，其余时候照常移动光标。
+ * ↑ 只在光标处在第一行时翻历史，↓ 只在最后一行时往回翻，其余时候照常移动光标；
+ * 翻出来的这条没改过时，光标在哪都接着翻。翻出来的光标都放在末尾。
  * 返回 null = 不处理这个按键。翻到的这条改过之后再按 ↑，改过的内容当成新的草稿。
  */
 export function historyStep(
@@ -55,18 +56,18 @@ export function historyStep(
   if (!up && key.key !== "ArrowDown") return null;
   if (key.altKey || key.metaKey || key.ctrlKey || key.shiftKey) return null;
   if (field.selectionStart !== field.selectionEnd) return null;
+  const browsing = nav.index != null && field.value === nav.shown;
   const rest = up ? field.value.slice(0, field.selectionStart) : field.value.slice(field.selectionEnd);
-  if (rest.includes("\n")) return null;
+  if (!browsing && rest.includes("\n")) return null;
 
-  const at: HistoryNav =
-    nav.index != null && field.value === nav.shown ? nav : { index: null, draft: field.value, shown: field.value };
+  const at: HistoryNav = browsing ? nav : { index: null, draft: field.value, shown: field.value };
   if (!up && at.index == null) return null;
   const entries = history();
   const index = up ? (at.index ?? entries.length) - 1 : at.index! + 1;
   if (index < 0) return null;
   if (index >= entries.length) return { nav: IDLE_HISTORY_NAV, text: at.draft, caret: at.draft.length };
   const text = entries[index];
-  return { nav: { index, draft: at.draft, shown: text }, text, caret: up ? 0 : text.length };
+  return { nav: { index, draft: at.draft, shown: text }, text, caret: text.length };
 }
 
 // ---- Esc：停下后把发出去的消息放回输入框 ----

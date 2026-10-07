@@ -25,8 +25,9 @@ describe("history step", () => {
 
   it("walks up through history and back down to the draft", () => {
     const up1 = historyStep(key("ArrowUp"), field("draft"), IDLE_HISTORY_NAV, history)!;
-    expect(up1).toMatchObject({ text: "second\nline", caret: 0 });
-    const up2 = historyStep(key("ArrowUp"), field(up1.text, 0), up1.nav, history)!;
+    expect(up1).toMatchObject({ text: "second\nline", caret: 11 });
+    // caret at the end of an unchanged multi-line entry: ↑ keeps walking
+    const up2 = historyStep(key("ArrowUp"), field(up1.text), up1.nav, history)!;
     expect(up2.text).toBe("first");
     expect(historyStep(key("ArrowUp"), field("first", 0), up2.nav, history)).toBeNull();
     const down1 = historyStep(key("ArrowDown"), field("first"), up2.nav, history)!;
@@ -43,6 +44,7 @@ describe("history step", () => {
 
   it("treats an edited recalled message as the new draft", () => {
     const up = historyStep(key("ArrowUp"), field(""), IDLE_HISTORY_NAV, history)!;
+    expect(historyStep(key("ArrowUp"), field("a\nchanged"), up.nav, history)).toBeNull();
     const edited = historyStep(key("ArrowUp"), field("changed", 0), up.nav, history)!;
     expect(edited.text).toBe("second\nline");
     const back = historyStep(key("ArrowDown"), field(edited.text), edited.nav, history)!;
