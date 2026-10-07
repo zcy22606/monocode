@@ -1,6 +1,7 @@
 // Soloyard：用英文翻译生成 key 的类型；加命名空间时在这里加一行。
 import type agentApp from "./locales/en/agentApp.json";
 import type app from "./locales/en/app.json";
+import type artifacts from "./locales/en/artifacts.json";
 import type automations from "./locales/en/automations.json";
 import type common from "./locales/en/common.json";
 import type connections from "./locales/en/connections.json";
@@ -30,6 +31,7 @@ declare module "i18next" {
     resources: {
       agentApp: typeof agentApp;
       app: typeof app;
+      artifacts: typeof artifacts;
       automations: typeof automations;
       common: typeof common;
       connections: typeof connections;

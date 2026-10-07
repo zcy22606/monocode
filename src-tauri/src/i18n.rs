@@ -86,6 +86,12 @@ fn zh(en: &str) -> Option<&'static str> {
         // Tray / notifications
         "Show MonoCode" => "显示 MonoCode",
         "Show" => "显示",
+        // Mono menu bar / floating chat
+        "Chat with a Mono" => "和 Mono 聊天",
+        "Create a Mono in MonoCode to chat here" => "先在 MonoCode 里新建一个 Mono，才能在这里聊天",
+        "Open MonoCode" => "打开 MonoCode",
+        "Open floating chat" => "打开悬浮聊天",
+        "Mono chat" => "Mono 聊天",
         _ => return None,
     })
 }

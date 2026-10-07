@@ -20,6 +20,12 @@ const ACTION_LABELS = {
   "notes.list": "sessions:monocodeCall.notesList",
   "notes.read": "sessions:monocodeCall.notesRead",
   "notes.write": "sessions:monocodeCall.notesWrite",
+  "sessions.stop": "sessions:monocodeCall.sessionsStop",
+  "sessions.archive": "sessions:monocodeCall.sessionsArchive",
+  "sessions.delete": "sessions:monocodeCall.sessionsDelete",
+  "artifacts.list": "sessions:monocodeCall.artifactsList",
+  "artifacts.read": "sessions:monocodeCall.artifactsRead",
+  "artifacts.write": "sessions:monocodeCall.artifactsWrite",
 } as const;
 
 /** Conservatively parse one shell invocation; compound commands use the shell row. */

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "../../../i18n";
-import type { HarnessId } from "../../sessions/model/session";
+import type { HarnessId, RuntimeMode } from "../../sessions/model/session";
+import { AccessPicker } from "../../sessions/ui/AccessPicker";
 import { ModelPicker, ModelSettingRows } from "../../sessions/ui/ModelPicker";
 import type { MonoLook, MonoState } from "../model/mono";
 import {
@@ -37,16 +38,19 @@ type Props = {
   harness: HarnessId;
   model: string;
   modelSettings: Record<string, string>;
+  runtimeMode: RuntimeMode;
+  busy?: boolean;
   onModelChange: (harness: HarnessId, model: string) => void;
   onModelSettingsChange: (settings: Record<string, string>) => void;
+  onRuntimeModeChange: (mode: RuntimeMode) => void;
   onClose: () => void;
   onReset?: () => Promise<void>;
   windowControls?: ReactNode;
 };
 
 /**
- * The Mono's profile, model and projects in one panel. Its habits, soul and
- * memory open directly as pages that slide over it.
+ * The Mono's profile, model, permissions and projects in one panel. Its habits,
+ * soul and memory open directly as pages that slide over it.
  */
 export function MonoDetails({
   open,
@@ -57,8 +61,11 @@ export function MonoDetails({
   harness,
   model,
   modelSettings,
+  runtimeMode,
+  busy = false,
   onModelChange,
   onModelSettingsChange,
+  onRuntimeModeChange,
   onClose,
   onReset,
   windowControls,
@@ -202,6 +209,15 @@ export function MonoDetails({
                 <Property label={label}>{control}</Property>
               )}
             />
+            <Property label={t("details.permissions")}>
+              <AccessPicker
+                value={runtimeMode}
+                onChange={onRuntimeModeChange}
+                busy={busy}
+                side="bottom"
+                variant="plain"
+              />
+            </Property>
             <Property label={t("details.projects")}>
               <MonoProjects monoId={monoId} projects={agent.projects} />
             </Property>

@@ -186,6 +186,7 @@ export function ProjectTerminalDock({
               : "border-l"
       } border-stroke`}
       onMouseDown={onFocus}
+      onFocus={onFocus}
     >
       <div
         role="separator"

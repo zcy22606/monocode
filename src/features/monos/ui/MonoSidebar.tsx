@@ -6,8 +6,9 @@ import { PanelRightToggle } from "../../../shared/ui/icons";
 
 const MIN_WIDTH = 340;
 let rememberedWidth = MIN_WIDTH;
+let rememberedArtifactWidth = 560;
 
-/** The shared frame for a Mono's details and turn activity. */
+/** The shared frame for a Mono's details and turn sidebars. */
 export function MonoSidebar({
   open,
   kind,
@@ -17,7 +18,7 @@ export function MonoSidebar({
   children,
 }: {
   open: boolean;
-  kind: "details" | "activity";
+  kind: "details" | "activity" | "sessions" | "artifact";
   label: string;
   color: string;
   windowControls?: ReactNode;
@@ -25,13 +26,17 @@ export function MonoSidebar({
 }) {
   const { t } = useTranslation("monos");
   const resize = useDragResize({
-    min: MIN_WIDTH,
-    max: () => Math.min(440, Math.round(window.innerWidth * 0.4)),
-    defaultWidth: MIN_WIDTH,
-    initial: rememberedWidth,
+    min: kind === "artifact" ? 360 : MIN_WIDTH,
+    max: () =>
+      kind === "artifact"
+        ? Math.min(840, Math.round(window.innerWidth * 0.58))
+        : Math.min(440, Math.round(window.innerWidth * 0.4)),
+    defaultWidth: kind === "artifact" ? 560 : MIN_WIDTH,
+    initial: kind === "artifact" ? rememberedArtifactWidth : rememberedWidth,
     direction: "left",
     onCommit: (width) => {
-      rememberedWidth = width;
+      if (kind === "artifact") rememberedArtifactWidth = width;
+      else rememberedWidth = width;
     },
   });
   return (
@@ -42,6 +47,8 @@ export function MonoSidebar({
       inert={!open || undefined}
       data-mono-details={kind === "details" ? "" : undefined}
       data-mono-activity={kind === "activity" ? "" : undefined}
+      data-mono-sessions={kind === "sessions" ? "" : undefined}
+      data-mono-artifact={kind === "artifact" ? "" : undefined}
       data-open={open}
       style={
         {
@@ -76,9 +83,11 @@ export function MonoSidebar({
 export function MonoSidebarHeader({
   title,
   onClose,
+  actions,
 }: {
   title: string;
   onClose: () => void;
+  actions?: ReactNode;
 }) {
   const { t } = useTranslation("monos");
   return (
@@ -91,6 +100,7 @@ export function MonoSidebarHeader({
         {title}
       </h3>
       <div className="flex shrink-0 items-center gap-0.5 px-3">
+        {actions}
         <IconButton
           label={t("sidebar.hide", { title: title.toLowerCase() })}
           active

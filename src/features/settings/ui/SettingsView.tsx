@@ -175,6 +175,7 @@ import {
   defaultModelId,
   firstEnabledHarness,
   getModelSnapshot,
+  hasLiveCatalog,
   loadDefaultModels,
   loadHiddenPickerProviders,
   loadLastModelChoice,
@@ -301,6 +302,7 @@ import {
   monoProjectsPhrase,
   monosSnapshot,
   subscribeMonos,
+  updateMono,
   type Mono,
 } from "../../monos/model/mono";
 import { resetMonoDefaults } from "../../monos/model/monoFiles";
@@ -3818,9 +3820,9 @@ function ProviderRow({
     models.length > 0 ? resolveModel(harness, selectedModel) : null;
 
   useEffect(() => {
-    if (!available || models.length > 0) return;
+    if (!available || hasLiveCatalog(harness)) return;
     void refreshHarnessCatalogs([harness]);
-  }, [available, harness, models.length]);
+  }, [available, harness]);
 
   return (
     <Row
@@ -4123,6 +4125,19 @@ function MonoRow({ mono }: { mono: Mono }) {
           : t("monos.noProjects")
       }
     >
+      <span className="text-[12px] leading-5 text-content/50">
+        {t("monos.showSpawnedSessions")}
+      </span>
+      <Toggle
+        label={t("monos.showSpawnedSessionsToggle", { name: look.name })}
+        on={mono.showStartedSessionsInSidebar !== false}
+        onChange={(on) =>
+          updateMono(mono.id, (entry) => ({
+            ...entry,
+            showStartedSessionsInSidebar: on,
+          }))
+        }
+      />
       <ConfirmReset
         label={t("monos.reset.label")}
         title={t("monos.reset.title", { name: look.name })}

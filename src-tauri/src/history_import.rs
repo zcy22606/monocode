@@ -173,6 +173,7 @@ fn import_scoped(conn: &Connection, home: &Path, scopes: &[String], store_cwd: &
             blocks: Value::Array(parsed.blocks),
             queued_messages: Vec::new(),
             queue_status: None,
+            sidebar_hidden: false,
             context_used: None,
             context_window: None,
             branch: parsed.branch,

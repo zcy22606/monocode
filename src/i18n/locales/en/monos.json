@@ -36,7 +36,8 @@
     "title": "Details",
     "model": "Model",
     "projects": "Projects",
-    "habitsMax": "At most {{max}} habits"
+    "habitsMax": "At most {{max}} habits",
+    "permissions": "Permissions"
   },
   "settings": {
     "title": "Settings",
@@ -162,5 +163,42 @@
   "usageLimit": {
     "chooseModel": "Choose another model",
     "chooseAccount": "Choose another account"
+  },
+  "floating": {
+    "stop": "Stop reply",
+    "stopTitle": "Stop reply (Escape)",
+    "reveal": "Open in MonoCode",
+    "hide": "Hide chat",
+    "loading": "Loading conversation…",
+    "newMono": "New mono",
+    "empty": "Say hello to {{name}}, ask a question, or hand over some work.",
+    "usageLimit": "The provider’s usage limit was reached.",
+    "tryAgain": "Try again",
+    "changeModel": "Change model in MonoCode",
+    "errors": {
+      "unavailable": "That Mono is no longer available.",
+      "notSent": "The message could not be sent. Try again in a moment.",
+      "noArtifacts": "Artifacts are unavailable.",
+      "noCreate": "New Monos are unavailable here.",
+      "unknownAction": "Unknown chat action."
+    }
+  },
+  "sessionsPanel": {
+    "label": "{{name}} sessions",
+    "title": "Sessions",
+    "launched_one": "{{count}} session launched in this turn",
+    "launched_other": "{{count}} sessions launched in this turn",
+    "opening": "Opening…",
+    "openFailed": "Could not open this session.",
+    "status": {
+      "unavailable": "No longer available",
+      "needsInput": "Needs input",
+      "working": "Working",
+      "archived": "Archived",
+      "draft": "Draft",
+      "ready": "Ready",
+      "statusUnavailable": "Status unavailable",
+      "loading": "Loading…"
+    }
   }
 }

@@ -36,7 +36,8 @@
     "title": "详情",
     "model": "模型",
     "projects": "项目",
-    "habitsMax": "最多 {{max}} 个习惯"
+    "habitsMax": "最多 {{max}} 个习惯",
+    "permissions": "权限"
   },
   "settings": {
     "title": "设置",
@@ -161,5 +162,41 @@
   "usageLimit": {
     "chooseModel": "换个模型",
     "chooseAccount": "换个账号"
+  },
+  "floating": {
+    "stop": "停止回复",
+    "stopTitle": "停止回复（Escape）",
+    "reveal": "在 MonoCode 中打开",
+    "hide": "隐藏聊天",
+    "loading": "正在加载对话…",
+    "newMono": "新建 Mono",
+    "empty": "跟 {{name}} 打个招呼，问个问题，或者把活交给它。",
+    "usageLimit": "已达到提供方的用量上限。",
+    "tryAgain": "重试",
+    "changeModel": "在 MonoCode 中更换模型",
+    "errors": {
+      "unavailable": "这个 Mono 已不存在。",
+      "notSent": "消息没能发出去，请稍后再试。",
+      "noArtifacts": "产物不可用。",
+      "noCreate": "这里无法新建 Mono。",
+      "unknownAction": "未知的聊天操作。"
+    }
+  },
+  "sessionsPanel": {
+    "label": "{{name}} 开过的会话",
+    "title": "会话",
+    "launched_other": "这一轮开了 {{count}} 个会话",
+    "opening": "正在打开…",
+    "openFailed": "无法打开这个会话。",
+    "status": {
+      "unavailable": "已不存在",
+      "needsInput": "需要输入",
+      "working": "工作中",
+      "archived": "已归档",
+      "draft": "草稿",
+      "ready": "就绪",
+      "statusUnavailable": "状态不可用",
+      "loading": "加载中…"
+    }
   }
 }

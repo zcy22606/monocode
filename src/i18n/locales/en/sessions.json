@@ -409,7 +409,13 @@
     "notesWrite": "Write a note",
     "help": "View CLI commands",
     "using": "Using MonoCode",
-    "used": "Used MonoCode"
+    "used": "Used MonoCode",
+    "sessionsStop": "Stop a session",
+    "sessionsArchive": "Archive a session",
+    "sessionsDelete": "Delete a session",
+    "artifactsList": "List artifacts",
+    "artifactsRead": "Read an artifact",
+    "artifactsWrite": "Write an artifact"
   },
   "activity": {
     "subagentsFailed_one": "Subagent failed",
@@ -587,7 +593,14 @@
     "notSentError": "Not sent · {{error}}",
     "hideActivity": "Hide activity",
     "showActivity": "Show activity",
-    "activityTrail": "Activity in chronological order"
+    "activityTrail": "Activity in chronological order",
+    "hideSessions": "Hide sessions",
+    "showSessions": "Show sessions",
+    "hideSessionsCount": "Hide sessions ({{n}})",
+    "showSessionsCount": "Show sessions ({{n}})",
+    "waitingForAnswers": "Waiting for answers…",
+    "waitingBackgroundTasks_one": "Waiting for background task…",
+    "waitingBackgroundTasks_other": "Waiting for {{count}} background tasks…"
   },
   "interjection": {
     "note": "{{label}} note",

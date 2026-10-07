@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "../../../i18n";
+import { isImeComposition } from "../../../shared/lib/keyboard";
 import { ChevronRight } from "../../../shared/ui/icons";
 import { PixelMascot } from "../../projects/ui/PixelMascot";
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
@@ -198,7 +199,9 @@ function NameField({ monoId, fallback }: { monoId: string; fallback: string }) {
         save();
       }}
       onKeyDown={(event) => {
-        if (event.key === "Enter") event.currentTarget.blur();
+        if (event.key === "Enter" && !isImeComposition(event.nativeEvent)) {
+          event.currentTarget.blur();
+        }
         if (event.key === "Escape") {
           setDraft(saved());
           event.currentTarget.blur();

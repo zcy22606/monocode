@@ -1,0 +1,23 @@
+{
+  "kind": {
+    "document": "文档"
+  },
+  "card": {
+    "open": "打开{{noun}}",
+    "openLabel": "打开{{noun}}「{{title}}」"
+  },
+  "panel": {
+    "reader": "{{label}}阅读器",
+    "delete": "删除{{noun}}",
+    "confirmDelete": "删除「{{title}}」？",
+    "deleteFailed": "无法删除这个{{noun}}。",
+    "copy": "复制{{noun}}",
+    "copied": "已复制",
+    "copiedStatus": "{{label}}已复制",
+    "copyFailed": "无法复制这个{{noun}}。",
+    "loadFailed": "无法加载这个文档。",
+    "loading": "正在加载文档…",
+    "unavailable": "这个文档已不存在。",
+    "updated": "更新于 {{time}}"
+  }
+}

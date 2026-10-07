@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { t as translate, useTranslation } from "../../../i18n";
+import { isImeComposition } from "../../../shared/lib/keyboard";
 import { IconButton } from "../../../app/shell/TitleBar";
 import { Pencil, Plus, StickyNote, Trash2 } from "../../../shared/ui/icons";
 import type { MonoLook } from "../model/mono";
@@ -375,7 +376,7 @@ function FactEditor({
         onFocus={(event) => event.currentTarget.select()}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter") {
+          if (event.key === "Enter" && !isImeComposition(event.nativeEvent)) {
             event.preventDefault();
             void commit(false);
           }

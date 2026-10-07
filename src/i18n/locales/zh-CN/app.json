@@ -116,5 +116,8 @@
     "habitApprovalTimeout": "没有人回应它的审批请求。",
     "habitTimeout": "运行时间太长，已被停止。",
     "habitUnfinished": "这次运行没有完成。"
+  },
+  "session": {
+    "unavailable": "这个会话已不存在。"
   }
 }

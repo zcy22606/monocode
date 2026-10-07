@@ -117,5 +117,8 @@
     "habitApprovalTimeout": "Nobody answered its approval request.",
     "habitTimeout": "It took too long and was stopped.",
     "habitUnfinished": "The run did not finish."
+  },
+  "session": {
+    "unavailable": "This session is no longer available."
   }
 }

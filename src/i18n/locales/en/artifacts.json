@@ -1,0 +1,23 @@
+{
+  "kind": {
+    "document": "Document"
+  },
+  "card": {
+    "open": "Open {{noun}}",
+    "openLabel": "Open {{noun}} {{title}}"
+  },
+  "panel": {
+    "reader": "{{label}} reader",
+    "delete": "Delete {{noun}}",
+    "confirmDelete": "Delete “{{title}}”?",
+    "deleteFailed": "Could not delete this {{noun}}.",
+    "copy": "Copy {{noun}}",
+    "copied": "Copied",
+    "copiedStatus": "{{label}} copied",
+    "copyFailed": "Could not copy this {{noun}}.",
+    "loadFailed": "Could not load this document.",
+    "loading": "Loading document…",
+    "unavailable": "This document is no longer available.",
+    "updated": "Updated {{time}}"
+  }
+}

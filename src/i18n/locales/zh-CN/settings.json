@@ -579,7 +579,7 @@
   },
   "monos": {
     "enabledDescription": "项目栏上属于你自己的 Agent。每个 Mono 处理你交给它的项目，记住要紧的事，还会养成自己定时运行的习惯。关闭后将隐藏它们。",
-    "listDescription": "点项目栏上 Monos 旁边的加号新建一个，再在它的详情里选择项目。",
+    "listDescription": "选择每个 Mono 新开的会话是否显示在侧栏。隐藏的会话仍会保存，可以从 Mono 的聊天里打开。点项目栏上的加号新建 Mono，再在它的详情里选择项目。",
     "empty": "还没有 Mono。",
     "worksOn": "负责 {{projects}}",
     "noProjects": "还没有项目",
@@ -591,6 +591,8 @@
       "failure": "无法重置 Mono。",
       "button": "重置为默认设置",
       "buttonNamed": "将 {{name}} 重置为默认设置"
-    }
+    },
+    "showSpawnedSessions": "在侧栏显示 Mono 开的会话",
+    "showSpawnedSessionsToggle": "在侧栏显示 {{name}} 开的会话"
   }
 }

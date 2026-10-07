@@ -402,7 +402,13 @@
     "notesWrite": "写笔记",
     "help": "查看 CLI 命令",
     "using": "正在使用 MonoCode",
-    "used": "已使用 MonoCode"
+    "used": "已使用 MonoCode",
+    "sessionsStop": "停止会话",
+    "sessionsArchive": "归档会话",
+    "sessionsDelete": "删除会话",
+    "artifactsList": "列出产物",
+    "artifactsRead": "读取产物",
+    "artifactsWrite": "写产物"
   },
   "activity": {
     "subagentsFailed_other": "{{count}} 个子 Agent 失败",
@@ -568,7 +574,13 @@
     "notSentError": "未发送 · {{error}}",
     "hideActivity": "隐藏活动",
     "showActivity": "显示活动",
-    "activityTrail": "按时间顺序排列的活动"
+    "activityTrail": "按时间顺序排列的活动",
+    "hideSessions": "隐藏会话",
+    "showSessions": "显示会话",
+    "hideSessionsCount": "隐藏会话（{{n}}）",
+    "showSessionsCount": "显示会话（{{n}}）",
+    "waitingForAnswers": "等待回答…",
+    "waitingBackgroundTasks_other": "等待 {{count}} 个后台任务…"
   },
   "interjection": {
     "note": "{{label}}备注",

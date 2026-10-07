@@ -582,7 +582,7 @@
   },
   "monos": {
     "enabledDescription": "Agents of your own on the project rail. Each works on the projects you give it, remembers what matters and picks up habits it runs on its own. Turn this off to hide them.",
-    "listDescription": "Add one with the plus beside Monos on the rail. Choose its projects from its details.",
+    "listDescription": "Choose whether new sessions started by each Mono appear in the sidebar. Hidden sessions remain saved and can be opened from the Mono's chat. Add a Mono with the plus on the rail and choose its projects from its details.",
     "empty": "No monos yet.",
     "worksOn": "Works on {{projects}}",
     "noProjects": "No projects yet",
@@ -594,6 +594,8 @@
       "failure": "Could not reset the Mono.",
       "button": "Reset to defaults",
       "buttonNamed": "Reset {{name}} to defaults"
-    }
+    },
+    "showSpawnedSessions": "Show Mono spawned session on the sidebar",
+    "showSpawnedSessionsToggle": "Show sessions started by {{name}} in sidebar"
   }
 }
