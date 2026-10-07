@@ -413,6 +413,7 @@
     "legacyCleanup": "Clean up"
   },
   "brainstorm": {
+    "rename": "Rename",
     "start": "New brainstorm",
     "untitled": "New brainstorm (not started)",
     "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they solve it today, why they'd switch. Don't rush to conclusions.\nWhen a direction is worth pursuing, write it up as an idea card (one line, who, what problem, why better than today) in the current folder.\nAsk me before researching competitors or user voices. When I say \"start the project\", follow product-thinking's project brief workflow.",
