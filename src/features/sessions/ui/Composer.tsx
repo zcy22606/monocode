@@ -111,6 +111,7 @@ import type { Worktree } from "../../source-control/model/worktrees";
 import { CwdPicker } from "../../projects/ui/CwdPicker";
 import { FileMentionPicker } from "./FileMentionPicker";
 import { NO_SOLOYARD_MENTIONS, isSoloyardMentionPath, rankSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
+import { IDLE_HISTORY_NAV, historyStep, onRestoreDraft } from "../../soloyard/model/composerHistory"; // Soloyard
 import { McpServerPicker } from "./McpServerPicker";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import { InboxMiniCard } from "../../inbox/ui/InboxMiniCard";
@@ -226,6 +227,8 @@ type Props = {
   soloyardLinks?: ReactNode;
   /** Soloyard: linked items offered in the @ picker. */
   soloyardMentions?: ProjectFile[];
+  /** Soloyard: this session's sent messages for ↑ / ↓, read only on key press. */
+  soloyardSentHistory?: () => string[];
   hideTopBar?: boolean;
   /** Keeps local file mentions, skills, and app modes off for host sessions. */
   remoteSession?: boolean;
@@ -354,6 +357,7 @@ export function Composer({
   hideBranchPicker = false,
   soloyardLinks, // Soloyard
   soloyardMentions = NO_SOLOYARD_MENTIONS, // Soloyard
+  soloyardSentHistory, // Soloyard
   hideTopBar = false,
   remoteSession = false,
   remoteFeatures,
@@ -1285,6 +1289,20 @@ export function Composer({
     onRecallLastTurnReady(recallLastTurn);
   }, [editLastTurnSupported, onRecallLastTurnReady, recallLastTurn]);
 
+  // Soloyard: Esc stopped this session's turn → what was sent comes back into an empty composer.
+  const historyNavRef = useRef(IDLE_HISTORY_NAV);
+  useEffect(
+    () =>
+      sessionId
+        ? onRestoreDraft(sessionId, (request) => {
+            if (ref.current?.value.trim() || attachmentsRef.current.length) return;
+            request.take();
+            restoreDraft(request.text, request.attachments, request.borrowedIds);
+          })
+        : undefined,
+    [restoreDraft, sessionId],
+  );
+
   const submit = (value: string) => {
     if (disabled || worktreeRemoved || submitLockRef.current) return;
     submitLockRef.current = true;
@@ -1601,15 +1619,19 @@ export function Composer({
       }
     }
 
-    if (
-      e.key === "ArrowUp" &&
-      editLastTurnSupported &&
-      navigationEmpty &&
-      e.currentTarget.selectionStart === 0 &&
-      e.currentTarget.selectionEnd === 0
-    ) {
+    // Soloyard: ↑ / ↓ walk this session's sent messages (edit-last-turn keeps its transcript button).
+    const historyEl = e.currentTarget;
+    const step = soloyardSentHistory && historyStep(e, historyEl, historyNavRef.current, soloyardSentHistory);
+    if (step) {
       e.preventDefault();
-      recallLastTurn();
+      historyNavRef.current = step.nav;
+      historyEl.value = step.text;
+      resizeComposer(historyEl);
+      historyEl.setSelectionRange(step.caret, step.caret);
+      setDraft(step.text);
+      syncHasValue(step.text, attachmentsRef.current);
+      setSlash(null);
+      setMention(null);
       return;
     }
 
