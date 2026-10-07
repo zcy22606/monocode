@@ -25,6 +25,7 @@ import { useIsBrainstormCwd } from "../../soloyard/model/brainstorm"; // Soloyar
 import { BrainstormFolderChip } from "../../soloyard/ui/brainstorm/BrainstormFolderChip"; // Soloyard
 import { ProjectMapChip, WorkDirChip } from "../../soloyard/ui/session/WorkDirChip"; // Soloyard
 import { useIsMultiRepo } from "../../soloyard/model/repos"; // Soloyard
+import { sentPrompts } from "../../soloyard/model/composerHistory"; // Soloyard
 import { SessionReview } from "./SessionReview";
 import { PromptOutline } from "./PromptOutline";
 import {
@@ -633,6 +634,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
         ) : undefined
       }
       soloyardMentions={soloyardMentions}
+      soloyardSentHistory={() => sentPrompts(session.blocks)} // Soloyard
       key={session.id}
       disabled={workspaceSwitchingSessionId === session.id}
       remoteSession={remoteSession}

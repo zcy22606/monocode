@@ -72,6 +72,7 @@ import { BRAINSTORM_CWD, onOpenProjectView, projectViewFile, setActiveProjectVie
 import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
+import { requestRestoreDraft, restoreDraftRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
 import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
@@ -9913,7 +9914,18 @@ function Workspace({
         ) {
           return;
         }
+        // Soloyard: what was sent (and still queued) goes back into the composer.
+        const stopped = sessionsRef.current.find((s) => s.id === sessionId);
+        const restore =
+          stopped && !isMonoSession(sessionId) && !remoteProjectFor(stopped.cwd)
+            ? restoreDraftRequest(stopped, (ids) =>
+                setSessions((prev) =>
+                  prev.map((s) => (s.id === sessionId ? ids.reduce(dequeueQueuedMessage, s) : s)),
+                ),
+              )
+            : null;
         onStop(sessionId);
+        if (restore) requestRestoreDraft(restore);
       });
     };
     window.addEventListener("keydown", onEscape);
