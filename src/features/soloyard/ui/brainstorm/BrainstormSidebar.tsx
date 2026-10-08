@@ -12,6 +12,7 @@ import { sessionDisplayTitle, type HarnessId } from "../../../sessions/model/ses
 import { requestOpenSession, requestRenameSession } from "../../model/appActions";
 import { deleteBrainstorm, listBrainstormSessions, startNewBrainstorm, useBrainstormRoot, type BrainstormSession } from "../../model/brainstorm";
 import { useBrainstormActive } from "../../model/projectViews";
+import { isComposing } from "../keys";
 
 /** 「3 分钟前」这类相对时间，跟着界面语言。 */
 function useRelativeTime() {
@@ -120,6 +121,7 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
                       onFocus={(e) => e.currentTarget.select()}
                       onBlur={(e) => rename(r, e.currentTarget.value)}
                       onKeyDown={(e) => {
+                        if (isComposing(e)) return;
                         if (e.key === "Enter") e.currentTarget.blur();
                         if (e.key === "Escape") setRenaming(null);
                       }}

@@ -119,6 +119,28 @@ it("picks a priority while creating an issue inline", async () => {
   expect(api.mutate).toHaveBeenCalledWith("createIssue", 1, { title: "Fix login", status: "todo", priority: 1 });
 });
 
+it("creates the first issue from an empty board, and ignores the Enter that picks an IME candidate", async () => {
+  api.issues = [];
+  saveIssueView(1, { ...DEFAULT_VIEW, layout: "board" });
+  render();
+  click(byText("New issue"));
+  const input = document.querySelector<HTMLInputElement>('input[placeholder^="Issue title"]')!;
+  expect(input).toBeTruthy();
+  act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "denglu");
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  // WebKit：确认选字的回车 keyCode 是 229
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", keyCode: 229, bubbles: true }));
+  });
+  expect(api.mutate).not.toHaveBeenCalled();
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  expect(api.mutate).toHaveBeenCalledWith("createIssue", 1, { title: "denglu", priority: 0 });
+});
+
 it("shows column names in the list header; its checkbox selects and clears all visible issues", () => {
   render();
   const header = byLabel("Select all").parentElement!;

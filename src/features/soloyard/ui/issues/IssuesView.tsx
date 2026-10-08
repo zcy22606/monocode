@@ -23,6 +23,7 @@ import {
 import { openProjectView } from "../../model/projectViews";
 import { NoticeBar, errorText, type Notice } from "../NoticeBar";
 import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
+import { isComposing } from "../keys";
 
 const shortDate = (iso: string, lang: string) => new Date(iso).toLocaleDateString(lang, { month: "short", day: "numeric" });
 
@@ -394,6 +395,7 @@ function InlineCreate({ defaultPriority, onCreate, onDone }: { defaultPriority: 
         onChange={(e) => setTitle(e.target.value)}
         onBlur={() => !title.trim() && !picker && onDone()}
         onKeyDown={async (e) => {
+          if (isComposing(e)) return;
           if (e.key === "Escape") onDone();
           if (e.key === "Enter" && title.trim()) {
             await onCreate(title.trim(), priority);
@@ -682,6 +684,12 @@ function BoardView({ groups, subIssues, view, canMove, selectedIds, selecting, c
   const show = (id: FieldId) => view.properties.includes(id);
   return (
     <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto overscroll-none p-3">
+      {/* 还没有任何分组（项目里一个 issue 都没有）时，新建落在一个临时列里，和列表视图一样 */}
+      {creatingIn !== null && !groups.some((g) => g.key === creatingIn) ? (
+        <section className="flex w-72 shrink-0 flex-col self-start rounded-lg bg-content/5 p-2">
+          <div className="overflow-hidden rounded-md border border-stroke">{inlineCreate(creatingIn)}</div>
+        </section>
+      ) : null}
       {groups.map((group) => (
         <section
           key={group.key}

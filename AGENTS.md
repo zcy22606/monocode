@@ -45,7 +45,8 @@
 ## 已有的 Soloyard 改动
 
 - `src-tauri/src/history_import.rs`：列项目会话时，把该目录下 Claude Code / Codex 的终端历史会话导进侧栏（只读转录文件，按 mtime 增量）。
-- 侧栏分页改成等宽图标，最多 5 个，多的进下拉；新增 `Project` 分页（`src/features/soloyard/`），竖排视图，点一项开顶层标签。
+- 侧栏分页改成等宽图标，最多 5 个，多的进下拉。
+- **顶栏和项目面板**（SOL-66）：顶栏标签区可收起成「当前标题 ▾ N」（`model/titleTabs.ts`，标签本来就只显示当前项目的，是上游的 `deckProjectTabs`），右边是项目面板开关（`ui/TitleBarTools.tsx`）。项目视图都开在右侧项目面板（标题栏下拉换视图，默认 Issues；issue 链接等所有 `openProjectView` 也开在这里）（`ui/ProjectPanel.tsx`、`model/projectPanel.ts`），不再开顶层标签：全窗口一个，打开别的会话或文件时保持打开（满屏的带动画退回满屏前的样子），切到别的项目换成那个项目的同一视图，详情压栈可返回；侧栏（拖宽度）/ 满屏（宽度占满、把会话挤掉，和侧栏是同一个元素，开合都是动宽度）/ 悬浮（拖位置和大小）三种样子，状态存 localStorage。以前开成标签的项目视图在还原布局时关掉（`workspaceSnapshot.ts` 的 `sanitizeFile`）。上游挂载：`TitleBar.tsx`（收起的标签区 + 工具栏）、`App.tsx`（`<main>` 里挂面板）、`workspaceSnapshot.ts`（丢掉旧的项目视图标签）。
 - **数据**：`soloyard/core/`（Node，零依赖，`node:sqlite`）是唯一的数据实现，表在 `monocode.db` 里、`soloyard_` 前缀、迁移记在 `soloyard_migrations`。
   - 界面经 `src-tauri/src/soloyard_bridge.rs` 拉起常驻的 `soloyard/core/src/sidecar.ts`，前端用 `src/features/soloyard/data/api.ts`（`useSoloyard` / `mutateSoloyard`），我们的数据变了会收到 `soloyard:changed` 自动刷新。
   - agent 经 `soloyard/mcp/server.ts`（零依赖 stdio MCP）读写同一个库；`soloyard/core/src/import-legacy.ts` 是原型库的一次性导入。

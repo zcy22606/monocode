@@ -1,8 +1,6 @@
 {
   "nav": {
-    "label": "项目",
-    "noFolder": "没有项目文件夹",
-    "planning": "规划"
+    "noFolder": "没有项目文件夹"
   },
   "view": {
     "overview": "概览",
@@ -511,5 +509,21 @@
     "remove": "从最近会话移除",
     "more_other": "还有 {{count}} 个",
     "showLess": "收起"
+  },
+  "panel": {
+    "label": "项目面板",
+    "back": "返回",
+    "fullscreen": "满屏",
+    "exitFullscreen": "退出满屏",
+    "float": "悬浮",
+    "dock": "停靠到右侧",
+    "resize": "调整项目面板宽度",
+    "switchView": "切换视图"
+  },
+  "titleTabs": {
+    "collapse": "收起标签",
+    "expand": "展开标签",
+    "list_other": "{{count}} 个标签",
+    "close": "关闭 {{name}}"
   }
 }
