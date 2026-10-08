@@ -39,12 +39,13 @@ export type HistoryNav = { index: number | null; draft: string; shown: string };
 export const IDLE_HISTORY_NAV: HistoryNav = { index: null, draft: "", shown: "" };
 
 type Key = { key: string; altKey: boolean; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean };
-type Field = { value: string; selectionStart: number; selectionEnd: number };
+/** onEdgeLine(up)：光标是否在（自动换行后的）第一行 / 最后一行，按需才量。 */
+type Field = { value: string; selectionStart: number; selectionEnd: number; onEdgeLine: (up: boolean) => boolean };
 
 /**
- * ↑ 只在光标处在第一行时翻历史，↓ 只在最后一行时往回翻，其余时候照常移动光标；
- * 翻出来的这条没改过时，光标在哪都接着翻。翻出来的光标都放在末尾。
- * 返回 null = 不处理这个按键。翻到的这条改过之后再按 ↑，改过的内容当成新的草稿。
+ * ↑ 只在光标处在第一行时翻历史，↓ 只在最后一行时往回翻，其余时候照常移动光标。
+ * 翻出来的光标都放在末尾。返回 null = 不处理这个按键。
+ * 翻到的这条改过之后再按 ↑，改过的内容当成新的草稿。
  */
 export function historyStep(
   key: Key,
@@ -56,12 +57,10 @@ export function historyStep(
   if (!up && key.key !== "ArrowDown") return null;
   if (key.altKey || key.metaKey || key.ctrlKey || key.shiftKey) return null;
   if (field.selectionStart !== field.selectionEnd) return null;
-  const browsing = nav.index != null && field.value === nav.shown;
-  const rest = up ? field.value.slice(0, field.selectionStart) : field.value.slice(field.selectionEnd);
-  if (!browsing && rest.includes("\n")) return null;
-
-  const at: HistoryNav = browsing ? nav : { index: null, draft: field.value, shown: field.value };
+  const at: HistoryNav =
+    nav.index != null && field.value === nav.shown ? nav : { index: null, draft: field.value, shown: field.value };
   if (!up && at.index == null) return null;
+  if (!field.onEdgeLine(up)) return null;
   const entries = history();
   const index = up ? (at.index ?? entries.length) - 1 : at.index! + 1;
   if (index < 0) return null;
@@ -118,4 +117,41 @@ export function onRestoreDraft(sessionId: string, handler: (request: RestoreDraf
   };
   window.addEventListener(RESTORE_EVENT, listener);
   return () => window.removeEventListener(RESTORE_EVENT, listener);
+}
+
+const MIRRORED = [
+  "boxSizing", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft",
+  "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth",
+  "fontFamily", "fontSize", "fontWeight", "fontStyle", "fontVariant", "letterSpacing", "lineHeight",
+  "textTransform", "wordSpacing", "textIndent", "tabSize", "wordBreak", "overflowWrap", "whiteSpace",
+] as const;
+
+/** 光标在不在自动换行后的第一行（up）/ 最后一行：拿一个同样式的隐藏 div 量光标的高度。 */
+export function caretOnEdgeLine(el: HTMLTextAreaElement, up: boolean): boolean {
+  const style = getComputedStyle(el);
+  const mirror = document.createElement("div");
+  for (const prop of MIRRORED) mirror.style[prop] = style[prop];
+  Object.assign(mirror.style, {
+    position: "absolute",
+    visibility: "hidden",
+    top: "0",
+    left: "-9999px",
+    // clientWidth 不含滚动条，和 textarea 实际排字的宽度一致
+    width: `${el.clientWidth + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth)}px`,
+    whiteSpace: "pre-wrap",
+  });
+  const top = (pos: number) => {
+    mirror.textContent = el.value.slice(0, pos);
+    const marker = document.createElement("span");
+    // 带上光标后面的字：光标在一个整体折到下一行的词中间时，量到的才是折过去的那行
+    marker.textContent = el.value.slice(pos) || "\u200b";
+    mirror.appendChild(marker);
+    return marker.offsetTop;
+  };
+  document.body.appendChild(mirror);
+  try {
+    return top(el.selectionStart) === top(up ? 0 : el.value.length);
+  } finally {
+    mirror.remove();
+  }
 }

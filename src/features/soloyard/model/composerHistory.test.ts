@@ -5,7 +5,13 @@ import { IDLE_HISTORY_NAV, historyStep, restoreDraftRequest, sentPrompts } from 
 const user = (text: string, extra: Partial<Block> = {}) => ({ id: text, role: "user", text, ...extra }) as Block;
 const agent = (text: string) => ({ id: `a-${text}`, role: "assistant", text }) as Block;
 const key = (name: string) => ({ key: name, altKey: false, metaKey: false, ctrlKey: false, shiftKey: false });
-const field = (value: string, caret = value.length) => ({ value, selectionStart: caret, selectionEnd: caret });
+const field = (value: string, caret = value.length) => ({
+  value,
+  selectionStart: caret,
+  selectionEnd: caret,
+  // hard line breaks stand in for the measured visual lines
+  onEdgeLine: (up: boolean) => !(up ? value.slice(0, caret) : value.slice(caret)).includes("\n"),
+});
 
 describe("sent prompts", () => {
   it("keeps the user's own messages, drops internal ones, repeats and the @link context", () => {
@@ -26,8 +32,9 @@ describe("history step", () => {
   it("walks up through history and back down to the draft", () => {
     const up1 = historyStep(key("ArrowUp"), field("draft"), IDLE_HISTORY_NAV, history)!;
     expect(up1).toMatchObject({ text: "second\nline", caret: 11 });
-    // caret at the end of an unchanged multi-line entry: ↑ keeps walking
-    const up2 = historyStep(key("ArrowUp"), field(up1.text), up1.nav, history)!;
+    // caret on the last line of a multi-line entry: ↑ moves the caret first
+    expect(historyStep(key("ArrowUp"), field(up1.text), up1.nav, history)).toBeNull();
+    const up2 = historyStep(key("ArrowUp"), field(up1.text, 3), up1.nav, history)!;
     expect(up2.text).toBe("first");
     expect(historyStep(key("ArrowUp"), field("first", 0), up2.nav, history)).toBeNull();
     const down1 = historyStep(key("ArrowDown"), field("first"), up2.nav, history)!;
