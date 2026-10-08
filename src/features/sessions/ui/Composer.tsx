@@ -111,7 +111,7 @@ import type { Worktree } from "../../source-control/model/worktrees";
 import { CwdPicker } from "../../projects/ui/CwdPicker";
 import { FileMentionPicker } from "./FileMentionPicker";
 import { NO_SOLOYARD_MENTIONS, isSoloyardMentionPath, rankSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
-import { IDLE_HISTORY_NAV, historyStep, onRestoreDraft } from "../../soloyard/model/composerHistory"; // Soloyard
+import { IDLE_HISTORY_NAV, caretOnEdgeLine, historyStep, onRestoreDraft } from "../../soloyard/model/composerHistory"; // Soloyard
 import { McpServerPicker } from "./McpServerPicker";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import { InboxMiniCard } from "../../inbox/ui/InboxMiniCard";
@@ -1621,7 +1621,19 @@ export function Composer({
 
     // Soloyard: ↑ / ↓ walk this session's sent messages (edit-last-turn keeps its transcript button).
     const historyEl = e.currentTarget;
-    const step = soloyardSentHistory && historyStep(e, historyEl, historyNavRef.current, soloyardSentHistory);
+    const step =
+      soloyardSentHistory &&
+      historyStep(
+        e,
+        {
+          value: historyEl.value,
+          selectionStart: historyEl.selectionStart,
+          selectionEnd: historyEl.selectionEnd,
+          onEdgeLine: (up) => caretOnEdgeLine(historyEl, up),
+        },
+        historyNavRef.current,
+        soloyardSentHistory,
+      );
     if (step) {
       e.preventDefault();
       historyNavRef.current = step.nav;
