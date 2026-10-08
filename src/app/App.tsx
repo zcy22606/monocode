@@ -73,7 +73,7 @@ import { BRAINSTORM_CWD, onOpenProjectView, projectViewFile, setActiveProjectVie
 import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
-import { requestRestoreDraft, restoreDraftRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
+import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
 import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
@@ -10040,18 +10040,21 @@ function Workspace({
         ) {
           return;
         }
-        // Soloyard: what was sent (and still queued) goes back into the composer.
+        // Soloyard: like Claude Code, Esc first pulls queued messages back into the composer (no stop);
+        // a stop before the agent answered puts that message back too.
         const stopped = sessionsRef.current.find((s) => s.id === sessionId);
-        const restore =
-          stopped && !isMonoSession(sessionId) && !remoteProjectFor(stopped.cwd)
-            ? restoreDraftRequest(stopped, (ids) =>
-                setSessions((prev) =>
-                  prev.map((s) => (s.id === sessionId ? ids.reduce(dequeueQueuedMessage, s) : s)),
-                ),
-              )
-            : null;
+        const restorable = stopped && !isMonoSession(sessionId) && !remoteProjectFor(stopped.cwd) ? stopped : null;
+        const queued =
+          restorable &&
+          queuedRestoreRequest(restorable, (ids) =>
+            setSessions((prev) =>
+              prev.map((s) => (s.id === sessionId ? ids.reduce(dequeueQueuedMessage, s) : s)),
+            ),
+          );
+        if (queued && requestRestoreDraft(queued)) return;
+        const unanswered = restorable && unansweredRestoreRequest(restorable);
         onStop(sessionId);
-        if (restore) requestRestoreDraft(restore);
+        if (unanswered) requestRestoreDraft(unanswered);
       });
     };
     window.addEventListener("keydown", onEscape);
