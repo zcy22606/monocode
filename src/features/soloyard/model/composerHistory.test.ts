@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Block, Session } from "../../sessions/model/session";
-import { IDLE_HISTORY_NAV, historyStep, restoreDraftRequest, sentPrompts } from "./composerHistory";
+import { IDLE_HISTORY_NAV, historyStep, queuedRestoreRequest, sentPrompts, unansweredRestoreRequest } from "./composerHistory";
 
 const user = (text: string, extra: Partial<Block> = {}) => ({ id: text, role: "user", text, ...extra }) as Block;
 const agent = (text: string) => ({ id: `a-${text}`, role: "assistant", text }) as Block;
@@ -60,24 +60,33 @@ describe("history step", () => {
 });
 
 describe("restore after Esc", () => {
-  it("puts the last sent message and queued ones back, taking only the queued ids", () => {
-    const take = vi.fn();
-    const session = {
-      id: "s",
-      blocks: [user("old"), agent("x"), user("latest", { attachments: [{ id: "f1" }] as Block["attachments"] })],
-      queuedMessages: [
+  const session = (blocks: Block[], queuedMessages?: unknown[]) => ({ id: "s", blocks, queuedMessages }) as unknown as Session;
+
+  it("pulls queued messages back, dequeuing only the ones it restored", () => {
+    const dequeue = vi.fn();
+    const request = queuedRestoreRequest(
+      session([user("latest")], [
         { id: "q1", text: "next", attachments: [] },
         { id: "q2", text: "note", attachments: [], noteCard: {} },
-      ],
-    } as unknown as Session;
-    const request = restoreDraftRequest(session, take)!;
-    expect(request.text).toBe("latest\n\nnext");
-    expect([...request.borrowedIds]).toEqual(["f1"]);
+        { id: "q3", text: "more", attachments: [] },
+      ]),
+      dequeue,
+    )!;
+    expect(request).toMatchObject({ text: "next\n\nmore", merge: true });
     request.take();
-    expect(take).toHaveBeenCalledWith(["q1"]);
+    expect(dequeue).toHaveBeenCalledWith(["q1", "q3"]);
+    expect(queuedRestoreRequest(session([user("latest")]), dequeue)).toBeNull();
   });
 
-  it("has nothing to restore in an empty session", () => {
-    expect(restoreDraftRequest({ id: "s", blocks: [] } as unknown as Session, vi.fn())).toBeNull();
+  it("puts the last message back only while the agent has not answered it", () => {
+    const attachments = [{ id: "f1" }] as Block["attachments"];
+    const waiting = unansweredRestoreRequest(
+      session([user("old"), agent("x"), user("latest", { attachments }), { id: "sys", role: "system", text: "…" } as Block]),
+    )!;
+    expect(waiting).toMatchObject({ text: "latest", merge: false });
+    expect([...waiting.borrowedIds]).toEqual(["f1"]);
+    expect(unansweredRestoreRequest(session([user("latest"), agent("working on it")]))).toBeNull();
+    expect(unansweredRestoreRequest(session([user("latest"), { id: "t", role: "tool", text: "" } as Block]))).toBeNull();
+    expect(unansweredRestoreRequest(session([]))).toBeNull();
   });
 });

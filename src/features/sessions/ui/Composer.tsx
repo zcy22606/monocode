@@ -1289,15 +1289,20 @@ export function Composer({
     onRecallLastTurnReady(recallLastTurn);
   }, [editLastTurnSupported, onRecallLastTurnReady, recallLastTurn]);
 
-  // Soloyard: Esc stopped this session's turn → what was sent comes back into an empty composer.
+  // Soloyard: Esc puts queued / unanswered messages back into the composer (see composerHistory).
   const historyNavRef = useRef(IDLE_HISTORY_NAV);
   useEffect(
     () =>
       sessionId
         ? onRestoreDraft(sessionId, (request) => {
-            if (ref.current?.value.trim() || attachmentsRef.current.length) return;
-            request.take();
-            restoreDraft(request.text, request.attachments, request.borrowedIds);
+            const current = ref.current?.value ?? "";
+            const filled = !!current.trim() || attachmentsRef.current.length > 0;
+            if ((filled && !request.merge) || !request.take()) return;
+            restoreDraft(
+              filled ? `${current}\n\n${request.text}` : request.text,
+              [...attachmentsRef.current, ...request.attachments],
+              new Set([...borrowedAttachmentIdsRef.current, ...request.borrowedIds]),
+            );
           })
         : undefined,
     [restoreDraft, sessionId],

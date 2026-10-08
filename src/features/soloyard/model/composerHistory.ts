@@ -1,7 +1,7 @@
 /**
  * Soloyard：输入框的「已发送消息」历史。
  * - ↑ / ↓ 在当前会话发过的消息和正在写的草稿之间切换（历史直接从会话的 user 块里取，不另外存）。
- * - Esc 停下正在跑的一轮时，把刚发的那条和还在排队的消息放回输入框。
+ * - Esc：有排队的消息先挪回输入框；否则停下，agent 还没回复的那条放回输入框（同 Claude Code）。
  */
 import { isOperatorUserTurn, operatorUserPrompt } from "../../sessions/model/operatorCommand";
 import type { Attachment, Block, Session } from "../../sessions/model/session";
@@ -69,7 +69,9 @@ export function historyStep(
   return { nav: { index, draft: at.draft, shown: text }, text, caret: text.length };
 }
 
-// ---- Esc：停下后把发出去的消息放回输入框 ----
+// ---- Esc：照 Claude Code 的做法把消息放回输入框 ----
+// 有排队的消息：只把排队的挪回输入框，不停（再按一次才停）。
+// 没有排队的：停下；agent 对最后一条还没任何输出时，把这条放回输入框。
 
 export type RestoreDraftRequest = {
   sessionId: string;
@@ -77,37 +79,75 @@ export type RestoreDraftRequest = {
   attachments: Attachment[];
   /** 属于对话里那条消息的附件，输入框只借用、不负责释放。 */
   borrowedIds: ReadonlySet<string>;
-  /** 输入框接下了才调：把排队的消息从队列里拿掉。 */
-  take: () => void;
+  /** true = 排队的消息，输入框里有字也接在后面；false = 只放进空输入框。 */
+  merge: boolean;
+  /** 输入框接下时调；只有第一次返回 true（同一会话开在两个窗格里时只放一处）。 */
+  take: () => boolean;
 };
+
+/** App 这边发出的请求，take 由 requestRestoreDraft 包成只生效一次。 */
+export type RestoreDraft = Omit<RestoreDraftRequest, "take"> & { take: () => void };
 
 const RESTORE_EVENT = "soloyard:restore-draft";
 
-/** Esc 停下之前调用（拿的是停之前的会话）：最后一条发出去的消息 + 排队的消息。 */
-export function restoreDraftRequest(
+/** 有输出就算 agent 已经开始回复（system / handoff 这类状态行不算）。 */
+const AGENT_OUTPUT = new Set<Block["role"]>(["assistant", "reasoning", "tool", "image", "approval", "tasks", "plan"]);
+
+/** 最后一条发出去、agent 还没任何输出的消息。 */
+function unansweredPrompt(blocks: Block[]): Block | undefined {
+  for (let i = blocks.length - 1; i >= 0; i -= 1) {
+    if (isSentPrompt(blocks[i])) return blocks[i];
+    if (AGENT_OUTPUT.has(blocks[i].role)) return undefined;
+  }
+  return undefined;
+}
+
+/** 排队的消息挪回输入框；接下了才调 dequeue 把它们从队列拿掉。 */
+export function queuedRestoreRequest(
   session: Session,
-  take: (queuedIds: string[]) => void,
-): RestoreDraftRequest | null {
-  const last = [...session.blocks].reverse().find(isSentPrompt);
+  dequeue: (queuedIds: string[]) => void,
+): RestoreDraft | null {
   const queued = (session.queuedMessages ?? []).filter(
-    (message) => !message.monoSessionCompletion && !message.noteCard && !message.handoffCard,
+    (message) =>
+      !message.monoSessionCompletion && !message.noteCard && !message.handoffCard && (message.text.trim() || message.attachments.length),
   );
-  const texts = [...(last ? [userText(last)] : []), ...queued.map((message) => message.text)].filter((text) => text.trim());
-  if (!texts.length) return null;
-  const borrowed = last?.attachments ?? [];
+  if (!queued.length) return null;
   return {
     sessionId: session.id,
-    text: texts.join("\n\n"),
-    attachments: [...borrowed, ...queued.flatMap((message) => message.attachments)],
-    borrowedIds: new Set(borrowed.map((file) => file.id)),
-    take: () => {
-      if (queued.length) take(queued.map((message) => message.id));
-    },
+    text: queued.map((message) => message.text).join("\n\n"),
+    attachments: queued.flatMap((message) => message.attachments),
+    borrowedIds: new Set(),
+    merge: true,
+    take: () => dequeue(queued.map((message) => message.id)),
   };
 }
 
-export function requestRestoreDraft(request: RestoreDraftRequest) {
-  window.dispatchEvent(new CustomEvent(RESTORE_EVENT, { detail: request }));
+/** 停下之前调用（拿停之前的会话）：agent 还没回复的那条放回空输入框。 */
+export function unansweredRestoreRequest(session: Session): RestoreDraft | null {
+  const prompt = unansweredPrompt(session.blocks);
+  if (!prompt) return null;
+  const attachments = prompt.attachments ?? [];
+  return {
+    sessionId: session.id,
+    text: userText(prompt),
+    attachments,
+    borrowedIds: new Set(attachments.map((file) => file.id)),
+    merge: false,
+    take: () => {},
+  };
+}
+
+/** 发给这个会话的输入框，返回有没有输入框接下。 */
+export function requestRestoreDraft(request: RestoreDraft): boolean {
+  let taken = false;
+  const take = () => {
+    if (taken) return false;
+    taken = true;
+    request.take();
+    return true;
+  };
+  window.dispatchEvent(new CustomEvent<RestoreDraftRequest>(RESTORE_EVENT, { detail: { ...request, take } }));
+  return taken;
 }
 
 export function onRestoreDraft(sessionId: string, handler: (request: RestoreDraftRequest) => void): () => void {
