@@ -269,7 +269,8 @@ fn codex_cwd(path: &Path) -> Option<String> {
     let mut line = String::new();
     BufReader::new(fs::File::open(path).ok()?).read_line(&mut line).ok()?;
     let value: Value = serde_json::from_str(&line).ok()?;
-    if value["type"] != "session_meta" {
+    // 底座生成标题等一次性调用（codexText.ts）也会留转录，不是用户的会话
+    if value["type"] != "session_meta" || value["payload"]["originator"] == "monocode-text" {
         return None;
     }
     value["payload"]["cwd"].as_str().map(|s| s.trim_end_matches('/').to_string())
@@ -502,6 +503,11 @@ mod tests {
         ]);
         write(&home.join(".codex/sessions/2026/09/02/rollout-other.jsonl"), &[
             json!({"type":"session_meta","payload":{"id":"33333333-3333-4333-8333-333333333333","cwd":"/elsewhere"}}),
+        ]);
+        // 底座生成标题的一次性线程
+        write(&home.join(".codex/sessions/2026/09/02/rollout-title.jsonl"), &[
+            json!({"type":"session_meta","payload":{"id":"66666666-6666-4666-8666-666666666666","cwd":cwd,"originator":"monocode-text"}}),
+            json!({"type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"Generate a title"}]}}),
         ]);
 
         let conn = Connection::open_in_memory().unwrap();
