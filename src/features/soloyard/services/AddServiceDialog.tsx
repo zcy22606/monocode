@@ -3,6 +3,7 @@ import { useTranslation } from "../../../i18n";
 import { Modal } from "../../../shared/ui/Modal";
 import { listPackageScripts, relativeDir, type PackageScript } from "./api";
 import { entryKey, upsertHistory, useServiceHistory } from "./history";
+import { isComposing } from "../ui/keys";
 
 /** 「服务」分页的添加弹窗：勾选 package.json 里的脚本（可多选），或者自己写命令。只加进历史，不启动。 */
 export function AddServiceDialog({ project, onClose }: { project: string; onClose: () => void }) {
@@ -92,7 +93,7 @@ export function AddServiceDialog({ project, onClose }: { project: string; onClos
           <input
             value={command}
             onChange={(event) => setCommand(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && chosen.length && add()}
+            onKeyDown={(event) => !isComposing(event) && event.key === "Enter" && chosen.length && add()}
             placeholder={t("services.commandPlaceholder")}
             spellCheck={false}
             className="h-8 rounded-md border border-stroke bg-transparent px-2 font-mono text-[12px] text-content outline-none placeholder:text-content/30 focus:border-accent"

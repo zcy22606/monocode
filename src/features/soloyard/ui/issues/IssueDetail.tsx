@@ -12,6 +12,7 @@ import { openProjectView } from "../../model/projectViews";
 import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
 import { ParallelStartDialog } from "./ParallelStartDialog";
 import { canStart } from "../../model/parallelStart";
+import { isComposing } from "../keys";
 
 const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
@@ -79,7 +80,7 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
             defaultValue={issue.title}
             aria-label={t("detail.titleAria")}
             onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== issue.title && update({ title: e.target.value.trim() })}
-            onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            onKeyDown={(e) => !isComposing(e) && e.key === "Enter" && e.currentTarget.blur()}
             className="w-full bg-transparent text-[20px] font-medium text-content outline-none"
           />
           <div className="flex flex-wrap items-center gap-1.5">
@@ -337,6 +338,7 @@ function Labels({ labels, onChange }: { labels: string[]; onChange: (labels: str
           placeholder={t("detail.label")}
           onBlur={() => setAdding(false)}
           onKeyDown={(e) => {
+            if (isComposing(e)) return;
             const value = e.currentTarget.value.trim();
             if (e.key === "Escape") setAdding(false);
             if (e.key === "Enter" && value) {
@@ -364,7 +366,7 @@ function AddLine({ placeholder, onAdd }: { placeholder: string; onAdd: (text: st
       placeholder={placeholder}
       onChange={(e) => setText(e.target.value)}
       onKeyDown={async (e) => {
-        if (e.key === "Enter" && text.trim()) {
+        if (!isComposing(e) && e.key === "Enter" && text.trim()) {
           await onAdd(text.trim());
           setText("");
         }

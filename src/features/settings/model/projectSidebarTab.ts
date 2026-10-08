@@ -7,7 +7,7 @@ type ProjectSidebarTab = Exclude<SidebarTabId, "inbox">;
 type StoredTabs = Record<string, ProjectSidebarTab>;
 
 function isProjectSidebarTab(value: unknown): value is ProjectSidebarTab {
-  return value === "sessions" || value === "files" || value === "changes" || value === "project" || value === "services"; // Soloyard
+  return value === "sessions" || value === "files" || value === "changes" || value === "services"; // Soloyard
 }
 
 function readAll(): StoredTabs {

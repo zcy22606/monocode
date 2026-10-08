@@ -9,6 +9,7 @@ import { homeDir, pickFolders } from "../../../../platform/tauri/fs";
 import { ChevronDown, Folder, FolderTree, GitBranch, Loader, Plus, Sparkles, X } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
 import { displayPath, useProjectRepos, type RepoCandidate, type RepoInfo } from "../../model/repos";
+import { isComposing } from "../keys";
 
 export function ReposView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
@@ -203,6 +204,7 @@ function RepoRow({ repo, root, home, onRun }: { repo: RepoInfo; root: string | n
           onChange={(e) => setDescription(e.target.value)}
           onBlur={save}
           onKeyDown={(e) => {
+            if (isComposing(e)) return;
             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
             if (e.key === "Escape") setDescription(repo.description);
           }}

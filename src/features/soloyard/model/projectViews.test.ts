@@ -1,21 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { newEditorWorkspaceTab } from "../../workspace/model/layout";
+import { newEditorWorkspaceTab, type FilePaneTab } from "../../workspace/model/layout";
 import { parseWorkspaceSnapshot } from "../../workspace/model/workspaceSnapshot";
-import { projectViewFile, sanitizeProjectView } from "./projectViews";
 
-describe("project view tabs", () => {
-  it("survive a workspace snapshot round trip (restart restores them as project views, not files)", () => {
-    const file = projectViewFile({ cwd: "/p/app", view: "issue", itemId: "5", title: "SOL-5 会话关联：a/b" });
-    const tab = newEditorWorkspaceTab(file);
-    const saved = JSON.parse(JSON.stringify({ tabs: [tab], sessions: [], activeTabId: tab.id, projectCwd: "/p/app" }));
-    const restored = parseWorkspaceSnapshot(saved)!.tabs[0].editorPanes[0].files[0];
-    expect(restored.projectView).toEqual({ view: "issue", itemId: "5" });
-    expect(restored.path).toBe("SOL-5 会话关联：a∕b");
-  });
+// 项目视图现在开在右侧面板（SOL-66），以前开成标签的还在用户保存的布局里，重启时要关掉
+describe("project view tabs saved before the side panel", () => {
+  const view: FilePaneTab = { id: "v1", path: "SOL-5 会话关联", cwd: "/p/app", projectView: { view: "issue", itemId: "5" } };
+  const file: FilePaneTab = { id: "f1", path: "README.md", cwd: "/p/app" };
+  const restore = (tabs: ReturnType<typeof newEditorWorkspaceTab>[]) =>
+    parseWorkspaceSnapshot(JSON.parse(JSON.stringify({ tabs, sessions: [], activeTabId: tabs[0].id, projectCwd: "/p/app" })))!;
 
-  it("drops unknown or malformed project view data", () => {
-    expect(sanitizeProjectView({ view: "nope" })).toBeUndefined();
-    expect(sanitizeProjectView("issues")).toBeUndefined();
-    expect(sanitizeProjectView({ view: "issues", itemId: 3 })).toEqual({ view: "issues" });
+  it("close on restore", () => {
+    const restored = restore([newEditorWorkspaceTab(view), newEditorWorkspaceTab(file)]);
+    expect(restored.tabs.map((tab) => tab.editorPanes[0].files.map((f) => f.id))).toEqual([["f1"]]);
+    expect(restored.activeTabId).toBe(restored.tabs[0].id);
   });
 });

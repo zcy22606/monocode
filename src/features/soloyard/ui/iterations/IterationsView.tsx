@@ -27,6 +27,7 @@ import { openProjectView } from "../../model/projectViews";
 import { StatusIcon } from "../issues/IssueIcons";
 import { NoticeBar, errorText, type Notice } from "../NoticeBar";
 import { DeleteIterationDialog, FinishIterationDialog, IterationFormDialog, NewFeatureDialog, StartIterationDialog } from "./IterationDialogs";
+import { isComposing } from "../keys";
 
 const FEATURE_DRAG = "application/x-soloyard-feature";
 const ITERATION_DRAG = "application/x-soloyard-iteration";
@@ -696,6 +697,7 @@ function Detail({ feature: f, iterations, backboneLabel, onMove, onRename, onCre
             onChange={(e) => setName(e.target.value)}
             onBlur={saveName}
             onKeyDown={(e) => {
+              if (isComposing(e)) return;
               if (e.key === "Enter") e.currentTarget.blur();
               if (e.key === "Escape") {
                 setName(f.name);

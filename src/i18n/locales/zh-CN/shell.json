@@ -247,7 +247,6 @@
       "inbox": "收件箱",
       "files": "资源管理器",
       "changes": "更改",
-      "project": "项目",
       "services": "服务"
     },
     "remoteChangeOffline": "请先连接这个项目所在的机器，再修改它的会话。",

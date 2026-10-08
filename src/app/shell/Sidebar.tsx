@@ -9,7 +9,6 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   Archive,
   Chatting,
-  DashboardSquare,
   Server, // Soloyard
   Check,
   ChevronDown,
@@ -33,7 +32,6 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
-import { ProjectNav } from "../../features/soloyard/ui/ProjectNav";
 import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
@@ -220,7 +218,6 @@ const TAB_LABELS = {
   inbox: "sidebar.tabs.inbox",
   files: "sidebar.tabs.files",
   changes: "sidebar.tabs.changes",
-  project: "sidebar.tabs.project",
   services: "sidebar.tabs.services",
 } as const satisfies Record<SidebarTab, string>;
 
@@ -229,7 +226,6 @@ const COMPACT_TAB_ICONS: Record<SidebarTab, typeof PanelLeft> = {
   inbox: Inbox,
   files: FileScript,
   changes: GitBranch,
-  project: DashboardSquare,
   services: Server, // Soloyard
 };
 
@@ -1845,7 +1841,6 @@ function SidebarComponent({
             </p>
           )}
         </div>
-        {tab === "project" ? <ProjectNav cwd={cwd} /> : null}
         {tab === "services" ? <ServicesNav cwd={cwd} /> : null}
         {tab === "sessions" && cwd && cwd !== "~" ? (
           <div className="flex h-9 shrink-0 items-center gap-1 border-b border-stroke px-2">

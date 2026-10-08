@@ -296,3 +296,8 @@ export const CheckSquare = wrap(CheckmarkSquare02Icon, "CheckSquare");
 export const Book = wrap(Book02Icon, "Book");
 export const Puzzle = wrap(PuzzleIcon, "Puzzle");
 export const Scale = wrap(JusticeScale01Icon, "Scale");
+// Soloyard: project panel (SOL-66).
+import ArrowShrink01Icon from "@hugeicons/core-free-icons/ArrowShrink01Icon";
+import PictureInPictureIcon from "@hugeicons/core-free-icons/PictureInPictureIcon";
+export const Minimize2 = wrap(ArrowShrink01Icon, "Minimize2");
+export const PictureInPicture = wrap(PictureInPictureIcon, "PictureInPicture");

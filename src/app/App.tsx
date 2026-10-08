@@ -69,7 +69,8 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { BRAINSTORM_CWD, onOpenProjectView, projectViewFile, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { BRAINSTORM_CWD, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
 import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
@@ -6366,27 +6367,6 @@ function Workspace({
       })();
     },
     [activateTab, insertBesideActive, closeMonoView],
-  );
-
-  // Soloyard: the sidebar Project tab opens its views as top-level tabs; reopening focuses the existing one.
-  useEffect(
-    () =>
-      onOpenProjectView((request) => {
-        const file = projectViewFile(request);
-        const created = newEditorWorkspaceTab(file);
-        let target: { tabId: string; paneId?: string } | undefined;
-        flushSync(() => {
-          setTabs((prev) => {
-            const result = openWorkspaceFile(prev, file, created, (tabs, tab) => insertBesideActive(tabs, tab, request.cwd), true);
-            target = result;
-            return result.tabs;
-          });
-        });
-        if (target?.paneId) activateTab(target.tabId, target.paneId);
-        else if (target) setActiveTabId(target.tabId);
-        setComposerFocused(false);
-      }),
-    [activateTab, insertBesideActive],
   );
 
   const onOpenPlan = useCallback(
@@ -12862,6 +12842,8 @@ function Workspace({
                           </div>
                         </div>
                       </div>
+                      {/* Soloyard: project views open in this panel beside the session (SOL-66) */}
+                      <ProjectPanel cwd={sidebarCwd} focus={`${activeTabId}:${activeTab?.focusedId}:${activeFile?.id ?? ""}`} hidden={monoCovers} />
                       {[...linkedWorkItemPanels.values()].map((panel) => (
                         <LinkedWorkItemPanel
                           repairSessions={repairSessions}

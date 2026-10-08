@@ -36,6 +36,8 @@ import { TabWidthMotion } from "./ClosingTab";
 import { FileTypeIcon } from "../../features/files/ui/FileTypeIcon";
 import { ProjectViewIcon } from "../../features/soloyard/ui/ProjectViewIcon";
 import type { ProjectViewId } from "../../features/soloyard/model/projectViews";
+import { CollapsedTitleTabs, TitleBarTools } from "../../features/soloyard/ui/TitleBarTools"; // Soloyard
+import { useTitleTabsCollapsed } from "../../features/soloyard/model/titleTabs"; // Soloyard
 import { HarnessIcon } from "../../features/sessions/ui/HarnessIcon";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { TerminalSpinner } from "../../features/sessions/ui/TerminalSpinner";
@@ -664,6 +666,7 @@ function TitleBarComponent({
   onSelectProject,
 }: Props) {
   const { t } = useTranslation("shell");
+  const tabsCollapsed = useTitleTabsCollapsed(); // Soloyard: the tab strip folds into "current title ▾"
   const tabIds = tabs.map((tab) => tab.id);
   const { displayed, setTabNode, finishMotion } = useTabCloseMotion(tabs);
   const externalTabDrop = useMemo<ReorderExternalDrop<string> | undefined>(
@@ -749,7 +752,7 @@ function TitleBarComponent({
       el.removeEventListener("scroll", syncTabOverflow);
       ro.disconnect();
     };
-  }, [syncTabOverflow]);
+  }, [syncTabOverflow, tabsCollapsed]); // Soloyard: the strip remounts when expanded
 
   useLayoutEffect(() => {
     syncTabOverflow();
@@ -1010,6 +1013,16 @@ function TitleBarComponent({
       >
         {mono ? (
           <MonoTitle look={mono.look} state={mono.state} />
+        ) : tabsCollapsed ? (
+          // Soloyard
+          <CollapsedTitleTabs
+            tabs={tabs}
+            activeId={activeId}
+            headline={(tab) => tabCopy(tab).headline}
+            closable={(tab) => titleTabClosable(tab, tabs.length)}
+            onSelect={onSelect}
+            onClose={onClose}
+          />
         ) : (
           <div
             className="relative h-full min-w-0 flex-1 overflow-hidden"
@@ -1108,6 +1121,8 @@ function TitleBarComponent({
           </div>
         )}
 
+        {/* Soloyard: tab strip toggle + project toolbar */}
+        {mono ? null : <TitleBarTools cwd={cwd} project={showCurrentProject} />}
         {!IS_MAC && !IS_WIN ? (
           <div className="flex min-w-0 flex-1 items-center justify-center px-4">
             <span className="pointer-events-none truncate text-[11.5px] font-medium text-content/40 select-none">

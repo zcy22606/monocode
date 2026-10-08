@@ -1,8 +1,6 @@
 {
   "nav": {
-    "label": "Project",
-    "noFolder": "No project folder",
-    "planning": "Planning"
+    "noFolder": "No project folder"
   },
   "view": {
     "overview": "Overview",
@@ -536,5 +534,22 @@
     "more_one": "{{count}} more",
     "more_other": "{{count}} more",
     "showLess": "Show less"
+  },
+  "panel": {
+    "label": "Project panel",
+    "back": "Back",
+    "fullscreen": "Fill window",
+    "exitFullscreen": "Exit full view",
+    "float": "Float",
+    "dock": "Dock to the side",
+    "resize": "Resize project panel",
+    "switchView": "Switch view"
+  },
+  "titleTabs": {
+    "collapse": "Collapse tabs",
+    "expand": "Show all tabs",
+    "list_one": "{{count}} tab",
+    "list_other": "{{count}} tabs",
+    "close": "Close {{name}}"
   }
 }
