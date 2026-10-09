@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({ issues: [] as unknown[], mutate: vi.fn() }));
 vi.mock("../../data/api", () => ({
   useSoloyard: () => ({ data: api.issues }),
   mutateSoloyard: api.mutate,
+  // 验收前先合并工作树分支：这些 issue 都不在工作树里做，没有要合的
+  soloyardCall: async () => ({ merged: false, reason: "nothing" }),
 }));
 const open = vi.hoisted(() => vi.fn());
 vi.mock("../../model/projectViews", () => ({ openProjectView: open }));

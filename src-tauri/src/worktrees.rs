@@ -237,6 +237,7 @@ pub async fn git_worktree_create(
     existing: bool,
 ) -> Result<Worktree, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        let _refs = crate::soloyard_project_repos::ref_write_lock(); // Soloyard: parallel start creates several at once
         create(&expand_home(&cwd), &branch, &base, existing)
     })
     .await
@@ -432,6 +433,7 @@ pub async fn git_worktree_rename_branch(
     branch: String,
 ) -> Result<Worktree, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        let _refs = crate::soloyard_project_repos::ref_write_lock(); // Soloyard: concurrent `git branch -m` fails
         rename_branch(&expand_home(&cwd), &expand_home(&path), &branch)
     })
     .await

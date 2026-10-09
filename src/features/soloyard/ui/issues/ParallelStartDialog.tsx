@@ -9,7 +9,7 @@ import { Check, GitBranch, Loader } from "../../../../shared/ui/icons";
 import { mutateSoloyard, soloyardCall } from "../../data/api";
 import { requestStartWork } from "../../model/appActions";
 import { repoName, type IssueDetail } from "../../model/issues";
-import { canStart, leadPrompt, type SubIssue } from "../../model/parallelStart";
+import { canStart, leadPrompt, needsHuman, startsByDefault, type SubIssue } from "../../model/parallelStart";
 import { startWorkPrompt } from "../../model/startWork";
 import { StatusIcon } from "./IssueIcons";
 
@@ -17,7 +17,7 @@ type Props = { issue: IssueDetail; project: { name: string; goal?: string }; cwd
 
 export function ParallelStartDialog({ issue, project, cwd, onClose }: Props) {
   const { t } = useTranslation("soloyard");
-  const [picked, setPicked] = useState(() => new Set(issue.children.filter(canStart).map((c) => c.id)));
+  const [picked, setPicked] = useState(() => new Set(issue.children.filter(startsByDefault).map((c) => c.id)));
   const [lead, setLead] = useState(true);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string>();
@@ -29,7 +29,13 @@ export function ParallelStartDialog({ issue, project, cwd, onClose }: Props) {
       return next;
     });
   const reason = (c: SubIssue) =>
-    c.status === "done" || c.status === "canceled" ? t("detail.parallelDone") : c.blocked && (c.status === "backlog" || c.status === "todo") ? t("detail.parallelNotReady") : t("detail.parallelStarted");
+    c.status === "done" || c.status === "canceled"
+      ? t("detail.parallelDone")
+      : c.status !== "backlog" && c.status !== "todo"
+        ? t("detail.parallelStarted")
+        : needsHuman(c)
+          ? t("detail.parallelHuman")
+          : t("detail.parallelNotReady");
 
   const start = async () => {
     setRunning(true);

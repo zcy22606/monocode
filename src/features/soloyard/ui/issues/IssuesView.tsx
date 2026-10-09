@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, GitBranch, ListFilter, MessageSquare, Plus, 
 import { mutateSoloyard, useSoloyard, type SoloyardProject } from "../../data/api";
 import { priorityLabel, repoName, statusLabel, type Issue } from "../../model/issues";
 import { EMPTY_SELECTION, selectIssue, type IssueSelection } from "../../model/issueSelection";
+import { mergeBeforeAccept } from "../../model/acceptIssue";
 import {
   DEFAULT_VIEW,
   ISSUE_FIELDS,
@@ -104,6 +105,22 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
       setNotice({ kind: "error", message: errorText(e) });
     }
   };
+  // 批量通过：在工作树里做的先逐个合并进仓库主分支，合不了的留在待验收并列出原因，其余照旧一批改成 done（可撤销状态，合并不撤）
+  const acceptMany = async (targets: Issue[]) => {
+    const ok: number[] = [];
+    const failures: string[] = [];
+    for (const issue of targets) {
+      try {
+        const reason = await mergeBeforeAccept(issue.id);
+        if (reason) failures.push(`${issue.ident}: ${reason}`);
+        else ok.push(issue.id);
+      } catch (e) {
+        failures.push(`${issue.ident}: ${errorText(e)}`);
+      }
+    }
+    if (ok.length) await bulk(ok, { status: "done" }, t("issues.bulk.accepted", { count: ok.length }));
+    if (failures.length) setNotice({ kind: "error", message: [t("merge.bulkFailed", { count: failures.length }), ...failures].join("\n") });
+  };
   const undo = async (batch: string) => {
     try {
       await mutateSoloyard("revertBatch", batch);
@@ -201,7 +218,7 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
             type="button"
             disabled={!toAccept.length}
             title={t("issues.bulk.acceptHint")}
-            onClick={() => void bulk(toAccept.map((i) => i.id), { status: "done" }, t("issues.bulk.accepted", { count: toAccept.length }))}
+            onClick={() => void acceptMany(toAccept)}
             className="flex h-6 items-center gap-1.5 rounded-md bg-accent px-2 font-medium text-white hover:opacity-90 disabled:bg-content/10 disabled:text-content/40 disabled:hover:opacity-100"
           >
             {t("issues.bulk.accept", { count: toAccept.length })}

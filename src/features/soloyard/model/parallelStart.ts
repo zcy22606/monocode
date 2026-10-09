@@ -8,8 +8,16 @@ import { repoName, type IssueDetail } from "./issues";
 
 export type SubIssue = IssueDetail["children"][number];
 
-/** 能开工：还没开始，前置都做完了。 */
-export const canStart = (child: SubIssue) => !child.blocked && (child.status === "backlog" || child.status === "todo");
+/** 标签 human = 要用户自己处理（拍板、找人确认、讨论），agent 做不了，并行开工不开它。 */
+export const HUMAN_LABEL = "human";
+export const needsHuman = (child: SubIssue) => child.labels?.includes(HUMAN_LABEL) ?? false;
+
+/** 能开工：还没开始，前置都做完了（验收通过、代码已合进主分支），也不是要人来做的。 */
+export const canStart = (child: SubIssue) =>
+  !child.blocked && !needsHuman(child) && (child.status === "backlog" || child.status === "todo");
+
+/** 默认勾上的：能开工里状态是 todo 的；backlog 的要用户自己勾。 */
+export const startsByDefault = (child: SubIssue) => canStart(child) && child.status === "todo";
 
 const where = (child: SubIssue) =>
   child.repo_path ? t("soloyard:prompt.lead.inRepo", { repo: repoName(child.repo_path) }) : t("soloyard:prompt.lead.atRoot");
@@ -24,7 +32,7 @@ export function leadPrompt(parent: IssueDetail, started: SubIssue[], project: { 
   if (parent.acceptance.length) lines.push(t("soloyard:prompt.acceptance"), ...parent.acceptance.map((a) => `- [${a.done ? "x" : " "}] ${a.text}`), "");
   lines.push(t("soloyard:prompt.project", { name: project.name, cwd }), "");
   if (started.length) lines.push(t("soloyard:prompt.lead.started"), ...started.map((c) => `- ${c.ident} ${c.title} — ${where(c)}`), "");
-  if (waiting.length) lines.push(t("soloyard:prompt.lead.waiting"), ...waiting.map((c) => `- ${c.ident} ${c.title} — ${where(c)}${c.blocked ? t("soloyard:prompt.lead.blocked") : ""}`), "");
+  if (waiting.length) lines.push(t("soloyard:prompt.lead.waiting"), ...waiting.map((c) => `- ${c.ident} ${c.title} — ${where(c)}${c.blocked ? t("soloyard:prompt.lead.blocked") : ""}${needsHuman(c) ? t("soloyard:prompt.lead.human") : ""}`), "");
   lines.push(
     t("soloyard:prompt.lead.progress", { ident }),
     t("soloyard:prompt.lead.now", { ident }),

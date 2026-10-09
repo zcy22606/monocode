@@ -11,6 +11,14 @@ use tauri::{AppHandle, Emitter};
 
 use crate::session_store::SessionSummary;
 
+/// 同一个仓库里并发 `git branch -m` 会抢 `.git/logs/refs/.tmp-renamed-log` 而失败（实测 5 个里坏好几个）；
+/// 并行开工会一次建好几个工作树、各自改名。建工作树和改名都在这把锁里排队。
+/// ponytail: 全局一把锁，不分仓库；建工作树很快，真慢了再按仓库分锁。
+pub fn ref_write_lock() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 /// 以 `cwd` 为根目录的项目的成员仓库（不含根目录本身）。数据层还没建表时为空。
 fn members(conn: &Connection, cwd: &str) -> Vec<String> {
     let cwd = cwd.trim_end_matches('/');

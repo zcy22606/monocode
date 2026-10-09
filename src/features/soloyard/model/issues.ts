@@ -29,7 +29,7 @@ export type IssueDetail = Omit<Issue, "sessions" | "children"> & {
   /** 功能不在任何迭代里：收在功能表，不进 Issues 列表。 */
   parked: number;
   acceptance: { id: number; text: string; done: number; sort: number }[];
-  children: { id: number; ident: string; title: string; status: IssueStatus; priority: number; repo_path: string | null; blocked: number }[];
+  children: { id: number; ident: string; title: string; status: IssueStatus; priority: number; repo_path: string | null; blocked: number; labels: string[] }[];
   parent: { id: number; ident: string; title: string; status: IssueStatus } | null;
   blockedBy: { id: number; ident: string; title: string; status: IssueStatus }[];
   comments: { id: number; actor: string; body_md: string; created_at: string }[];
