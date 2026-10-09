@@ -51,6 +51,7 @@ import { dragPointToClient } from "../../../shared/lib/dragPoint";
 import {
   basename,
   clipboardFilePaths,
+  copyFileToClipboard,
   copyPath,
   createPath,
   deletePath,
@@ -159,6 +160,11 @@ async function copyText(text: string) {
     document.execCommand("copy");
     el.remove();
   }
+}
+
+// Soloyard: Copy also puts the file on the system clipboard, so other apps (Lark, Finder) paste the file itself.
+function copyFileToSystem(path: string, isDir: boolean) {
+  if (!isDir) void copyFileToClipboard(path).catch(() => {});
 }
 
 /** Non-Latin layouts put the local letter in `key`, so fall back to the physical key. */
@@ -664,6 +670,7 @@ export const FileTree = memo(function FileTree({
       case "copy":
         if (target.isRoot) return;
         setClip({ mode: "copy", path: target.path, isDir: target.isDir });
+        copyFileToSystem(target.path, target.isDir); // Soloyard
         return;
       case "paste":
         await run(() => pasteAt(target.path));
@@ -859,6 +866,7 @@ export const FileTree = memo(function FileTree({
       if (isRoot) return;
       e.preventDefault();
       setClip({ mode: "copy", path, isDir });
+      copyFileToSystem(path, isDir); // Soloyard
       return;
     }
     if (mod && !e.altKey && !e.shiftKey && key === "x") {
