@@ -165,3 +165,24 @@ test('issue 移到功能表：收进待定、不进列表；功能排进迭代�
   assert.equal(r.getIssue(db, loose)!.iteration_id, null)
   assert.equal(listed(loose), false)
 })
+
+test('手动建的 issue 默认排进当前迭代；没有进行中的就建「未命名迭代」；指定了就放那里；子任务不单独排', () => {
+  const { db, p } = setup()
+  const iterOf = (id: number) => plan(db, p.id).iterations.find((i) => i.id === r.getIssue(db, id)!.iteration_id)
+  // 只有计划中的 v0.1：建一个开始了的 v0.2「未命名迭代」，排在 v0.1 前面
+  it.createIteration(db, 'user', p.id, { tag: 'v0.1' })
+  const first = it.createIssueInIteration(db, 'user', p.id, { title: '修崩溃' })
+  assert.deepEqual([iterOf(first)!.tag, iterOf(first)!.name, iterOf(first)!.status], ['v0.2', '未命名迭代', 'active'])
+  assert.deepEqual(plan(db, p.id).iterations.map((i) => i.tag), ['v0.2', 'v0.1'])
+  assert.equal(plan(db, p.id).features.find((f) => f.id === r.getIssue(db, first)!.feature_id)!.name, '修崩溃')
+  // 已经有进行中的：直接用它，不再建
+  const second = it.createIssueInIteration(db, 'user', p.id, { title: '改文案' })
+  assert.equal(iterOf(second)!.tag, 'v0.2')
+  assert.equal(plan(db, p.id).iterations.length, 2)
+  // 明确指定
+  const v01 = plan(db, p.id).iterations.find((i) => i.tag === 'v0.1')!.id
+  assert.equal(iterOf(it.createIssueInIteration(db, 'user', p.id, { title: '以后做' }, v01))!.tag, 'v0.1')
+  // 子任务跟着主任务走
+  const child = it.createIssueInIteration(db, 'user', p.id, { title: '子任务', parent_id: first })
+  assert.equal(r.getIssue(db, child)!.feature_id, null)
+})

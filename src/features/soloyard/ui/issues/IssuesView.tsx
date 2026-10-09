@@ -36,8 +36,12 @@ type Mods = Pick<MouseEvent, "shiftKey" | "metaKey" | "ctrlKey">;
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
   const { data: allIssues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id, includeSubIssues: true });
-  // 子任务不单独占一行：折叠在主任务下面（主任务被筛掉时，子任务也不单独出现）
-  const { issues, subIssues } = useMemo(() => splitSubIssues(allIssues), [allIssues]);
+  // 子任务不单独占一行：折叠在主任务下面（主任务被筛掉时，子任务也不单独出现）。
+  // 只列进行中迭代里的（没挂功能的也列）：还没开始的、已完成锁定的迭代都在迭代表里看
+  const { issues, subIssues } = useMemo(() => {
+    const split = splitSubIssues(allIssues);
+    return { ...split, issues: split.issues.filter((issue) => !issue.feature_id || issue.iteration_status === "active") };
+  }, [allIssues]);
   const [view, setViewState] = useState(() => loadIssueView(project.id));
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [displayAnchor, setDisplayAnchor] = useState<HTMLElement | null>(null);

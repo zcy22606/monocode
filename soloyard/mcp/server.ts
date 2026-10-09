@@ -27,10 +27,12 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 多仓库项目（get_project 返回 repos）：建 issue 时用 repo 标上在哪个仓库做，用户 Start work 会直接在那个仓库开会话；跨仓库的需求建主 issue（不标 repo），按仓库拆子 issue。
 - 要用户自己处理的事（拍板、找人确认、讨论、要账号或权限）建 issue 时加标签 human：并行开工不会给它开 agent 会话。
 - 在工作树里做的 issue：做完把改动提交到当前分支（不合并、不推送）再改 in_review；用户验收通过时，应用把这个分支合进仓库主分支，依赖它的 issue 才能开工。
-- 给迭代里的功能建 issue 用 create_feature_issues（按功能编号，一个功能一个 issue），迭代表才会显示完成；create_issues 建的是不挂功能的 issue。
+- 给迭代里的功能建 issue 用 create_feature_issues（按功能编号，一个功能一个 issue），迭代表才会显示完成。
+- create_issues 建的顶层 issue 默认排进当前迭代（排在最前的进行中迭代；没有就自动建一个「未命名迭代」），用户明确说放到某个迭代才传 iteration。子任务跟着主任务走。
 - 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
-- 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。
-  开始 / 完成 / 删除迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
+- 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、update_iteration（改版本号 / 名称 / 目标、调先后）、
+  delete_iteration（只删空的）、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项），update_issue 的 iteration 把 issue 排进迭代。
+  开始 / 完成迭代、删掉有内容的迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
 - 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。`
 
 type Json = Record<string, any>
@@ -123,31 +125,43 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     run: ({ issue }) => repo.getIssue(db, repo.findIssueId(db, issue)),
   },
   {
-    name: 'create_issues', description: '批量新建 issue（可带验收标准、父 issue、前置、仓库）。多仓库项目里每个 issue 尽量标上在哪个仓库做；跨仓库的大需求建一个主 issue（不标仓库），按仓库拆成子 issue（parent），有先后的用 blocked_by。一次事务。',
-    inputSchema: { type: 'object', required: ['project', 'issues'], properties: { project: projectRef, issues: { type: 'array', items: newIssueSchema } } },
-    run: ({ project: ref, issues }) => {
+    name: 'create_issues', description: '批量新建 issue（可带验收标准、父 issue、前置、仓库）。顶层 issue 默认排进当前迭代，iteration 指定时放到那里；子任务跟着主任务走。多仓库项目里每个 issue 尽量标上在哪个仓库做；跨仓库的大需求建一个主 issue（不标仓库），按仓库拆成子 issue（parent），有先后的用 blocked_by。一次事务。',
+    inputSchema: { type: 'object', required: ['project', 'issues'], properties: {
+      project: projectRef, issues: { type: 'array', items: newIssueSchema },
+      iteration: str('顶层 issue 放到哪个迭代（版本号），或 pending 待定 / split 另立项。不传 = 当前迭代（没有就自动建「未命名迭代」）'),
+    } },
+    run: ({ project: ref, issues, iteration }) => {
       const pid = project(ref).id
-      const ids = tx(db, () => (issues as Json[]).map(({ parent, blocked_by, repo: repoRef, ...i }) => repo.createIssue(db, actor, pid, {
+      const target = iteration ? agentTarget(pid, iteration) : undefined
+      const ids = tx(db, () => (issues as Json[]).map(({ parent, blocked_by, repo: repoRef, ...i }) => iter.createIssueInIteration(db, actor, pid, {
         ...(i as repo.NewIssue),
         repo_path: resolveRepo(db, pid, repoRef as string | undefined),
         parent_id: parent != null ? repo.findIssueId(db, parent) : undefined,
         blocked_by: (blocked_by ?? []).map((b: unknown) => repo.findIssueId(db, b as string)),
-      })))
-      return repo.listIssues(db, { projectId: pid, includeSubIssues: true }).filter((i) => ids.includes(i.id)).map(({ id, ident, title }) => ({ id, ident, title }))
+      }, target)))
+      // 放到待定 / 另立项的不进 listIssues，按 id 逐个取
+      return ids.map((id) => { const { ident, title } = repo.getIssue(db, id)!; return { id, ident, title } })
     },
   },
   {
-    name: 'update_issue', description: '修改 issue（状态、标题、描述、优先级、标签、仓库）。带 expected_version 时版本不符会拒绝并返回最新值。做完改 in_review，不要改 done。',
+    name: 'update_issue', description: '修改 issue（状态、标题、描述、优先级、标签、仓库、所在迭代）。带 expected_version 时版本不符会拒绝并返回最新值。做完改 in_review，不要改 done。',
     inputSchema: { type: 'object', required: ['issue'], properties: {
       issue: issueRef, expected_version: { type: 'number' }, status: STATUS, title: str('标题'), body_md: str('描述'),
       priority: { type: 'number' }, labels: { type: 'array', items: { type: 'string' } },
       repo: str('改在哪个成员仓库做（仓库名或路径）；传空字符串 = 改回项目根目录'),
+      iteration: str('排进哪个迭代（版本号），或 pending 待定 / split 另立项。issue 跟着功能走：挪它的功能；没挂功能的用标题建一个功能挂上'),
     } },
-    run: ({ issue, expected_version, repo: repoRef, ...patch }) => {
+    run: ({ issue, expected_version, repo: repoRef, iteration, ...patch }) => {
       if (patch.status === 'done') throw new Error('不能由 agent 改成 done：做完请改成 in_review 并评论，验收由用户来做')
       const id = repo.findIssueId(db, issue)
-      if (repoRef !== undefined) patch.repo_path = resolveRepo(db, repo.getRow(db, 'issues', id)!.project_id, repoRef as string)
-      return repo.updateIssue(db, actor, id, patch, expected_version)
+      const pid = repo.getRow(db, 'issues', id)!.project_id
+      if (repoRef !== undefined) patch.repo_path = resolveRepo(db, pid, repoRef as string)
+      return tx(db, () => {
+        const row = repo.updateIssue(db, actor, id, patch, expected_version)
+        if (iteration === undefined) return row
+        iter.parkIssue(db, actor, id, agentTarget(pid, iteration))
+        return repo.getRow(db, 'issues', id)
+      })
     },
   },
   {
@@ -186,6 +200,32 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
       const pid = project(ref).id
       const id = iter.createIteration(db, actor, pid, { tag, name, goal, target_date }, before ? iterationByTag(pid, before).id : null)
       return { id, tag }
+    },
+  },
+  {
+    name: 'update_iteration', description: '改迭代的版本号、名称、目标、目标日期，或用 before 调先后（排到某个版本号前面）。只传要改的。',
+    inputSchema: { type: 'object', required: ['project', 'iteration'], properties: {
+      project: projectRef, iteration: str('要改的迭代的版本号'), tag: str('新版本号'), name: str('名称'), goal: str('目标'),
+      target_date: str('目标日期 YYYY-MM-DD，空字符串 = 清掉'), before: str('排到这个版本号前面'),
+    } },
+    run: ({ project: ref, iteration, before, ...patch }) => {
+      const pid = project(ref).id
+      const it = iterationByTag(pid, iteration)
+      return tx(db, () => {
+        if (before) iter.moveIteration(db, actor, it.id, iterationByTag(pid, before).id)
+        return iter.updateIteration(db, actor, it.id, patch)
+      })
+    },
+  },
+  {
+    name: 'delete_iteration', description: '删除一个空迭代（没有功能也没有 issue）。有内容的要先用 move_features 挪走，或者让用户在应用里删。',
+    inputSchema: { type: 'object', required: ['project', 'iteration'], properties: { project: projectRef, iteration: str('版本号') } },
+    run: ({ project: ref, iteration }) => {
+      const it = iterationByTag(project(ref).id, iteration)
+      const used = db.prepare('SELECT (SELECT COUNT(*) FROM soloyard_features WHERE iteration_id = ?) + (SELECT COUNT(*) FROM soloyard_issues WHERE iteration_id = ?) AS n').get(it.id, it.id) as { n: number }
+      if (used.n) throw new Error(`${it.tag} 里还有 ${used.n} 个功能 / issue，agent 只能删空迭代：先挪走，或让用户在应用里删`)
+      iter.deleteIteration(db, actor, it.id, 'pending')
+      return { deleted: it.tag }
     },
   },
   {

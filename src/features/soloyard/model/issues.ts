@@ -23,6 +23,10 @@ export type Issue = {
   /** 在哪个成员仓库做（路径）；null = 项目根目录。 */
   repo_path: string | null;
   parent_id: number | null;
+  /** 挂的功能（迭代表的一行）；null = 没挂。 */
+  feature_id?: number | null;
+  /** 功能所在迭代的状态（planned / active / done）；没挂功能是 null。 */
+  iteration_status?: string | null;
 };
 
 export type IssueDetail = Omit<Issue, "sessions" | "children"> & {

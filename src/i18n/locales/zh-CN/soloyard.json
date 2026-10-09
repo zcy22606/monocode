@@ -66,6 +66,7 @@
     "filterMenu": "筛选 issue",
     "changeStatus": "修改状态",
     "changePriority": "修改优先级",
+    "changeIteration": "移到迭代",
     "layout": {
       "list": "列表",
       "board": "看板"
@@ -105,9 +106,8 @@
     "titleAria": "标题",
     "startWork": "开工",
     "startWorkHint": "开一个新会话，把这个 issue 填进输入框",
-    "park": "移到功能表",
-    "parkHint": "先不排期：收进迭代页的「待定」，不在 Issues 页显示",
-    "parked": "已收进功能表，不在 Issues 页显示。在迭代页把功能排进某个迭代，它就会回来。",
+    "noIteration": "未排迭代",
+    "parked": "不在进行中的迭代里，不在 Issues 页显示；所在迭代开始后会回来。",
     "review": "等你验收",
     "accept": "通过",
     "sendBack": "打回",

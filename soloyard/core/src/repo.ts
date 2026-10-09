@@ -222,6 +222,7 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
     SELECT i.*, p.key || '-' || i.number AS ident,
       (SELECT COUNT(*) FROM soloyard_issues c WHERE c.parent_id = i.id) AS children,
       (SELECT COUNT(*) FROM soloyard_issues c WHERE c.parent_id = i.id AND c.status = 'done') AS children_done,
+      (SELECT it.status FROM soloyard_features f JOIN soloyard_iterations it ON it.id = f.iteration_id WHERE f.id = i.feature_id) AS iteration_status,
       (SELECT COUNT(*) FROM soloyard_session_links l WHERE l.kind = 'issue' AND l.target = CAST(i.id AS TEXT)
         ${hasBaseSessions(db) ? 'AND l.session_id IN (SELECT id FROM sessions)' : ''}) AS sessions
     FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id

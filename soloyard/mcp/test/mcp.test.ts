@@ -118,6 +118,50 @@ test('MCP：迭代表、建迭代、建功能、挪功能；不许 agent 标「�
   }
 })
 
+test('MCP：改迭代（版本号 / 名称 / 先后）、只删空迭代、update_issue 把 issue 排进迭代', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app') })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    await s.tool('create_iteration', { project: 'APP', tag: 'v0.1' })
+    await s.tool('create_iteration', { project: 'APP', tag: 'v0.2' })
+    await s.tool('create_features', { project: 'APP', to: 'v0.1', features: [{ name: '登录' }] })
+    // 旧的 v0.1 改成 v0.2 前先删掉空的 v0.2，再新建 v0.1 排到它前面
+    assert.match((await s.tool('update_iteration', { project: 'APP', iteration: 'v0.1', tag: 'v0.2' })).error.error, /已经有了/)
+    assert.match((await s.tool('delete_iteration', { project: 'APP', iteration: 'v0.1' })).error.error, /只能删空迭代/)
+    assert.equal((await s.tool('delete_iteration', { project: 'APP', iteration: 'v0.2' })).data.deleted, 'v0.2')
+    assert.equal((await s.tool('update_iteration', { project: 'APP', iteration: 'v0.1', tag: 'v0.2', name: '旧骨架' })).data.name, '旧骨架')
+    await s.tool('create_iteration', { project: 'APP', tag: 'v0.1' })
+    await s.tool('update_iteration', { project: 'APP', iteration: 'v0.1', before: 'v0.2' })
+    const plan = (await s.tool('get_iteration_plan', { project: 'APP' })).data
+    assert.deepEqual(plan.iterations.map((i: any) => [i.tag, i.features]), [['v0.1', 0], ['v0.2', 1]])
+
+    // 没挂功能的 issue：排进迭代时用标题建功能挂上；再排一次只挪功能
+    const [loose] = (await s.tool('create_issues', { project: 'APP', issues: [{ title: '修崩溃', priority: 2 }] })).data
+    assert.equal((await s.tool('update_issue', { issue: loose.ident, iteration: 'v0.1', priority: 3 })).data.priority, 3)
+    assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v0.1' })).data.map((f: any) => [f.name, f.issue]), [['修崩溃', `${loose.ident} (backlog)`]])
+    await s.tool('update_issue', { issue: loose.ident, iteration: 'v0.2' })
+    assert.deepEqual((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v0.2' })).data.map((f: any) => f.name), ['登录', '修崩溃'])
+    assert.match((await s.tool('update_issue', { issue: loose.ident, iteration: 'cut' })).error.error, /不做/)
+
+    // create_issues：上面建「修崩溃」时没有进行中的迭代，自动建了「未命名迭代」；之后默认都进它，传 iteration 放到指定的
+    const unnamed = (await s.tool('get_iteration_plan', { project: 'APP' })).data.iterations.find((i: any) => i.name === '未命名迭代')
+    assert.deepEqual([unnamed.tag, unnamed.status], ['v0.3', 'active'])
+    const [cur] = (await s.tool('create_issues', { project: 'APP', issues: [{ title: '默认' }] })).data
+    const [later] = (await s.tool('create_issues', { project: 'APP', iteration: 'v0.1', issues: [{ title: '指定' }] })).data
+    const [parked] = (await s.tool('create_issues', { project: 'APP', iteration: 'pending', issues: [{ title: '待定的' }] })).data
+    assert.equal(parked.title, '待定的', '放到待定的也返回')
+    assert.ok((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v0.3' })).data.some((f: any) => f.issue?.startsWith(cur.ident)))
+    assert.ok((await s.tool('get_iteration_plan', { project: 'APP', iteration: 'v0.1' })).data.some((f: any) => f.issue?.startsWith(later.ident)))
+  } finally {
+    s.close()
+  }
+})
+
 test('MCP：按功能编号建 issue，迭代表显示它的状态；已有就返回现有的；编号不存在报错', async () => {
   const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
   const dbPath = join(dir, 'monocode.db')

@@ -9,6 +9,7 @@ import { startWorkPrompt } from "../../model/startWork";
 import { acceptIssue, type IssueBranch } from "../../model/acceptIssue";
 import { priorityLabel, repoName, statusLabel, type IssueDetail as Detail } from "../../model/issues";
 import { useProjectRepos } from "../../model/repos";
+import { BUCKETS, bucketLabel, decodeTarget, encodeTarget, iterationLabel, targetOf, type IterationPlan } from "../../model/iterations";
 import { openProjectView } from "../../model/projectViews";
 import { PriorityIcon, StatusIcon, priorityMenuItems, statusMenuItems } from "./IssueIcons";
 import { ParallelStartDialog } from "./ParallelStartDialog";
@@ -17,7 +18,7 @@ import { isComposing } from "../keys";
 
 const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-type Picker = { anchor: HTMLElement; kind: "status" | "priority" | "repo" };
+type Picker = { anchor: HTMLElement; kind: "status" | "priority" | "repo" | "iteration" };
 
 /** Issue 详情标签：标题、属性、描述、验收清单、关联会话、评论。 */
 export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) {
@@ -34,10 +35,16 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const [parallel, setParallel] = useState(false);
   const { data: project } = useProjectForPath(cwd);
   const repos = useProjectRepos(cwd)?.repos ?? [];
+  // 排在哪：issue 跟着功能走，功能在某个迭代或待定 / 另立项 / 不做。子任务跟着主任务，不单独排
+  const { data: plan } = useSoloyard<IterationPlan>("iterationPlan", issue && !issue.parent ? issue.project_id : undefined);
   if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
   if (issue === null) return <p className="p-6 text-[13px] text-content/50">{t("detail.deleted")}</p>;
   if (!issue) return null;
   const update = (patch: Record<string, unknown>) => mutateSoloyard("updateIssue", issue.id, patch);
+  const feature = plan?.features.find((f) => f.issue_id === issue.id);
+  const placedIn = feature ? targetOf(feature) : undefined;
+  const placedIteration = plan?.iterations.find((i) => i.id === placedIn);
+  const placeLabel = placedIteration ? placedIteration.tag : typeof placedIn === "string" ? bucketLabel(placedIn) : t("detail.noIteration");
   // 开工：先生成会话 id 挂到 issue 上，再请底座开新会话、把开工提示词填进输入框。
   // 不在这里改状态——用户可能只是看看就关了；真正开工后 agent 按提示词经 MCP 改成 in_progress。
   // 会话第一次发送后才存进库，没发出去的关联在列表里不显示。
@@ -124,13 +131,13 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               </PropertyButton>
             ) : null}
             <Labels labels={issue.labels} onChange={(labels) => update({ labels })} />
-            {!issue.parked ? (
-              <button type="button" onClick={() => void mutateSoloyard("parkIssue", issue.id)} title={t("detail.parkHint")} className="ml-auto h-7 rounded-md px-2 text-[12px] text-content/50 hover:bg-content/10 hover:text-content">
-                {t("detail.park")}
-              </button>
+            {plan ? (
+              <PropertyButton onClick={(el) => setPicker({ anchor: el, kind: "iteration" })}>
+                <span title={placedIteration ? iterationLabel(placedIteration) : undefined}>{placeLabel}</span>
+              </PropertyButton>
             ) : null}
           </div>
-          {issue.parked ? <p className="text-[12px] text-content/50">{t("detail.parked")}</p> : null}
+          {feature && placedIteration?.status !== "active" ? <p className="text-[12px] text-content/50">{t("detail.parked")}</p> : null}
         </header>
 
         {issue.status === "in_review" ? (
@@ -301,15 +308,25 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               ? statusMenuItems(issue.status)
               : picker.kind === "priority"
                 ? priorityMenuItems(issue.priority)
-                : [
+                : picker.kind === "iteration"
+                  ? [
+                      // 已完成的迭代锁定，进不去
+                      ...(plan?.iterations ?? [])
+                        .filter((i) => i.status !== "done")
+                        .map((i) => ({ kind: "item" as const, id: encodeTarget(i.id), label: iterationLabel(i), checked: placedIn === i.id })),
+                      { kind: "sep" as const },
+                      ...BUCKETS.map((b) => ({ kind: "item" as const, id: b, label: bucketLabel(b), checked: placedIn === b })),
+                    ]
+                  : [
                     { kind: "item", id: "", label: t("field.noRepo"), checked: !issue.repo_path },
                     ...repos.map((r) => ({ kind: "item" as const, id: r.path, label: r.name, checked: issue.repo_path === r.path })),
                   ]
           }
-          ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : picker.kind === "priority" ? t("issues.changePriority") : t("issues.changeRepo")}
-          width={picker.kind === "repo" ? 220 : 180}
+          ariaLabel={picker.kind === "status" ? t("issues.changeStatus") : picker.kind === "priority" ? t("issues.changePriority") : picker.kind === "iteration" ? t("issues.changeIteration") : t("issues.changeRepo")}
+          width={picker.kind === "repo" || picker.kind === "iteration" ? 220 : 180}
           onPick={(id) => {
             setPicker(null);
+            if (picker.kind === "iteration") return void mutateSoloyard("parkIssue", issue.id, decodeTarget(id));
             void update(picker.kind === "status" ? { status: id } : picker.kind === "priority" ? { priority: Number(id) } : { repo_path: id || null });
           }}
           onClose={() => setPicker(null)}

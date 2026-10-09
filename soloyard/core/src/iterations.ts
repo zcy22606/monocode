@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { DB } from './db.ts'
 import { tx } from './db.ts'
-import { createIssue, getRow, insert, remove, revertChange, update, type Actor, type Row } from './repo.ts'
+import { createIssue, getRow, insert, remove, revertChange, update, type Actor, type NewIssue, type Row } from './repo.ts'
 
 /**
  * 迭代：一张带版本号的规划表。每个功能要么在某个迭代里，要么在 bucket（待定 / 另立项 / 不做）。
@@ -258,19 +258,49 @@ export function createFeatureIssue(db: DB, actor: Actor, featureId: number) {
 }
 
 /**
- * 把 issue 收回功能表的「待定」：有功能就挪功能，没有就用 issue 标题建一个功能挂上。
+ * 当前迭代 = 排在最前的进行中迭代。一个都没有就建一个「未命名迭代」（版本号取第一个空着的 v0.N），
+ * 排在没完成的迭代最前面并直接开始。返回 id。
+ */
+export function currentIteration(db: DB, actor: Actor, projectId: number): number {
+  return tx(db, () => {
+    const list = iterationsOf(db, projectId)
+    const active = list.find((i) => i.status === 'active')
+    if (active) return active.id as number
+    let n = 1
+    while (list.some((i) => norm(i.tag) === `0.${n}`)) n++
+    const id = createIteration(db, actor, projectId, { tag: `v0.${n}`, name: '未命名迭代' }, list.find((i) => i.status !== 'done')?.id ?? null)
+    update(db, actor, 'iterations', id, { status: 'active', started_at: now() })
+    return id
+  })
+}
+
+/**
+ * 手动建 issue（界面行内新建、MCP create_issues）：顶层 issue 默认排进当前迭代，target 明确给了就放那里；
+ * 迭代表按功能显示，所以先用标题建一个功能，issue 挂在它上面。子任务跟着主任务走，不单独排。返回 issue id。
+ */
+export function createIssueInIteration(db: DB, actor: Actor, projectId: number, input: NewIssue, target?: Target) {
+  return tx(db, () => {
+    if (input.parent_id || input.feature_id) return createIssue(db, actor, projectId, input)
+    const to = target ?? currentIteration(db, actor, projectId)
+    const featureId = createFeature(db, actor, projectId, { name: input.title }, to)
+    return createIssue(db, actor, projectId, { ...input, feature_id: featureId, iteration_id: isBucket(to) ? undefined : to })
+  })
+}
+
+/**
+ * 把 issue 收回功能表的「待定」（或排进 target 迭代）：有功能就挪功能，没有就用 issue 标题建一个功能挂上。
  * 功能不在迭代里时 issue 不进 Issues 列表；以后把功能排进迭代，issue 连同历史一起回来。返回功能 id。
  */
-export function parkIssue(db: DB, actor: Actor, issueId: number) {
+export function parkIssue(db: DB, actor: Actor, issueId: number, target: Target = 'pending') {
   return tx(db, () => {
     const issue = getRow(db, 'issues', issueId)
     if (!issue) throw new Error(`找不到 issue ${issueId}`)
     if (issue.feature_id) {
-      moveFeatures(db, actor, [issue.feature_id], 'pending')
+      moveFeatures(db, actor, [issue.feature_id], target)
       return issue.feature_id as number
     }
-    const featureId = createFeature(db, actor, issue.project_id, { name: issue.title }, 'pending')
-    update(db, actor, 'issues', issueId, { feature_id: featureId, iteration_id: null })
+    const featureId = createFeature(db, actor, issue.project_id, { name: issue.title }, target)
+    update(db, actor, 'issues', issueId, { feature_id: featureId, iteration_id: isBucket(target) ? null : target })
     return featureId
   })
 }

@@ -66,6 +66,7 @@
     "filterMenu": "Filter issues",
     "changeStatus": "Change status",
     "changePriority": "Change priority",
+    "changeIteration": "Move to iteration",
     "layout": {
       "list": "List",
       "board": "Board"
@@ -109,9 +110,8 @@
     "titleAria": "Title",
     "startWork": "Start work",
     "startWorkHint": "Open a new session with this issue in the composer",
-    "park": "Move to feature list",
-    "parkHint": "Not scheduled yet: move it to Pending on the Iterations page and hide it from Issues",
-    "parked": "Parked in the feature list and hidden from Issues. Move its feature into an iteration to bring it back.",
+    "noIteration": "No iteration",
+    "parked": "Not in an active iteration, so it's hidden from Issues. It comes back when its iteration starts.",
     "review": "Waiting for your review",
     "accept": "Accept",
     "sendBack": "Send back",
