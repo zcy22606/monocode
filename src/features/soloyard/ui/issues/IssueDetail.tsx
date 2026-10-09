@@ -137,7 +137,7 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               </PropertyButton>
             ) : null}
           </div>
-          {feature && placedIteration?.status !== "active" ? <p className="text-[12px] text-content/50">{t("detail.parked")}</p> : null}
+          {feature && !placedIteration ? <p className="text-[12px] text-content/50">{t("detail.parked")}</p> : null}
         </header>
 
         {issue.status === "in_review" ? (

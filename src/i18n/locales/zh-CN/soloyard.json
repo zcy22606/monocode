@@ -53,7 +53,10 @@
     "allIssues": "全部 issue",
     "title": "标题",
     "repo": "仓库",
-    "noRepo": "项目根目录"
+    "noRepo": "项目根目录",
+    "iteration": "迭代",
+    "currentIteration": "当前迭代",
+    "noIteration": "未排迭代"
   },
   "issues": {
     "search": "搜索 issue",
@@ -107,7 +110,7 @@
     "startWork": "开工",
     "startWorkHint": "开一个新会话，把这个 issue 填进输入框",
     "noIteration": "未排迭代",
-    "parked": "不在进行中的迭代里，不在 Issues 页显示；所在迭代开始后会回来。",
+    "parked": "不在任何迭代里，不在 Issues 页显示；排进迭代后会回来。",
     "review": "等你验收",
     "accept": "通过",
     "sendBack": "打回",

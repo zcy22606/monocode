@@ -8,7 +8,7 @@
 import { t } from "../../../i18n";
 import { PRIORITIES, STATUSES, isCompleted, priorityLabel, repoName, statusLabel, type Issue } from "./issues";
 
-export type FieldId = "status" | "priority" | "labels" | "repo" | "created" | "updated" | "id" | "sessions";
+export type FieldId = "status" | "priority" | "iteration" | "labels" | "repo" | "created" | "updated" | "id" | "sessions";
 
 export type FieldOption = { key: string; label: string };
 
@@ -43,6 +43,17 @@ const repoOptions = (issues: Issue[]) => [
     .map((path) => ({ key: path, label: repoName(path) })),
   { key: NO_REPO, label: t("soloyard:field.noRepo") },
 ];
+const NO_ITERATION = "__none__";
+/** 筛选专用：当前迭代（排在最前的进行中迭代）。存这个而不是迭代 id，当前迭代换了筛选跟着换。 */
+export const CURRENT_ITERATION = "__current__";
+/** 出现过的迭代（按迭代表的先后）+「未排迭代」。 */
+const iterationOptions = (issues: Issue[]) => [
+  ...[...new Map(issues.flatMap((i) => (i.iteration_id ? [[i.iteration_id, i] as const] : []))).values()]
+    .sort((a, b) => (a.iteration_sort ?? 0) - (b.iteration_sort ?? 0))
+    .map((i) => ({ key: String(i.iteration_id), label: iterationText(i) })),
+  { key: NO_ITERATION, label: t("soloyard:field.noIteration") },
+];
+export const iterationText = (i: Issue) => [i.iteration_tag, i.iteration_name].filter(Boolean).join(" · ");
 const statusOptions = () => STATUSES.map((s) => ({ key: s, label: statusLabel(s) }));
 const priorityOptions = () => PRIORITIES.map((p) => ({ key: String(p), label: priorityLabel(p) }));
 const byPriority = (p: number) => (p === 0 ? 9 : p); // 无优先级排最后
@@ -75,6 +86,24 @@ export const ISSUE_FIELDS: Record<FieldId, IssueField> = {
     filter: {
       options: priorityOptions,
       matches: (issue, values) => values.includes(String(issue.priority)),
+    },
+    display: true,
+  },
+  // 迭代（版本号）：拖到某个迭代 = 把 issue 的功能挪过去（已完成的迭代锁定，挪不进也挪不出）
+  iteration: {
+    id: "iteration",
+    label: () => t("soloyard:field.iteration"),
+    group: {
+      options: iterationOptions,
+      keysOf: (issue) => [issue.iteration_id ? String(issue.iteration_id) : NO_ITERATION],
+      patchFor: (key) => (key === NO_ITERATION ? null : { iteration_id: Number(key) }),
+    },
+    compare: (a, b) => (a.iteration_sort ?? Infinity) - (b.iteration_sort ?? Infinity),
+    filter: {
+      options: (issues) => [{ key: CURRENT_ITERATION, label: t("soloyard:field.currentIteration") }, ...iterationOptions(issues)],
+      matches: (issue, values) =>
+        (values.includes(CURRENT_ITERATION) && !!issue.iteration_current) ||
+        values.includes(issue.iteration_id ? String(issue.iteration_id) : NO_ITERATION),
     },
     display: true,
   },
@@ -146,6 +175,8 @@ export type IssueViewConfig = {
   showEmptyGroups: boolean;
   properties: FieldId[];
   filters: IssueViewFilter[];
+  /** 配置的版本：旧版本存下来的视图读的时候补上新的默认筛选（只补一次）。 */
+  version: number;
 };
 
 export const DEFAULT_VIEW: IssueViewConfig = {
@@ -155,8 +186,10 @@ export const DEFAULT_VIEW: IssueViewConfig = {
   orderDesc: false,
   showCompleted: true,
   showEmptyGroups: false,
-  properties: ["id", "status", "priority", "repo", "labels", "created"],
-  filters: [],
+  properties: ["id", "status", "priority", "iteration", "repo", "labels", "created"],
+  // 默认只看当前迭代；要看别的迭代或全部，改 / 清掉这个筛选
+  filters: [{ field: "iteration", values: [CURRENT_ITERATION] }],
+  version: 2,
 };
 
 export type IssueGroup = { key: string; label: string; issues: Issue[] };
@@ -210,8 +243,15 @@ export function loadIssueView(projectId: number): IssueViewConfig {
       ...saved,
       groupBy: saved.groupBy === null || known(saved.groupBy) ? (saved.groupBy ?? null) : DEFAULT_VIEW.groupBy,
       orderBy: known(saved.orderBy) ? saved.orderBy : DEFAULT_VIEW.orderBy,
-      properties: (saved.properties ?? DEFAULT_VIEW.properties).filter(known),
-      filters: (saved.filters ?? []).filter((f) => known(f.field)),
+      properties: [
+        ...(saved.properties ?? DEFAULT_VIEW.properties).filter(known),
+        ...(saved.version === DEFAULT_VIEW.version || !saved.properties || saved.properties.includes("iteration") ? [] : ["iteration" as const]),
+      ],
+      filters:
+        saved.version === DEFAULT_VIEW.version
+          ? (saved.filters ?? []).filter((f) => known(f.field))
+          : [...DEFAULT_VIEW.filters, ...(saved.filters ?? []).filter((f) => known(f.field) && f.field !== "iteration")],
+      version: DEFAULT_VIEW.version,
     };
   } catch {
     return DEFAULT_VIEW;

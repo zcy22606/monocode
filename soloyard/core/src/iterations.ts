@@ -275,13 +275,13 @@ export function currentIteration(db: DB, actor: Actor, projectId: number): numbe
 }
 
 /**
- * 手动建 issue（界面行内新建、MCP create_issues）：顶层 issue 默认排进当前迭代，target 明确给了就放那里；
+ * 手动建 issue（界面行内新建、MCP create_issues）：顶层 issue 默认排进当前迭代，target / iteration_id 明确给了就放那里；
  * 迭代表按功能显示，所以先用标题建一个功能，issue 挂在它上面。子任务跟着主任务走，不单独排。返回 issue id。
  */
 export function createIssueInIteration(db: DB, actor: Actor, projectId: number, input: NewIssue, target?: Target) {
   return tx(db, () => {
     if (input.parent_id || input.feature_id) return createIssue(db, actor, projectId, input)
-    const to = target ?? currentIteration(db, actor, projectId)
+    const to = target ?? input.iteration_id ?? currentIteration(db, actor, projectId)
     const featureId = createFeature(db, actor, projectId, { name: input.title }, to)
     return createIssue(db, actor, projectId, { ...input, feature_id: featureId, iteration_id: isBucket(to) ? undefined : to })
   })

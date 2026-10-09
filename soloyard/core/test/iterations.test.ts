@@ -182,6 +182,15 @@ test('手动建的 issue 默认排进当前迭代；没有进行中的就建「�
   // 明确指定
   const v01 = plan(db, p.id).iterations.find((i) => i.tag === 'v0.1')!.id
   assert.equal(iterOf(it.createIssueInIteration(db, 'user', p.id, { title: '以后做' }, v01))!.tag, 'v0.1')
+  // 界面在某个迭代分组里新建：iteration_id 带在 issue 上
+  const inGroup = it.createIssueInIteration(db, 'user', p.id, { title: '分组里建', iteration_id: v01 })
+  assert.equal(plan(db, p.id).features.find((f) => f.id === r.getIssue(db, inGroup)!.feature_id)!.iteration_id, v01)
+  // 列表带上迭代：以功能所在的为准，当前迭代 = 排在最前的进行中迭代
+  const row = (id: number) => r.listIssues(db, { projectId: p.id }).find((i) => i.id === id)!
+  assert.deepEqual([row(second).iteration_tag, row(second).iteration_current], ['v0.2', true])
+  assert.deepEqual([row(inGroup).iteration_id, row(inGroup).iteration_tag, row(inGroup).iteration_current], [v01, 'v0.1', false])
+  db.prepare('UPDATE soloyard_features SET iteration_id = ? WHERE id = ?').run(v01, r.getIssue(db, second)!.feature_id)
+  assert.equal(row(second).iteration_tag, 'v0.1', 'issue 上的 iteration_id 旧了也按功能算')
   // 子任务跟着主任务走
   const child = it.createIssueInIteration(db, 'user', p.id, { title: '子任务', parent_id: first })
   assert.equal(r.getIssue(db, child)!.feature_id, null)

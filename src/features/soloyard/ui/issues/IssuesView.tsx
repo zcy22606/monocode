@@ -14,6 +14,7 @@ import {
   displayableFields,
   filterableFields,
   groupableFields,
+  iterationText,
   loadIssueView,
   saveIssueView,
   sortableFields,
@@ -36,12 +37,8 @@ type Mods = Pick<MouseEvent, "shiftKey" | "metaKey" | "ctrlKey">;
 export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: string }) {
   const { t } = useTranslation("soloyard");
   const { data: allIssues = [], error } = useSoloyard<Issue[]>("listIssues", { projectId: project.id, includeSubIssues: true });
-  // 子任务不单独占一行：折叠在主任务下面（主任务被筛掉时，子任务也不单独出现）。
-  // 只列进行中迭代里的（没挂功能的也列）：还没开始的、已完成锁定的迭代都在迭代表里看
-  const { issues, subIssues } = useMemo(() => {
-    const split = splitSubIssues(allIssues);
-    return { ...split, issues: split.issues.filter((issue) => !issue.feature_id || issue.iteration_status === "active") };
-  }, [allIssues]);
+  // 子任务不单独占一行：折叠在主任务下面（主任务被筛掉时，子任务也不单独出现）。看哪个迭代靠「迭代」筛选，默认当前迭代
+  const { issues, subIssues } = useMemo(() => splitSubIssues(allIssues), [allIssues]);
   const [view, setViewState] = useState(() => loadIssueView(project.id));
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [displayAnchor, setDisplayAnchor] = useState<HTMLElement | null>(null);
@@ -70,7 +67,10 @@ export function IssuesView({ project, cwd }: { project: SoloyardProject; cwd: st
   const move = (issueId: number, groupKey: string) => {
     const issue = issues.find((entry) => entry.id === issueId);
     const patch = issue && groupField?.patchFor?.(groupKey, issue);
-    if (patch) void mutateSoloyard("updateIssue", issueId, patch);
+    if (!patch) return;
+    // 换迭代是挪 issue 的功能，不是改 issue 的一个字段
+    const done = "iteration_id" in patch ? mutateSoloyard("parkIssue", issueId, patch.iteration_id) : mutateSoloyard("updateIssue", issueId, patch);
+    done.catch((e) => setNotice({ kind: "error", message: errorText(e) }));
   };
   const toggleFilter = (field: FieldId, value: string) => {
     const current = view.filters.find((f) => f.field === field)?.values ?? [];
@@ -485,7 +485,7 @@ function PropertyButton({ issue, kind, onClick, className = "" }: { issue: Issue
 
 /** 行 / 卡片上的属性小标签，按视图配置显示。 */
 /** 列表的列宽：表头和每行共用，才能对齐。 */
-const COL = { priority: "w-12", id: "w-16", status: "w-12", repo: "w-36", labels: "w-40", sessions: "w-12", date: "w-14" };
+const COL = { priority: "w-12", id: "w-16", status: "w-12", iteration: "w-14", repo: "w-36", labels: "w-40", sessions: "w-12", date: "w-14" };
 
 function Properties({ issue, view, list = false }: { issue: Issue; view: IssueViewConfig; list?: boolean }) {
   const { t, i18n } = useTranslation("soloyard");
@@ -493,6 +493,11 @@ function Properties({ issue, view, list = false }: { issue: Issue; view: IssueVi
   if (list) {
     return (
       <>
+        {show("iteration") ? (
+          <span className={`${COL.iteration} shrink-0 truncate text-right text-[11.5px] text-content/55`} title={iterationText(issue)}>
+            {issue.iteration_tag}
+          </span>
+        ) : null}
         {show("repo") ? (
           <span className={`${COL.repo} flex shrink-0 items-center justify-end gap-1 truncate text-[11.5px] text-content/55`} title={issue.repo_path ?? undefined}>
             {issue.repo_path ? <><GitBranch className="size-3 shrink-0 opacity-70" /><span className="truncate">{repoName(issue.repo_path)}</span></> : null}
@@ -517,6 +522,11 @@ function Properties({ issue, view, list = false }: { issue: Issue; view: IssueVi
   }
   return (
     <>
+      {show("iteration") && issue.iteration_tag ? (
+        <span className="h-5 shrink-0 rounded-md bg-content/5 px-1.5 text-[11px] leading-5 text-content/60" title={iterationText(issue)}>
+          {issue.iteration_tag}
+        </span>
+      ) : null}
       {show("repo") && issue.repo_path ? (
         <span className="flex shrink-0 items-center gap-1 text-[11px] text-content/55" title={issue.repo_path}>
           <GitBranch className="size-3 opacity-70" />
@@ -564,6 +574,7 @@ function ListHeader({ view, allSelected, someSelected, onSelectAll }: { view: Is
       {cell("id", COL.id)}
       {cell("status", COL.status)}
       <span className="min-w-0 flex-1 truncate">{t("field.title")}</span>
+      {cell("iteration", COL.iteration, true)}
       {cell("repo", COL.repo, true)}
       {cell("labels", COL.labels, true)}
       {cell("sessions", COL.sessions, true)}

@@ -222,12 +222,18 @@ export function listIssues(db: DB, f: IssueFilter = {}) {
     SELECT i.*, p.key || '-' || i.number AS ident,
       (SELECT COUNT(*) FROM soloyard_issues c WHERE c.parent_id = i.id) AS children,
       (SELECT COUNT(*) FROM soloyard_issues c WHERE c.parent_id = i.id AND c.status = 'done') AS children_done,
-      (SELECT it.status FROM soloyard_features f JOIN soloyard_iterations it ON it.id = f.iteration_id WHERE f.id = i.feature_id) AS iteration_status,
+      it.id AS iteration_ref, it.tag AS iteration_tag, it.name AS iteration_name, it.status AS iteration_status, it.sort AS iteration_sort,
+      it.id = (SELECT c.id FROM soloyard_iterations c WHERE c.project_id = i.project_id AND c.status = 'active' ORDER BY c.sort, c.id LIMIT 1) AS iteration_current,
       (SELECT COUNT(*) FROM soloyard_session_links l WHERE l.kind = 'issue' AND l.target = CAST(i.id AS TEXT)
         ${hasBaseSessions(db) ? 'AND l.session_id IN (SELECT id FROM sessions)' : ''}) AS sessions
     FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id
+      LEFT JOIN soloyard_features f ON f.id = i.feature_id
+      LEFT JOIN soloyard_iterations it ON it.id = COALESCE(f.iteration_id, i.iteration_id)
     WHERE ${where.join(' AND ')} ORDER BY i.sort_key, i.id`).all(...args) as Row[]
-  return rows.map((r) => ({ ...r, labels: JSON.parse(r.labels) as string[] }))
+  // 迭代以功能所在的为准（导入功能全景只挪功能，issue 上的 iteration_id 可能是旧的）；没挂功能的才看 issue 自己的
+  return rows.map(({ iteration_ref, iteration_current, ...r }) => ({
+    ...r, iteration_id: iteration_ref ?? null, iteration_current: !!iteration_current, labels: JSON.parse(r.labels) as string[],
+  }))
 }
 
 /** 往项目里加一份文档（头脑风暴提升为项目时，把工作文件夹里的 markdown 收进来）。 */

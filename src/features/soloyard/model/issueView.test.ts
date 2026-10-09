@@ -1,12 +1,13 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from "vitest";
 import type { Issue } from "./issues";
-import { DEFAULT_VIEW, ISSUE_FIELDS, applyView, loadIssueView, matchesIssueQuery, saveIssueView } from "./issueView";
+import { CURRENT_ITERATION, DEFAULT_VIEW, ISSUE_FIELDS, applyView, loadIssueView, matchesIssueQuery, saveIssueView } from "./issueView";
 
 const issue = (number: number, patch: Partial<Issue>): Issue => ({
   id: number, project_id: 1, number, ident: `APP-${number}`, title: `t${number}`, body_md: "", status: "todo",
   priority: 0, labels: [], created_at: `2026-10-0${number}`, updated_at: `2026-10-0${number}`, completed_at: null,
-  version: 1, children: 0, children_done: 0, sessions: 0, repo_path: null, ...patch,
+  // 默认视图只看当前迭代
+  version: 1, children: 0, children_done: 0, sessions: 0, repo_path: null, iteration_current: true, ...patch,
 });
 
 const issues = [
@@ -69,7 +70,7 @@ describe("issue view persistence", () => {
     const view = loadIssueView(7);
     expect(view.layout).toBe("board");
     expect(view.groupBy).toBe("status");
-    expect(view.properties).toEqual(["id"]);
+    expect(view.properties).toEqual(["id", "iteration"]); // 旧配置补上「迭代」列
     saveIssueView(7, { ...view, groupBy: null });
     expect(loadIssueView(7).groupBy).toBeNull();
   });
@@ -90,5 +91,35 @@ describe("repo field", () => {
   it("filters by repo, including issues at the project root", () => {
     const view = { ...DEFAULT_VIEW, groupBy: null, orderBy: "id" as const, filters: [{ field: "repo" as const, values: ["/ws/backend", "__root__"] }] };
     expect(applyView(repoIssues, view)[0].issues.map((i) => i.number)).toEqual([2, 3, 4]);
+  });
+});
+
+describe("iteration field", () => {
+  const v01 = { iteration_id: 10, iteration_tag: "v0.1", iteration_name: "骨架", iteration_sort: 1, iteration_current: true };
+  const v02 = { iteration_id: 20, iteration_tag: "v0.2", iteration_name: "", iteration_sort: 2, iteration_current: false };
+  const its = [issue(1, v02), issue(2, v01), issue(3, { iteration_current: false }), issue(4, v01)];
+
+  it("shows only the current iteration by default; the filter can pick others or no iteration", () => {
+    expect(applyView(its, { ...DEFAULT_VIEW, groupBy: null, orderBy: "id" })[0].issues.map((i) => i.number)).toEqual([2, 4]);
+    const view = { ...DEFAULT_VIEW, groupBy: null, orderBy: "id" as const, filters: [{ field: "iteration" as const, values: ["20", "__none__"] }] };
+    expect(applyView(its, view)[0].issues.map((i) => i.number)).toEqual([1, 3]);
+    expect(ISSUE_FIELDS.iteration.filter!.options(its).map((o) => o.label)).toEqual(["Current iteration", "v0.1 · 骨架", "v0.2", "No iteration"]);
+  });
+
+  it("groups in iteration order; dragging into an iteration moves it there, not into 'no iteration'", () => {
+    const groups = applyView(its, { ...DEFAULT_VIEW, groupBy: "iteration", orderBy: "id", filters: [] });
+    expect(groups.map((g) => [g.key, g.issues.map((i) => i.number)])).toEqual([["10", [2, 4]], ["20", [1]], ["__none__", [3]]]);
+    expect(ISSUE_FIELDS.iteration.group!.patchFor!("20")).toEqual({ iteration_id: 20 });
+    expect(ISSUE_FIELDS.iteration.group!.patchFor!("__none__")).toBeNull();
+  });
+
+  it("adds the current-iteration filter and column to views saved before it existed, once", () => {
+    localStorage.setItem("soloyard.issueView.8", JSON.stringify({ properties: ["id"], filters: [{ field: "priority", values: ["1"] }] }));
+    const view = loadIssueView(8);
+    expect(view.filters).toEqual([{ field: "iteration", values: [CURRENT_ITERATION] }, { field: "priority", values: ["1"] }]);
+    expect(view.properties).toEqual(["id", "iteration"]);
+    saveIssueView(8, { ...view, filters: [], properties: ["id"] });
+    expect(loadIssueView(8).filters).toEqual([]);
+    expect(loadIssueView(8).properties).toEqual(["id"]);
   });
 });

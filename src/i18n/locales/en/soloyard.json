@@ -53,7 +53,10 @@
     "allIssues": "All issues",
     "title": "Title",
     "repo": "Repository",
-    "noRepo": "Project root"
+    "noRepo": "Project root",
+    "iteration": "Iteration",
+    "currentIteration": "Current iteration",
+    "noIteration": "No iteration"
   },
   "issues": {
     "search": "Search issues",
@@ -111,7 +114,7 @@
     "startWork": "Start work",
     "startWorkHint": "Open a new session with this issue in the composer",
     "noIteration": "No iteration",
-    "parked": "Not in an active iteration, so it's hidden from Issues. It comes back when its iteration starts.",
+    "parked": "Not in any iteration, so it's hidden from Issues. It comes back when it's put in an iteration.",
     "review": "Waiting for your review",
     "accept": "Accept",
     "sendBack": "Send back",

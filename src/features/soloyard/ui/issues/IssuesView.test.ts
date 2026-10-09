@@ -20,7 +20,8 @@ const { IssuesView } = await import("./IssuesView");
 const issue = (number: number, patch: Partial<Issue> = {}): Issue => ({
   id: number, project_id: 1, number, ident: `APP-${number}`, title: `Issue ${number}`, body_md: "", status: "todo",
   priority: 0, labels: [], created_at: "2026-10-01", updated_at: "2026-10-01", completed_at: null,
-  version: 1, children: 0, children_done: 0, sessions: 0, ...patch,
+  // 默认只看当前迭代
+  version: 1, children: 0, children_done: 0, sessions: 0, iteration_id: 1, iteration_tag: "v0.1", iteration_current: true, ...patch,
 });
 
 let container: HTMLDivElement;
@@ -146,7 +147,7 @@ it("creates the first issue from an empty board, and ignores the Enter that pick
 it("shows column names in the list header; its checkbox selects and clears all visible issues", () => {
   render();
   const header = byLabel("Select all").parentElement!;
-  expect([...header.querySelectorAll("span")].map((s) => s.textContent)).toEqual(["Priority", "ID", "Status", "Title", "Labels", "Created"]);
+  expect([...header.querySelectorAll("span")].map((s) => s.textContent)).toEqual(["Priority", "ID", "Status", "Title", "Iteration", "Labels", "Created"]);
   click(byLabel("Select all"));
   expect(byText("3 selected", "span")).toBeTruthy();
   click(byLabel("Select all"));

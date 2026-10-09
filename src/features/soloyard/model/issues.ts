@@ -25,8 +25,16 @@ export type Issue = {
   parent_id: number | null;
   /** 挂的功能（迭代表的一行）；null = 没挂。 */
   feature_id?: number | null;
-  /** 功能所在迭代的状态（planned / active / done）；没挂功能是 null。 */
+  /** 所在迭代（以功能所在的为准）；没排进迭代是 null。 */
+  iteration_id?: number | null;
+  iteration_tag?: string | null;
+  iteration_name?: string | null;
+  /** 迭代的状态（planned / active / done）。 */
   iteration_status?: string | null;
+  /** 迭代的先后（迭代表的顺序）。 */
+  iteration_sort?: number | null;
+  /** 是不是当前迭代（排在最前的进行中迭代）。 */
+  iteration_current?: boolean;
 };
 
 export type IssueDetail = Omit<Issue, "sessions" | "children"> & {
