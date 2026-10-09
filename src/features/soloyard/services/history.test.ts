@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { entryKey, loadHistory, parseEntryKey, removeHistory, sortHistory, upsertHistory } from "./history";
+import { entryKey, loadHistory, parseEntryKey, removeHistory, renameHistory, sortHistory, upsertHistory } from "./history";
 
 describe("service history", () => {
   beforeEach(() => {
@@ -35,5 +35,13 @@ describe("service history", () => {
     removeHistory("/p", entryKey({ cwd: "/p", command: "b" }));
     expect(loadHistory("/p").map((e) => e.command)).toEqual(["a"]);
     expect(parseEntryKey(entryKey({ cwd: "/p", command: "PORT=1 npm run dev" }))).toEqual({ cwd: "/p", command: "PORT=1 npm run dev" });
+  });
+  it("keeps a service's name across updates and clears it with an empty name", () => {
+    renameHistory("/p", { cwd: "/p", command: "pnpm dev" }, "  web  ");
+    expect(loadHistory("/p")[0].name).toBe("web");
+    upsertHistory("/p", [{ cwd: "/p", command: "pnpm dev", lastRunAt: 9999, logPath: "/l.log" }]);
+    expect(loadHistory("/p")[0]).toMatchObject({ name: "web", logPath: "/l.log" });
+    renameHistory("/p", { cwd: "/p", command: "pnpm dev" }, "");
+    expect(loadHistory("/p")[0].name).toBeUndefined();
   });
 });

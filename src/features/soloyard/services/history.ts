@@ -12,6 +12,8 @@ export type HistoryEntry = {
   lastRunAt?: number;
   /** 最近一次的日志文件，服务停了也能回看。 */
   logPath?: string;
+  /** 用户起的名字，显示成「名字:端口」。 */
+  name?: string;
 };
 
 type Store = Record<string, HistoryEntry[]>;
@@ -66,6 +68,7 @@ export function upsertHistory(
       addedAt: prev?.addedAt ?? now,
       lastRunAt: update.lastRunAt ?? prev?.lastRunAt,
       logPath: update.logPath ?? prev?.logPath,
+      ...(prev?.name ? { name: prev.name } : {}),
     };
     const stale =
       !prev ||
@@ -78,6 +81,19 @@ export function upsertHistory(
     else list.push(next);
   }
   if (changed) writeAll({ ...store, [project]: list });
+}
+
+/** 改名（空串 = 去掉名字）；还不在历史里的先加进去。 */
+export function renameHistory(project: string, entry: { cwd: string; command: string }, name: string) {
+  upsertHistory(project, [entry]);
+  const store = readAll();
+  const trimmed = name.trim();
+  const list = (store[project] ?? []).map((item) => {
+    if (entryKey(item) !== entryKey(entry)) return item;
+    const { name: _old, ...rest } = item;
+    return trimmed ? { ...rest, name: trimmed } : rest;
+  });
+  writeAll({ ...store, [project]: list });
 }
 
 export function removeHistory(project: string, key: string) {

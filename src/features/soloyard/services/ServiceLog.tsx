@@ -21,7 +21,8 @@ export function ServiceLog({ cwd, itemId }: { cwd: string; itemId: string }) {
   const history = useServiceHistory(cwd);
   const target = parseEntryKey(itemId);
   const service = services?.find((entry) => serviceKey(entry) === itemId);
-  const logPath = service?.logPath ?? history.find((entry) => entryKey(entry) === itemId)?.logPath ?? null;
+  const saved = history.find((entry) => entryKey(entry) === itemId);
+  const logPath = service?.logPath ?? saved?.logPath ?? null;
   const hostRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
 
@@ -91,6 +92,7 @@ export function ServiceLog({ cwd, itemId }: { cwd: string; itemId: string }) {
         <header className="flex shrink-0 items-center gap-3 border-b border-stroke px-3 py-1.5">
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="truncate font-mono text-[12px] text-content/80" title={service.command}>
+              {saved?.name ? `${saved.name} ` : ""}
               {service.ports.map((p) => `:${p}`).join(" ")} · {service.command}
             </div>
             <ServiceLocation service={service} />
@@ -100,6 +102,7 @@ export function ServiceLog({ cwd, itemId }: { cwd: string; itemId: string }) {
       ) : target ? (
         <header className="flex shrink-0 items-center gap-3 border-b border-stroke px-3 py-1.5">
           <div className="min-w-0 flex-1 truncate font-mono text-[12px] text-content/60" title={target.cwd}>
+            {saved?.name ? `${saved.name} · ` : ""}
             {target.command}
           </div>
           <StartButton project={cwd} entry={target} />

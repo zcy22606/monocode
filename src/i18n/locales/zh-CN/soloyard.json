@@ -217,7 +217,10 @@
       "m": "{{count}} 分钟前",
       "h": "{{count}} 小时前",
       "d": "{{count}} 天前"
-    }
+    },
+    "rename": "重命名",
+    "clearName": "清除名称",
+    "namePlaceholder": "服务名"
   },
   "iterations": {
     "layout": {

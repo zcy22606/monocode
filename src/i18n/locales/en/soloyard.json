@@ -223,7 +223,10 @@
       "m": "{{count}}m ago",
       "h": "{{count}}h ago",
       "d": "{{count}}d ago"
-    }
+    },
+    "rename": "Rename",
+    "clearName": "Clear name",
+    "namePlaceholder": "Service name"
   },
   "iterations": {
     "layout": {
