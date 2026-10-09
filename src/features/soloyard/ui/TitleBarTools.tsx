@@ -11,7 +11,6 @@ import { HarnessIcon } from "../../sessions/ui/HarnessIcon";
 import { TerminalSpinner } from "../../sessions/ui/TerminalSpinner";
 import { Popover } from "../../../shared/ui/Popover";
 import { panelShownFor, toggleProjectPanel, useProjectPanel } from "../model/projectPanel";
-import { useBrainstormActive } from "../model/projectViews";
 import { toggleTitleTabsCollapsed, useTitleTabsCollapsed } from "../model/titleTabs";
 
 /** 收起的标签区：只显示当前标签的标题，点开列出本项目的标签，可切换、关闭。 */
@@ -98,11 +97,10 @@ function TabIcon({ tab }: { tab: Tab }) {
   return <FileTypeIcon name={tab.files[0]} isDir={false} size={14} />;
 }
 
-/** 顶栏右边：收起 / 展开标签，项目面板开关（没有项目、在头脑风暴里时不显示）。 */
+/** 顶栏右边：收起 / 展开标签，项目面板开关（没有项目时不显示；头脑风暴里也有，面板是侧栏选中的项目）。 */
 export function TitleBarTools({ cwd, project }: { cwd: string; project: boolean }) {
   const { t } = useTranslation("soloyard");
   const collapsed = useTitleTabsCollapsed();
-  const brainstorm = useBrainstormActive();
   const open = panelShownFor(useProjectPanel(), cwd);
   const Toggle = collapsed ? ChevronRight : ChevronLeft;
   return (
@@ -116,7 +114,7 @@ export function TitleBarTools({ cwd, project }: { cwd: string; project: boolean 
       >
         <Toggle className="size-3.5" strokeWidth={1.75} />
       </button>
-      {project && !brainstorm ? (
+      {project ? (
         <button
           type="button"
           aria-label={t("panel.label")}
