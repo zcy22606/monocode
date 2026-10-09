@@ -47,7 +47,7 @@ import {
   openPathWithDefaultApp,
   revealPath,
 } from "../../../platform/tauri/fs";
-import { inlineFolderPath } from "../../soloyard/model/fileLinks"; // Soloyard
+import { inlinePath } from "../../soloyard/model/fileLinks"; // Soloyard
 import { INBOX_MEDIA_PREFIXES, isInboxMediaUrl } from "../../inbox/model/inboxMedia";
 import { isNoteImagePath } from "../../notes";
 import { IS_MAC, IS_WIN } from "../../../platform/tauri/platform";
@@ -310,9 +310,10 @@ function MarkdownCode({
   const block = Object.prototype.hasOwnProperty.call(props, "data-block");
   if (!block) {
     const text = textContent(children);
-    // Soloyard: a trailing slash means a folder; folders open in Finder.
-    const fileName = text.trim().endsWith("/") ? undefined : inlineFileName(text);
-    const folder = fileName ? undefined : inlineFolderPath(text);
+    // Soloyard: also folders (open in Finder) and non-ASCII file names.
+    const extra = inlinePath(text);
+    const fileName = extra ? (extra.isDir ? undefined : extra.name) : inlineFileName(text);
+    const folder = extra?.isDir ? extra.name : undefined;
     const { cwd, onOpenFile, onFileContextMenu } = useContext(FileOpenContext);
     const file = fileName || folder
       ? resolveWorkspaceFileReference(text, cwd)
