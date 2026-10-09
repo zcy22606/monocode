@@ -145,7 +145,8 @@
     "parallelNotReady": "等前置",
     "parallelStarted": "已开始",
     "parallelDone": "已完成",
-    "parallelConfirm_other": "开 {{count}} 个会话"
+    "parallelConfirm_other": "开 {{count}} 个会话",
+    "parallelHuman": "需要你处理"
   },
   "prompt": {
     "start": "开始处理 {{ident}}：{{title}}",
@@ -171,9 +172,11 @@
       "blocked": "（等前置）",
       "progress": "看进度用 Soloyard MCP：get_issue {{ident}} 看子任务状态，再对每个子任务 get_issue 看评论。",
       "now": "现在：把 {{ident}} 改成 in_progress，简要说一下各子任务怎么分工、彼此要约定哪些接口，然后等我。",
-      "check": "我让你检查进度时：汇报每个子任务的状态，卡住的说明原因；有等前置的子任务前置做完了，提醒我开工。",
-      "integrate": "所有子任务都 in_review 后：在项目根目录联调——把每个子任务在各自仓库里的工作树分支合到一起，跑端到端检查，把结果写成 {{ident}} 的评论，再把 {{ident}} 改成 in_review。都不要改成 done，验收由我来做。"
-    }
+      "check": "我让你检查进度时：汇报每个子任务的状态，卡住的说明原因。子任务 in_review 就是在等我验收，提醒我；验收通过时它的分支会合进所在仓库的主分支，依赖它的子任务这时才能开工——有子任务可以开工了，提醒我在 {{ident}} 上再点一次「并行开工」。标了（需要我处理）的子任务由我来做。",
+      "integrate": "所有子任务都验收通过后（代码都已经合进各仓库的主分支）：在项目根目录跑端到端检查，把结果写成 {{ident}} 的评论，再把 {{ident}} 改成 in_review。都不要改成 done，验收由我来做。",
+      "human": "（需要我处理）"
+    },
+    "commitInWorktree": "这个会话在自己的工作树里干活：改成 in_review 之前，把改动提交到当前分支（不要合并、不要推送）。我验收通过时，应用会把这个分支合进仓库的主分支。"
   },
   "services": {
     "empty": "还没有服务。这个工作区里跑过的服务会出现在这里，也可以点「+」添加。",
@@ -525,5 +528,18 @@
     "expand": "展开标签",
     "list_other": "{{count}} 个标签",
     "close": "关闭 {{name}}"
+  },
+  "merge": {
+    "accept": "通过并合并",
+    "acceptHint": "把这个 issue 工作树的分支合进它的仓库，再标成完成",
+    "preview_other": "通过时会把 {{branch}} 上的 {{count}} 个提交合进 {{repo}}/{{target}}。",
+    "previewDirty_other": "工作树里还有 {{count}} 处改动没提交，先让 agent 提交。",
+    "comment": "验收通过：已把 {{branch}} 合进 {{repo}}/{{target}}（{{commit}}）。",
+    "dirtyWorktree_other": "没有合并：{{branch}} 还有 {{count}} 处改动没提交（{{files}}）。打回让 agent 提交。",
+    "dirtyMain": "没有合并：{{repo}} 的主检出有没提交的改动（{{files}}），先提交或收起来。",
+    "conflict": "没有合并：{{branch}} 和 {{repo}}/{{target}} 有冲突（{{files}}），已撤回这次合并。打回让 agent 先把 {{target}} 合进自己的分支、解决冲突。",
+    "noTarget": "没有合并：{{repo}} 的主检出不在任何分支上。",
+    "failed": "没有合并：{{message}}",
+    "bulkFailed_other": "{{count}} 个 issue 留在待验收："
   }
 }

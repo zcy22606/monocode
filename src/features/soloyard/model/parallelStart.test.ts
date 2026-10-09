@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { i18n } from "../../../i18n";
 import type { IssueDetail } from "./issues";
-import { canStart, leadPrompt } from "./parallelStart";
+import { canStart, leadPrompt, startsByDefault } from "./parallelStart";
 
 const child = (id: number, patch: Partial<IssueDetail["children"][number]>) => ({
-  id, ident: `WS-${id}`, title: `t${id}`, status: "todo" as const, priority: 0, repo_path: null, blocked: 0, ...patch,
+  id, ident: `WS-${id}`, title: `t${id}`, status: "todo" as const, priority: 0, repo_path: null, blocked: 0, labels: [] as string[], ...patch,
 });
 const parent: IssueDetail = {
   id: 1, project_id: 1, number: 1, ident: "WS-1", title: "改协议", body_md: "协议 v2。", status: "todo", priority: 2, labels: [],
@@ -15,6 +15,8 @@ const parent: IssueDetail = {
     child(3, { title: "后端", repo_path: "/ws/backend", blocked: 1 }),
     child(4, { title: "文档", status: "in_progress" }),
     child(5, { title: "旧方案", status: "canceled" }),
+    child(6, { title: "待 Cam 确认", labels: ["human"] }),
+    child(7, { title: "加密", status: "backlog", repo_path: "/ws/backend" }),
   ],
   parent: null, blockedBy: [], comments: [], sessions: [],
 };
@@ -22,8 +24,9 @@ const parent: IssueDetail = {
 describe("parallel start", () => {
   afterEach(() => i18n.changeLanguage("en"));
 
-  it("only offers sub-issues that haven't started and aren't waiting on prerequisites", () => {
-    expect(parent.children.filter(canStart).map((c) => c.id)).toEqual([2]);
+  it("only offers sub-issues that haven't started, aren't waiting on prerequisites and aren't the user's to do; backlog ones aren't checked by default", () => {
+    expect(parent.children.filter(canStart).map((c) => c.id)).toEqual([2, 7]);
+    expect(parent.children.filter(startsByDefault).map((c) => c.id)).toEqual([2]);
   });
 
   it("tells the lead what started where, what still waits, and how to integrate", () => {
@@ -35,6 +38,8 @@ describe("parallel start", () => {
     expect(prompt).toContain("- WS-3 后端 — in backend (new worktree) (waiting on prerequisites)");
     expect(prompt).toContain("- WS-4 文档 — at the project root");
     expect(prompt).not.toContain("旧方案");
+    expect(prompt).toContain("- WS-6 待 Cam 确认 — at the project root (needs me)");
+    expect(prompt).toContain("Accepting it merges its branch");
     expect(prompt).toContain("set WS-1 to in_review");
   });
 

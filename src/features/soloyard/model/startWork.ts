@@ -24,5 +24,7 @@ export function startWorkPrompt(issue: IssueDetail, project: ProjectInfo, cwd: s
   }
   lines.push(...context, "");
   lines.push(t("soloyard:prompt.begin", { ident }), t("soloyard:prompt.whenDone"), t("soloyard:prompt.selfCheck"), t("soloyard:prompt.report", { ident }));
+  // 带仓库的 issue 在新工作树里做：验收通过时应用把这个分支合进主分支，所以改动要先提交到分支上
+  if (issue.repo_path) lines.push(t("soloyard:prompt.commitInWorktree"));
   return lines.join("\n");
 }

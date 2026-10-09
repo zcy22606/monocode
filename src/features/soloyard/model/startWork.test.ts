@@ -36,7 +36,9 @@ describe("startWorkPrompt", () => {
   it("names the member repo the session works in", () => {
     const prompt = startWorkPrompt({ ...issue, repo_path: "/ws/openroboto-backend" }, { name: "openroboto" }, "/ws");
     expect(prompt).toContain("Repository: openroboto-backend (/ws/openroboto-backend)");
+    expect(prompt).toContain("commit your changes to the current branch before setting the issue to in_review");
     expect(startWorkPrompt(issue, { name: "openroboto" }, "/ws")).not.toContain("Repository:");
+    expect(startWorkPrompt(issue, { name: "openroboto" }, "/ws")).not.toContain("worktree");
   });
 
   it("omits empty sections", () => {

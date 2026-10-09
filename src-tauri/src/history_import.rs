@@ -539,12 +539,19 @@ mod tests {
         let t = |s: &str| millis(s).unwrap();
         conn.execute("INSERT INTO sessions (id, cwd, harness, model, runtime_mode, title, provider_session_id, blocks_json, created_at, updated_at) VALUES ('app', ?1, 'claude', 'claude:opus', 'supervised', 'app', ?2, '[{\"id\":\"x\",\"role\":\"tool\"}]', 1, ?3)", params![cwd, c3, t("2026-09-03T00:00:00Z")]).unwrap();
         let line = |ts: &str, role: &str, text: &str| json!({"type":role,"sessionId":c3,"cwd":cwd,"timestamp":ts,"message":{"content":[{"type":"text","text":text}]}});
+        // 同一毫秒里连写几次，mtime 不变会被当成「文件没变」跳过；每次写完把 mtime 往后拨，测试才稳定
+        let rewrite = |lines: &[Value], secs: u64| {
+            let path = dir.join(format!("{c3}.jsonl"));
+            write(&path, lines);
+            let at = std::time::SystemTime::now() + std::time::Duration::from_secs(secs);
+            fs::File::options().write(true).open(&path).unwrap().set_modified(at).unwrap();
+        };
         let mut lines = vec![line("2026-09-02T00:00:00Z", "user", "应用里问的"), line("2026-09-02T00:00:01Z", "assistant", "应用里答的")];
-        write(&dir.join(format!("{c3}.jsonl")), &lines);
+        rewrite(&lines, 1);
         assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "nothing newer than the app record");
         conn.execute("INSERT INTO in_flight_sessions (session_id, cwd, sort_index) VALUES ('app', ?1, 0)", params![cwd]).unwrap();
         lines.extend([line("2026-09-04T00:00:00Z", "user", "终端里接着问"), line("2026-09-04T00:00:01Z", "assistant", "终端里答"), line("2026-09-04T00:00:02Z", "assistant", "补一句")]);
-        write(&dir.join(format!("{c3}.jsonl")), &lines);
+        rewrite(&lines, 2);
         assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "running in the app");
         conn.execute("DELETE FROM in_flight_sessions", []).unwrap();
         assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 1);

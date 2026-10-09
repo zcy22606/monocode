@@ -10,6 +10,7 @@ import { openDb } from './db.ts'
 import * as repo from './repo.ts'
 import * as it from './iterations.ts'
 import * as repos from './repos.ts'
+import * as merge from './merge.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -48,6 +49,9 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
     },
   },
   projectRepos: { run: (path: string) => repos.projectRepos(db, path) },
+  // 验收即合并：issue 工作树的分支合进仓库主检出（只动 git，不改库，所以不广播）
+  issueBranch: { run: (issueId: number) => merge.issueBranch(db, issueId) },
+  mergeIssueBranch: { run: (issueId: number) => merge.mergeIssueBranch(db, issueId) },
   projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd).map },
   memberRepoPaths: { run: () => repos.memberRepoPaths(db) },
   setupSuggestion: { run: (cwd: string) => repos.setupSuggestion(db, cwd) },

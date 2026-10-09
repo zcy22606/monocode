@@ -6,6 +6,7 @@ import { ArrowUp, GitBranch, MessageSquare, Play, Plus, GitMerge, X } from "../.
 import { mutateSoloyard, useProjectForPath, useSoloyard } from "../../data/api";
 import { requestOpenSession, requestSendToSession, requestStartWork } from "../../model/appActions";
 import { startWorkPrompt } from "../../model/startWork";
+import { acceptIssue, type IssueBranch } from "../../model/acceptIssue";
 import { priorityLabel, repoName, statusLabel, type IssueDetail as Detail } from "../../model/issues";
 import { useProjectRepos } from "../../model/repos";
 import { openProjectView } from "../../model/projectViews";
@@ -26,6 +27,10 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const [picker, setPicker] = useState<Picker | null>(null);
   const [editingBody, setEditingBody] = useState(false);
   const [sendingBack, setSendingBack] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
+  // 在工作树里做的 issue：通过时要合进哪个分支（只在待验收时查）
+  const { data: branch } = useSoloyard<IssueBranch | null>("issueBranch", issue?.status === "in_review" ? issueId : undefined);
   const [parallel, setParallel] = useState(false);
   const { data: project } = useProjectForPath(cwd);
   const repos = useProjectRepos(cwd)?.repos ?? [];
@@ -134,14 +139,33 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
               <StatusIcon status="in_review" />
               {t("detail.review")}
               <span className="ml-auto flex gap-1.5">
-                <button type="button" onClick={() => void update({ status: "done" })} className="h-7 rounded-md bg-accent px-2.5 text-[12px] font-medium text-white hover:opacity-90">
-                  {t("detail.accept")}
+                <button
+                  type="button"
+                  disabled={accepting}
+                  onClick={() => {
+                    setAccepting(true);
+                    setAcceptError(null);
+                    void acceptIssue(issue.id)
+                      .then(setAcceptError, (e: unknown) => setAcceptError(e instanceof Error ? e.message : String(e)))
+                      .finally(() => setAccepting(false));
+                  }}
+                  title={branch?.ahead ? t("merge.acceptHint") : undefined}
+                  className="h-7 rounded-md bg-accent px-2.5 text-[12px] font-medium text-white hover:opacity-90 disabled:opacity-60"
+                >
+                  {branch?.ahead ? t("merge.accept") : t("detail.accept")}
                 </button>
                 <button type="button" onClick={() => setSendingBack(true)} className="h-7 rounded-md border border-stroke px-2.5 text-[12px] text-content/80 hover:bg-content/10">
                   {t("detail.sendBack")}
                 </button>
               </span>
             </div>
+            {branch?.ahead ? (
+              <p className="text-[12px] text-content/60">
+                {t("merge.preview", { count: branch.ahead, branch: branch.branch, repo: repoName(branch.repo), target: branch.target })}
+                {branch.dirty.length ? <span className="text-amber-400"> {t("merge.previewDirty", { count: branch.dirty.length })}</span> : null}
+              </p>
+            ) : null}
+            {acceptError ? <p role="alert" className="text-[12px] text-red-400/90">{acceptError}</p> : null}
             {sendingBack ? (
               <SendBack
                 target={latestSession ? (latestSession.title ?? t("detail.latestSession")) : null}

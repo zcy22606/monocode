@@ -10,7 +10,7 @@ export function NoticeBar({ notice, onUndo, onClose }: { notice: Notice; onUndo:
   const { t } = useTranslation("soloyard");
   return (
     <div className={`flex shrink-0 items-center gap-2 border-b border-stroke px-4 py-1.5 text-[12px] ${notice.kind === "error" ? "bg-red-500/10 text-red-300" : "bg-content/5 text-content/70"}`}>
-      <span role={notice.kind === "error" ? "alert" : "status"} className="min-w-0 truncate" title={notice.message}>{notice.message}</span>
+      <span role={notice.kind === "error" ? "alert" : "status"} className={notice.kind === "error" ? "min-w-0 whitespace-pre-line" : "min-w-0 truncate"} title={notice.message}>{notice.message}</span>
       {notice.kind === "undo" ? (
         <button type="button" onClick={() => onUndo(notice.batch)} className="ml-auto shrink-0 whitespace-nowrap rounded px-2 py-0.5 font-medium text-content hover:bg-content/10">
           {t("iterations.undo")}

@@ -150,7 +150,8 @@
     "parallelStarted": "Already started",
     "parallelDone": "Done",
     "parallelConfirm_one": "Start {{count}} session",
-    "parallelConfirm_other": "Start {{count}} sessions"
+    "parallelConfirm_other": "Start {{count}} sessions",
+    "parallelHuman": "Needs you"
   },
   "prompt": {
     "start": "Start working on {{ident}}: {{title}}",
@@ -176,9 +177,11 @@
       "blocked": " (waiting on prerequisites)",
       "progress": "Track progress with the Soloyard MCP tools: get_issue {{ident}} for the sub-issue statuses, then get_issue on each sub-issue for its comments.",
       "now": "Now: set {{ident}} to in_progress, briefly lay out how the sub-issues split the work and the interfaces they need to agree on, then wait for me.",
-      "check": "When I ask you to check progress: report each sub-issue's status and explain anything stuck. When a waiting sub-issue's prerequisites are done, tell me it can start.",
-      "integrate": "When every sub-issue is in_review: integrate at the project root — bring each sub-issue's worktree branch together in its repository, run the end-to-end checks, comment the results on {{ident}}, then set {{ident}} to in_review. Don't set anything to done — I'll accept it."
-    }
+      "check": "When I ask you to check progress: report each sub-issue's status and explain anything stuck. A sub-issue in_review is waiting for my review — remind me. Accepting it merges its branch into its repository's main branch, and only then can the sub-issues that depend on it start; when some become startable, remind me to run \"Start in parallel\" on {{ident}} again. Sub-issues marked (needs me) are mine to handle.",
+      "integrate": "When every sub-issue is accepted (their code is already merged into each repository's main branch): run the end-to-end checks from the project root, comment the results on {{ident}}, then set {{ident}} to in_review. Don't set anything to done — I'll accept it.",
+      "human": " (needs me)"
+    },
+    "commitInWorktree": "This session works in its own worktree: commit your changes to the current branch before setting the issue to in_review (don't merge or push). When I accept it, the app merges this branch into the repository's main branch."
   },
   "services": {
     "empty": "No services yet. Services that run in this workspace show up here, or use + to add one.",
@@ -551,5 +554,22 @@
     "list_one": "{{count}} tab",
     "list_other": "{{count}} tabs",
     "close": "Close {{name}}"
+  },
+  "merge": {
+    "accept": "Accept & merge",
+    "acceptHint": "Merge this issue's worktree branch into its repository, then mark it done",
+    "preview_one": "Accepting merges {{count}} commit on {{branch}} into {{repo}}/{{target}}.",
+    "preview_other": "Accepting merges {{count}} commits on {{branch}} into {{repo}}/{{target}}.",
+    "previewDirty_one": "The worktree still has {{count}} uncommitted change — have the agent commit it first.",
+    "previewDirty_other": "The worktree still has {{count}} uncommitted changes — have the agent commit them first.",
+    "comment": "Accepted: merged {{branch}} into {{repo}}/{{target}} ({{commit}}).",
+    "dirtyWorktree_one": "Not merged: {{branch}} has {{count}} uncommitted change ({{files}}). Send it back so the agent commits it.",
+    "dirtyWorktree_other": "Not merged: {{branch}} has {{count}} uncommitted changes ({{files}}). Send it back so the agent commits them.",
+    "dirtyMain": "Not merged: the main checkout of {{repo}} has uncommitted changes ({{files}}). Commit or stash them first.",
+    "conflict": "Not merged: {{branch}} conflicts with {{repo}}/{{target}} ({{files}}); the merge was backed out. Send it back so the agent merges {{target}} into its branch and resolves the conflicts.",
+    "noTarget": "Not merged: the main checkout of {{repo}} isn't on a branch.",
+    "failed": "Not merged: {{message}}",
+    "bulkFailed_one": "{{count}} issue stayed in review:",
+    "bulkFailed_other": "{{count}} issues stayed in review:"
   }
 }

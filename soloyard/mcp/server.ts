@@ -25,6 +25,8 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
 - 多仓库项目（get_project 返回 repos）：建 issue 时用 repo 标上在哪个仓库做，用户 Start work 会直接在那个仓库开会话；跨仓库的需求建主 issue（不标 repo），按仓库拆子 issue。
+- 要用户自己处理的事（拍板、找人确认、讨论、要账号或权限）建 issue 时加标签 human：并行开工不会给它开 agent 会话。
+- 在工作树里做的 issue：做完把改动提交到当前分支（不合并、不推送）再改 in_review；用户验收通过时，应用把这个分支合进仓库主分支，依赖它的 issue 才能开工。
 - 给迭代里的功能建 issue 用 create_feature_issues（按功能编号，一个功能一个 issue），迭代表才会显示完成；create_issues 建的是不挂功能的 issue。
 - 手里的数据可能旧了就带 expected_version；收到 version_conflict 按返回的 latest 重新决定，不要硬覆盖用户的改动。
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项）。

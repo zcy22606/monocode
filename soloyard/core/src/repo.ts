@@ -280,10 +280,11 @@ export function getIssue(db: DB, id: number) {
     labels: JSON.parse(issue.labels) as string[],
     acceptance: db.prepare('SELECT * FROM soloyard_acceptance WHERE issue_id = ? ORDER BY sort, id').all(id) as Row[],
     // 子任务：带仓库、优先级，以及是不是还在等没做完的前置（并行开工时只能勾选不在等的）
-    children: db.prepare(`SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status, i.priority, i.repo_path,
+    children: (db.prepare(`SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status, i.priority, i.repo_path, i.labels,
         EXISTS (SELECT 1 FROM soloyard_issue_deps d JOIN soloyard_issues b ON b.id = d.blocked_by_id
           WHERE d.issue_id = i.id AND b.status NOT IN ('done','canceled')) AS blocked
-      FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.parent_id = ? ORDER BY i.sort_key, i.id`).all(id) as Row[],
+      FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.parent_id = ? ORDER BY i.sort_key, i.id`).all(id) as Row[])
+      .map((c) => ({ ...c, labels: JSON.parse(c.labels) as string[] })),
     parent: issue.parent_id
       ? (db.prepare("SELECT i.id, p.key || '-' || i.number AS ident, i.title, i.status FROM soloyard_issues i JOIN soloyard_projects p ON p.id = i.project_id WHERE i.id = ?").get(issue.parent_id) as Row | undefined) ?? null
       : null,
