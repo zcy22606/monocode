@@ -571,5 +571,8 @@
     "failed": "Not merged: {{message}}",
     "bulkFailed_one": "{{count}} issue stayed in review:",
     "bulkFailed_other": "{{count}} issues stayed in review:"
+  },
+  "fileLink": {
+    "copyFile": "Copy File"
   }
 }

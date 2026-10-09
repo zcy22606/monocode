@@ -42,7 +42,12 @@ import { isAtxHeadingLine } from "../../files/model/markdownSource";
 import { useColorScheme } from "../../../shared/hooks/useColorScheme";
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
 import { copyText } from "../../../platform/tauri/clipboard";
-import { openPathWithDefaultApp, revealPath } from "../../../platform/tauri/fs";
+import {
+  copyFileToClipboard,
+  openPathWithDefaultApp,
+  revealPath,
+} from "../../../platform/tauri/fs";
+import { inlineFolderPath } from "../../soloyard/model/fileLinks"; // Soloyard
 import { INBOX_MEDIA_PREFIXES, isInboxMediaUrl } from "../../inbox/model/inboxMedia";
 import { isNoteImagePath } from "../../notes";
 import { IS_MAC, IS_WIN } from "../../../platform/tauri/platform";
@@ -113,6 +118,7 @@ type FileLinkMenu = {
   y: number;
   path: string;
   navigation?: EditorNavigation;
+  isDir?: boolean; // Soloyard
 };
 
 const FileOpenContext = createContext<{
@@ -122,6 +128,7 @@ const FileOpenContext = createContext<{
     event: ReactMouseEvent,
     path: string,
     navigation?: EditorNavigation,
+    isDir?: boolean, // Soloyard
   ) => void;
 }>({});
 
@@ -138,6 +145,7 @@ function revealLabel(): string {
 function fileLinkMenuItems(
   canOpenInMonoCode: boolean,
   canCopyRelativePath: boolean,
+  canCopyFile = false, // Soloyard
 ): ExplorerMenuItem[] {
   return [
     {
@@ -153,6 +161,10 @@ function fileLinkMenuItems(
     },
     { kind: "item", id: "reveal", label: revealLabel() },
     { kind: "sep" },
+    // Soloyard: puts the file itself on the clipboard, for pasting into Lark / Finder.
+    ...(canCopyFile
+      ? [{ kind: "item" as const, id: "copy-file", label: translate("soloyard:fileLink.copyFile") }]
+      : []),
     {
       kind: "item",
       id: "copy-path",
@@ -298,13 +310,17 @@ function MarkdownCode({
   const block = Object.prototype.hasOwnProperty.call(props, "data-block");
   if (!block) {
     const text = textContent(children);
-    const fileName = inlineFileName(text);
+    // Soloyard: a trailing slash means a folder; folders open in Finder.
+    const fileName = text.trim().endsWith("/") ? undefined : inlineFileName(text);
+    const folder = fileName ? undefined : inlineFolderPath(text);
     const { cwd, onOpenFile, onFileContextMenu } = useContext(FileOpenContext);
-    const file = fileName
+    const file = fileName || folder
       ? resolveWorkspaceFileReference(text, cwd)
       : undefined;
     const open =
-      file && onOpenFile
+      file && folder
+        ? () => void openPathWithDefaultApp(file.path).catch(console.error)
+        : file && onOpenFile
         ? () => onOpenFile(file.path, file.navigation)
         : undefined;
     return (
@@ -320,7 +336,7 @@ function MarkdownCode({
         onContextMenu={(event) => {
           onContextMenu?.(event);
           if (event.defaultPrevented || !file || !onFileContextMenu) return;
-          onFileContextMenu(event, file.path, file.navigation);
+          onFileContextMenu(event, file.path, file.navigation, !!folder);
         }}
         onKeyDown={
           open
@@ -336,6 +352,10 @@ function MarkdownCode({
         {fileName ? (
           <span aria-hidden="true">
             <FileTypeIcon name={fileName} isDir={false} size={14} />
+          </span>
+        ) : file && folder ? (
+          <span aria-hidden="true">
+            <FileTypeIcon name={folder} isDir size={14} />
           </span>
         ) : null}
         {children}
@@ -539,10 +559,10 @@ export const AgentMarkdown = memo(function AgentMarkdown({
   const [fileMenu, setFileMenu] = useState<FileLinkMenu | null>(null);
   const [fileActionError, setFileActionError] = useState<string | null>(null);
   const onFileContextMenu = useCallback(
-    (event: ReactMouseEvent, path: string, navigation?: EditorNavigation) => {
+    (event: ReactMouseEvent, path: string, navigation?: EditorNavigation, isDir?: boolean) => {
       event.preventDefault();
       event.stopPropagation();
-      setFileMenu({ x: event.clientX, y: event.clientY, path, navigation });
+      setFileMenu({ x: event.clientX, y: event.clientY, path, navigation, isDir });
     },
     [],
   );
@@ -605,6 +625,9 @@ export const AgentMarkdown = memo(function AgentMarkdown({
       case "copy-relative-path":
         action = copyText(displayPath(path, cwd));
         break;
+      case "copy-file": // Soloyard
+        action = copyFileToClipboard(path);
+        break;
       default:
         return;
     }
@@ -645,7 +668,11 @@ export const AgentMarkdown = memo(function AgentMarkdown({
             <ExplorerMenu
               x={fileMenu.x}
               y={fileMenu.y}
-              items={fileLinkMenuItems(!!onOpenFile, !!cwd)}
+              items={fileLinkMenuItems(
+                !!onOpenFile && !fileMenu.isDir,
+                !!cwd,
+                IS_MAC && !fileMenu.isDir, // Soloyard
+              )}
               ariaLabel={t("fileLink.menuLabel")}
               onPick={onFileMenuPick}
               onClose={() => setFileMenu(null)}

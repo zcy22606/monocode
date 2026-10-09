@@ -541,5 +541,8 @@
     "noTarget": "没有合并：{{repo}} 的主检出不在任何分支上。",
     "failed": "没有合并：{{message}}",
     "bulkFailed_other": "{{count}} 个 issue 留在待验收："
+  },
+  "fileLink": {
+    "copyFile": "复制文件"
   }
 }
