@@ -200,5 +200,37 @@
       "statusUnavailable": "状态不可用",
       "loading": "加载中…"
     }
+  },
+  "changes": {
+    "title": "更改",
+    "views": "更改视图",
+    "commit": "提交",
+    "notInGit": "这些文件不在 Git 仓库中，没有可提交的内容。",
+    "projects": "项目"
+  },
+  "commit": {
+    "confirmDeleteUntracked": "删除未跟踪的文件 {{name}}？",
+    "confirmDiscard": "丢弃 {{name}} 中的更改？此操作无法撤销。",
+    "delete": "删除",
+    "discard": "丢弃",
+    "confirmPrFromDefault": "从默认分支「{{branch}}」创建 PR？",
+    "confirmPushDefault": "推送到默认分支「{{branch}}」？",
+    "prContentFailed": "无法准备 PR 内容",
+    "prCreated": "已创建 PR",
+    "committedPushed": "已提交并推送",
+    "committed": "已提交",
+    "placeholder": "提交信息（{{shortcut}} 提交）",
+    "cancelGenerate": "取消生成提交信息",
+    "generate": "生成提交信息",
+    "commit": "提交",
+    "options": "提交选项",
+    "commitPush": "提交并推送",
+    "commitPushPr": "提交、推送并创建 PR",
+    "noChanges": "没有未提交的更改",
+    "loadingChanges": "正在加载更改…",
+    "thisCommit": "本次提交",
+    "leaveAllOut": "全部移出",
+    "changes": "更改",
+    "addAllToCommit": "全部加入提交"
   }
 }

@@ -202,5 +202,37 @@
       "statusUnavailable": "Status unavailable",
       "loading": "Loading…"
     }
+  },
+  "changes": {
+    "title": "Changes",
+    "views": "Changes views",
+    "commit": "Commit",
+    "notInGit": "These files aren’t in a Git repository, so there’s nothing to commit.",
+    "projects": "Projects"
+  },
+  "commit": {
+    "confirmDeleteUntracked": "Delete untracked file {{name}}?",
+    "confirmDiscard": "Discard changes in {{name}}? This cannot be undone.",
+    "delete": "Delete",
+    "discard": "Discard",
+    "confirmPrFromDefault": "Create a pull request from default branch \"{{branch}}\"?",
+    "confirmPushDefault": "Push to default branch \"{{branch}}\"?",
+    "prContentFailed": "Could not prepare pull request content",
+    "prCreated": "Pull request created",
+    "committedPushed": "Committed and pushed",
+    "committed": "Committed",
+    "placeholder": "Message ({{shortcut}} to commit)",
+    "cancelGenerate": "Cancel commit message generation",
+    "generate": "Generate commit message",
+    "commit": "Commit",
+    "options": "Commit options",
+    "commitPush": "Commit & Push",
+    "commitPushPr": "Commit, Push & Create PR",
+    "noChanges": "No uncommitted changes",
+    "loadingChanges": "Loading changes…",
+    "thisCommit": "This Commit",
+    "leaveAllOut": "Leave All Out",
+    "changes": "Changes",
+    "addAllToCommit": "Add All to Commit"
   }
 }

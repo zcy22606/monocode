@@ -273,7 +273,9 @@
     "review": "查看",
     "showFewer": "收起文件",
     "showMore_other": "显示另外 {{count}} 个文件",
-    "mixed": "混合更改"
+    "mixed": "混合更改",
+    "commitTitle": "提交这些更改",
+    "commit": "提交"
   },
   "modes": {
     "turnOff": "关闭「{{mode}}」",

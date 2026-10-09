@@ -10,7 +10,8 @@
     "prompt": "MonoCode {{version}} 已发布（当前版本 {{current}}）。{{detail}}\n\n现在安装吗？",
     "notConfigured": "当前版本没有配置自动更新。\n\n可以到这里下载新版本：{{url}}",
     "checkFailed": "检查更新失败。\n\n{{error}}",
-    "installFailed": "安装更新失败。\n\n{{error}}"
+    "installFailed": "安装更新失败。\n\n{{error}}",
+    "notAvailable": "这个安装方式暂时不支持自动更新。\n\n可以到这里下载新版本：{{url}}"
   },
   "quit": {
     "ok": "退出"

@@ -10,7 +10,8 @@
     "prompt": "MonoCode {{version}} is available (you have {{current}}).{{detail}}\n\nInstall now?",
     "notConfigured": "Automatic updates aren't configured for this build.\n\nDownload releases at {{url}}",
     "checkFailed": "Couldn't check for updates.\n\n{{error}}",
-    "installFailed": "Couldn't install the update.\n\n{{error}}"
+    "installFailed": "Couldn't install the update.\n\n{{error}}",
+    "notAvailable": "Automatic updates aren't available for this install yet.\n\nDownload releases at {{url}}"
   },
   "quit": {
     "ok": "Quit"
