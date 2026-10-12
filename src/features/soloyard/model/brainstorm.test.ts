@@ -5,11 +5,12 @@ describe("头脑风暴", () => {
   it("默认文件夹名是开始时间", () => {
     expect(defaultFolderName(new Date(2026, 9, 5, 9, 7))).toBe("2026-10-05-0907");
   });
-  it("只有工作区下面的子文件夹才算头脑风暴", () => {
+  it("工作区本身和它下面的子文件夹算头脑风暴（侧栏把工作区当「头脑风暴」项目）", () => {
     const root = "/Users/me/Library/Application Support/x/workspace";
     expect(isBrainstormCwd(`${root}/2026-10-05-0907`, root)).toBe(true);
     expect(isBrainstormCwd(`${root}/2026-10-05-0907/`, root)).toBe(true);
-    expect(isBrainstormCwd(root, root)).toBe(false);
+    expect(isBrainstormCwd(root, root)).toBe(true);
+    expect(isBrainstormCwd(`${root}/`, root)).toBe(true);
     expect(isBrainstormCwd(`${root}-other/a`, root)).toBe(false);
     expect(isBrainstormCwd("/Users/me/code/app", root)).toBe(false);
     expect(isBrainstormCwd(`${root}/a`, null)).toBe(false);
