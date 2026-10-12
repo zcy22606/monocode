@@ -8613,7 +8613,14 @@ function Workspace({
           setComposerFocused(true);
           if (request.send) setTimeout(() => submitSessionRef.current(session.id, request.prompt, []), 0);
         },
-        openSession: (sessionId) => void onSelectHistorySession(sessionId),
+        openSession: (sessionId) => {
+          // Like startWork: bring the session to front over the search / inbox / notes / automations views.
+          setSearchViewOpen(false);
+          setInboxViewOpen(false);
+          setNotesViewOpen(false);
+          setAutomationsViewOpen(false);
+          void onSelectHistorySession(sessionId);
+        },
         sendToSession: ({ sessionId, text }) => {
           // Open (and hydrate) the session first, then submit into it.
           void onSelectHistorySession(sessionId).then(() => submitSessionRef.current(sessionId, text, []));
