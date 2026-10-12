@@ -16,6 +16,7 @@ import * as stage from './stage.ts'
 import * as overview from './overview.ts'
 import * as ideas from './ideas.ts'
 import * as decisions from './decisions.ts'
+import { exportDocuments } from './docs-export.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -31,6 +32,14 @@ try {
   ideas.backfillIdeas(db, workspace)
 } catch (e) {
   process.stderr.write(`backfill ideas: ${e}\n`)
+}
+
+// 文档改成以项目 docs/ 里的文件为准：表里还有没导出的就写成文件（导过的记在项目 meta，不重复）。stdout 是协议，日志走 stderr
+try {
+  const { written } = exportDocuments(db, (msg) => process.stderr.write(msg + '\n'))
+  if (written.length) process.stderr.write(`soloyard: exported ${written.length} document(s) to docs/\n`)
+} catch (e) {
+  process.stderr.write(`soloyard: document export failed: ${e instanceof Error ? e.message : String(e)}\n`)
 }
 
 /** 界面能调的方法（白名单）。写操作在名字里标 write，执行后广播 changed。 */

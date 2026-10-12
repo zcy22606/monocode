@@ -355,7 +355,7 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
   },
   {
     name: 'import_product_thinking',
-    description: 'product-thinking 每个命令结束、pt.py check 通过后调用：把项目目录里的立项卡等文档、证据、决策、功能全景和版本表写进 Soloyard。按编号覆盖，重复导入安全：用户在应用里挪过的功能、做过的决定都保留。project 传目录绝对路径时，还没有项目就按这个目录新建。',
+    description: 'product-thinking 每个命令结束、pt.py check 通过后调用：把项目目录里的证据、决策、功能全景和版本表写进 Soloyard。立项卡等文档不进库：直接写进项目根目录的 docs/（.md 或 SCHEMA 的节 + 块 .json），应用的 Docs 页读文件显示；返回的 docs 只是项目目录 docs/ 下 .json 的个数。按编号覆盖，重复导入安全：用户在应用里挪过的功能、做过的决定都保留。project 传目录绝对路径时，还没有项目就按这个目录新建。',
     inputSchema: { type: 'object', required: ['dir', 'project'], properties: {
       dir: str('product-thinking 项目目录的绝对路径（含 project.json）'), project: projectRef,
     } },

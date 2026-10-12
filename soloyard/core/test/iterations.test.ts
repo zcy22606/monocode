@@ -113,6 +113,8 @@ test('导入 product-thinking：建版本、按 plan 放功能；重新导入保
   const p = r.projectForPath(db, '/work/app')
   const res = importProductThinking(db, 'agent:t', dir, p.id)
   assert.equal(res.iterations_created, 2)
+  assert.equal(res.docs, 1)
+  assert.equal((db.prepare('SELECT COUNT(*) AS n FROM soloyard_documents').get() as { n: number }).n, 0, '文档不进库，以 docs/ 里的文件为准')
   const where = (code: string) => {
     const plan = it.iterationPlan(db, p.id)
     const f = plan.features.find((x) => x.code === code)!
