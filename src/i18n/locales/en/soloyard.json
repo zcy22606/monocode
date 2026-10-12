@@ -458,7 +458,6 @@
       "exists": "A brainstorm folder named {{name}} already exists",
       "hint": "Named after the start time by default. Can only be changed before the first message."
     },
-    "draft": "No message sent yet",
     "moved": "Brainstorm moved to the left: click Brainstorm under Inbox to start one; past ones are listed in the sidebar. You can close this old tab.",
     "remove": {
       "action": "Delete",

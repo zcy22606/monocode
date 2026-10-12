@@ -1,7 +1,7 @@
 /**
  * 头脑风暴时的侧栏：盖在工作区面板上，样子和会话列表一样，只列头脑风暴会话（工作区下各子文件夹里的会话）。
  * 每个头脑风暴是一条想法项目（agent 维护标题、英文名、一句话），所以每行显示想法项目的标题和一句话；还没起名的用会话标题。
- * 会话第一次发送后才入库，所以刚开的新头脑风暴先显示成一行「新的头脑风暴」。
+ * 和项目的会话列表一样，会话第一次发送后才出现在列表里。
  * 每行悬停出现改名（双击 / F2 也行，改的是想法项目的标题）、归档（搁置 / 放弃，放弃要写原因）和删除（会话、工作文件夹、
  * 想法项目一起删，先确认）。归档的折叠在列表底部，可以恢复。
  */
@@ -93,7 +93,6 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
   const restore = (idea: Idea) =>
     void mutateSoloyard("setProjectStage", idea.id, "resume").then(() => setReload((n) => n + 1), (e: unknown) => setError(String(e)));
 
-  const draftActive = !!activeSessionId && !rows.some((r) => r.id === activeSessionId);
   const active = rows.filter((r) => !isArchived(ideaOf(r)));
   const archived = rows.filter((r) => isArchived(ideaOf(r)));
 
@@ -116,21 +115,13 @@ function BrainstormList({ activeSessionId }: { activeSessionId?: string }) {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-none">
         {error ? <p role="alert" className="px-3 py-2 text-[12px] text-red-400">{error}</p> : null}
-        {!rows.length && !draftActive ? (
+        {!rows.length ? (
           <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
             <Sparkles className="size-5 text-content/30" />
             <p className="text-[12px] leading-relaxed text-content/50">{t("brainstorm.empty.body")}</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-0.5 p-1.5">
-            {draftActive ? (
-              <li>
-                <div aria-current="true" className="flex flex-col gap-0.5 rounded-md bg-selection px-2.5 py-2">
-                  <span className="truncate text-[13px] text-content/60">{t("brainstorm.untitled")}</span>
-                  <span className="text-[11px] text-content/40">{t("brainstorm.draft")}</span>
-                </div>
-              </li>
-            ) : null}
             {active.map((r) => (
               <li key={r.id} className="group relative">
                 {renaming === r.id ? (

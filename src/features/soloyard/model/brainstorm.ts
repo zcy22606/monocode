@@ -11,7 +11,7 @@ import { useSyncExternalStore } from "react";
 import { t } from "../../../i18n";
 import { createPath, deletePath, listDir, movePath, renamePath } from "../../../platform/tauri/fs";
 import { mutateSoloyard, soloyardCall } from "../data/api";
-import { requestDeleteSession, requestMoveSession, requestSendToSession, requestStartWork } from "./appActions";
+import { requestDeleteSession, requestMoveSession, requestOpenSession, requestSendToSession, requestStartWork } from "./appActions";
 
 let root: string | null = null;
 const listeners = new Set<() => void>();
@@ -103,7 +103,22 @@ export async function startBrainstorm(prompt: string): Promise<{ sessionId: stri
   return { sessionId, folder };
 }
 
-/** 侧栏「头脑风暴」和头脑风暴列表的「+」：输入框留空给用户说想法，头脑风暴的规矩在系统提示里（core 的 BRAINSTORM_GUIDE）。 */
+/**
+ * 侧栏的「头脑风暴」入口：和点项目一样，回到最近的头脑风暴会话（跳过已归档的）；一个都没有才新开。
+ * 开新的只走头脑风暴列表上的「+」。
+ */
+export async function openBrainstorm() {
+  const base = await workspaceRoot();
+  const [sessions, ideas] = await Promise.all([listBrainstormSessions(base), listIdeas(base)]);
+  const archived = new Set(ideas.filter(isArchived).map((i) => i.path.replace(/\/+$/, "")));
+  const latest = sessions
+    .filter((s) => !archived.has(s.cwd.replace(/\/+$/, "")))
+    .sort((a, b) => b.updated_at - a.updated_at)[0];
+  if (latest) requestOpenSession(latest.id);
+  else await startNewBrainstorm();
+}
+
+/** 头脑风暴列表的「+」：输入框留空给用户说想法，头脑风暴的规矩在系统提示里（core 的 BRAINSTORM_GUIDE）。 */
 export const startNewBrainstorm = () => startBrainstorm("");
 
 /** 发第一条消息前给工作区文件夹改名：改文件夹，再把会话指过去。 */
