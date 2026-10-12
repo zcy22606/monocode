@@ -14,7 +14,6 @@ import {
 import { useLockOverscroll } from "../../../shared/hooks/useLockOverscroll";
 import { TerminalGridBackground } from "../../terminal/ui/TerminalGridBackground";
 import { useTranslation } from "../../../i18n";
-import { isBrainstormCwd } from "../../soloyard/model/brainstorm"; // Soloyard
 
 type Props = {
   cwd: string;
@@ -31,7 +30,7 @@ export function EmptySession({ cwd, composer, hasChatBackground }: Props) {
     () => true,
   );
   const getProjectLabel = () =>
-    looksLikeProject(cwd) && !isBrainstormCwd(cwd) // Soloyard: a brainstorm folder isn't a project
+    looksLikeProject(cwd)
       ? resolveTabGroupLabel(
           projectKey(cwd),
           loadTabGroupLabels(),

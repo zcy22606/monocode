@@ -248,3 +248,77 @@ test('MCP：多仓库项目里建 issue 标仓库（名字或路径），get_pro
     s.close()
   }
 })
+
+test('MCP：get_project / list_projects 带阶段和下一步；update_project 改阶段要原因', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app'), stage: 'initiating' })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const p = (await s.tool('get_project', { project: 'APP' })).data
+    assert.deepEqual([p.stage, p.stage_step], ['initiating', 'charter'])
+    assert.match(p.next_step, /立项覆盖表/)
+    assert.equal((await s.tool('list_projects', {})).data[0].stage, 'initiating')
+    assert.match((await s.tool('update_project', { project: 'APP', stage: 'launched', reason: '上线了' })).error.error, /建造期/)
+    const parked = (await s.tool('update_project', { project: 'APP', stage: 'parked', reason: '先做别的' })).data
+    assert.deepEqual([parked.stage, parked.stage_note.reason, parked.stage_note.by], ['parked', '先做别的', 'agent:test'])
+    assert.equal((await s.tool('update_project', { project: 'APP', stage: 'resume', reason: '回来做' })).data.stage, 'initiating')
+  } finally {
+    s.close()
+  }
+})
+
+test('MCP：get_overview / update_overview，用户改过的节不覆盖', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app') })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const before = (await s.tool('get_overview', { project: 'APP' })).data
+    assert.equal(before.entries.length, 13)
+    const res = (await s.tool('update_overview', { project: 'APP', updates: [{ key: 'goal', body: '一句话', expected_version: 0 }, { key: 'users', body: '独立开发者', expected_version: 0 }] })).data
+    assert.deepEqual(res, [{ key: 'goal', version: 1 }, { key: 'users', version: 1 }])
+
+    const db2 = openDb(dbPath)
+    const { updateOverview } = await import('../../core/src/overview.ts')
+    updateOverview(db2, 'user', 1, [{ key: 'users', body: '我改的', expected_version: 1 }])
+    db2.close()
+    const err = (await s.tool('update_overview', { project: 'APP', updates: [{ key: 'users', body: '覆盖', expected_version: 1 }] })).error
+    assert.match(err.error, /用户在你读过之后改过「目标用户」/)
+    assert.equal(err.latest.body, '我改的')
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.goal, '一句话')
+  } finally {
+    s.close()
+  }
+})
+
+test('MCP：决策和证据；record_decision 要原话；单向门定了阶段往下走', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app'), stage: 'initiating' })
+  repo.insert(db, 'user', 'documents', { project_id: 1, slug: '01-立项', title: '立项卡', body_md: '' })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const { codes } = (await s.tool('add_evidence', { project: 'APP', items: [{ claim: '新手看不懂数据', level: 'B' }] })).data
+    assert.deepEqual(codes, ['E-1'])
+    await s.tool('upsert_decisions', { project: 'APP', decisions: [{ code: 'D-2', title: '首要人群', door: 'one-way', options: [{ key: 'A', label: '新手' }, { key: 'B', label: '腰部' }], evidence: codes }] })
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.stage_step, 'decide')
+    assert.match((await s.tool('record_decision', { project: 'APP', code: 'D-2', option: 'A', quote: '' })).error.error, /原话/)
+    const rec = (await s.tool('record_decision', { project: 'APP', code: 'D-2', option: 'A', quote: '就先做新手' })).data
+    assert.deepEqual([rec.status, rec.user.via, rec.user.quote], ['decided', '对话', '就先做新手'])
+    assert.deepEqual((await s.tool('list_decisions', { project: 'APP' })).data, [{ code: 'D-2', title: '首要人群', door: 'one-way', status: 'decided', user: { option: 'A', via: '对话', date: rec.user.date } }])
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.stage_step, 'versions')
+    assert.equal((await s.tool('list_evidence', { project: 'APP', codes: ['E-1'] })).data[0].claim, '新手看不懂数据')
+  } finally {
+    s.close()
+  }
+})

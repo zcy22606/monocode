@@ -69,9 +69,9 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { BRAINSTORM_CWD, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { isBrainstormCwd, onIdeaRemoved } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
-import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
@@ -1869,19 +1869,11 @@ function Workspace({
   }, [activeSkillCwd, active?.id, active?.harness]);
 
   const activeFile = activeTab ? focusedFileTab(activeTab) : undefined;
-  // Soloyard: a brainstorm session isn't a project; the sidebar stays on the current project.
-  const brainstormActive = !activeFile && isBrainstormCwd(active?.cwd);
   // Soloyard: highlight the Project sidebar item for the focused project-view tab.
-  useEffect(
-    () =>
-      brainstormActive
-        ? setActiveProjectView(BRAINSTORM_CWD, { view: "brainstorm" })
-        : setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView),
-    [activeFile, brainstormActive],
-  );
+  useEffect(() => setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView), [activeFile]);
   // A Mono belongs to no project, so its view keeps the project in place.
   const sidebarCwd =
-    activeFile?.projectCwd ?? activeFile?.cwd ?? (brainstormActive ? undefined : active?.cwd) ?? projectCwd;
+    activeFile?.projectCwd ?? activeFile?.cwd ?? active?.cwd ?? projectCwd;
   const sidebarCwdRef = useRef(sidebarCwd);
   sidebarCwdRef.current = sidebarCwd;
   const [sidebarTabSelection, setSidebarTabSelection] = useState<{
@@ -6180,6 +6172,8 @@ function Workspace({
         );
       }
       setRecents(remaining);
+      // Soloyard: an idea's folder lives in the app's own workspace/ — removing deletes it, archiving parks the idea.
+      if (isBrainstormCwd(normalized)) void onIdeaRemoved(normalized, options.purgeData);
 
       const tabs = tabsRef.current;
       const sessions = sessionsRef.current;
@@ -8603,11 +8597,23 @@ function Workspace({
           sessionsRef.current = [...sessionsRef.current, session];
           setSessions(sessionsRef.current);
           appendTab(tab, request.cwd);
+          // A new idea's folder was just created: make it the selected, remembered project like any other.
+          if (request.remember) {
+            setProjectCwd(request.cwd);
+            setRecents(rememberProject(request.cwd));
+          }
           setActiveTabId(tab.id);
           setComposerFocused(true);
           if (request.send) setTimeout(() => submitSessionRef.current(session.id, request.prompt, []), 0);
         },
-        openSession: (sessionId) => void onSelectHistorySession(sessionId),
+        openSession: (sessionId) => {
+          // Like startWork: bring the session to front over the search / inbox / notes / automations views.
+          setSearchViewOpen(false);
+          setInboxViewOpen(false);
+          setNotesViewOpen(false);
+          setAutomationsViewOpen(false);
+          void onSelectHistorySession(sessionId);
+        },
         sendToSession: ({ sessionId, text }) => {
           // Open (and hydrate) the session first, then submit into it.
           void onSelectHistorySession(sessionId).then(() => submitSessionRef.current(sessionId, text, []));
@@ -8622,10 +8628,8 @@ function Workspace({
           setSessions((prev) =>
             prev.map((s) => (s.id === sessionId ? { ...s, cwd, branch: undefined, worktreeCwd: undefined, worktreeRemoved: undefined } : s)),
           );
-          if (!isBrainstormCwd(cwd)) {
-            setProjectCwd(cwd);
-            setRecents(rememberProject(cwd));
-          }
+          setProjectCwd(cwd);
+          setRecents(rememberProject(cwd));
           return undefined;
         },
         deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),

@@ -148,10 +148,11 @@ it("renders assigned projects in persistent collapsible groups", async () => {
 
 it("creates, styles, assigns, and deletes a group from the rail", async () => {
   await renderRail();
-  expect(sectionLabels()).toEqual(["Projects"]);
+  // Soloyard: the Groups header (with New group) stays visible even with no groups.
+  expect(sectionLabels()).toEqual(["Groups", "Projects"]);
   expect(
     document.querySelector('button[aria-label="New project group"]'),
-  ).toBeNull();
+  ).not.toBeNull();
 
   const personal = button("personal");
   await act(async () => {
@@ -202,8 +203,9 @@ it("creates, styles, assigns, and deletes a group from the rail", async () => {
   expect(loadProjectGroups()).toEqual([]);
   expect(loadProjectGroupAssignments()).toEqual({});
   expect(button("personal")).toBeDefined();
-  expect(sectionLabels()).toEqual(["Projects"]);
+  // Soloyard: deleting the last group keeps the Groups header, so a new one can still be made from here.
+  expect(sectionLabels()).toEqual(["Groups", "Projects"]);
   expect(
     document.querySelector('button[aria-label="New project group"]'),
-  ).toBeNull();
+  ).not.toBeNull();
 });

@@ -14,6 +14,9 @@ import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
 import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
+import { projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
+import { getOverview, OverviewConflict, updateOverview, FIELDS, SECTIONS } from '../core/src/overview.ts'
+import { addEvidence, decide, getDecision, listDecisions, listEvidence, upsertDecisions } from '../core/src/decisions.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -21,7 +24,7 @@ export const DEFAULT_DB = join(homedir(), 'Library/Application Support/dev.indie
 const db = openDb(process.env.SOLOYARD_DB ?? DEFAULT_DB)
 
 const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收）。规则：
-- 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。
+- 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。get_project 还返回项目阶段和下一步（立项期按它推进）。
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
 - 多仓库项目（get_project 返回 repos）：建 issue 时用 repo 标上在哪个仓库做，用户 Start work 会直接在那个仓库开会话；跨仓库的需求建主 issue（不标 repo），按仓库拆子 issue。
@@ -33,6 +36,13 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、update_iteration（改版本号 / 名称 / 目标、调先后）、
   delete_iteration（只删空的）、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项），update_issue 的 iteration 把 issue 排进迭代。
   开始 / 完成迭代、删掉有内容的迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
+- 头脑风暴：每个头脑风暴（应用数据目录 workspace/ 下的文件夹）是一个想法项目（stage = idea），get_project 传当前文件夹就能找到；
+  从用户第一句起维护它的 overview（暂定标题 name、将来文件夹名 slug、一句话 goal 和各节）。提升为项目由用户在应用里点，agent 不做。
+- 决策和证据以应用为准：list_decisions / get_decision / upsert_decisions（写选项和推荐，不替用户拍板）/ record_decision（用户在对话里说了决定时代记，附原话）、
+  list_evidence / add_evidence。用户在应用的 Decisions 页拍板。
+- overview（get_overview / update_overview）是项目的产品说明书：做什么、为什么，不放技术。头脑风暴、立项相关的会话要随时维护它
+  （方向变了、查到了、定了就改对应的节）；普通开发会话只在用户做了产品层面的决定时才改，技术决定不进 overview。
+  改之前先读，带读到的版本；用户改过的节被拒时不要硬改，在对话里提建议。
 - 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。`
 
 type Json = Record<string, any>
@@ -92,22 +102,98 @@ function featureIds(projectId: number, codes: string[]) {
     return id
   })
 }
+/** 阶段和下一步（给 agent 读的说明）。 */
+const NEXT_TEXT: Record<string, string> = {
+  idea: '想法期：在头脑风暴里把方向聊清楚，并随时维护 overview；用户点「提升为项目」后进入立项',
+  charter: '待立项：先盘点已有的 overview、证据、决策和 docs/，列立项覆盖表和预计耗时，用户点头后再跑 product-thinking 立项（只补缺的）',
+  decide: '待拍板：还有单向门决策没定，等用户在 Decisions 页拍板；依赖它的步骤（版本表）先不要跑',
+  versions: '待排版本：跑 product-thinking 加法的「版本表」，导入后迭代页出现版本表',
+  cut: '待减法：用户在迭代页挪功能，挪完可以跑减法审查；用户开始第一个迭代 = 立项结束',
+  building: '建造期：按 issue 干活',
+}
+const stageBrief = (s: StageInfo) => ({ stage: s.stage, ...(s.step ? { stage_step: s.step } : {}), ...(s.next ? { next_step: NEXT_TEXT[s.next.key] } : {}), ...(s.note ? { stage_note: s.note } : {}) })
+
 const featureBrief = (f: Json) => ({ code: f.code, name: f.name, level: f.level ?? undefined, issue: f.issue_ident ? `${f.issue_ident} (${f.issue_status})` : undefined })
 
 const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Json) => unknown }[] = [
   {
-    name: 'list_projects', description: '列出所有项目：key、名称、关联目录、未完成和待验收的 issue 数',
-    inputSchema: { type: 'object', properties: {} }, run: () => repo.listProjects(db),
+    name: 'list_projects', description: '列出所有项目：key、名称、阶段、关联目录、未完成和待验收的 issue 数',
+    inputSchema: { type: 'object', properties: {} }, run: () => repo.listProjects(db).map((p) => ({ ...p, ...stageBrief(projectStage(db, p.id)) })),
   },
   {
-    name: 'get_project', description: '按目录（传当前工作目录即可，worktree 也行）或 key 找项目。开工前先调它拿项目 key。',
+    name: 'get_project', description: '按目录（传当前工作目录即可，worktree 也行）或 key 找项目。开工前先调它拿项目 key。返回阶段（stage：idea 想法 / initiating 立项 / building 建造 / launched 上线 / parked 搁置 / killed 放弃）、立项期的小步和下一步。',
     inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef } },
     run: ({ project: ref }) => {
       const p = project(ref)
       const root = (db.prepare('SELECT path FROM soloyard_project_paths WHERE project_id = ? ORDER BY length(path) LIMIT 1').get(p.id) as { path?: string } | undefined)?.path
       const repos = root ? projectRepos(db, root)?.repos.map(({ name, path, description, branch }) => ({ name, path, description, branch })) ?? [] : []
-      return { ...p, ...(repos.length ? { root, repos } : {}), open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
+      return { ...p, ...stageBrief(projectStage(db, p.id)), ...(repos.length ? { root, repos } : {}), open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
     },
+  },
+  {
+    name: 'update_project', description: '改项目阶段：parked 搁置 / killed 放弃 / launched 上线（只能从建造期）/ resume 从搁置或放弃恢复。只在用户明确说了时才调，reason 写用户的原话或理由。想法 → 立项只能由用户在应用里「提升为项目」，立项 → 建造是开始第一个迭代时自动的。',
+    inputSchema: { type: 'object', required: ['project', 'stage', 'reason'], properties: {
+      project: projectRef, stage: { type: 'string', enum: ['parked', 'killed', 'launched', 'resume'] }, reason: str('原因（用户的原话或理由）'),
+    } },
+    run: ({ project: ref, stage, reason }) => {
+      const p = project(ref)
+      setProjectStage(db, actor, p.id, stage, reason)
+      return { key: p.key, ...stageBrief(projectStage(db, p.id)) }
+    },
+  },
+  {
+    name: 'get_overview', description: '读项目的 overview（产品说明书：做什么、为什么，不含技术）：标题、英文名、一句话、止损线，以及背景与问题、目标用户、现有替代和竞品、调研发现、关键决策、范围和不做的、成功指标、风险与待验证假设、还没想清楚的。每节带版本和最后改的人（user = 用户）。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef } },
+    run: ({ project: ref }) => getOverview(db, project(ref).id),
+  },
+  {
+    name: 'update_overview', description: `改 overview 的几节（一次事务，改完自动写快照 docs/overview.md）。key：${[...FIELDS, ...SECTIONS].join(' / ')}。每项必须带 expected_version（get_overview 读到的版本，没写过的节是 0）；版本对不上会拒绝——尤其是用户改过的节，不要覆盖，把建议在对话里告诉用户。正文引用决策和证据只写编号（D-2、E-14），不抄内容。slug = 英文名（项目文件夹名，小写字母、数字、短横线）。`,
+    inputSchema: { type: 'object', required: ['project', 'updates'], properties: {
+      project: projectRef,
+      updates: { type: 'array', items: { type: 'object', required: ['key', 'body', 'expected_version'], properties: { key: { type: 'string', enum: [...FIELDS, ...SECTIONS] }, body: str('这一节的全文（markdown）'), expected_version: { type: 'number' } } } },
+    } },
+    run: ({ project: ref, updates }) => {
+      const p = project(ref)
+      const o = updateOverview(db, actor, p.id, updates)
+      return o.entries.filter((e) => (updates as Json[]).some((u) => u.key === e.key)).map(({ key, version }) => ({ key, version }))
+    },
+  },
+  {
+    name: 'list_decisions', description: '列项目的决策（单向门在前、没定的在前）：编号、标题、door（one-way 单向门 / two-way 双向门）、status（pending 等用户 / ai_default / decided 已定）、用户的决定。full=true 返回全部字段（背景、选项、推荐、反方……）。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, status: str('只列这个状态，如 pending'), full: { type: 'boolean' } } },
+    run: ({ project: ref, status, full }) => listDecisions(db, project(ref).id)
+      .filter((d) => !status || d.status === status)
+      .map((d) => (full ? d : { code: d.code, title: d.title, door: d.door, status: d.status, ai: d.ai?.option, user: d.user ? { option: d.user.option, via: d.user.via, date: d.user.date } : null })),
+  },
+  {
+    name: 'get_decision', description: '读一条决策的全部（编号或别名）。',
+    inputSchema: { type: 'object', required: ['project', 'code'], properties: { project: projectRef, code: str('决策编号，如 D-2') } },
+    run: ({ project: ref, code }) => getDecision(db, project(ref).id, code) ?? null,
+  },
+  {
+    name: 'upsert_decisions', description: '写决策（新建或补充）：code、title、door（one-way / two-way）、context、evidence（证据编号数组）、options（[{key,label,benefit,cost,reversibility}]，需要时含「不做 / 推迟」）、ai（{option,reason}）、counter（反方最强论证）、needs_info。不能替用户拍板：用户已定的决定保留不动。单向门不要设默认值。',
+    inputSchema: { type: 'object', required: ['project', 'decisions'], properties: { project: projectRef, decisions: { type: 'array', items: { type: 'object', required: ['code'] } } } },
+    run: ({ project: ref, decisions }) => upsertDecisions(db, actor, project(ref).id, decisions).map((d) => ({ code: d.code, status: d.status })),
+  },
+  {
+    name: 'record_decision', description: '用户在对话里明确说了某个决策选哪个时，代为记下（标「经对话」）。必须附上用户的原话 quote；不能自己替用户决定。',
+    inputSchema: { type: 'object', required: ['project', 'code', 'option', 'quote'], properties: {
+      project: projectRef, code: str('决策编号'), option: str('选项 key'), quote: str('用户的原话'), note: str('补充说明'),
+    } },
+    run: ({ project: ref, code, option, quote, note }) => {
+      const d = decide(db, actor, project(ref).id, code, { option, quote, note, via: '对话' })
+      return { code: d.code, status: d.status, user: d.user }
+    },
+  },
+  {
+    name: 'list_evidence', description: '列证据（编号、等级、摘要、原话、来源、访问日期）。codes 只取这些编号；q 按关键词搜。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, codes: { type: 'array', items: { type: 'string' } }, q: str('关键词') } },
+    run: ({ project: ref, codes, q }) => listEvidence(db, project(ref).id, { codes, q }),
+  },
+  {
+    name: 'add_evidence', description: '记证据（每条：claim 结论、quote 逐字摘录、url、platform、accessed 访问日期、level S/A/B+/B/B-/C/D、axis 做法/价值）。没给 code 的自动编 E-<n>；code 已有的覆盖。返回编号，overview 和文档里引用它。绝不用模型记忆编证据。',
+    inputSchema: { type: 'object', required: ['project', 'items'], properties: { project: projectRef, items: { type: 'array', items: { type: 'object', required: ['claim'] } } } },
+    run: ({ project: ref, items }) => ({ codes: addEvidence(db, actor, project(ref).id, items) }),
   },
   {
     name: 'list_issues', description: '列出项目的 issue，按优先级排（紧急 → 低，无优先级最后）。ready=true 只列可开工的（未开始且前置都已完成）',
@@ -269,7 +355,7 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
   },
   {
     name: 'import_product_thinking',
-    description: 'product-thinking 每个命令结束、pt.py check 通过后调用：把项目目录里的立项卡等文档、证据、决策、功能全景和版本表写进 Soloyard。按编号覆盖，重复导入安全：用户在应用里挪过的功能、做过的决定都保留。project 传目录绝对路径时，还没有项目就按这个目录新建。',
+    description: 'product-thinking 每个命令结束、pt.py check 通过后调用：把项目目录里的证据、决策、功能全景和版本表写进 Soloyard。立项卡等文档不进库：直接写进项目根目录的 docs/（.md 或 SCHEMA 的节 + 块 .json），应用的 Docs 页读文件显示；返回的 docs 只是项目目录 docs/ 下 .json 的个数。按编号覆盖，重复导入安全：用户在应用里挪过的功能、做过的决定都保留。project 传目录绝对路径时，还没有项目就按这个目录新建。',
     inputSchema: { type: 'object', required: ['dir', 'project'], properties: {
       dir: str('product-thinking 项目目录的绝对路径（含 project.json）'), project: projectRef,
     } },
@@ -298,6 +384,7 @@ function callTool(name: string, args: Json) {
   try {
     return { content: [{ type: 'text', text: JSON.stringify(tool.run(args ?? {}) ?? null, null, 2) }] }
   } catch (e) {
+    if (e instanceof OverviewConflict) return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error: e.message, latest: e.latest }) }] }
     const latest = e instanceof repo.VersionConflict ? e.latest : undefined
     const error = latest ? 'version_conflict：数据已被别人改过，按 latest 重新决定后再写' : e instanceof Error ? e.message : String(e)
     return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error, ...(latest ? { latest } : {}) }) }] }

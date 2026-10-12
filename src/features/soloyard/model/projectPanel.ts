@@ -1,7 +1,8 @@
 /**
- * Soloyard：右侧项目面板（SOL-66）。顶栏的开关按钮开 / 收，标题栏下拉换视图，openProjectView 也开在这里，不再开顶层标签。
- * 全窗口一个，切会话时保持打开（满屏的退回侧栏），切到别的项目跟着换成那个项目的同一视图。
- * 状态存 localStorage，重启后还原。
+ * Soloyard：右侧项目面板（SOL-66）。顶栏的开关按钮开 / 收，openProjectView 也开在这里，不再开顶层标签。
+ * 导航是「主页 + 子页」：栈底永远是概览（项目主页），往上是一个模块（Issues、迭代、文档……），再往上是点进去的详情。
+ * 标题栏是面包屑，模块那一段带下拉，平级切换一步到位；点「概览」回主页，返回键一层层退。
+ * 全窗口一个，切会话时保持打开（满屏的退回侧栏），切到别的项目留在同一个模块。状态存 localStorage，重启后还原。
  */
 import { useSyncExternalStore } from "react";
 import { navOf, type OpenProjectViewRequest, type ProjectViewId, type ProjectViewSource } from "./projectViews";
@@ -19,9 +20,19 @@ export type ProjectPanelState = {
   width: number;
   float: FloatRect | null;
   cwd: string;
-  /** 第一项是工具栏上的视图，后面是点进去的详情，返回就是出栈。 */
+  /** [概览, 模块?, 详情…]：第一项永远是概览，返回就是出栈。 */
   stack: PanelEntry[];
 };
+
+/** 项目主页：栈底。放在 load() 前面：模块加载时 load() 就要用到。 */
+const HOME: PanelEntry = { view: "overview" };
+/** 以前存的栈（第一项是某个列表视图）补上主页。 */
+function withHome(stack: PanelEntry[]): PanelEntry[] {
+  if (!stack.length) return stack;
+  return stack[0].view === "overview" ? stack : [HOME, ...stack];
+}
+/** 栈里的模块（第二项）：Issues、迭代、文档……；在主页时是 undefined。 */
+export const panelModule = (stack: PanelEntry[]) => stack[1];
 
 const KEY = "soloyard.projectPanel";
 export const PANEL_DEFAULT_WIDTH = 520;
@@ -42,7 +53,7 @@ function load(): ProjectPanelState {
     if (!saved) return INITIAL;
     // 启动时也不停在满屏
     const mode = saved.mode === "full" ? (saved.restoreMode ?? "dock") : (saved.mode ?? "dock");
-    return { ...INITIAL, ...saved, mode, stack: Array.isArray(saved.stack) ? saved.stack : [] };
+    return { ...INITIAL, ...saved, mode, stack: Array.isArray(saved.stack) ? withHome(saved.stack) : [] };
   } catch {
     return INITIAL;
   }
@@ -79,36 +90,47 @@ export const panelShownFor = (panel: ProjectPanelState, cwd: string) => panelSho
 /** 从收起状态打开时的样子：满屏不留到下次，回到满屏前的侧栏（或悬浮）。 */
 const reopenMode = (): PanelMode => (state.mode === "full" ? state.restoreMode : state.mode);
 
-/** 顶栏开关：开着就收起；否则打开，回到上次看的视图（同一项目连详情一起），没看过就是 Issues。 */
+/** 顶栏开关：开着就收起；否则打开——同一项目回到上次停的地方（连详情一起），换了项目从主页开始。 */
 export function toggleProjectPanel(cwd: string) {
   if (panelShownFor(state, cwd)) {
     set({ open: false });
     return;
   }
-  const root = state.stack[0];
-  const listView = root && (navOf(root.view) !== root.view || !root.itemId) ? navOf(root.view) : "issues";
-  set({ open: true, mode: reopenMode(), cwd, stack: sameCwd(state.cwd, cwd) && root ? state.stack : [{ view: listView }] });
+  set({ open: true, mode: reopenMode(), cwd, stack: sameCwd(state.cwd, cwd) && state.stack.length ? state.stack : [HOME] });
 }
 
-/** 标题栏下拉：换成这个视图。 */
+/** 换模块（面包屑下拉、主页的模块卡片）：概览 = 回主页，否则 [概览, 模块]，原来的详情丢掉。 */
 export function selectProjectPanelView(view: ProjectViewId) {
-  set({ stack: [{ view }] });
+  set({ stack: view === "overview" ? [HOME] : [HOME, { view }] });
+}
+
+/** 点面包屑的某一段：退到那一层。 */
+export function popProjectPanelTo(index: number) {
+  if (index >= 0 && index < state.stack.length - 1) set({ stack: state.stack.slice(0, index + 1) });
 }
 
 /**
- * openProjectView 落到这里：列表视图换掉整个栈；详情压栈（同一列表下接着压，否则从它的列表开始）；
- * 没有列表的视图（服务日志）单独一页。
+ * openProjectView 落到这里，都挂在主页下面：模块 → [概览, 模块]；详情压栈（同一模块下接着压，否则从它的模块开始）；
+ * 没有模块的视图（服务日志）直接挂在主页下。
  */
 export function openInProjectPanel(request: OpenProjectViewRequest) {
   if (!panelShown(state)) set({ mode: reopenMode() });
   const entry: PanelEntry = { view: request.view, ...(request.itemId ? { itemId: request.itemId } : {}), title: request.title };
   const nav = navOf(request.view);
-  if (nav === request.view && !request.itemId) {
-    set({ open: true, cwd: request.cwd, stack: [{ view: nav }] });
+  if (request.view === "overview") {
+    set({ open: true, cwd: request.cwd, stack: [HOME] });
     return;
   }
-  const continues = panelShown(state) && sameCwd(state.cwd, request.cwd) && navOf(state.stack[0].view) === nav;
-  const base = nav === request.view ? [] : continues ? state.stack : [{ view: nav }];
+  if (nav === request.view && !request.itemId) {
+    set({ open: true, cwd: request.cwd, stack: [HOME, { view: nav }] });
+    return;
+  }
+  if (nav === request.view) {
+    set({ open: true, cwd: request.cwd, stack: [HOME, entry] });
+    return;
+  }
+  const continues = panelShown(state) && sameCwd(state.cwd, request.cwd) && panelModule(state.stack)?.view === nav;
+  const base = continues ? state.stack : [HOME, { view: nav }];
   const stack = sameEntry(base[base.length - 1], entry) ? base : [...base, entry];
   set({ open: true, cwd: request.cwd, stack });
 }
@@ -117,12 +139,12 @@ export function backProjectPanel() {
   if (state.stack.length > 1) set({ stack: state.stack.slice(0, -1) });
 }
 
-/** 切到别的项目：留在同一个列表视图，详情属于旧项目，丢掉；服务日志这类没有列表的视图收起。 */
+/** 切到别的项目：留在同一个模块（没有就是主页）；详情和服务日志属于旧项目，丢掉。 */
 export function retargetProjectPanel(cwd: string) {
   if (sameCwd(state.cwd, cwd)) return;
-  const root = state.stack[0];
-  const keep = root && (navOf(root.view) !== root.view || !root.itemId) ? [{ view: navOf(root.view) }] : [];
-  set({ cwd, stack: keep, open: state.open && keep.length > 0 });
+  const module = panelModule(state.stack);
+  const keep = module && !module.itemId ? [HOME, { view: module.view }] : [HOME];
+  set({ cwd, stack: state.stack.length ? keep : [] });
 }
 
 /** 打开了别的会话或文件：满屏的退回满屏前的样子，让它露出来。 */
