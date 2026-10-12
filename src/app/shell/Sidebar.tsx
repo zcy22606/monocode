@@ -32,7 +32,8 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
-import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
+import { useIsBrainstormRoot } from "../../features/soloyard/model/brainstorm"; // Soloyard
+import { BrainstormSidebarTitle } from "../../features/soloyard/ui/brainstorm/BrainstormSidebarTitle"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
@@ -1713,13 +1714,16 @@ function SidebarComponent({
       : []),
   ];
 
+  const brainstormRoot = useIsBrainstormRoot(cwd); // Soloyard: the brainstorm "project"
   const workspaceHeader = (
     <div
       className="flex h-10 shrink-0 select-none items-center gap-1 border-b border-stroke pl-3 pr-1.5"
       data-tauri-drag-region="deep"
     >
       <div className="flex min-w-0 flex-1 items-center">
-        {!remoteProject && cwd && cwd !== "~" ? (
+        {brainstormRoot ? (
+          <BrainstormSidebarTitle />
+        ) : !remoteProject && cwd && cwd !== "~" ? (
           <SidebarWorktreeSwitcher
             cwd={cwd}
             tabStats={worktreeTabStats}
@@ -2291,7 +2295,6 @@ function SidebarComponent({
           onClose={() => setLinkingSession(null)}
         />
       ) : null}
-      <BrainstormSidebar activeSessionId={activeSessionId} />{/* Soloyard: brainstorm sessions list over the workspace panel */}
       <div
         role="separator"
         aria-orientation="vertical"

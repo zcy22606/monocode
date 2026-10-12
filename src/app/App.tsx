@@ -71,7 +71,7 @@ import {
 import { flushSync } from "react-dom";
 import { BRAINSTORM_CWD, setActiveProjectView } from "../features/soloyard/model/projectViews";
 import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
-import { isBrainstormCwd } from "../features/soloyard/model/brainstorm"; // Soloyard
+import { isBrainstormCwd, startNewBrainstorm, useBrainstormRoot } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
@@ -1869,8 +1869,9 @@ function Workspace({
   }, [activeSkillCwd, active?.id, active?.harness]);
 
   const activeFile = activeTab ? focusedFileTab(activeTab) : undefined;
-  // Soloyard: a brainstorm session isn't a project; the sidebar stays on the current project.
+  // Soloyard: brainstorms show in the sidebar like a project whose root is the app's workspace/ folder.
   const brainstormActive = !activeFile && isBrainstormCwd(active?.cwd);
+  const brainstormRoot = useBrainstormRoot(); // Soloyard
   // Soloyard: highlight the Project sidebar item for the focused project-view tab.
   useEffect(
     () =>
@@ -1881,7 +1882,7 @@ function Workspace({
   );
   // A Mono belongs to no project, so its view keeps the project in place.
   const sidebarCwd =
-    activeFile?.projectCwd ?? activeFile?.cwd ?? (brainstormActive ? undefined : active?.cwd) ?? projectCwd;
+    activeFile?.projectCwd ?? activeFile?.cwd ?? (brainstormActive ? brainstormRoot ?? undefined : active?.cwd) ?? projectCwd; // Soloyard: brainstorm root
   const sidebarCwdRef = useRef(sidebarCwd);
   sidebarCwdRef.current = sidebarCwd;
   const [sidebarTabSelection, setSidebarTabSelection] = useState<{
@@ -2686,6 +2687,11 @@ function Workspace({
   );
 
   const onNew = useCallback(() => {
+    // Soloyard: a new session in a brainstorm is a new brainstorm (its own folder under workspace/).
+    if (isBrainstormCwd(active?.cwd)) {
+      void startNewBrainstorm();
+      return "";
+    }
     setSearchViewOpen(false);
     setInboxViewOpen(false);
     setNotesViewOpen(false);

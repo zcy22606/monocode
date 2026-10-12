@@ -7,11 +7,12 @@
  * → 清理工作文件夹 → 告诉会话里的 agent 已经提升，让它更新 overview、进入立项盘点。
  */
 import { appDataDir, join } from "@tauri-apps/api/path";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { sessionDisplayTitle, type HarnessId } from "../../sessions/model/session";
 import { t } from "../../../i18n";
 import { createPath, deletePath, listDir, movePath, renamePath } from "../../../platform/tauri/fs";
 import { mutateSoloyard, soloyardCall } from "../data/api";
-import { requestDeleteSession, requestMoveSession, requestOpenSession, requestSendToSession, requestStartWork } from "./appActions";
+import { requestDeleteSession, requestMoveSession, requestOpenSession, requestRenameSession, requestSendToSession, requestStartWork } from "./appActions";
 
 let root: string | null = null;
 const listeners = new Set<() => void>();
@@ -37,6 +38,12 @@ export const isBrainstormCwd = (cwd: string | undefined, base = root) => !!base 
 
 /** 工作区根目录（解析出来前是 null），解析完重新渲染。 */
 export const useBrainstormRoot = () => useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => root);
+
+/** 侧栏当前是不是头脑风暴这个「项目」（根目录 = 工作区）。 */
+export function useIsBrainstormRoot(cwd: string | undefined) {
+  const base = useBrainstormRoot();
+  return !!base && !!cwd && cwd.replace(/\/+$/, "") === base;
+}
 
 /** 应用刚启动时恢复的头脑风暴会话也能认出来：根目录解析完会重新渲染。 */
 export function useIsBrainstormCwd(cwd: string | undefined) {
@@ -191,4 +198,41 @@ export async function deleteBrainstorm(sessionId: string | null, folder: string)
   if (sessionId) await requestDeleteSession(sessionId);
   await deletePath(folder);
   await mutateSoloyard("deleteIdea", folder);
+}
+
+/** 每个想法项目上次看到的标题：只在标题变了时才同步，不覆盖用户在侧栏里自己改的会话名。 */
+const seenNames = new Map<number, string>();
+
+/**
+ * 想法项目的标题（agent 经 update_overview 维护）同步成会话标题，侧栏的头脑风暴列表就显示它。
+ * 标题变了才改；第一次看到时只改还没有标题的会话。挂在一直存在的侧栏入口上，每 5 秒查一次。
+ */
+export function useBrainstormTitleSync() {
+  const base = useBrainstormRoot();
+  useEffect(() => {
+    if (!base) return;
+    let alive = true;
+    const clean = (p: string) => p.replace(/\/+$/, "");
+    const tick = async () => {
+      const [sessions, ideas] = await Promise.all([listBrainstormSessions(base), listIdeas(base)]);
+      if (!alive) return;
+      for (const idea of ideas) {
+        if (!idea.name) continue;
+        const before = seenNames.get(idea.id);
+        seenNames.set(idea.id, idea.name);
+        if (before === idea.name) continue;
+        for (const s of sessions.filter((x) => clean(x.cwd) === clean(idea.path))) {
+          const shown = s.title ? sessionDisplayTitle(s.title, s.harness as HarnessId) : "";
+          const untitled = !shown || shown === "New session";
+          if (shown !== idea.name && (before !== undefined || untitled)) requestRenameSession(s.id, idea.name);
+        }
+      }
+    };
+    void tick().catch(() => undefined);
+    const timer = window.setInterval(() => void tick().catch(() => undefined), 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [base]);
 }

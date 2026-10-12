@@ -416,9 +416,7 @@
     "legacyCleanup": "Clean up"
   },
   "brainstorm": {
-    "rename": "Rename",
     "start": "New brainstorm",
-    "untitled": "New brainstorm (not started)",
     "promote": "Promote to project",
     "promoteDialog": {
       "title": "Promote to project",
@@ -447,9 +445,6 @@
       "prefilled": "Prefilled from what the agent wrote during the brainstorm; change anything you like.",
       "stepPrompt": "Tell the agent in this session it's now a project, so it updates the overview and starts initiation"
     },
-    "empty": {
-      "body": "No brainstorms yet. Click + to start one; the session runs in Soloyard's own workspace, no project needed."
-    },
     "folderChip": {
       "title": "Workspace folder name",
       "tooltip": "Brainstorm workspace folder: {{path}} (can be renamed before the first message)",
@@ -459,25 +454,6 @@
       "hint": "Named after the start time by default. Can only be changed before the first message."
     },
     "moved": "Brainstorm moved to the left: click Brainstorm under Inbox to start one; past ones are listed in the sidebar. You can close this old tab.",
-    "remove": {
-      "action": "Delete",
-      "title": "Delete “{{title}}”",
-      "body": "The session and everything in its working folder {{folder}} will be deleted. This can't be undone."
-    },
-    "archive": {
-      "action": "Archive",
-      "title": "Archive “{{title}}”",
-      "parked": "Parked",
-      "parkedHint": "Set aside for now; you might pick it up later.",
-      "killed": "Dropped",
-      "killedHint": "Not doing it. Write down why.",
-      "reasonRequired": "Why drop it?",
-      "reasonOptional": "Note (optional)",
-      "confirm": "Archive",
-      "restore": "Restore",
-      "section_one": "Archived · {{count}}",
-      "section_other": "Archived · {{count}}"
-    },
     "promotedPrompt": "[Promoted to a project] Name \"{{name}}\", folder {{path}}, issue key {{key}}.\n1. Bring the overview up to date with what we've discussed so far (don't overwrite sections I edited).\n2. Then start initiation: take stock of the overview, evidence, decisions and docs/, list an initiation coverage table (for each part: covered / needs more / missing, with evidence IDs) and estimate the time. Wait for my go-ahead before running, and only fill the gaps."
   },
   "repos": {

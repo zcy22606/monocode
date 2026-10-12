@@ -400,9 +400,7 @@
     "legacyCleanup": "清理"
   },
   "brainstorm": {
-    "rename": "改名",
     "start": "开始新的头脑风暴",
-    "untitled": "新的头脑风暴（还没聊）",
     "promote": "提升为项目",
     "promoteDialog": {
       "title": "提升为项目",
@@ -430,9 +428,6 @@
       "prefilled": "已经按 agent 在头脑风暴里写的预填好了，都可以改。",
       "stepPrompt": "告诉这个会话里的 agent 已经提升为项目，让它更新 overview、进入立项"
     },
-    "empty": {
-      "body": "还没有头脑风暴。点右上角的 + 开始一个，会话开在 Soloyard 自己的工作区里，不用先建项目。"
-    },
     "folderChip": {
       "title": "工作区文件夹名",
       "tooltip": "头脑风暴的工作区文件夹：{{path}}（发第一条消息前可以改名）",
@@ -442,24 +437,6 @@
       "hint": "默认用开始时间命名。只在发第一条消息之前能改。"
     },
     "moved": "头脑风暴已经移到左侧：点收件箱下面的「头脑风暴」开始，历史在侧栏列表里。这个旧标签可以关掉了。",
-    "remove": {
-      "action": "删除",
-      "title": "删除「{{title}}」",
-      "body": "会话和工作文件夹 {{folder}} 里的所有文件会一起删除，删除后不能恢复。"
-    },
-    "archive": {
-      "action": "归档",
-      "title": "归档「{{title}}」",
-      "parked": "搁置",
-      "parkedHint": "先放一放，以后可能再捡起来。",
-      "killed": "放弃",
-      "killedHint": "确定不做了，写下为什么。",
-      "reasonRequired": "为什么放弃？",
-      "reasonOptional": "备注（可选）",
-      "confirm": "归档",
-      "restore": "恢复",
-      "section_other": "已归档 · {{count}}"
-    },
     "promotedPrompt": "【已提升为项目】名称「{{name}}」，文件夹 {{path}}，issue 前缀 {{key}}。\n1. 按我们目前聊到的，把 overview 更新到最新（不要覆盖我改过的节）。\n2. 然后进入立项：先盘点 overview、证据、决策和 docs/，列一张立项覆盖表（每块标「已有够用 / 有但要补 / 没有」，附证据编号），给出预计耗时。等我点头再跑，只补缺的。"
   },
   "repos": {

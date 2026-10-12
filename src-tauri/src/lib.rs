@@ -18,6 +18,7 @@ mod harness_updates;
 mod history_import; // Soloyard
 mod i18n; // Soloyard
 mod soloyard_agents; // Soloyard
+mod soloyard_brainstorm; // Soloyard
 mod soloyard_bridge; // Soloyard
 mod soloyard_missing_worktree; // Soloyard
 mod soloyard_project_repos; // Soloyard
