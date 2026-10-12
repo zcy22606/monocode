@@ -11,6 +11,7 @@ import {
   type DecisionBrief, type Overview, type OverviewEntry, type StageInfo,
 } from "../../model/overview";
 import { openProjectView, viewLabel } from "../../model/projectViews";
+import { ProjectSettingsDialog } from "./ProjectSettingsDialog";
 
 const card = "flex flex-col gap-2 rounded-lg border border-stroke p-4";
 const label = "flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-content/40";
@@ -21,6 +22,7 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
   const { data: stage } = useSoloyard<StageInfo>("projectStage", project.id);
   const { data: decisions = [] } = useSoloyard<DecisionBrief[]>("listDecisions", project.id);
   const [notice, setNotice] = useState("");
+  const [settings, setSettings] = useState(false);
   if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
   if (!overview || !stage) return null;
 
@@ -40,10 +42,15 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
     <div className="h-full overflow-y-auto overscroll-none">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-6">
         <header className="flex flex-col gap-1">
-          <InlineField entry={name} onSave={save} className="text-[18px] font-medium text-content" />
+          <div className="flex items-start gap-2">
+            <InlineField entry={name} onSave={save} placeholder={t("overview.untitled")} className="text-[18px] font-medium text-content" />
+            <button type="button" onClick={() => setSettings(true)} className="ml-auto shrink-0 rounded-md px-2 py-1 text-[12px] text-content/50 hover:bg-content/10 hover:text-content">
+              {t("settings.title")}
+            </button>
+          </div>
           <div className="flex items-center gap-2 font-mono text-[12px] text-content/45">
             <InlineField entry={slug} onSave={save} placeholder={t("overview.slugPlaceholder")} className="font-mono" />
-            {stage.stage !== "idea" ? <span>· {project.key}</span> : null}
+            {!project.key.startsWith("~") ? <span>· {project.key}</span> : null}
           </div>
         </header>
 
@@ -104,6 +111,7 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
         </div>
         <p className="text-[11px] text-content/35">{t("overview.snapshotNote")}</p>
       </div>
+      {settings ? <ProjectSettingsDialog project={project} overview={overview} stage={stage} onClose={() => setSettings(false)} /> : null}
     </div>
   );
 }

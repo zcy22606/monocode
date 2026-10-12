@@ -2,14 +2,16 @@
  * 头脑风暴会话：开在 Soloyard 自己的工作区（应用数据目录下的 workspace/），每次一个子文件夹，
  * 文件夹名默认是开始时间（2026-10-05-1530），发第一条消息前可以改。会话页和新会话完全一样，
  * 只是输入框顶栏的「项目 / 当前检出 / 分支」换成「工作区文件夹」。
- * 聊出值得做的方向后「提升为项目」：建项目文件夹和项目 → 会话挪过去接着聊 → 产物收进项目 → 清理工作文件夹。
+ * 每个头脑风暴就是一条想法项目（soloyard/core/src/ideas.ts）：agent 从第一句起维护它的标题、英文名、一句话和 overview。
+ * 聊出值得做的方向后「提升为项目」：建项目文件夹 → 会话挪过去接着聊 → 想法项目转成正式项目（立项期）→ 文档收进 docs/
+ * → 清理工作文件夹 → 告诉会话里的 agent 已经提升，让它更新 overview、进入立项盘点。
  */
 import { appDataDir, join } from "@tauri-apps/api/path";
 import { useSyncExternalStore } from "react";
 import { t } from "../../../i18n";
-import { createPath, deletePath, listDir, movePath, readTextFile, renamePath } from "../../../platform/tauri/fs";
+import { createPath, deletePath, listDir, movePath, renamePath } from "../../../platform/tauri/fs";
 import { mutateSoloyard, soloyardCall } from "../data/api";
-import { requestDeleteSession, requestMoveSession, requestStartWork } from "./appActions";
+import { requestDeleteSession, requestMoveSession, requestSendToSession, requestStartWork } from "./appActions";
 
 let root: string | null = null;
 const listeners = new Set<() => void>();
@@ -44,6 +46,20 @@ export function useIsBrainstormCwd(cwd: string | undefined) {
 export type BrainstormSession = { id: string; cwd: string; harness: string; title: string | null; updated_at: number };
 /** 工作区下的头脑风暴会话（发过消息的才入库）。 */
 export const listBrainstormSessions = (base: string) => soloyardCall<BrainstormSession[]>("sessionsUnder", base);
+
+/** 头脑风暴的想法项目（标题、英文名、一句话由 agent 维护）。 */
+export type Idea = {
+  id: number;
+  path: string;
+  name: string;
+  slug: string | null;
+  goal: string;
+  stage: "idea" | "parked" | "killed" | string;
+  note: { reason?: string } | null;
+  updated_at: string;
+};
+export const listIdeas = (base: string) => soloyardCall<Idea[]>("ideasUnder", base);
+export const isArchived = (idea: Idea | undefined) => idea?.stage === "parked" || idea?.stage === "killed";
 
 const exists = (e: unknown) => /exist/i.test(String(e));
 
@@ -81,6 +97,7 @@ export async function startBrainstorm(prompt: string): Promise<{ sessionId: stri
       if (!exists(e) || n > 50) throw e;
     }
   }
+  await mutateSoloyard("ideaForPath", folder);
   const sessionId = crypto.randomUUID();
   requestStartWork({ cwd: folder, sessionId, prompt });
   return { sessionId, folder };
@@ -92,29 +109,39 @@ export const startNewBrainstorm = () => startBrainstorm(t("soloyard:brainstorm.p
 /** 发第一条消息前给工作区文件夹改名：改文件夹，再把会话指过去。 */
 export async function renameBrainstormFolder(sessionId: string, cwd: string, name: string) {
   const next = await renamePath(cwd, name);
+  await mutateSoloyard("moveIdeaPath", cwd, next);
   try {
     await requestMoveSession({ sessionId, cwd: next });
   } catch (e) {
     await renamePath(next, cwd.replace(/\/+$/, "").split("/").pop() ?? name).catch(() => undefined); // 会话没跟过去就改回来
+    await mutateSoloyard("moveIdeaPath", next, cwd).catch(() => undefined);
     throw e;
   }
   return next;
 }
 
-export type PromoteStep = "folder" | "session" | "project" | "files" | "cleanup";
+export type PromoteStep = "folder" | "session" | "project" | "files" | "cleanup" | "prompt";
+export type PromoteInput = { sessionId: string; folder: string; name: string; slug: string; key: string; goal: string; parent: string };
 const TEXT_FILE = /\.(md|markdown|txt)$/i;
 
+async function ensureDir(parent: string, name: string) {
+  return createPath(parent, name, true).catch((e: unknown) => (exists(e) ? `${parent}/${name}` : Promise.reject(e)));
+}
+
 /**
- * 提升为项目。顺序按「出错时损失最小」排：先建空的项目文件夹，再挪会话（正在运行会被拒绝，这时删掉刚建的空文件夹即可），
- * 然后建 Soloyard 项目、收产物（markdown / 文本进项目文档，其余文件挪进项目的 brainstorm/ 目录），最后删工作文件夹。
+ * 提升为项目。先检查（名称、英文名、前缀、目标文件夹），再按「出错时损失最小」的顺序做：
+ * 建空的项目文件夹 → 挪会话（正在运行会被拒绝，这时删掉刚建的空文件夹即可）→ 想法项目转成正式项目
+ * → 文档（工作文件夹顶层的 markdown 和 docs/ 里的）挪进项目的 docs/，其余文件挪进 brainstorm/ → 删工作文件夹
+ * → 给会话发一条：已经提升，更新 overview，进入立项盘点（等用户点头再跑）。
  */
-export async function promoteBrainstorm(
-  input: { sessionId: string; folder: string; name: string; parent: string; dirName: string },
-  onStep: (step: PromoteStep) => void,
-): Promise<{ path: string; projectId: number }> {
+export async function promoteBrainstorm(input: PromoteInput, onStep: (step: PromoteStep) => void): Promise<{ path: string }> {
+  const path = `${input.parent.replace(/\/+$/, "")}/${input.slug}`;
+  const fields = { name: input.name.trim(), slug: input.slug, key: input.key, goal: input.goal.trim() };
+  const problem = await soloyardCall<string | null>("checkPromote", input.folder, { ...fields, path });
+  if (problem) throw new Error(problem);
   onStep("folder");
-  const path = await createPath(input.parent, input.dirName, true).catch((e: unknown) => {
-    throw new Error(exists(e) ? t("soloyard:brainstorm.promoteDialog.folderExists", { path: `${input.parent}/${input.dirName}` }) : String(e));
+  await createPath(input.parent, input.slug, true).catch((e: unknown) => {
+    throw new Error(exists(e) ? t("soloyard:brainstorm.promoteDialog.folderExists", { path }) : String(e));
   });
   onStep("session");
   try {
@@ -124,25 +151,29 @@ export async function promoteBrainstorm(
     throw new Error(String(e).includes("busy") ? t("soloyard:brainstorm.promoteDialog.busy") : String(e));
   }
   onStep("project");
-  const projectId = await mutateSoloyard<number>("createProjectAt", input.name, path);
+  await mutateSoloyard("promoteIdea", input.folder, { ...fields, path });
   onStep("files");
-  const entries = (await listDir(input.folder)).filter((e) => !e.name.startsWith("."));
-  for (const entry of entries) {
-    if (!entry.isDir && TEXT_FILE.test(entry.name)) {
-      const body = await readTextFile(entry.path);
-      await mutateSoloyard("addDocument", projectId, { title: entry.name.replace(TEXT_FILE, ""), body_md: body });
+  const docs = await ensureDir(path, "docs");
+  for (const entry of (await listDir(input.folder)).filter((e) => !e.name.startsWith("."))) {
+    if (entry.isDir && entry.name === "docs") {
+      // overview.md 是快照，提升时已经在新文件夹里重新生成了
+      for (const doc of (await listDir(entry.path)).filter((d) => d.name !== "overview.md")) await movePath(doc.path, docs);
+    } else if (!entry.isDir && TEXT_FILE.test(entry.name)) {
+      await movePath(entry.path, docs);
     } else {
-      const keep = await createPath(path, "brainstorm", true).catch((e: unknown) => (exists(e) ? `${path}/brainstorm` : Promise.reject(e)));
-      await movePath(entry.path, keep);
+      await movePath(entry.path, await ensureDir(path, "brainstorm"));
     }
   }
   onStep("cleanup");
   await deletePath(input.folder);
-  return { path, projectId };
+  onStep("prompt");
+  requestSendToSession({ sessionId: input.sessionId, text: t("soloyard:brainstorm.promotedPrompt", { name: fields.name, path, key: fields.key }) });
+  return { path };
 }
 
-/** 删除头脑风暴：会话和工作文件夹一起删（调用方已经确认过）。 */
+/** 删除头脑风暴：会话、工作文件夹和它的想法项目一起删（调用方已经确认过）。 */
 export async function deleteBrainstorm(sessionId: string | null, folder: string) {
   if (sessionId) await requestDeleteSession(sessionId);
   await deletePath(folder);
+  await mutateSoloyard("deleteIdea", folder);
 }

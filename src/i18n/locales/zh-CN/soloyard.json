@@ -407,26 +407,33 @@
     "rename": "改名",
     "start": "开始新的头脑风暴",
     "untitled": "新的头脑风暴（还没聊）",
-    "prompt": "我们来头脑风暴。先陪我把想法聊透：问清楚给谁用、他们现在怎么解决、为什么会换，不急着下结论。\n聊出值得做的方向时，把它整理成想法卡（一句话、给谁、解决什么、和现有做法比好在哪）存到当前文件夹。\n要查竞品或用户声音时先问我要不要查。我说「立项」时，再按 product-thinking 的立项流程走。",
+    "prompt": "我们来头脑风暴。先陪我把想法聊透：问清楚给谁用、他们现在怎么解决、为什么会换，不急着下结论。\n这次头脑风暴在 Soloyard 里是一个想法项目（用 soloyard MCP 的 get_project 传当前文件夹就能找到）。从我的第一句起，就用 update_overview 一直维护它的 overview：暂定标题（name）、将来项目文件夹的英文名（slug，小写字母、数字、短横线）、一句话描述（goal），以及聊清楚的各节（背景与问题、目标用户、现有替代和竞品、调研发现、风险、还没想清楚的）。方向还不清楚就先叫「未命名想法」，方向变了就更新。我自己改过的节不要覆盖，改成提建议。\n证据和决策记进应用，不要只留在对话里。要查竞品或用户声音时先问我。笔记和想法卡放到当前文件夹的 docs/ 里。",
     "promote": "提升为项目",
     "promoteDialog": {
       "title": "提升为项目",
       "name": "项目名称",
       "location": "放在哪个文件夹下",
       "pick": "选择位置…",
-      "folder": "文件夹名",
+      "folder": "英文名（文件夹名）",
       "folderInvalid": "文件夹名只能用英文字母、数字、点、短横线和下划线",
       "willDo": "确认后会：",
       "stepFolder": "新建项目文件夹 {{path}}",
-      "stepProject": "在 Soloyard 里新建项目「{{name}}」",
+      "stepProject": "把想法转成项目「{{name}}」（阶段：立项）",
       "stepSession": "会话搬到项目文件夹，原会话接着聊",
       "stepCleanup": "清理这次头脑风暴的临时文件夹",
       "namePlaceholder": "例如：小红书选题助手",
       "files": "工作文件夹里的产物",
       "noFiles": "工作文件夹里还没有文件。",
-      "stepFiles_other": "把工作文件夹里的 {{count}} 个文件整理进项目（文档、决策、证据写进数据库）",
+      "stepFiles_other": "把工作文件夹里的 {{count}} 个文件整理进项目（文档放进 docs/）",
       "folderExists": "{{path}} 已经存在，换一个文件夹名或位置",
-      "busy": "Agent 还在运行，等它停下再提升"
+      "busy": "Agent 还在运行，等它停下再提升",
+      "key": "issue 前缀",
+      "keyInvalid": "issue 前缀要大写字母开头，2–10 位大写字母或数字（比如 XHS）",
+      "slugInvalid": "英文名只能用小写字母、数字和短横线（比如 xhs-coach）",
+      "goal": "一句话描述",
+      "goalPlaceholder": "给谁用、解决什么，一句话",
+      "prefilled": "已经按 agent 在头脑风暴里写的预填好了，都可以改。",
+      "stepPrompt": "告诉这个会话里的 agent 已经提升为项目，让它更新 overview、进入立项"
     },
     "empty": {
       "body": "还没有头脑风暴。点右上角的 + 开始一个，会话开在 Soloyard 自己的工作区里，不用先建项目。"
@@ -445,7 +452,21 @@
       "action": "删除",
       "title": "删除「{{title}}」",
       "body": "会话和工作文件夹 {{folder}} 里的所有文件会一起删除，删除后不能恢复。"
-    }
+    },
+    "archive": {
+      "action": "归档",
+      "title": "归档「{{title}}」",
+      "parked": "搁置",
+      "parkedHint": "先放一放，以后可能再捡起来。",
+      "killed": "放弃",
+      "killedHint": "确定不做了，写下为什么。",
+      "reasonRequired": "为什么放弃？",
+      "reasonOptional": "备注（可选）",
+      "confirm": "归档",
+      "restore": "恢复",
+      "section_other": "已归档 · {{count}}"
+    },
+    "promotedPrompt": "【已提升为项目】名称「{{name}}」，文件夹 {{path}}，issue 前缀 {{key}}。\n1. 按我们目前聊到的，把 overview 更新到最新（不要覆盖我改过的节）。\n2. 然后进入立项：先盘点 overview、证据、决策和 docs/，列一张立项覆盖表（每块标「已有够用 / 有但要补 / 没有」，附证据编号），给出预计耗时。等我点头再跑，只补缺的。"
   },
   "repos": {
     "intro": "这个项目由哪些仓库组成。每个新会话都会带上它们的位置和说明（项目地图），并能读写所有仓库，不用再自己交代。",
@@ -638,6 +659,20 @@
         "hint": "编码 agent 拿到就能开工的交付包",
         "prompt": "整理这个项目的 PRD 交付包（product-thinking「PRD」）：根据 overview、决策和 docs/，产出编码 agent 能直接开工的 dev-pack（markdown）。还是默认值的地方标出来。"
       }
-    }
+    },
+    "untitled": "未命名想法"
+  },
+  "settings": {
+    "title": "设置",
+    "save": "保存",
+    "key": "issue 前缀",
+    "stage": "阶段",
+    "slugLocked": "这是项目文件夹名，提升为项目后不能再改。",
+    "keyLocked": "项目已经有 issue 了，前缀不能再改。",
+    "stageHint": "立项期的小步按数据自动推进。手动只能搁置、放弃（要写原因）、标上线，或者恢复。",
+    "reason": "原因（放弃时必填）",
+    "kill": "放弃…",
+    "launch": "标为上线",
+    "resume": "恢复"
   }
 }

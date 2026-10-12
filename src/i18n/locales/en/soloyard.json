@@ -423,27 +423,34 @@
     "rename": "Rename",
     "start": "New brainstorm",
     "untitled": "New brainstorm (not started)",
-    "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they solve it today, why they'd switch. Don't rush to conclusions.\nWhen a direction is worth pursuing, write it up as an idea card (one line, who, what problem, why better than today) in the current folder.\nAsk me before researching competitors or user voices. When I say \"start the project\", follow product-thinking's project brief workflow.",
+    "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they cope today, and what would make them switch — no rush to conclusions.\nThis brainstorm is an idea project in Soloyard (find it with the soloyard MCP get_project, passing the current folder). From my first message on, keep its overview current with update_overview: a working title (name), an English name for the future project folder (slug: lowercase letters, digits and dashes), a one-liner (goal), and the sections as they become clear (background, target users, alternatives, findings, risks, open questions). If the direction isn't clear yet, call it \"Untitled idea\"; when the direction changes, update it. Don't overwrite sections I edited myself — suggest instead.\nRecord evidence and decisions in the app rather than only in chat. Ask me before researching competitors or user voices. Notes and idea cards go into docs/ in the current folder.",
     "promote": "Promote to project",
     "promoteDialog": {
       "title": "Promote to project",
       "name": "Project name",
       "location": "Parent folder",
       "pick": "Choose location…",
-      "folder": "Folder name",
+      "folder": "English name (folder)",
       "folderInvalid": "Folder names can only use letters, digits, dots, dashes and underscores",
       "willDo": "This will:",
       "stepFolder": "Create the project folder {{path}}",
-      "stepProject": "Create the Soloyard project “{{name}}”",
+      "stepProject": "Turn the idea into the project “{{name}}” (stage: initiation)",
       "stepSession": "Move the session to the project folder and keep the conversation going",
       "stepCleanup": "Clean up this brainstorm's temporary folder",
       "namePlaceholder": "e.g. Xiaohongshu topic assistant",
       "files": "Artifacts in the working folder",
       "noFiles": "The working folder has no files yet.",
-      "stepFiles_one": "Bring the {{count}} file in the working folder into the project (docs, decisions and evidence go to the database)",
-      "stepFiles_other": "Bring the {{count}} files in the working folder into the project (docs, decisions and evidence go to the database)",
+      "stepFiles_one": "Move {{count}} file from the working folder into the project (documents into docs/)",
+      "stepFiles_other": "Move {{count}} files from the working folder into the project (documents into docs/)",
       "folderExists": "{{path}} already exists. Choose another folder name or location.",
-      "busy": "The agent is still running. Wait for it to stop before promoting."
+      "busy": "The agent is still running. Wait for it to stop before promoting.",
+      "key": "Issue key",
+      "keyInvalid": "The issue key starts with a capital letter, 2–10 capital letters or digits (e.g. XHS)",
+      "slugInvalid": "The English name uses lowercase letters, digits and dashes (e.g. xhs-coach)",
+      "goal": "One-liner",
+      "goalPlaceholder": "Who it's for and what it solves, in one sentence",
+      "prefilled": "Prefilled from what the agent wrote during the brainstorm; change anything you like.",
+      "stepPrompt": "Tell the agent in this session it's now a project, so it updates the overview and starts initiation"
     },
     "empty": {
       "body": "No brainstorms yet. Click + to start one; the session runs in Soloyard's own workspace, no project needed."
@@ -462,7 +469,22 @@
       "action": "Delete",
       "title": "Delete “{{title}}”",
       "body": "The session and everything in its working folder {{folder}} will be deleted. This can't be undone."
-    }
+    },
+    "archive": {
+      "action": "Archive",
+      "title": "Archive “{{title}}”",
+      "parked": "Parked",
+      "parkedHint": "Set aside for now; you might pick it up later.",
+      "killed": "Dropped",
+      "killedHint": "Not doing it. Write down why.",
+      "reasonRequired": "Why drop it?",
+      "reasonOptional": "Note (optional)",
+      "confirm": "Archive",
+      "restore": "Restore",
+      "section_one": "Archived · {{count}}",
+      "section_other": "Archived · {{count}}"
+    },
+    "promotedPrompt": "[Promoted to a project] Name \"{{name}}\", folder {{path}}, issue key {{key}}.\n1. Bring the overview up to date with what we've discussed so far (don't overwrite sections I edited).\n2. Then start initiation: take stock of the overview, evidence, decisions and docs/, list an initiation coverage table (for each part: covered / needs more / missing, with evidence IDs) and estimate the time. Wait for my go-ahead before running, and only fill the gaps."
   },
   "repos": {
     "intro": "Which repositories this project is made of. Every new session gets their locations and descriptions as a project map, plus access to all of them — no need to explain them again.",
@@ -670,6 +692,20 @@
         "hint": "A hand-off package a coding agent can build from",
         "prompt": "Put together the PRD package for this project (product-thinking \"PRD\"): a dev-pack in markdown a coding agent can start from, based on the overview, decisions and docs/. Mark anything still assumed as a default."
       }
-    }
+    },
+    "untitled": "Untitled idea"
+  },
+  "settings": {
+    "title": "Settings",
+    "save": "Save",
+    "key": "Issue key",
+    "stage": "Stage",
+    "slugLocked": "This is the project folder name; it can't change after promotion.",
+    "keyLocked": "The project already has issues, so the key can't change.",
+    "stageHint": "Initiation steps follow from the data. You can park, drop (with a reason), mark as launched, or resume.",
+    "reason": "Reason (required to drop)",
+    "kill": "Drop…",
+    "launch": "Mark launched",
+    "resume": "Resume"
   }
 }

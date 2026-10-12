@@ -1,25 +1,53 @@
 /**
- * 头脑风暴「提升为项目」：名称、位置由用户定（不由 AI 选）；列出工作文件夹里现有的产物，说明会依次做什么，
- * 确认后按步骤执行（model/brainstorm.ts 的 promoteBrainstorm），每步显示进度，出错停在弹窗里说明原因。
- * 完成后会话已经在项目文件夹里，侧栏切到新项目。
+ * 头脑风暴「提升为项目」：预填 agent 在想法项目里维护的标题、英文名（= 项目文件夹名）、一句话，以及按英文名生成的 issue 前缀，
+ * 都可以改；位置由用户选（不由 AI 选）。列出工作文件夹里现有的产物，说明会依次做什么，确认后按步骤执行
+ * （model/brainstorm.ts 的 promoteBrainstorm），每步显示进度，出错停在弹窗里说明原因。
+ * 完成后会话已经在项目文件夹里，并收到一条「已提升，进入立项」的消息。
  */
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "../../../../i18n";
 import { listDir, pickFolders } from "../../../../platform/tauri/fs";
 import { Check, File, FolderOpen, Loader } from "../../../../shared/ui/icons";
 import { Modal } from "../../../../shared/ui/Modal";
-import { FOLDER_NAME, promoteBrainstorm, type PromoteStep } from "../../model/brainstorm";
+import { soloyardCall, useSoloyard } from "../../data/api";
+import { promoteBrainstorm, type PromoteStep } from "../../model/brainstorm";
+
+/** 英文名 = 文件夹名：小写字母、数字、短横线（和数据层 overview.ts 的 SLUG 一致）。 */
+const SLUG = /^[a-z0-9][a-z0-9-]*$/;
+const KEY = /^[A-Z][A-Z0-9]{1,9}$/;
+type IdeaRow = { id: number; name: string; slug: string | null; goal: string };
 
 const field = "rounded-md border border-content/10 bg-content/5 px-2.5 text-[13px] text-content outline-none placeholder:text-content/30 focus:border-content/25";
 const labelText = "text-[12px] font-medium text-content/70";
 const primaryButton = "inline-flex items-center gap-1.5 rounded-md bg-content px-3 py-1.5 text-[12px] font-medium text-background-base hover:bg-content/80 disabled:opacity-40";
-const STEPS: PromoteStep[] = ["folder", "session", "project", "files", "cleanup"];
+const STEPS: PromoteStep[] = ["folder", "session", "project", "files", "cleanup", "prompt"];
 
 export function BrainstormPromoteDialog({ sessionId, folder, title, onClose }: { sessionId: string; folder: string; title: string; onClose: () => void }) {
   const { t } = useTranslation("soloyard");
+  const { data: idea } = useSoloyard<IdeaRow | null>("findProjectByPath", folder);
   const [name, setName] = useState(title);
   const [parent, setParent] = useState("");
-  const [dirName, setDirName] = useState(FOLDER_NAME.test(title) ? title : "");
+  const [dirName, setDirName] = useState("");
+  const [key, setKey] = useState("");
+  const [goal, setGoal] = useState("");
+  // 前缀没被用户改过时，跟着英文名自动生成
+  const keyTouched = useRef(false);
+  const filled = useRef(false);
+  useEffect(() => {
+    if (!idea || filled.current) return;
+    filled.current = true;
+    if (idea.name) setName(idea.name);
+    if (idea.slug) setDirName(idea.slug);
+    setGoal(idea.goal);
+  }, [idea]);
+  useEffect(() => {
+    if (keyTouched.current || !SLUG.test(dirName)) return;
+    let alive = true;
+    void soloyardCall<string>("suggestKey", dirName, idea?.id).then((k) => alive && !keyTouched.current && setKey(k));
+    return () => {
+      alive = false;
+    };
+  }, [dirName, idea?.id]);
   const [files, setFiles] = useState<string[] | null>(null);
   /** null = 还没开始；否则是正在做 / 停在的那一步。 */
   const [step, setStep] = useState<PromoteStep | null>(null);
@@ -36,14 +64,16 @@ export function BrainstormPromoteDialog({ sessionId, folder, title, onClose }: {
     );
   }, [folder]);
 
-  const dirValid = FOLDER_NAME.test(dirName);
+  const dirValid = SLUG.test(dirName);
+  const keyValid = KEY.test(key);
   const path = parent && dirName ? `${parent.replace(/\/+$/, "")}/${dirName}` : "";
-  const ready = !!name.trim() && !!parent && dirValid;
+  const ready = !!name.trim() && !!parent && dirValid && keyValid;
   const stepLabel = (s: PromoteStep) =>
     s === "folder" ? t("brainstorm.promoteDialog.stepFolder", { path: path || "…" })
     : s === "project" ? t("brainstorm.promoteDialog.stepProject", { name: name.trim() || "…" })
     : s === "files" ? t("brainstorm.promoteDialog.stepFiles", { count: files?.length ?? 0 })
     : s === "session" ? t("brainstorm.promoteDialog.stepSession")
+    : s === "prompt" ? t("brainstorm.promoteDialog.stepPrompt")
     : t("brainstorm.promoteDialog.stepCleanup");
 
   const submit = async (e: FormEvent) => {
@@ -51,7 +81,7 @@ export function BrainstormPromoteDialog({ sessionId, folder, title, onClose }: {
     if (!ready || running) return;
     setError("");
     try {
-      await promoteBrainstorm({ sessionId, folder, name: name.trim(), parent, dirName }, setStep);
+      await promoteBrainstorm({ sessionId, folder, name: name.trim(), slug: dirName, key, goal, parent }, setStep);
       onClose();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -81,12 +111,31 @@ export function BrainstormPromoteDialog({ sessionId, folder, title, onClose }: {
                 <span className="min-w-0 truncate">{parent || t("brainstorm.promoteDialog.pick")}</span>
               </button>
             </div>
-            <label className="flex w-48 flex-col gap-1.5">
+            <label className="flex w-44 flex-col gap-1.5">
               <span className={labelText}>{t("brainstorm.promoteDialog.folder")}</span>
-              <input value={dirName} spellCheck={false} placeholder="xhs-assistant" onChange={(e) => setDirName(e.target.value)} className={`h-9 font-mono ${field} ${dirName && !dirValid ? "border-red-400/50" : ""}`} />
+              <input value={dirName} spellCheck={false} placeholder="xhs-coach" onChange={(e) => setDirName(e.target.value.trim())} className={`h-9 font-mono ${field} ${dirName && !dirValid ? "border-red-400/50" : ""}`} />
+            </label>
+            <label className="flex w-24 flex-col gap-1.5">
+              <span className={labelText}>{t("brainstorm.promoteDialog.key")}</span>
+              <input
+                value={key}
+                spellCheck={false}
+                placeholder="XHS"
+                onChange={(e) => {
+                  keyTouched.current = true;
+                  setKey(e.target.value.toUpperCase().trim());
+                }}
+                className={`h-9 font-mono ${field} ${key && !keyValid ? "border-red-400/50" : ""}`}
+              />
             </label>
           </div>
-          {dirName && !dirValid ? <p role="alert" className="-mt-2 text-[11px] text-red-400/90">{t("brainstorm.promoteDialog.folderInvalid")}</p> : null}
+          {dirName && !dirValid ? <p role="alert" className="-mt-2 text-[11px] text-red-400/90">{t("brainstorm.promoteDialog.slugInvalid")}</p> : null}
+          {key && !keyValid ? <p role="alert" className="-mt-2 text-[11px] text-red-400/90">{t("brainstorm.promoteDialog.keyInvalid")}</p> : null}
+          <label className="flex flex-col gap-1.5">
+            <span className={labelText}>{t("brainstorm.promoteDialog.goal")}</span>
+            <textarea value={goal} rows={2} placeholder={t("brainstorm.promoteDialog.goalPlaceholder")} onChange={(e) => setGoal(e.target.value)} className={`resize-none py-2 ${field}`} />
+          </label>
+          {idea ? <p className="-mt-2 text-[11px] text-content/40">{t("brainstorm.promoteDialog.prefilled")}</p> : null}
           <div className="flex flex-col gap-1.5">
             <span className={labelText}>{t("brainstorm.promoteDialog.files")}</span>
             {files === null ? null : files.length ? (

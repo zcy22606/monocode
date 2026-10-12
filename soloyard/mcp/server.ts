@@ -35,6 +35,8 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、update_iteration（改版本号 / 名称 / 目标、调先后）、
   delete_iteration（只删空的）、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项），update_issue 的 iteration 把 issue 排进迭代。
   开始 / 完成迭代、删掉有内容的迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
+- 头脑风暴：每个头脑风暴（应用数据目录 workspace/ 下的文件夹）是一个想法项目（stage = idea），get_project 传当前文件夹就能找到；
+  从用户第一句起维护它的 overview（暂定标题 name、将来文件夹名 slug、一句话 goal 和各节）。提升为项目由用户在应用里点，agent 不做。
 - overview（get_overview / update_overview）是项目的产品说明书：做什么、为什么，不放技术。头脑风暴、立项相关的会话要随时维护它
   （方向变了、查到了、定了就改对应的节）；普通开发会话只在用户做了产品层面的决定时才改，技术决定不进 overview。
   改之前先读，带读到的版本；用户改过的节被拒时不要硬改，在对话里提建议。

@@ -5,6 +5,7 @@
  *   通知  {"event":"changed"}   —— 库被改了（自己写的，或 MCP / 其他进程写的），界面据此刷新
  * 用法：node sidecar.ts <db 路径>
  */
+import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { openDb } from './db.ts'
 import * as repo from './repo.ts'
@@ -13,6 +14,7 @@ import * as repos from './repos.ts'
 import * as merge from './merge.ts'
 import * as stage from './stage.ts'
 import * as overview from './overview.ts'
+import * as ideas from './ideas.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -21,11 +23,20 @@ if (!path) {
 }
 const db = openDb(path)
 const actor = 'user'
+// 头脑风暴的工作区和库在同一个应用数据目录里；这个功能之前开的头脑风暴各补一条想法项目
+const workspace = join(dirname(path), 'workspace')
+const inWorkspace = (p: string) => p.replace(/\/+$/, '').startsWith(workspace + '/')
+try {
+  ideas.backfillIdeas(db, workspace)
+} catch (e) {
+  process.stderr.write(`backfill ideas: ${e}\n`)
+}
 
 /** 界面能调的方法（白名单）。写操作在名字里标 write，执行后广播 changed。 */
 const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknown }> = {
   // 不广播：只在第一次打开时建项目，调用方直接拿返回值；广播会让读它的界面反复重取
-  projectForPath: { run: (p: string) => repo.projectForPath(db, p) },
+  // 头脑风暴的工作文件夹对应想法项目，不当普通项目建
+  projectForPath: { run: (p: string) => (inWorkspace(p) ? ideas.ideaForPath(db, actor, p) : repo.projectForPath(db, p)) },
   listIssues: { run: (f: repo.IssueFilter) => repo.listIssues(db, f) },
   getIssue: { run: (id: number) => repo.getIssue(db, id) ?? null },
   projectLabels: { run: (projectId: number) => repo.projectLabels(db, projectId) },
@@ -70,6 +81,15 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   getOverview: { run: (projectId: number) => overview.getOverview(db, projectId) },
   updateOverview: { write: true, run: (projectId: number, updates: overview.OverviewUpdate[]) => overview.updateOverview(db, actor, projectId, updates) },
   // 概览页「等你拍板」：决策的标题、单向 / 双向门、状态（完整的决策页是 SOL-12）
+  // 想法项目（头脑风暴）和提升为项目
+  ideaForPath: { write: true, run: (p: string) => ideas.ideaForPath(db, actor, p) },
+  ideasUnder: { run: (root: string) => ideas.ideasUnder(db, root) },
+  moveIdeaPath: { write: true, run: (from: string, to: string) => ideas.moveIdeaPath(db, from, to) },
+  deleteIdea: { write: true, run: (p: string) => ideas.deleteIdea(db, actor, p) },
+  suggestKey: { run: (slug: string, exceptId?: number) => ideas.suggestKey(db, slug, exceptId) },
+  checkPromote: { run: (ideaPath: string, input: ideas.PromoteInput) => ideas.checkPromote(db, ideaPath, input) },
+  promoteIdea: { write: true, run: (ideaPath: string, input: ideas.PromoteInput) => ideas.promoteIdea(db, actor, ideaPath, input) },
+  setProjectKey: { write: true, run: (projectId: number, key: string) => ideas.setProjectKey(db, actor, projectId, key) },
   listDecisions: { run: (projectId: number) => db.prepare('SELECT id, code, title, door, status FROM soloyard_decisions WHERE project_id = ? ORDER BY id').all(projectId) },
   setProjectStage: { write: true, run: (projectId: number, to: stage.StageChange, reason?: string) => stage.setProjectStage(db, actor, projectId, to, reason) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
