@@ -419,7 +419,6 @@
     "rename": "Rename",
     "start": "New brainstorm",
     "untitled": "New brainstorm (not started)",
-    "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they cope today, and what would make them switch — no rush to conclusions.\nThis brainstorm is an idea project in Soloyard (find it with the soloyard MCP get_project, passing the current folder). From my first message on, keep its overview current with update_overview: a working title (name), an English name for the future project folder (slug: lowercase letters, digits and dashes), a one-liner (goal), and the sections as they become clear (background, target users, alternatives, findings, risks, open questions). If the direction isn't clear yet, call it \"Untitled idea\"; when the direction changes, update it. Don't overwrite sections I edited myself — suggest instead.\nRecord evidence and decisions in the app rather than only in chat. Ask me before researching competitors or user voices. Notes and idea cards go into docs/ in the current folder.",
     "promote": "Promote to project",
     "promoteDialog": {
       "title": "Promote to project",

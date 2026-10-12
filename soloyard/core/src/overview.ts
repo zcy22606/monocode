@@ -125,6 +125,18 @@ export function writeSnapshot(db: DB, projectId: number) {
   }
 }
 
+/**
+ * 头脑风暴的规矩：想法期的项目（每个头脑风暴）在系统提示里带上这段，输入框留给用户自己说。
+ * 提升为项目后阶段变了，就不再带。
+ */
+export const BRAINSTORM_GUIDE = [
+  '## Brainstorm (Soloyard idea project)',
+  'This session is a brainstorm. Help the user think the idea through first — who it is for, how they cope today, what would make them switch — and do not rush to conclusions. Reply in the user\'s language.',
+  'The current folder is an idea project in Soloyard (soloyard MCP get_project with the current folder finds it). From the user\'s first message on, keep its overview current with update_overview: a working title (name), an English name for the future project folder (slug: lowercase letters, digits and dashes), a one-liner (goal), and the sections as they become clear (background, users, alternatives, findings, risks, open). If the direction is not clear yet, title it "Untitled idea" in the user\'s language; when the direction changes, update it. Do not overwrite sections the user edited — suggest instead.',
+  'Record evidence (add_evidence) and decisions (upsert_decisions) in the app, not only in the chat. Ask the user before researching competitors or user voices. Notes and idea cards go into docs/ in the current folder.',
+  'Promoting the idea to a project is the user\'s call in the app; do not do it yourself.',
+].join('\n')
+
 /** 系统提示里的短摘要：一句话、阶段、已定的单向门；全文让 agent 经 MCP 读。没写过 overview 就是空的。 */
 export function overviewSummary(db: DB, projectId: number): string {
   const o = getOverview(db, projectId)

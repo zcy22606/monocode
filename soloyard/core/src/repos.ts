@@ -10,7 +10,8 @@ import { basename, dirname, join } from 'node:path'
 import { tx } from './db.ts'
 import type { DB } from './db.ts'
 import { type Actor, type Row, findProjectByPath, getRow, insert, projectForPath, remove, update } from './repo.ts'
-import { overviewSummary } from './overview.ts'
+import { BRAINSTORM_GUIDE, overviewSummary } from './overview.ts'
+import { projectStage } from './stage.ts'
 
 export type Worktree = { path: string; name: string; branch: string | null }
 export type RepoInfo = { id: number; path: string; name: string; description: string; branch: string | null; worktrees: Worktree[]; missing: boolean }
@@ -199,9 +200,11 @@ export function projectSessionContext(db: DB, cwd?: string, workCwd?: string): {
         .filter((d): d is string => !!d && existsSync(d) && !inside(d, work))
     : []
   // overview 的短摘要接在项目地图后面（单仓库、没写说明的项目只有它）
+  // 想法期（头脑风暴）再带上头脑风暴的规矩
   const summary = overviewSummary(db, info.project.id)
-  const map = projectMap(info, work) || (summary ? `# Soloyard project: ${info.project.name} (issue key ${info.project.key})` : '')
-  return { dirs: dirs.filter((d) => !dirs.some((o) => o !== d && inside(d, o))), map: [map, summary].filter(Boolean).join('\n\n') }
+  const guide = projectStage(db, info.project.id).stage === 'idea' ? BRAINSTORM_GUIDE : ''
+  const map = projectMap(info, work) || (summary || guide ? `# Soloyard project: ${info.project.name || '(untitled idea)'}` + (info.project.key.startsWith('~') ? '' : ` (issue key ${info.project.key})`) : '')
+  return { dirs: dirs.filter((d) => !dirs.some((o) => o !== d && inside(d, o))), map: [map, summary, guide].filter(Boolean).join('\n\n') }
 }
 
 /**

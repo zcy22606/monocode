@@ -103,8 +103,8 @@ export async function startBrainstorm(prompt: string): Promise<{ sessionId: stri
   return { sessionId, folder };
 }
 
-/** 侧栏「头脑风暴」和头脑风暴列表的「+」：提示词跟着界面语言。 */
-export const startNewBrainstorm = () => startBrainstorm(t("soloyard:brainstorm.prompt"));
+/** 侧栏「头脑风暴」和头脑风暴列表的「+」：输入框留空给用户说想法，头脑风暴的规矩在系统提示里（core 的 BRAINSTORM_GUIDE）。 */
+export const startNewBrainstorm = () => startBrainstorm("");
 
 /** 发第一条消息前给工作区文件夹改名：改文件夹，再把会话指过去。 */
 export async function renameBrainstormFolder(sessionId: string, cwd: string, name: string) {

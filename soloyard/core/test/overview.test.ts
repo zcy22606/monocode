@@ -57,3 +57,20 @@ test('系统提示摘要：没写过 overview 就没有；写了就接在项目�
   assert.match(map, /Decided: D-2 首要人群/)
   assert.match(map, /get_overview/)
 })
+
+test('头脑风暴：想法项目的系统提示带头脑风暴说明，提升后不带', async () => {
+  const { ideaForPath, promoteIdea } = await import('../src/ideas.ts')
+  const db = openDb(':memory:')
+  const folder = mkdtempSync(join(tmpdir(), 'soloyard-idea-'))
+  const idea = ideaForPath(db, 'user', folder)
+  const map = projectSessionContext(db, folder).map
+  assert.match(map, /# Soloyard project: \(untitled idea\)\n/)
+  assert.match(map, /## Brainstorm \(Soloyard idea project\)/)
+
+  const target = mkdtempSync(join(tmpdir(), 'soloyard-promoted-'))
+  promoteIdea(db, 'user', folder, { name: '新项目', slug: 'new-app', key: 'NEW', goal: '一句话', path: target })
+  const after = projectSessionContext(db, target).map
+  assert.match(after, /# Soloyard project: 新项目 \(issue key NEW\)/)
+  assert.doesNotMatch(after, /Brainstorm/)
+  assert.equal(r.getRow(db, 'projects', idea.id)!.stage, 'initiating')
+})
