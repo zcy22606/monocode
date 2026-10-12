@@ -23,7 +23,6 @@
     "note": "占位内容，仅用于预览布局和交互",
     "noteSamples": "占位内容，仅用于预览布局和交互；点示例条目会打开详情标签",
     "sampleIssue": "示例 issue {{letter}}",
-    "sampleDoc": "示例文档 {{letter}}",
     "sampleDecision": "示例决策 {{letter}}"
   },
   "status": {
@@ -550,5 +549,25 @@
   },
   "fileLink": {
     "copyFile": "复制文件"
+  },
+  "docs": {
+    "noFolder": "这个项目还没有 docs/ 文件夹。Agent 会把产品文档（立项卡、功能全集、调研……）写进项目根目录的 docs/，写好就会出现在这里。",
+    "emptyFolder": "docs/ 里还没有 .md 或 .json 文件。Agent 会把产品文档写进来，保存后就会出现在这里。",
+    "auto": "自动生成",
+    "autoHint": "项目概览的快照，概览每次变动都会重新生成。要改请去概览页。",
+    "missing": "这个文件已经不在了。",
+    "emptyDoc": "空文档，点这里开始写",
+    "readOnly": "只读",
+    "readOnlyHint": "由 product-thinking 生成，要改请让 Agent 改。",
+    "save": "保存",
+    "saveHint": "⌘S 保存 · Esc 取消",
+    "conflict": "你编辑期间，文件在磁盘上被改过了。",
+    "overwrite": "覆盖",
+    "discard": "放弃我的修改",
+    "badJson": "这个 JSON 文件解析不了：{{error}}",
+    "rawJson": "原始 JSON",
+    "unknownBlock": "不支持的块：{{type}}",
+    "featuresTable": "功能表：去迭代页看功能",
+    "competitorMatrix": "竞品矩阵：去迭代页看功能"
   }
 }

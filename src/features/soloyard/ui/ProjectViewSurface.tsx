@@ -6,21 +6,25 @@ import { IssueDetail } from "./issues/IssueDetail";
 import { IssuesView } from "./issues/IssuesView";
 import { IterationsView } from "./iterations/IterationsView";
 import { ReposView } from "./repos/ReposView";
+import { DocsView } from "./docs/DocsView";
+import { DocDetail } from "./docs/DocDetail";
 import { ServiceLog } from "../services/ServiceLog";
 import { startNewBrainstorm } from "../model/brainstorm";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
 const SAMPLES = {
-  docs: { detail: "doc", name: "sampleDoc", items: [["doc-1", "A"], ["doc-2", "B"]] },
   decisions: { detail: "decision", name: "sampleDecision", items: [["D-1", "A"], ["D-2", "B"]] },
 } as const satisfies Partial<Record<ProjectViewId, { detail: ProjectViewId; name: string; items: readonly (readonly [string, string])[] }>>;
 
-const DETAIL_VIEWS: ProjectViewId[] = ["issue", "doc", "decision"];
+const DETAIL_VIEWS: ProjectViewId[] = ["issue", "decision"];
 
 /** Project 分页打开的标签内容：已经做好的视图走真实数据，其余还是占位。 */
 export function ProjectViewSurface({ cwd, source, title }: { cwd: string; source: ProjectViewSource; title: string }) {
   if (source.view === "service") return <ServiceLog cwd={cwd} itemId={source.itemId ?? ""} />;
   if (source.view === "brainstorm") return <BrainstormMoved />;
+  // 文档以项目根目录 docs/ 里的文件为准，直接读文件，不经数据库
+  if (source.view === "docs") return <DocsView cwd={cwd} />;
+  if (source.view === "doc") return <DocDetail cwd={cwd} rel={source.itemId ?? ""} />;
   return <ProjectDataView cwd={cwd} source={source} title={title} />;
 }
 
