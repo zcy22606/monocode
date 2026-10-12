@@ -85,7 +85,8 @@
       "today": "今天",
       "last7": "最近 7 天",
       "last30": "最近 30 天"
-    }
+    },
+    "unavailable": "不可用"
   },
   "attachment": {
     "remove": "移除",
@@ -189,7 +190,8 @@
     "summary": "{{headline}}，{{detail}}",
     "compactWait": "请等待当前操作完成",
     "compactTitle": "压缩这个对话的上下文",
-    "compactNow": "立即压缩"
+    "compactNow": "立即压缩",
+    "empty": "尚未使用上下文"
   },
   "usageLimit": {
     "resetAt": "{{when}} · {{duration}}后",
@@ -263,19 +265,22 @@
   },
   "review": {
     "changed_other": "更改了 {{count}} 个文件",
-    "undoAll": "撤销这个会话的全部更改",
+    "undoAll": "撤销记录的更改",
     "undoLocked": "这个项目里有其他会话正在运行，暂时无法撤销",
-    "undoUnavailable": "有文件在这个会话之外被修改，无法撤销",
+    "undoUnavailable": "工作区被共享、分支已移动，或记录的文件之后又被修改，无法撤销",
     "undo": "撤销",
-    "keepTitle": "保留这个会话的全部更改并关闭此卡片",
+    "keepTitle": "保留记录的更改并关闭此卡片",
     "keep": "保留",
     "reviewTitle": "查看更改",
     "review": "查看",
     "showFewer": "收起文件",
     "showMore_other": "显示另外 {{count}} 个文件",
-    "mixed": "混合更改",
     "commitTitle": "提交这些更改",
-    "commit": "提交"
+    "commit": "提交",
+    "recordFailed": "无法记录更改",
+    "changedTitle": "最近一轮中记录到的工作区更改",
+    "diffUnavailableTitle": "这个较早的检查点没有精确的前后差异",
+    "diffUnavailable": "差异不可用"
   },
   "modes": {
     "turnOff": "关闭「{{mode}}」",
@@ -577,12 +582,9 @@
     "hideActivity": "隐藏活动",
     "showActivity": "显示活动",
     "activityTrail": "按时间顺序排列的活动",
-    "hideSessions": "隐藏会话",
-    "showSessions": "显示会话",
-    "hideSessionsCount": "隐藏会话（{{n}}）",
-    "showSessionsCount": "显示会话（{{n}}）",
     "waitingForAnswers": "等待回答…",
-    "waitingBackgroundTasks_other": "等待 {{count}} 个后台任务…"
+    "waitingBackgroundTasks_other": "等待 {{count}} 个后台任务…",
+    "reacted": "回应了 {{emoji}}"
   },
   "interjection": {
     "note": "{{label}}备注",
@@ -616,5 +618,8 @@
     "exploringProject": "正在浏览项目…",
     "runningAgent": "正在运行 Agent…",
     "usingTool": "正在使用工具…"
+  },
+  "media": {
+    "openImage": "打开图片"
   }
 }

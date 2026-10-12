@@ -24,6 +24,7 @@ export function ColorSwatchRow({
   onPickIndex,
   onToggleCustom,
   className,
+  size = "sm",
 }: {
   colors: readonly string[];
   labels?: readonly string[];
@@ -34,8 +35,11 @@ export function ColorSwatchRow({
   onPickIndex: (index: number) => void;
   onToggleCustom?: () => void;
   className?: string;
+  size?: "sm" | "lg";
 }) {
   const { t } = useTranslation("shared");
+  const hit = size === "lg" ? "size-9" : "size-5";
+  const dot = size === "lg" ? "size-7" : "size-3.5";
   const pipetteActive =
     customHighlighted ?? (customColor != null || customPickerOpen);
   return (
@@ -56,10 +60,10 @@ export function ColorSwatchRow({
             aria-pressed={selected}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onPickIndex(index)}
-            className="grid size-5 place-items-center rounded-full"
+            className={`grid ${hit} place-items-center rounded-full`}
           >
             <span
-              className={`size-3.5 rounded-full ${
+              className={`${dot} rounded-full ${
                 selected
                   ? "ring-2 ring-content/80 ring-offset-1 ring-offset-transparent"
                   : ""
@@ -77,10 +81,10 @@ export function ColorSwatchRow({
         aria-pressed={customColor != null}
         onMouseDown={(event) => event.preventDefault()}
         onClick={onToggleCustom}
-        className="grid size-5 place-items-center rounded-full"
+        className={`grid ${hit} place-items-center rounded-full`}
       >
         <span
-          className={`grid size-3.5 place-items-center overflow-hidden rounded-full ${
+          className={`grid ${dot} place-items-center overflow-hidden rounded-full ${
             pipetteActive
               ? "ring-2 ring-content/80 ring-offset-1 ring-offset-transparent"
               : ""
@@ -96,7 +100,7 @@ export function ColorSwatchRow({
         >
           {!customColor ? (
             <Pipette
-              className="size-2 text-white drop-shadow-sm"
+              className={`${size === "lg" ? "size-3.5" : "size-2"} text-white drop-shadow-sm`}
               strokeWidth={2.25}
             />
           ) : null}

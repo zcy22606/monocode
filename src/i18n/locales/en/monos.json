@@ -22,7 +22,7 @@
   },
   "header": {
     "greeting": "I can see every session, note and folder in {{projects}}. Ask what’s going on, or hand me work.",
-    "greetingNoProjects": "Add the projects I should work on from my details, or just ask me something."
+    "greetingNoProjects": "Add the projects I should work on in my settings, or just ask me something."
   },
   "intro": {
     "title": "Meet Monos",
@@ -56,7 +56,9 @@
     "failure": "Could not reset the conversation.",
     "description": "Clear all messages and start fresh",
     "cancel": "Cancel",
-    "resetting": "Resetting…"
+    "resetting": "Resetting…",
+    "descriptionStay": "Clear all messages and start fresh. Its soul, memory and habits stay.",
+    "action": "Reset"
   },
   "habit": {
     "today": "Today {{time}}",
@@ -83,7 +85,11 @@
   "habits": {
     "empty": "No habits yet",
     "upcoming": "Upcoming",
-    "done": "Done"
+    "done": "Done",
+    "upNextToday": "Up next today",
+    "doneToday": "Done today",
+    "later": "Later",
+    "scheduled": "Scheduled"
   },
   "newHabit": {
     "title": "New habit",
@@ -147,7 +153,9 @@
     "attachFiles": "Attach files",
     "message": "Message {{name}}",
     "send": "Send",
-    "readingAttachments": "Reading attachments…"
+    "readingAttachments": "Reading attachments…",
+    "emoji": "Emoji",
+    "addEmoji": "Add emoji"
   },
   "projects": {
     "remove": "Remove {{name}}",
@@ -208,7 +216,13 @@
     "views": "Changes views",
     "commit": "Commit",
     "notInGit": "These files aren’t in a Git repository, so there’s nothing to commit.",
-    "projects": "Projects"
+    "projects": "Projects",
+    "commitProject": "Commit {{name}}",
+    "noProject": "Give {{name}} a project to work on, and its changes show up here to commit.",
+    "loadFailed": "Couldn’t load repositories: {{error}}",
+    "switchCheckout": "Switch {{project}} working copy",
+    "checkouts": "{{project}} working copies",
+    "projectFolder": "Project folder"
   },
   "commit": {
     "confirmDeleteUntracked": "Delete untracked file {{name}}?",
@@ -233,6 +247,60 @@
     "thisCommit": "This Commit",
     "leaveAllOut": "Leave All Out",
     "changes": "Changes",
-    "addAllToCommit": "Add All to Commit"
+    "addAllToCommit": "Add All to Commit",
+    "stagedChanges": "Staged Changes",
+    "unstageAll": "Unstage All Changes",
+    "stageAll": "Stage All Changes"
+  },
+  "reaction": {
+    "notification": "Reacted {{emoji}} to your message"
+  },
+  "launched": {
+    "status": {
+      "working": "Working",
+      "input": "Needs input",
+      "draft": "Draft",
+      "failed": "Failed",
+      "stopped": "Stopped",
+      "done": "Done"
+    },
+    "open": "Open session {{title}}",
+    "openWithStatus": "Open session {{title}}, {{status}}"
+  },
+  "settingsDialog": {
+    "title": "{{name}} settings",
+    "sections": "Settings sections",
+    "general": "General",
+    "modelDescription": "What it thinks and replies with.",
+    "permissionsDescription": "What it may do without asking.",
+    "projectsDescription": "It can see every session, note and folder in these.",
+    "startedSessions": "Sessions it starts",
+    "showInSidebar": "Show sessions in sidebar",
+    "showInSidebarDescription": "Sessions it starts appear in your project sidebar. Hidden ones stay saved and open from its overview.",
+    "groupInFolder": "Group in a folder",
+    "groupInFolderDescription": "Sessions it starts go in a “{{name}}” folder in your project sidebar.",
+    "conversation": "Conversation",
+    "changeLook": "Change mascot and color",
+    "look": "Mascot and color",
+    "name": "Name"
+  },
+  "overview": {
+    "label": "{{name}} overview",
+    "title": "Overview",
+    "documents": "Documents",
+    "hide": "Hide overview",
+    "emptySessions": "Ask {{name}} to start a session on one of your projects, like a bug fix or a review, and it shows up here.",
+    "emptyHabits": "Ask {{name}} to put recurring work on a schedule, like a morning digest or a weekly report.",
+    "emptyDocuments": "Ask {{name}} to write something up, like a plan or a summary, and it shows up here.",
+    "searchPlaceholder": "Search sessions...",
+    "search": "Search sessions",
+    "filter": "Filter sessions"
+  },
+  "sessionList": {
+    "noSearchMatch": "No sessions match this search.",
+    "noFilterMatch": "No sessions match these filters.",
+    "allDeleted": "The sessions {{name}} started have since been deleted.",
+    "unavailable": "Unavailable",
+    "openInWorkspace": "Open in workspace"
   }
 }

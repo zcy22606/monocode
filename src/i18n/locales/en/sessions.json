@@ -86,7 +86,8 @@
       "today": "Today",
       "last7": "Last 7 days",
       "last30": "Last 30 days"
-    }
+    },
+    "unavailable": "Unavailable"
   },
   "attachment": {
     "remove": "Remove",
@@ -191,7 +192,8 @@
     "summary": "{{headline}}, {{detail}}",
     "compactWait": "Wait for the current operation to finish",
     "compactTitle": "Compact this conversation's context",
-    "compactNow": "Compact now"
+    "compactNow": "Compact now",
+    "empty": "No context used yet"
   },
   "usageLimit": {
     "resetAt": "{{when}} · in {{duration}}",
@@ -268,20 +270,23 @@
   "review": {
     "changed_one": "Changed {{count}} file",
     "changed_other": "Changed {{count}} files",
-    "undoAll": "Undo all session changes",
+    "undoAll": "Undo the recorded changes",
     "undoLocked": "Undo is unavailable while another session is running in this project",
-    "undoUnavailable": "Undo is unavailable because a file changed outside this session",
+    "undoUnavailable": "Undo is unavailable because the workspace was shared, the branch moved, or a recorded file changed afterward",
     "undo": "Undo",
-    "keepTitle": "Keep all session changes and dismiss this card",
+    "keepTitle": "Keep the recorded changes and dismiss this card",
     "keep": "Keep",
     "reviewTitle": "Review changes",
     "review": "Review",
     "showFewer": "Show fewer files",
     "showMore_one": "Show {{count}} more file",
     "showMore_other": "Show {{count}} more files",
-    "mixed": "Mixed changes",
     "commitTitle": "Commit these changes",
-    "commit": "Commit"
+    "commit": "Commit",
+    "recordFailed": "Couldn’t record changes",
+    "changedTitle": "Workspace changes recorded during the latest turn",
+    "diffUnavailableTitle": "This older checkpoint has no exact before/after diff",
+    "diffUnavailable": "Diff unavailable"
   },
   "modes": {
     "turnOff": "Turn off {{mode}}",
@@ -596,13 +601,10 @@
     "hideActivity": "Hide activity",
     "showActivity": "Show activity",
     "activityTrail": "Activity in chronological order",
-    "hideSessions": "Hide sessions",
-    "showSessions": "Show sessions",
-    "hideSessionsCount": "Hide sessions ({{n}})",
-    "showSessionsCount": "Show sessions ({{n}})",
     "waitingForAnswers": "Waiting for answers…",
     "waitingBackgroundTasks_one": "Waiting for background task…",
-    "waitingBackgroundTasks_other": "Waiting for {{count}} background tasks…"
+    "waitingBackgroundTasks_other": "Waiting for {{count}} background tasks…",
+    "reacted": "Reacted {{emoji}}"
   },
   "interjection": {
     "note": "{{label}} note",
@@ -636,5 +638,8 @@
     "exploringProject": "Exploring project…",
     "runningAgent": "Running agent…",
     "usingTool": "Using tool…"
+  },
+  "media": {
+    "openImage": "Open image"
   }
 }

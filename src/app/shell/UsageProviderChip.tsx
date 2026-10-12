@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   clampUsedPercent,
+  DAILY_WINDOW_MINUTES,
+  formatExtraUsageBalance,
   formatRateLimitWindowChipLabel,
   formatResetCountdown,
   formatResetDuration,
@@ -60,6 +62,23 @@ type UsageWindowEntry = {
   window: RateLimitWindow;
 };
 
+export type UsageChipVariant = "footer" | "composer";
+
+const USAGE_CHIP_CLASSES: Record<UsageChipVariant, string> = {
+  footer:
+    "-mx-1 inline-flex h-5 min-w-0 shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-1 text-content/55 transition-[background-color,color,transform] duration-150 ease-out hover:bg-content/10 hover:text-content focus-visible:outline-2 focus-visible:outline-accent active:scale-[0.97]",
+  composer:
+    "inline-flex h-6.5 min-w-0 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 text-content/55 transition-colors hover:bg-content/8 hover:text-content focus-visible:outline-2 focus-visible:outline-accent",
+};
+
+/** The refresh button beside the usage chips, per variant. */
+export const USAGE_REFRESH_CLASSES: Record<UsageChipVariant, string> = {
+  footer:
+    "grid size-4.5 shrink-0 place-items-center rounded text-content/40 hover:bg-content/10 hover:text-content disabled:opacity-50",
+  composer:
+    "grid size-6.5 shrink-0 place-items-center rounded-md text-content/40 transition-colors hover:bg-content/8 hover:text-content disabled:opacity-50",
+};
+
 type ResetActionState =
   "idle" | "confirming" | "using" | CodexRateLimitResetOutcome | "error";
 
@@ -75,6 +94,7 @@ export function UsageProviderChip({
   onConsumeReset,
   onReconnect,
   presentation,
+  variant = "footer",
 }: {
   limits: ProviderRateLimits;
   now: number;
@@ -87,6 +107,8 @@ export function UsageProviderChip({
   onManageAccounts?: () => void;
   onConsumeReset?: (creditId?: string) => Promise<CodexRateLimitResetOutcome>;
   onReconnect?: () => Promise<void>;
+  /** `composer` matches the quiet tool buttons under a Mono's composer. */
+  variant?: UsageChipVariant;
 }) {
   const { t } = useTranslation("shell");
   const showRemaining = useShowRemainingUsage();
@@ -224,7 +246,7 @@ export function UsageProviderChip({
       <button
         ref={trigger}
         type="button"
-        className="-mx-1 inline-flex h-5 min-w-0 shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-1 text-content/55 transition-[background-color,color,transform] duration-150 ease-out hover:bg-content/10 hover:text-content focus-visible:outline-2 focus-visible:outline-accent active:scale-[0.97]"
+        className={USAGE_CHIP_CLASSES[variant]}
         aria-label={t("usage.detailsLabel", { provider: providerLabel })}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -416,6 +438,17 @@ export function UsageProviderChip({
               ) : (
                 <EmptyUsageState limits={limits} loading={loading} />
               )}
+
+              {limits.extraUsageBalance != null ? (
+                <section className="mt-1.5 flex items-baseline justify-between gap-3 rounded-lg bg-content/[0.045] px-3 py-2.5 ring-1 ring-inset ring-content/[0.06]">
+                  <h3 className="text-[11px] font-medium text-content/65">
+                    {t("usage.extraUsageBalance")}
+                  </h3>
+                  <span className="shrink-0 text-[11px] font-medium tabular-nums">
+                    {formatExtraUsageBalance(limits.extraUsageBalance)}
+                  </span>
+                </section>
+              ) : null}
 
               {suggestion && onSelectAccount ? (
                 <SwitchSuggestion
@@ -783,7 +816,9 @@ function UsageWindowCard({
   const remaining = 100 - pct;
   const shown = showRemaining ? remaining : pct;
   const title =
-    kind === "session"
+    kind === "session" && window.windowMinutes === DAILY_WINDOW_MINUTES
+      ? t("usage.limit.daily")
+      : kind === "session"
       ? t("usage.limit.session")
       : kind === "weekly"
         ? t("usage.limit.weekly")

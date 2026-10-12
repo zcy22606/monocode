@@ -159,7 +159,10 @@
     "deleteAllDescription": "永久删除此标签页中的全部 {{n}} 个对话",
     "noProject": "没有项目",
     "tabActions": "{{name}} 的标签页操作",
-    "showMonoDetails": "显示 Mono 详情"
+    "hideOverview": "隐藏概览",
+    "showOverview": "显示概览",
+    "overview": "概览",
+    "monoSettings": "{{name}} 设置"
   },
   "footer": {
     "removedAccount": "这个对话使用的账号已被移除",
@@ -212,7 +215,8 @@
       "session": "5 小时限额",
       "weekly": "每周限额",
       "monthly": "每月限额",
-      "other": "{{window}} 限额"
+      "other": "{{window}} 限额",
+      "daily": "每日限额"
     },
     "used": "已用 {{percent}}",
     "remainingLabel": "{{title}}剩余",
@@ -239,7 +243,8 @@
       "alreadyRedeemed": "这次重置已经用过了。"
     },
     "expired": "已过期",
-    "usedLabel": "{{title}}已用"
+    "usedLabel": "{{title}}已用",
+    "extraUsageBalance": "额外用量余额"
   },
   "sidebar": {
     "tabs": {
@@ -327,6 +332,7 @@
     "namedOptions": "{{name}} 选项",
     "name": "Mono 名称",
     "background": "背景图片",
-    "delete": "删除 Mono…"
+    "delete": "删除 Mono…",
+    "newReplies_other": "{{count}} 条新回复"
   }
 }

@@ -9,7 +9,7 @@ import { ImagePlus, MoreHorizontal, Plus, Trash2 } from "../../shared/ui/icons";
 import { Popover, type PopoverAnchor } from "../../shared/ui/Popover";
 import { Shimmer } from "../../shared/ui/Shimmer";
 import { useAnimatedReorder } from "../../shared/hooks/useAnimatedReorder";
-import { useTranslation } from "../../i18n";
+import { t as translate, useTranslation } from "../../i18n";
 import { MonoRailMascot } from "../../features/monos/ui/MonoRailMascot";
 import { MonoIntroPopover } from "../../features/monos/ui/MonoIntro";
 import { ProjectBackgroundDialog } from "../../features/projects/ui/ProjectBackgroundDialog";
@@ -42,8 +42,8 @@ export type MonoRailProps = {
   activeId?: string;
   /** What each Mono is doing, by Mono id; missing reads as idle. */
   states: ReadonlyMap<string, MonoState>;
-  /** Monos that finished something the user has not looked at yet. */
-  unseenIds?: ReadonlySet<string>;
+  /** Replies each Mono has that the user has not looked at yet, by Mono id. */
+  unseenCounts?: ReadonlyMap<string, number>;
   onOpen: (monoId: string) => void;
   onCreate: () => void;
   onDelete: (monoId: string) => void;
@@ -53,6 +53,15 @@ export type MonoRailProps = {
 
 const IDLE: MonoState = { status: "idle" };
 
+/** A Mono's unread count as its badge shows it. */
+export function unreadBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
+
+export function unreadLabel(count: number): string {
+  return translate("shell:monoRail.newReplies", { count });
+}
+
 /**
  * The user's Monos, above the projects. Each opens like a project does, but
  * into its conversation; none belongs to a project, so they get a section of
@@ -61,7 +70,7 @@ const IDLE: MonoState = { status: "idle" };
 export function MonoRailSection({
   activeId,
   states,
-  unseenIds,
+  unseenCounts,
   onOpen,
   onCreate,
   onDelete,
@@ -128,7 +137,7 @@ export function MonoRailSection({
           const look = monoLook(mono);
           const state = states.get(mono.id) ?? IDLE;
           const selected = mono.id === activeId;
-          const unseen = !selected && !!unseenIds?.has(mono.id);
+          const unseen = selected ? 0 : (unseenCounts?.get(mono.id) ?? 0);
           const projects = look.projects.length
             ? monoProjectsPhrase(look.projects)
             : t("monoRail.noProjects");
@@ -177,9 +186,14 @@ export function MonoRailSection({
               <button
                 type="button"
                 title={[look.name, projects, status].filter(Boolean).join("\n")}
-                aria-label={[look.name, status ?? t("monoRail.idle"), projects].join(
-                  ", ",
-                )}
+                aria-label={[
+                  look.name,
+                  status ?? t("monoRail.idle"),
+                  unseen ? unreadLabel(unseen) : undefined,
+                  projects,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
                 aria-current={selected ? "true" : undefined}
                 className="flex min-w-0 flex-1 cursor-default items-center gap-2 text-left transition-[padding] duration-150 motion-reduce:transition-none group-hover:pr-6 group-focus-within:pr-6"
               >
@@ -204,8 +218,11 @@ export function MonoRailSection({
                 {unseen ? (
                   <span
                     aria-hidden
-                    className="size-1.5 shrink-0 rounded-full bg-content/60 group-hover:hidden group-focus-within:hidden"
-                  />
+                    data-mono-unread={unseen}
+                    className="grid h-4 min-w-4 shrink-0 place-items-center rounded-full bg-content/15 px-1 text-[10px] font-medium tabular-nums leading-none text-content/80 group-hover:hidden group-has-[:focus-visible]:hidden"
+                  >
+                    {unreadBadge(unseen)}
+                  </span>
                 ) : null}
               </button>
               <button

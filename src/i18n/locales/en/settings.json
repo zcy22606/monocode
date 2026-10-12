@@ -109,7 +109,10 @@
     "diff-colors": "Diff colors",
     "monos-enabled": "Show monos",
     "mono-list": "Your monos",
-    "mono-menu-bar-icon": "Menu bar icon"
+    "mono-menu-bar-icon": "Menu bar icon",
+    "rail-monos-pinned": "Pin monos to the icon rail",
+    "composer-autocorrect": "Autocorrect",
+    "idle-agents": "Keep idle agents ready"
   },
   "keybindings": {
     "command": {
@@ -276,7 +279,8 @@
       "description": "Idle animation, and nothing else. Turn both off for a still workspace."
     },
     "composer-mascot": "When a turn is running, the project mascot runs along the composer, bonks the scroll-to-latest button the first time, then jumps it, and sometimes grabs a coin.",
-    "empty-session-games": "Pac-man and snake idle on the empty-session grid. Hover the band to take control of whichever is on screen. Turn this off to keep the pane still."
+    "empty-session-games": "Pac-man and snake idle on the empty-session grid. Hover the band to take control of whichever is on screen. Turn this off to keep the pane still.",
+    "composer-autocorrect": "Spell check and autocorrect prompts in session and mono composers. Turn this off to keep the text exactly as typed."
   },
   "inbox": {
     "github": {
@@ -523,7 +527,9 @@
     "showInPickerLabel": "Show {{provider}} in the model picker",
     "usagePrivacy": "Usage and privacy",
     "show-remaining-usage": "Fill usage meters with what is left in each limit instead of what has been used.",
-    "mask-emails": "Blur account emails in Settings and the usage popover until you click one, so they stay out of screenshots."
+    "mask-emails": "Blur account emails in Settings and the usage popover until you click one, so they stay out of screenshots.",
+    "idle-agents": "A finished conversation keeps its agent CLI running for a few minutes, so a follow-up starts instantly. Each one can hold a few hundred MB of memory. Past this many, the one idle longest stops early; it resumes on your next message after a short restart. Choose None on a machine short on memory.",
+    "idleAgentsNone": "None"
   },
   "archive": {
     "projects": {
@@ -598,6 +604,7 @@
     },
     "showSpawnedSessions": "Show Mono spawned session on the sidebar",
     "showSpawnedSessionsToggle": "Show sessions started by {{name}} in sidebar",
-    "menuBarIconDescription": "Chat with a Mono or open the quick composer from the macOS menu bar. Turn this off to hide the icon."
+    "menuBarIconDescription": "Chat with a Mono or open the quick composer from the macOS menu bar. Turn this off to hide the icon.",
+    "rail-monos-pinned": "When the project rail is collapsed to icons, show each Mono at the top of the rail, above a divider, instead of inside the project picker."
   }
 }

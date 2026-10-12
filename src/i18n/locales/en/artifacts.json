@@ -1,6 +1,7 @@
 {
   "kind": {
-    "document": "Document"
+    "document": "Document",
+    "html": "Visual"
   },
   "card": {
     "open": "Open {{noun}}",
@@ -18,6 +19,7 @@
     "loadFailed": "Could not load this document.",
     "loading": "Loading document…",
     "unavailable": "This document is no longer available.",
-    "updated": "Updated {{time}}"
+    "updated": "Updated {{time}}",
+    "hideOverview": "Hide overview"
   }
 }

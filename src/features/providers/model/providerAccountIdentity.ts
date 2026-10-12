@@ -1,10 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
-import { t } from "../../../i18n";
+import { loadRateLimits } from "./rateLimitsCache";
+import { cachedDevinIdentity } from "./rateLimitsFetch";
 import type {
   ProviderAccount,
   ProviderAccountProvider,
 } from "./providerAccounts";
+import { t } from "../../../i18n";
 
 /** Identity the provider CLI cached on disk after sign-in. */
 export type ProviderAccountIdentity = {
@@ -18,6 +20,11 @@ export async function readProviderAccountIdentity(
   provider: ProviderAccountProvider,
   accountId: string,
 ): Promise<ProviderAccountIdentity | null> {
+  if (provider === "devin") {
+    // Devin keeps no identity on disk; its usage read carries one.
+    await loadRateLimits("devin", accountId);
+    return cachedDevinIdentity();
+  }
   try {
     return await invoke<ProviderAccountIdentity | null>(
       "provider_account_identity",

@@ -12,10 +12,18 @@ import {
   RATE_LIMIT_MIN_REFETCH_MS,
   RATE_LIMIT_POLL_MS,
 } from "../../features/providers/model/rateLimits";
-import { UsageProviderChip } from "./UsageProviderChip";
+import { UsageProviderChip, type UsageChipVariant } from "./UsageProviderChip";
 import { useTranslation } from "../../i18n";
 
-export function PiUsage({ model, now }: { model?: string; now: number }) {
+export function PiUsage({
+  model,
+  now,
+  variant = "footer",
+}: {
+  model?: string;
+  now: number;
+  variant?: UsageChipVariant;
+}) {
   const { t } = useTranslation("shell");
   const provider = piUsageProvider(model);
   if (!provider) {
@@ -33,15 +41,24 @@ export function PiUsage({ model, now }: { model?: string; now: number }) {
       </span>
     );
   }
-  return <PiProviderUsage key={provider} provider={provider} now={now} />;
+  return (
+    <PiProviderUsage
+      key={provider}
+      provider={provider}
+      now={now}
+      variant={variant}
+    />
+  );
 }
 
 function PiProviderUsage({
   provider,
   now,
+  variant,
 }: {
   provider: PiUsageProvider;
   now: number;
+  variant: UsageChipVariant;
 }) {
   const { t } = useTranslation("shell");
   const [limits, setLimits] = useState(() =>
@@ -93,6 +110,7 @@ function PiProviderUsage({
       <UsageProviderChip
         limits={limits}
         now={now}
+        variant={variant}
         presentation={{
           sourceLabel: t("pi.source"),
           harness: "pi",

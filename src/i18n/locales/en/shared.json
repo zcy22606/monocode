@@ -37,5 +37,15 @@
     },
     "time": "Time",
     "timeHint": "Local time, 24-hour"
+  },
+  "emojiPicker": {
+    "search": "Search emoji",
+    "recent": "Recent",
+    "loading": "Loading…",
+    "empty": "No emoji found",
+    "pick": "Pick an emoji",
+    "jumpToCategory": "Jump to category {{n}}",
+    "skinTone": "Skin tone",
+    "changeSkinTone": "Change skin tone"
   }
 }

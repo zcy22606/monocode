@@ -5,6 +5,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { useTabGroupLogos } from "../hooks/useTabGroupLogos";
+import { useProjectAppearance } from "../hooks/useProjectAppearance";
 import { basename } from "../../../platform/tauri/fs";
 import {
   prettyParent,
@@ -15,14 +16,9 @@ import {
   looksLikeProject,
   projectRailItems,
   sameProjectPath,
-  subscribeProjectPathsChanged,
   type RecentProject,
 } from "../model/recents";
 import {
-  loadTabGroupColors,
-  loadTabGroupCustomColors,
-  loadTabGroupLabels,
-  loadTabGroupMascots,
   resolveTabGroupColor,
   resolveTabGroupLabel,
   resolveTabGroupLogo,
@@ -54,24 +50,6 @@ export type PickerMonos = {
   onOpen: (monoId: string) => void;
   onCreate?: () => void;
 };
-
-function loadAppearance() {
-  return {
-    groupLabels: loadTabGroupLabels(),
-    groupColors: loadTabGroupColors(),
-    groupCustomColors: loadTabGroupCustomColors(),
-    groupMascots: loadTabGroupMascots(),
-  };
-}
-
-function useProjectAppearance() {
-  const [appearance, setAppearance] = useState(loadAppearance);
-  useEffect(
-    () => subscribeProjectPathsChanged(() => setAppearance(loadAppearance())),
-    [],
-  );
-  return appearance;
-}
 
 type Props = {
   cwd: string;
@@ -407,7 +385,7 @@ export function ProjectPickerPopover({
             setActive(0);
           }}
           placeholder={
-            monos
+            monos?.items.length
               ? t("picker.searchMonosPlaceholder")
               : t("picker.searchPlaceholder")
           }

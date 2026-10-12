@@ -169,7 +169,10 @@ import {
   MINIMUM_OPENCODE_VERSION,
   parseOpenCodeVersion,
 } from "../../../integrations/harness/providers/opencode/opencodeProtocol";
-import { refreshHarnessCatalogs } from "../../../integrations/harness/core/registry";
+import {
+  enforceHarnessIdleLimit,
+  refreshHarnessCatalogs,
+} from "../../../integrations/harness/core/registry";
 import { loginHarness } from "../../../integrations/harness/core/auth";
 import {
   defaultModelId,
@@ -223,6 +226,7 @@ import {
   renameProviderAccount,
   saveProviderAccount,
   subscribeProviderAccounts,
+  supportsAccountProfiles,
   type ProviderAccount,
   type ProviderAccountProvider,
 } from "../../providers/model/providerAccounts";
@@ -234,9 +238,13 @@ import {
 } from "../../providers/model/providerAccountIdentity";
 import { ProviderAccountSubtitle } from "../../providers/ui/ProviderAccountSubtitle";
 import {
+  saveComposerAutocorrect,
   saveMaskEmails,
+  saveRailMonosPinned,
   saveShowRemainingUsage,
+  useComposerAutocorrect,
   useMaskEmails,
+  useRailMonosPinned,
   useShowRemainingUsage,
 } from "../model/displayPrefs";
 import {
@@ -311,6 +319,7 @@ import {
   filterKeybindings,
   currentKeybindings,
   loadClaudeHooks,
+  loadIdleAgentLimit,
   loadCloseToTray,
   loadCollapsedProjectRailMode,
   loadComposerRunner,
@@ -331,6 +340,9 @@ import {
   loadQuickComposerShortcut,
   loadTabAnimationsEnabled,
   saveClaudeHooks,
+  saveIdleAgentLimit,
+  IDLE_AGENT_LIMITS,
+  type IdleAgentLimit,
   saveCloseToTray,
   saveCollapsedProjectRailMode,
   saveComposerRunner,
@@ -1022,6 +1034,7 @@ function ChatPage() {
   const [diffViewer, setDiffViewer] = useState<DiffViewer>(loadDiffViewer);
   const [formatOnSave, setFormatOnSave] = useState(loadFormatOnSave);
   const [composerRunner, setComposerRunner] = useState(loadComposerRunner);
+  const composerAutocorrect = useComposerAutocorrect();
   const [gridArcadeEnabled, setGridArcadeEnabled] = useState(
     loadGridArcadeEnabled,
   );
@@ -1143,6 +1156,17 @@ function ChatPage() {
               { value: "beside", label: t("chat.modelControls.beside") },
             ]}
             onChange={onModelControls}
+          />
+        </Row>
+        <Row
+          id="composer-autocorrect"
+          label={t("index.composer-autocorrect")}
+          description={t("chat.composer-autocorrect")}
+        >
+          <Toggle
+            label={t("index.composer-autocorrect")}
+            on={composerAutocorrect}
+            onChange={saveComposerAutocorrect}
           />
         </Row>
       </Group>
@@ -3234,6 +3258,8 @@ function ProvidersPage({
   const [choice, setChoice] = useState(loadLastModelChoice);
   const [defaultModels, setDefaultModels] = useState(loadDefaultModels);
   const [claudeHooks, setClaudeHooks] = useState(loadClaudeHooks);
+  const [idleAgentLimit, setIdleAgentLimit] =
+    useState<IdleAgentLimit>(loadIdleAgentLimit);
   const [scope, setScope] = useState<string>(GLOBAL_PROVIDER_SCOPE);
   const [hiddenGlobally, setHiddenGlobally] = useState(
     loadHiddenPickerProviders,
@@ -3291,6 +3317,14 @@ function ProvidersPage({
   const onClaudeHooks = (next: boolean) => {
     saveClaudeHooks(next);
     setClaudeHooks(next);
+  };
+
+  const onIdleAgentLimit = (next: string) => {
+    const limit = Number(next) as IdleAgentLimit;
+    saveIdleAgentLimit(limit);
+    setIdleAgentLimit(limit);
+    // A lower limit takes effect now, not at the next finished turn.
+    enforceHarnessIdleLimit();
   };
 
   const onModelChange = (harness: HarnessId, model: string) => {
@@ -3394,6 +3428,21 @@ function ProvidersPage({
       </Group>
 
       <Group title={t("providers.advanced")}>
+        <Row
+          id="idle-agents"
+          label={t("index.idle-agents")}
+          description={t("providers.idle-agents")}
+        >
+          <Segmented
+            label={t("index.idle-agents")}
+            value={String(idleAgentLimit)}
+            options={IDLE_AGENT_LIMITS.map((limit) => ({
+              value: String(limit),
+              label: limit === 0 ? t("providers.idleAgentsNone") : String(limit),
+            }))}
+            onChange={onIdleAgentLimit}
+          />
+        </Row>
         <Row
           id="claude-hooks"
           label={t("index.claude-hooks")}
@@ -3575,15 +3624,17 @@ function ProviderAccountsSettings() {
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                disabled={Boolean(working)}
-                onClick={() => startAdd(provider)}
-                className="flex shrink-0 items-center gap-1.5 rounded-md border border-content/10 px-2.5 py-1 text-[12px] text-content/70 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.97] disabled:cursor-default disabled:opacity-40"
-              >
-                <Plus className="size-3.5" strokeWidth={1.75} aria-hidden />
-                {t("providers.accounts.add")}
-              </button>
+              {supportsAccountProfiles(provider) ? (
+                <button
+                  type="button"
+                  disabled={Boolean(working)}
+                  onClick={() => startAdd(provider)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-md border border-content/10 px-2.5 py-1 text-[12px] text-content/70 transition-transform duration-150 hover:bg-content/10 hover:text-content active:scale-[0.97] disabled:cursor-default disabled:opacity-40"
+                >
+                  <Plus className="size-3.5" strokeWidth={1.75} aria-hidden />
+                  {t("providers.accounts.add")}
+                </button>
+              ) : null}
             </div>
             <div className="border-t border-content/5 bg-content/[0.015] pl-10">
               {accounts.map((account) => {
@@ -4090,6 +4141,7 @@ function MonosPage() {
     loadMonoMenuBarIcon,
     () => true,
   );
+  const railPinned = useRailMonosPinned();
   const snapshot = useSyncExternalStore(subscribeMonos, monosSnapshot);
   const monos = useMemo(() => listMonos(), [snapshot]);
 
@@ -4105,6 +4157,18 @@ function MonosPage() {
             label={t("index.monos-enabled")}
             on={enabled}
             onChange={saveMonosEnabled}
+          />
+        </Row>
+        <Row
+          id="rail-monos-pinned"
+          label={t("index.rail-monos-pinned")}
+          description={t("monos.rail-monos-pinned")}
+        >
+          <Toggle
+            label={t("index.rail-monos-pinned")}
+            on={railPinned}
+            onChange={saveRailMonosPinned}
+            disabled={!enabled}
           />
         </Row>
         {IS_MAC && (
@@ -4167,7 +4231,7 @@ function MonoRow({ mono }: { mono: Mono }) {
       </span>
       <Toggle
         label={t("monos.showSpawnedSessionsToggle", { name: look.name })}
-        on={mono.showStartedSessionsInSidebar !== false}
+        on={mono.showStartedSessionsInSidebar === true}
         onChange={(on) =>
           updateMono(mono.id, (entry) => ({
             ...entry,

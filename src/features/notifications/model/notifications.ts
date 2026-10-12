@@ -5,6 +5,7 @@ import {
   allowsProjectNotification,
   type NotificationSubject,
 } from "./notificationPreferences";
+import { monoReplyText } from "../../monos/model/monoReaction";
 import { knownNotificationProject } from "./notificationProjects";
 import { t } from "../../../i18n";
 
@@ -211,7 +212,8 @@ export function notificationText(
     title,
     subtitle,
     body: clip(
-      reply?.text || t("os.finished", { ns: "notifications", harness }),
+      (reply && monoReplyText(reply.text)) ||
+        t("os.finished", { ns: "notifications", harness }),
     ),
   };
 }

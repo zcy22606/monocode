@@ -1,5 +1,7 @@
 import {
   clampUsedPercent,
+  DAILY_WINDOW_MINUTES,
+  formatExtraUsageBalance,
   formatResetDuration,
   formatUsagePercent,
   formatWindowLabel,
@@ -86,7 +88,15 @@ export function meterWindows(
   limits: ProviderRateLimits | undefined,
 ): { title: string; window: RateLimitWindow }[] {
   return [
-    limits?.session ? { title: "5h", window: limits.session } : null,
+    limits?.session
+      ? {
+          // Devin's short window is a day, not five hours.
+          title: limits.session.windowMinutes === DAILY_WINDOW_MINUTES
+              ? t("usage.daily", { ns: "providers" })
+              : "5h",
+          window: limits.session,
+        }
+      : null,
     limits?.weekly
       ? { title: t("usage.weekly", { ns: "providers" }), window: limits.weekly }
       : null,
@@ -104,6 +114,7 @@ export function AccountUsageMeters({
   limits: ProviderRateLimits | undefined;
   now: number;
 }) {
+  const { t } = useTranslation("providers");
   const windows = meterWindows(limits);
 
   if (windows.length === 0) {
@@ -134,6 +145,14 @@ export function AccountUsageMeters({
           now={now}
         />
       ))}
+      {limits?.extraUsageBalance != null ? (
+        <div className="w-16 text-[10px] leading-3" title={t("usage.extraUsageBalance")}>
+          <div className="truncate text-content/40">{t("usage.extra")}</div>
+          <div className="mt-1 font-medium tabular-nums text-content/70">
+            {formatExtraUsageBalance(limits.extraUsageBalance)}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

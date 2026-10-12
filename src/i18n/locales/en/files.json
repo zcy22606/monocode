@@ -26,7 +26,11 @@
     "imageActions": "Image actions",
     "retry": "Retry",
     "reveal": "Reveal",
-    "copyPath": "Copy path"
+    "copyPath": "Copy path",
+    "playFailed": "Couldn’t play {{name}}",
+    "videoUnsupported": "This video’s format or codec is unsupported, or the file is damaged.",
+    "videoPreview": "Video preview: {{name}}",
+    "openExternally": "Open externally"
   },
   "plan": {
     "missing": "This plan is no longer in the session.",

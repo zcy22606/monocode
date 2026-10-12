@@ -26,7 +26,11 @@
     "imageActions": "图片操作",
     "retry": "重试",
     "reveal": "显示位置",
-    "copyPath": "复制路径"
+    "copyPath": "复制路径",
+    "playFailed": "无法播放 {{name}}",
+    "videoUnsupported": "不支持这个视频的格式或编解码器，或者文件已损坏。",
+    "videoPreview": "视频预览：{{name}}",
+    "openExternally": "在外部打开"
   },
   "plan": {
     "missing": "这个计划已不在会话中。",

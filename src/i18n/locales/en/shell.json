@@ -162,7 +162,10 @@
     "deleteAllDescription": "Permanently delete all {{n}} conversations in this tab",
     "noProject": "No project",
     "tabActions": "Tab actions for {{name}}",
-    "showMonoDetails": "Show Mono details"
+    "hideOverview": "Hide overview",
+    "showOverview": "Show overview",
+    "overview": "Overview",
+    "monoSettings": "{{name}} settings"
   },
   "footer": {
     "removedAccount": "This conversation uses a removed account",
@@ -216,7 +219,8 @@
       "session": "5-hour limit",
       "weekly": "Weekly limit",
       "monthly": "Monthly limit",
-      "other": "{{window}} limit"
+      "other": "{{window}} limit",
+      "daily": "Daily limit"
     },
     "used": "{{percent}} used",
     "remainingLabel": "{{title}} remaining",
@@ -244,7 +248,8 @@
       "alreadyRedeemed": "That reset was already used."
     },
     "expired": "expired",
-    "usedLabel": "{{title}} used"
+    "usedLabel": "{{title}} used",
+    "extraUsageBalance": "Extra usage balance"
   },
   "sidebar": {
     "tabs": {
@@ -334,6 +339,8 @@
     "namedOptions": "{{name}} options",
     "name": "Mono name",
     "background": "Background image",
-    "delete": "Delete mono…"
+    "delete": "Delete mono…",
+    "newReplies_one": "{{count}} new reply",
+    "newReplies_other": "{{count}} new replies"
   }
 }

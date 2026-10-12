@@ -1,12 +1,13 @@
-import { useRef, useState } from "react";
-import { t as translate, useTranslation } from "../../../i18n";
+import { useEffect, useRef, useState } from "react";
 import { isImeComposition } from "../../../shared/lib/keyboard";
 import { IconButton } from "../../../app/shell/TitleBar";
 import { Pencil, Plus, StickyNote, Trash2 } from "../../../shared/ui/icons";
-import type { MonoLook } from "../model/mono";
+import type { MonoLook, MonoState } from "../model/mono";
 import {
   MonoFileConflict,
   editMonoFile,
+  loadMonoFiles,
+  subscribeMonoFiles,
   type MonoFiles,
 } from "../model/monoFiles";
 import {
@@ -26,6 +27,7 @@ import {
   MemoryGauge,
   PageHeader,
 } from "./monoPanelParts";
+import { t as translate, useTranslation } from "../../../i18n";
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -59,7 +61,7 @@ export function SoulPage({
   monoId: string;
   agent: MonoLook;
   files: MonoFiles | undefined;
-  onBack: () => void;
+  onBack?: () => void;
 }) {
   const { t } = useTranslation("monos");
   return (
@@ -93,7 +95,7 @@ export function MemoryPage({
 }: {
   monoId: string;
   files: MonoFiles | undefined;
-  onBack: () => void;
+  onBack?: () => void;
 }) {
   const { t } = useTranslation("monos");
   const [adding, setAdding] = useState(false);
@@ -392,4 +394,35 @@ function FactEditor({
       />
     </div>
   );
+}
+
+/** The agent's files, reloaded when it finishes a turn or the app regains focus. */
+export function useMonoFiles(
+  monoId: string,
+  status: MonoState["status"],
+): MonoFiles | undefined {
+  const [files, setFiles] = useState<MonoFiles>();
+  const working = status === "working";
+  useEffect(() => {
+    let live = true;
+    const refresh = () => {
+      void loadMonoFiles(monoId)
+        .then((next) => {
+          if (live) setFiles(next);
+        })
+        .catch((error) =>
+          console.warn("Could not load the Mono's files", error),
+        );
+    };
+    refresh();
+    const stop = subscribeMonoFiles(refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      live = false;
+      stop();
+      window.removeEventListener("focus", refresh);
+    };
+    // A turn ending is when the agent may have written to its memory.
+  }, [monoId, working]);
+  return files;
 }

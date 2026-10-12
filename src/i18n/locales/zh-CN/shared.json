@@ -37,5 +37,15 @@
     },
     "time": "时间",
     "timeHint": "本地时间，24 小时制"
+  },
+  "emojiPicker": {
+    "search": "搜索表情",
+    "recent": "最近使用",
+    "loading": "正在加载…",
+    "empty": "没有找到表情",
+    "pick": "选择一个表情",
+    "jumpToCategory": "跳到第 {{n}} 个分类",
+    "skinTone": "肤色",
+    "changeSkinTone": "更改肤色"
   }
 }

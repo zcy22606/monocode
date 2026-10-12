@@ -17,6 +17,8 @@ type Props = {
   x: number;
   y: number;
   harnesses: HarnessId[];
+  /** Offers launches since deleted, which only a Mono's sessions keep. */
+  unavailableOption?: boolean;
   filters: SessionSidebarFilters;
   onChange: (filters: SessionSidebarFilters) => void;
   onClose: () => void;
@@ -33,6 +35,7 @@ export function SessionFiltersMenu({
   x,
   y,
   harnesses,
+  unavailableOption = false,
   filters,
   onChange,
   onClose,
@@ -63,6 +66,11 @@ export function SessionFiltersMenu({
     onClose();
   };
 
+  const toggleUnavailable = () => {
+    onChange({ ...filters, showUnavailable: !filters.showUnavailable });
+    onClose();
+  };
+
   return (
     <Popover
       anchor={{ x, y }}
@@ -80,6 +88,13 @@ export function SessionFiltersMenu({
         checked={filters.showArchived}
         onClick={toggleArchived}
       />
+      {unavailableOption ? (
+        <FilterItem
+          label={t("filters.unavailable")}
+          checked={!!filters.showUnavailable}
+          onClick={toggleUnavailable}
+        />
+      ) : null}
 
       <SectionLabel>{t("filters.status")}</SectionLabel>
       <FilterItem

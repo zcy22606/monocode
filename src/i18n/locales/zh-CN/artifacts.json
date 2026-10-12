@@ -1,6 +1,7 @@
 {
   "kind": {
-    "document": "文档"
+    "document": "文档",
+    "html": "可视化"
   },
   "card": {
     "open": "打开{{noun}}",
@@ -18,6 +19,7 @@
     "loadFailed": "无法加载这个文档。",
     "loading": "正在加载文档…",
     "unavailable": "这个文档已不存在。",
-    "updated": "更新于 {{time}}"
+    "updated": "更新于 {{time}}",
+    "hideOverview": "隐藏概览"
   }
 }

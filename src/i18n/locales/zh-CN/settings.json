@@ -109,7 +109,10 @@
     "diff-colors": "差异配色",
     "monos-enabled": "显示 Mono",
     "mono-list": "你的 Mono",
-    "mono-menu-bar-icon": "菜单栏图标"
+    "mono-menu-bar-icon": "菜单栏图标",
+    "rail-monos-pinned": "将 Mono 固定到图标栏",
+    "composer-autocorrect": "自动纠错",
+    "idle-agents": "保留闲置的 Agent 待命"
   },
   "keybindings": {
     "command": {
@@ -275,7 +278,8 @@
       "description": "只是闲置动画，别无他用。两个都关掉，工作区就是静止的。"
     },
     "composer-mascot": "回合运行时，项目吉祥物会沿着输入框奔跑，第一次撞到「滚动到最新」按钮，之后会跳过去，偶尔还会捡到金币。",
-    "empty-session-games": "吃豆人和贪吃蛇会在空会话的网格上自己玩。鼠标悬停在那条区域上，就能接管屏幕上正在玩的那个。关掉后窗格保持静止。"
+    "empty-session-games": "吃豆人和贪吃蛇会在空会话的网格上自己玩。鼠标悬停在那条区域上，就能接管屏幕上正在玩的那个。关掉后窗格保持静止。",
+    "composer-autocorrect": "在会话和 Mono 的输入框中对提示词进行拼写检查和自动纠错。关闭后会完全保留你输入的文字。"
   },
   "inbox": {
     "github": {
@@ -520,7 +524,9 @@
     "showInPickerLabel": "在模型选择器中显示 {{provider}}",
     "usagePrivacy": "用量与隐私",
     "show-remaining-usage": "用量条显示每项额度还剩多少，而不是已经用了多少。",
-    "mask-emails": "在设置和用量弹窗里把账号邮箱模糊处理，点一下才显示，截图时不会露出来。"
+    "mask-emails": "在设置和用量弹窗里把账号邮箱模糊处理，点一下才显示，截图时不会露出来。",
+    "idle-agents": "对话结束后，它的 Agent CLI 会继续运行几分钟，让后续消息能立即开始。每个可能占用几百 MB 内存。超过这个数量时，闲置最久的那个会提前停止；你下次发消息时它会在短暂重启后恢复。内存紧张的机器上请选择「无」。",
+    "idleAgentsNone": "无"
   },
   "archive": {
     "projects": {
@@ -595,6 +601,7 @@
     },
     "showSpawnedSessions": "在侧栏显示 Mono 开的会话",
     "showSpawnedSessionsToggle": "在侧栏显示 {{name}} 开的会话",
-    "menuBarIconDescription": "从 macOS 菜单栏和 Mono 聊天，或打开快速输入。关掉后不显示这个图标。"
+    "menuBarIconDescription": "从 macOS 菜单栏和 Mono 聊天，或打开快速输入。关掉后不显示这个图标。",
+    "rail-monos-pinned": "项目栏收起为图标时，把每个 Mono 显示在栏顶部的分隔线上方，而不是放在项目选择器里。"
   }
 }

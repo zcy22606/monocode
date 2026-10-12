@@ -22,7 +22,10 @@
     "window": "{{window}} window",
     "limitRemaining": "{{title}} limit remaining",
     "full": "Full",
-    "limitUsed": "{{title}} limit used"
+    "limitUsed": "{{title}} limit used",
+    "daily": "Daily",
+    "extraUsageBalance": "Extra usage balance",
+    "extra": "Extra"
   },
   "identity": {
     "personal": "Personal"

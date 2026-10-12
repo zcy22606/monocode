@@ -22,7 +22,7 @@
   },
   "header": {
     "greeting": "我能看到 {{projects}} 里的每个会话、笔记和文件夹。问问进展如何，或者把活交给我。",
-    "greetingNoProjects": "在我的详情里添加要我负责的项目，或者直接问我点什么。"
+    "greetingNoProjects": "在我的设置里添加要我负责的项目，或者直接问我点什么。"
   },
   "intro": {
     "title": "认识 Monos",
@@ -56,7 +56,9 @@
     "failure": "无法重置对话。",
     "description": "清空所有消息，重新开始",
     "cancel": "取消",
-    "resetting": "正在重置…"
+    "resetting": "正在重置…",
+    "descriptionStay": "清空所有消息，重新开始。它的灵魂、记忆和习惯都会保留。",
+    "action": "重置"
   },
   "habit": {
     "today": "今天 {{time}}",
@@ -83,7 +85,11 @@
   "habits": {
     "empty": "还没有习惯",
     "upcoming": "即将运行",
-    "done": "已完成"
+    "done": "已完成",
+    "upNextToday": "今天接下来",
+    "doneToday": "今天已完成",
+    "later": "稍后",
+    "scheduled": "已排期"
   },
   "newHabit": {
     "title": "新建习惯",
@@ -146,7 +152,9 @@
     "attachFiles": "附加文件",
     "message": "给 {{name}} 发消息",
     "send": "发送",
-    "readingAttachments": "正在读取附件…"
+    "readingAttachments": "正在读取附件…",
+    "emoji": "表情",
+    "addEmoji": "添加表情"
   },
   "projects": {
     "remove": "移除 {{name}}",
@@ -206,7 +214,13 @@
     "views": "更改视图",
     "commit": "提交",
     "notInGit": "这些文件不在 Git 仓库中，没有可提交的内容。",
-    "projects": "项目"
+    "projects": "项目",
+    "commitProject": "提交 {{name}}",
+    "noProject": "给 {{name}} 一个要做的项目，它的更改就会出现在这里等你提交。",
+    "loadFailed": "无法加载仓库：{{error}}",
+    "switchCheckout": "切换 {{project}} 的工作副本",
+    "checkouts": "{{project}} 的工作副本",
+    "projectFolder": "项目文件夹"
   },
   "commit": {
     "confirmDeleteUntracked": "删除未跟踪的文件 {{name}}？",
@@ -231,6 +245,60 @@
     "thisCommit": "本次提交",
     "leaveAllOut": "全部移出",
     "changes": "更改",
-    "addAllToCommit": "全部加入提交"
+    "addAllToCommit": "全部加入提交",
+    "stagedChanges": "已暂存的更改",
+    "unstageAll": "取消暂存所有更改",
+    "stageAll": "暂存所有更改"
+  },
+  "reaction": {
+    "notification": "对你的消息回应了 {{emoji}}"
+  },
+  "launched": {
+    "status": {
+      "working": "工作中",
+      "input": "需要输入",
+      "draft": "草稿",
+      "failed": "失败",
+      "stopped": "已停止",
+      "done": "已完成"
+    },
+    "open": "打开会话 {{title}}",
+    "openWithStatus": "打开会话 {{title}}，{{status}}"
+  },
+  "settingsDialog": {
+    "title": "{{name}} 的设置",
+    "sections": "设置分区",
+    "general": "通用",
+    "modelDescription": "它用来思考和回复的模型。",
+    "permissionsDescription": "它不用问你就能做哪些事。",
+    "projectsDescription": "它能看到这些项目里的每个会话、笔记和文件夹。",
+    "startedSessions": "它开的会话",
+    "showInSidebar": "在侧栏显示会话",
+    "showInSidebarDescription": "它开的会话会出现在你的项目侧栏里。隐藏的会话仍会保存，可以从它的概览里打开。",
+    "groupInFolder": "归到一个文件夹",
+    "groupInFolderDescription": "它开的会话会放进项目侧栏里名为「{{name}}」的文件夹。",
+    "conversation": "对话",
+    "changeLook": "更换吉祥物和颜色",
+    "look": "吉祥物和颜色",
+    "name": "名字"
+  },
+  "overview": {
+    "label": "{{name}} 的概览",
+    "title": "概览",
+    "documents": "文档",
+    "hide": "隐藏概览",
+    "emptySessions": "让 {{name}} 在你的某个项目上开一个会话，比如修个 bug 或做个评审，会话就会出现在这里。",
+    "emptyHabits": "让 {{name}} 把重复的工作排上日程，比如每天早上的摘要或每周报告。",
+    "emptyDocuments": "让 {{name}} 写点东西，比如一份计划或总结，文档就会出现在这里。",
+    "searchPlaceholder": "搜索会话…",
+    "search": "搜索会话",
+    "filter": "筛选会话"
+  },
+  "sessionList": {
+    "noSearchMatch": "没有符合搜索的会话。",
+    "noFilterMatch": "没有符合筛选条件的会话。",
+    "allDeleted": "{{name}} 开过的会话都已被删除。",
+    "unavailable": "已不存在",
+    "openInWorkspace": "在工作区中打开"
   }
 }

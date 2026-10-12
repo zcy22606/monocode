@@ -22,7 +22,10 @@
     "window": "{{window}} 窗口",
     "limitRemaining": "{{title}} 剩余额度",
     "full": "已满",
-    "limitUsed": "{{title}} 已用额度"
+    "limitUsed": "{{title}} 已用额度",
+    "daily": "每日",
+    "extraUsageBalance": "额外用量余额",
+    "extra": "额外"
   },
   "identity": {
     "personal": "个人"

@@ -27,6 +27,7 @@ export const BTW_HARNESSES: readonly HarnessId[] = [
   "opencode",
   "pi",
   "omp",
+  "devin",
 ];
 
 export function supportsBtwHarness(
