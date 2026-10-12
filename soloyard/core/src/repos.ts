@@ -10,7 +10,7 @@ import { basename, dirname, join } from 'node:path'
 import { tx } from './db.ts'
 import type { DB } from './db.ts'
 import { type Actor, type Row, findProjectByPath, getRow, insert, projectForPath, remove, update } from './repo.ts'
-import { BRAINSTORM_GUIDE, overviewSummary } from './overview.ts'
+import { brainstormGuide, overviewSummary } from './overview.ts'
 import { projectStage } from './stage.ts'
 
 export type Worktree = { path: string; name: string; branch: string | null }
@@ -191,7 +191,8 @@ export function projectMap(info: ProjectRepos, workCwd?: string): string {
  * 发送前：要开放给 agent 的目录（根目录 + 成员仓库，已经在工作目录里的不重复给）和项目地图。
  * 交给 Claude 的 --add-dir / Codex 的可写目录，和会话关联的文件夹合在一起。
  */
-export function projectSessionContext(db: DB, cwd?: string, workCwd?: string): { dirs: string[]; map: string } {
+/** mcp = 这个版本注册的 MCP 名字（正式版 soloyard，开发版 soloyard-dev），系统提示里点名用它。 */
+export function projectSessionContext(db: DB, cwd?: string, workCwd?: string, mcp = 'soloyard'): { dirs: string[]; map: string } {
   const info = cwd ? projectRepos(db, cwd) : null
   if (!info) return { dirs: [], map: '' }
   const work = clean(workCwd || cwd!)
@@ -201,8 +202,8 @@ export function projectSessionContext(db: DB, cwd?: string, workCwd?: string): {
     : []
   // overview 的短摘要接在项目地图后面（单仓库、没写说明的项目只有它）
   // 想法期（头脑风暴）再带上头脑风暴的规矩
-  const summary = overviewSummary(db, info.project.id)
-  const guide = projectStage(db, info.project.id).stage === 'idea' ? BRAINSTORM_GUIDE : ''
+  const summary = overviewSummary(db, info.project.id, mcp)
+  const guide = projectStage(db, info.project.id).stage === 'idea' ? brainstormGuide(mcp) : ''
   const map = projectMap(info, work) || (summary || guide ? `# Soloyard project: ${info.project.name || '(untitled idea)'}` + (info.project.key.startsWith('~') ? '' : ` (issue key ${info.project.key})`) : '')
   return { dirs: dirs.filter((d) => !dirs.some((o) => o !== d && inside(d, o))), map: [map, summary, guide].filter(Boolean).join('\n\n') }
 }
