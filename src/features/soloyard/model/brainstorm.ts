@@ -34,7 +34,11 @@ export function defaultFolderName(now = new Date()) {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
 }
 
-export const isBrainstormCwd = (cwd: string | undefined, base = root) => !!base && !!cwd && cwd.replace(/\/+$/, "").startsWith(`${base}/`);
+/** 头脑风暴的目录：工作区下的子文件夹，以及工作区本身（侧栏把它当「头脑风暴」项目，它也不能进项目列表）。 */
+export const isBrainstormCwd = (cwd: string | undefined, base = root) => {
+  const clean = cwd?.replace(/\/+$/, "");
+  return !!base && !!clean && (clean === base || clean.startsWith(`${base}/`));
+};
 
 /** 工作区根目录（解析出来前是 null），解析完重新渲染。 */
 export const useBrainstormRoot = () => useSyncExternalStore((l) => (listeners.add(l), () => listeners.delete(l)), () => root);

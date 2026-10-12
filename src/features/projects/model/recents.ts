@@ -43,6 +43,7 @@ export function loadRecents(): RecentProject[] {
       if (!item || typeof item !== "object") continue;
       const rec = item as { path?: unknown; openedAt?: unknown };
       if (typeof rec.path !== "string" || !rec.path) continue;
+      if (isBrainstormCwd(rec.path)) continue; // Soloyard: drop brainstorm folders saved before they were excluded
       const openedAt =
         typeof rec.openedAt === "number" && Number.isFinite(rec.openedAt)
           ? rec.openedAt

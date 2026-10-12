@@ -1872,13 +1872,15 @@ function Workspace({
   // Soloyard: brainstorms show in the sidebar like a project whose root is the app's workspace/ folder.
   const brainstormActive = !activeFile && isBrainstormCwd(active?.cwd);
   const brainstormRoot = useBrainstormRoot(); // Soloyard
+  // Soloyard: the rail highlights Brainstorm only while no full-screen view (inbox, notes…) covers the session.
+  const brainstormShown = brainstormActive && !searchViewOpen && !inboxViewOpen && !notesViewOpen && !automationsViewOpen;
   // Soloyard: highlight the Project sidebar item for the focused project-view tab.
   useEffect(
     () =>
-      brainstormActive
+      brainstormShown
         ? setActiveProjectView(BRAINSTORM_CWD, { view: "brainstorm" })
         : setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView),
-    [activeFile, brainstormActive],
+    [activeFile, brainstormShown],
   );
   // A Mono belongs to no project, so its view keeps the project in place.
   const sidebarCwd =
