@@ -110,6 +110,15 @@ const MIGRATIONS: string[] = [
   `
   UPDATE soloyard_projects SET stage = 'building' WHERE stage NOT IN ('idea', 'initiating', 'building', 'launched', 'parked', 'killed');
   `,
+  // overview（overview.ts）：项目的产品说明书，一条一节（标题、英文名、一句话、止损线也各算一节），各有版本，
+  // agent 改之前比版本，用户改过的不覆盖。slug = 英文名（项目文件夹名），想法期就有。
+  `
+  CREATE TABLE soloyard_overview (
+    id INTEGER PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES soloyard_projects(id) ON DELETE CASCADE,
+    section TEXT NOT NULL, body_md TEXT NOT NULL DEFAULT '', updated_by TEXT NOT NULL,
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, UNIQUE (project_id, section));
+  ALTER TABLE soloyard_projects ADD COLUMN slug TEXT;
+  `,
 ]
 
 export function openDb(path: string): DB {

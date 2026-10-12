@@ -270,3 +270,30 @@ test('MCP：get_project / list_projects 带阶段和下一步；update_project �
     s.close()
   }
 })
+
+test('MCP：get_overview / update_overview，用户改过的节不覆盖', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app') })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const before = (await s.tool('get_overview', { project: 'APP' })).data
+    assert.equal(before.entries.length, 13)
+    const res = (await s.tool('update_overview', { project: 'APP', updates: [{ key: 'goal', body: '一句话', expected_version: 0 }, { key: 'users', body: '独立开发者', expected_version: 0 }] })).data
+    assert.deepEqual(res, [{ key: 'goal', version: 1 }, { key: 'users', version: 1 }])
+
+    const db2 = openDb(dbPath)
+    const { updateOverview } = await import('../../core/src/overview.ts')
+    updateOverview(db2, 'user', 1, [{ key: 'users', body: '我改的', expected_version: 1 }])
+    db2.close()
+    const err = (await s.tool('update_overview', { project: 'APP', updates: [{ key: 'users', body: '覆盖', expected_version: 1 }] })).error
+    assert.match(err.error, /用户在你读过之后改过「目标用户」/)
+    assert.equal(err.latest.body, '我改的')
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.goal, '一句话')
+  } finally {
+    s.close()
+  }
+})

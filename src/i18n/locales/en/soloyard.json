@@ -580,5 +580,96 @@
   },
   "fileLink": {
     "copyFile": "Copy File"
+  },
+  "overview": {
+    "slugPlaceholder": "english-name",
+    "pending_one": "Waiting for your call · {{count}}",
+    "pending_other": "Waiting for your call · {{count}}",
+    "all": "All",
+    "oneWay": "One-way",
+    "twoWay": "Two-way",
+    "noPending": "Nothing to decide right now.",
+    "empty": "Not written yet. The agent fills this in as you talk; you can also write it yourself.",
+    "suggestTitle": "Suggested (optional)",
+    "snapshotNote": "A read-only copy is written to docs/overview.md in the project folder after every change.",
+    "stage": {
+      "idea": "Idea",
+      "initiating": "Initiation",
+      "building": "Building",
+      "launched": "Launched",
+      "parked": "Parked",
+      "killed": "Dropped"
+    },
+    "step": {
+      "charter": "Initiation brief",
+      "decide": "Decisions",
+      "versions": "Version plan",
+      "cut": "Cut scope",
+      "start": "Start first iteration"
+    },
+    "key": {
+      "name": "Project name",
+      "slug": "English name",
+      "goal": "One-liner",
+      "stoploss": "Stop-loss line",
+      "background": "Background and problem",
+      "users": "Target users",
+      "alternatives": "Alternatives and competitors",
+      "findings": "Research findings",
+      "decisions": "Key decisions",
+      "scope": "Scope and non-goals",
+      "metrics": "Success metrics",
+      "risks": "Risks and assumptions to test",
+      "open": "Still unclear"
+    },
+    "next": {
+      "charter": {
+        "title": "Next: run initiation",
+        "hint": "The agent first lists what is already covered and how long the rest takes; it only runs after you agree.",
+        "action": "Start in a new session"
+      },
+      "versions": {
+        "title": "Next: lay out the version plan",
+        "hint": "The agent puts every feature into a version on the Iterations page.",
+        "action": "Start in a new session"
+      },
+      "cut": {
+        "title": "Next: cut scope",
+        "hint": "Move features between versions on the Iterations page, then start the first iteration.",
+        "action": "Open Iterations"
+      },
+      "decide": {
+        "title_one": "Next: decide {{count}} one-way door",
+        "title_other": "Next: decide {{count}} one-way doors",
+        "hint": "The version plan waits until the primary audience, target market and other one-way doors are decided.",
+        "action": "Decide"
+      }
+    },
+    "prompt": {
+      "charter": "Run initiation for this project (product-thinking). First take stock of what already exists: the overview (get_overview), evidence, decisions and the files in docs/. List an initiation coverage table — for each part (restated idea, demand evidence, competitors and alternatives, primary audience and wedge, value, distribution and compliance pre-check, riskiest assumptions, stop-loss line) mark \"covered / needs more / missing\" with evidence IDs — and estimate the time. Wait for my go-ahead before running, and only fill the gaps. Afterwards update the overview.",
+      "versions": "Lay out the version plan for this project (product-thinking, the version-table part of \"add\"): put every feature into a version or Pending / Split / Cut, with reasons, and import it. Read my decisions first (single-door decisions are already made in the app)."
+    },
+    "suggest": {
+      "dig": {
+        "label": "Dig into v1 features",
+        "hint": "Research each v1 feature until it can be designed and built",
+        "prompt": "Dig into the features of the first version (product-thinking \"dig\"): how leading products do it, user voices, design options and acceptance criteria. Write the results to docs/ and update the overview where it changes."
+      },
+      "business": {
+        "label": "Business analysis",
+        "hint": "Market, pricing, cold start, financials, compliance",
+        "prompt": "Run the business analysis for this project (product-thinking \"business\"): market and competition, business model and pricing, cold start and distribution, financial estimate, compliance. Write it to docs/; put one-way decisions (like the pricing model) into the app for me to decide."
+      },
+      "tech": {
+        "label": "Tech choices",
+        "hint": "Open-source and cloud options first, then build / buy / adopt / fork",
+        "prompt": "Run the tech analysis for this project (product-thinking \"tech\"): look for open-source projects and cloud services first, then decide build / buy / adopt / fork, with feasibility and cost. Write it to docs/."
+      },
+      "prd": {
+        "label": "PRD package",
+        "hint": "A hand-off package a coding agent can build from",
+        "prompt": "Put together the PRD package for this project (product-thinking \"PRD\"): a dev-pack in markdown a coding agent can start from, based on the overview, decisions and docs/. Mark anything still assumed as a default."
+      }
+    }
   }
 }

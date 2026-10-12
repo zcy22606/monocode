@@ -14,7 +14,8 @@ const T = (entity: string) => `soloyard_${entity}`
 
 /** 每个实体允许 update 改的列；不在表里的键一律忽略，防止 agent 改 id / version。 */
 const WRITABLE: Record<string, string[]> = {
-  projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json', 'instructions'],
+  projects: ['name', 'goal', 'stage', 'archived', 'next_step', 'stoploss_json', 'meta_json', 'instructions', 'slug', 'key'],
+  overview: ['body_md', 'updated_by'],
   project_repos: ['description', 'sort'],
   issues: ['title', 'body_md', 'status', 'priority', 'labels', 'due_date', 'cycle_id', 'milestone_id', 'parent_id', 'feature_id', 'iteration_id', 'sort_key', 'completed_at', 'repo_path'],
   acceptance: ['text', 'done', 'sort'],
@@ -23,7 +24,7 @@ const WRITABLE: Record<string, string[]> = {
   documents: ['kind', 'title', 'body_md', 'blocks_json'],
   decisions: ['title', 'door', 'status', 'data_json'],
 }
-const VERSIONED = new Set(['projects', 'ideas', 'documents', 'decisions', 'features', 'milestones', 'cycles', 'issues', 'iterations'])
+const VERSIONED = new Set(['projects', 'overview', 'ideas', 'documents', 'decisions', 'features', 'milestones', 'cycles', 'issues', 'iterations'])
 
 export const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done', 'canceled'] as const
 

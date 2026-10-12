@@ -79,14 +79,14 @@ export const panelShownFor = (panel: ProjectPanelState, cwd: string) => panelSho
 /** 从收起状态打开时的样子：满屏不留到下次，回到满屏前的侧栏（或悬浮）。 */
 const reopenMode = (): PanelMode => (state.mode === "full" ? state.restoreMode : state.mode);
 
-/** 顶栏开关：开着就收起；否则打开，回到上次看的视图（同一项目连详情一起），没看过就是 Issues。 */
-export function toggleProjectPanel(cwd: string) {
+/** 顶栏开关：开着就收起；否则打开，回到上次看的视图（同一项目连详情一起），没看过就是 fallback（想法 / 立项期是概览，否则 Issues）。 */
+export function toggleProjectPanel(cwd: string, fallback: ProjectViewId = "issues") {
   if (panelShownFor(state, cwd)) {
     set({ open: false });
     return;
   }
   const root = state.stack[0];
-  const listView = root && (navOf(root.view) !== root.view || !root.itemId) ? navOf(root.view) : "issues";
+  const listView = root && (navOf(root.view) !== root.view || !root.itemId) ? navOf(root.view) : fallback;
   set({ open: true, mode: reopenMode(), cwd, stack: sameCwd(state.cwd, cwd) && root ? state.stack : [{ view: listView }] });
 }
 

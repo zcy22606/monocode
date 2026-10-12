@@ -10,6 +10,7 @@ import { basename, dirname, join } from 'node:path'
 import { tx } from './db.ts'
 import type { DB } from './db.ts'
 import { type Actor, type Row, findProjectByPath, getRow, insert, projectForPath, remove, update } from './repo.ts'
+import { overviewSummary } from './overview.ts'
 
 export type Worktree = { path: string; name: string; branch: string | null }
 export type RepoInfo = { id: number; path: string; name: string; description: string; branch: string | null; worktrees: Worktree[]; missing: boolean }
@@ -197,7 +198,10 @@ export function projectSessionContext(db: DB, cwd?: string, workCwd?: string): {
     ? [info.project.root, ...info.repos.filter((r) => !r.missing).map((r) => r.path)]
         .filter((d): d is string => !!d && existsSync(d) && !inside(d, work))
     : []
-  return { dirs: dirs.filter((d) => !dirs.some((o) => o !== d && inside(d, o))), map: projectMap(info, work) }
+  // overview 的短摘要接在项目地图后面（单仓库、没写说明的项目只有它）
+  const summary = overviewSummary(db, info.project.id)
+  const map = projectMap(info, work) || (summary ? `# Soloyard project: ${info.project.name} (issue key ${info.project.key})` : '')
+  return { dirs: dirs.filter((d) => !dirs.some((o) => o !== d && inside(d, o))), map: [map, summary].filter(Boolean).join('\n\n') }
 }
 
 /**

@@ -12,6 +12,7 @@ import * as it from './iterations.ts'
 import * as repos from './repos.ts'
 import * as merge from './merge.ts'
 import * as stage from './stage.ts'
+import * as overview from './overview.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -66,6 +67,10 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   findProjectByPath: { run: (p: string) => repo.findProjectByPath(db, p) ?? null },
   listProjects: { run: () => repo.listProjects(db) },
   projectStage: { run: (projectId: number) => stage.projectStage(db, projectId) },
+  getOverview: { run: (projectId: number) => overview.getOverview(db, projectId) },
+  updateOverview: { write: true, run: (projectId: number, updates: overview.OverviewUpdate[]) => overview.updateOverview(db, actor, projectId, updates) },
+  // 概览页「等你拍板」：决策的标题、单向 / 双向门、状态（完整的决策页是 SOL-12）
+  listDecisions: { run: (projectId: number) => db.prepare('SELECT id, code, title, door, status FROM soloyard_decisions WHERE project_id = ? ORDER BY id').all(projectId) },
   setProjectStage: { write: true, run: (projectId: number, to: stage.StageChange, reason?: string) => stage.setProjectStage(db, actor, projectId, to, reason) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
   createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },
@@ -123,6 +128,6 @@ createInterface({ input: process.stdin }).on('line', (line) => {
       send({ event: 'changed' })
     }
   } catch (e) {
-    send({ id: req.id, error: e instanceof Error ? e.message : String(e), latest: e instanceof repo.VersionConflict ? e.latest : undefined })
+    send({ id: req.id, error: e instanceof Error ? e.message : String(e), latest: e instanceof repo.VersionConflict || e instanceof overview.OverviewConflict ? e.latest : undefined })
   }
 }).on('close', () => process.exit(0))

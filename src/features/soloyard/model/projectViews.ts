@@ -29,12 +29,12 @@ export type ProjectViewSource = {
   itemId?: string;
 };
 
-/** 项目面板标题栏下拉里的视图，Issues 最常用、也是默认。 */
+/** 项目面板标题栏下拉里的视图。默认打开哪个看阶段：想法 / 立项期是概览，建造期是 Issues（TitleBarTools）。 */
 export const PANEL_VIEWS: ProjectViewId[] = [
+  "overview",
   "issues",
   // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
   "cycles",
-  "overview",
   "docs",
   "repos",
   "decisions",

@@ -11,6 +11,8 @@ import { HarnessIcon } from "../../sessions/ui/HarnessIcon";
 import { TerminalSpinner } from "../../sessions/ui/TerminalSpinner";
 import { Popover } from "../../../shared/ui/Popover";
 import { panelShownFor, toggleProjectPanel, useProjectPanel } from "../model/projectPanel";
+import { useSoloyard } from "../data/api";
+import type { StageInfo } from "../model/overview";
 import { toggleTitleTabsCollapsed, useTitleTabsCollapsed } from "../model/titleTabs";
 
 /** 收起的标签区：只显示当前标签的标题，点开列出本项目的标签，可切换、关闭。 */
@@ -102,6 +104,10 @@ export function TitleBarTools({ cwd, project }: { cwd: string; project: boolean 
   const { t } = useTranslation("soloyard");
   const collapsed = useTitleTabsCollapsed();
   const open = panelShownFor(useProjectPanel(), cwd);
+  // 想法 / 立项期打开面板默认看概览，建造期默认 Issues
+  const { data: found } = useSoloyard<{ id: number } | null>("findProjectByPath", project ? cwd : undefined);
+  const { data: stage } = useSoloyard<StageInfo>("projectStage", found?.id);
+  const fallback = stage?.stage === "idea" || stage?.stage === "initiating" ? "overview" : "issues";
   const Toggle = collapsed ? ChevronRight : ChevronLeft;
   return (
     <div className="flex shrink-0 items-center gap-0.5 pr-2" data-tauri-drag-region="false">
@@ -120,7 +126,7 @@ export function TitleBarTools({ cwd, project }: { cwd: string; project: boolean 
           aria-label={t("panel.label")}
           aria-pressed={open}
           title={t("panel.label")}
-          onClick={() => toggleProjectPanel(cwd)}
+          onClick={() => toggleProjectPanel(cwd, fallback)}
           className={`ml-1 grid size-6.5 place-items-center rounded-md ${
             open ? "bg-selection text-content" : "text-content/55 hover:bg-content/10 hover:text-content"
           }`}

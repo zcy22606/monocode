@@ -550,5 +550,94 @@
   },
   "fileLink": {
     "copyFile": "复制文件"
+  },
+  "overview": {
+    "slugPlaceholder": "english-name",
+    "pending_other": "等你拍板 · {{count}}",
+    "all": "全部",
+    "oneWay": "单向门",
+    "twoWay": "双向门",
+    "noPending": "现在没有要你拍板的。",
+    "empty": "还没写。聊着聊着 agent 会补上，你也可以自己写。",
+    "suggestTitle": "建议做（可选）",
+    "snapshotNote": "每次改动后，项目文件夹里的 docs/overview.md 会自动更新一份只读副本。",
+    "stage": {
+      "idea": "想法",
+      "initiating": "立项",
+      "building": "建造",
+      "launched": "上线",
+      "parked": "搁置",
+      "killed": "放弃"
+    },
+    "step": {
+      "charter": "立项卡",
+      "decide": "拍板",
+      "versions": "排版本表",
+      "cut": "减法",
+      "start": "开始第一个迭代"
+    },
+    "key": {
+      "name": "项目名称",
+      "slug": "英文名",
+      "goal": "一句话",
+      "stoploss": "止损线",
+      "background": "背景与问题",
+      "users": "目标用户",
+      "alternatives": "现有替代和竞品",
+      "findings": "调研发现",
+      "decisions": "关键决策",
+      "scope": "范围和不做的",
+      "metrics": "成功指标",
+      "risks": "风险与待验证假设",
+      "open": "还没想清楚的"
+    },
+    "next": {
+      "charter": {
+        "title": "下一步：立项",
+        "hint": "agent 先列出哪些已经有了、剩下的要多久，你点头后才开跑。",
+        "action": "在新会话里开始"
+      },
+      "versions": {
+        "title": "下一步：排版本表",
+        "hint": "agent 把每个功能排进迭代页上的某个版本。",
+        "action": "在新会话里开始"
+      },
+      "cut": {
+        "title": "下一步：做减法",
+        "hint": "在迭代页把功能挪到合适的版本，然后开始第一个迭代。",
+        "action": "打开迭代页"
+      },
+      "decide": {
+        "title_other": "下一步：拍板 {{count}} 个单向门",
+        "hint": "首要人群、目标市场这些单向门定了，版本表才开跑。",
+        "action": "去拍板"
+      }
+    },
+    "prompt": {
+      "charter": "给这个项目立项（product-thinking）。先盘点已有的东西：overview（get_overview）、证据、决策和 docs/ 里的文件。列一张立项覆盖表——每一块（重述 idea、需求证据、竞品和替代方案、首要人群和切入点、价值判断、分发和合规预筛、最危险假设、止损线）标「已有够用 / 有但要补 / 没有」并附证据编号——再给出预计耗时。等我点头再跑，只补缺的。跑完更新 overview。",
+      "versions": "给这个项目排版本表（product-thinking 加法的「版本表」）：把每个功能放进某个版本或「待定 / 另立项 / 不做」，写上理由，然后导入。先读我的决定（单向门已经在应用里拍过板）。"
+    },
+    "suggest": {
+      "dig": {
+        "label": "深挖 v1 功能",
+        "hint": "把第一个版本的功能逐个调研到能设计和开发",
+        "prompt": "深挖第一个版本的功能（product-thinking「深挖」）：标杆怎么做、用户声音、设计方案和验收标准。结果写进 docs/，影响到 overview 的地方一并更新。"
+      },
+      "business": {
+        "label": "商业分析",
+        "hint": "市场、定价、冷启动、财务测算、合规",
+        "prompt": "做这个项目的商业分析（product-thinking「商业」）：市场与竞争、商业模式与定价、冷启动与分发、财务测算、合规。写进 docs/；定价模型这类单向门放进应用等我拍板。"
+      },
+      "tech": {
+        "label": "技术选型",
+        "hint": "先找开源和云服务，再决定自己做 / 买 / 用 / 改",
+        "prompt": "做这个项目的技术分析（product-thinking「技术」）：先找开源项目和云服务，再决定 Build / Buy / Adopt / Fork，评估可行性和成本。写进 docs/。"
+      },
+      "prd": {
+        "label": "PRD 交付包",
+        "hint": "编码 agent 拿到就能开工的交付包",
+        "prompt": "整理这个项目的 PRD 交付包（product-thinking「PRD」）：根据 overview、决策和 docs/，产出编码 agent 能直接开工的 dev-pack（markdown）。还是默认值的地方标出来。"
+      }
+    }
   }
 }

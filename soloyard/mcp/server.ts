@@ -15,6 +15,7 @@ import * as iter from '../core/src/iterations.ts'
 import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
 import { projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
+import { getOverview, OverviewConflict, updateOverview, FIELDS, SECTIONS } from '../core/src/overview.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -34,6 +35,9 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - 迭代（带版本号的规划表）：get_iteration_plan 看全貌，再传 iteration 看某个迭代的功能。可以 create_iteration、update_iteration（改版本号 / 名称 / 目标、调先后）、
   delete_iteration（只删空的）、create_features、move_features（挪到别的迭代 / pending 待定 / split 另立项），update_issue 的 iteration 把 issue 排进迭代。
   开始 / 完成迭代、删掉有内容的迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
+- overview（get_overview / update_overview）是项目的产品说明书：做什么、为什么，不放技术。头脑风暴、立项相关的会话要随时维护它
+  （方向变了、查到了、定了就改对应的节）；普通开发会话只在用户做了产品层面的决定时才改，技术决定不进 overview。
+  改之前先读，带读到的版本；用户改过的节被拒时不要硬改，在对话里提建议。
 - 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。`
 
 type Json = Record<string, any>
@@ -130,6 +134,23 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
       const p = project(ref)
       setProjectStage(db, actor, p.id, stage, reason)
       return { key: p.key, ...stageBrief(projectStage(db, p.id)) }
+    },
+  },
+  {
+    name: 'get_overview', description: '读项目的 overview（产品说明书：做什么、为什么，不含技术）：标题、英文名、一句话、止损线，以及背景与问题、目标用户、现有替代和竞品、调研发现、关键决策、范围和不做的、成功指标、风险与待验证假设、还没想清楚的。每节带版本和最后改的人（user = 用户）。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef } },
+    run: ({ project: ref }) => getOverview(db, project(ref).id),
+  },
+  {
+    name: 'update_overview', description: `改 overview 的几节（一次事务，改完自动写快照 docs/overview.md）。key：${[...FIELDS, ...SECTIONS].join(' / ')}。每项必须带 expected_version（get_overview 读到的版本，没写过的节是 0）；版本对不上会拒绝——尤其是用户改过的节，不要覆盖，把建议在对话里告诉用户。正文引用决策和证据只写编号（D-2、E-14），不抄内容。slug = 英文名（项目文件夹名，小写字母、数字、短横线）。`,
+    inputSchema: { type: 'object', required: ['project', 'updates'], properties: {
+      project: projectRef,
+      updates: { type: 'array', items: { type: 'object', required: ['key', 'body', 'expected_version'], properties: { key: { type: 'string', enum: [...FIELDS, ...SECTIONS] }, body: str('这一节的全文（markdown）'), expected_version: { type: 'number' } } } },
+    } },
+    run: ({ project: ref, updates }) => {
+      const p = project(ref)
+      const o = updateOverview(db, actor, p.id, updates)
+      return o.entries.filter((e) => (updates as Json[]).some((u) => u.key === e.key)).map(({ key, version }) => ({ key, version }))
     },
   },
   {
@@ -321,6 +342,7 @@ function callTool(name: string, args: Json) {
   try {
     return { content: [{ type: 'text', text: JSON.stringify(tool.run(args ?? {}) ?? null, null, 2) }] }
   } catch (e) {
+    if (e instanceof OverviewConflict) return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error: e.message, latest: e.latest }) }] }
     const latest = e instanceof repo.VersionConflict ? e.latest : undefined
     const error = latest ? 'version_conflict：数据已被别人改过，按 latest 重新决定后再写' : e instanceof Error ? e.message : String(e)
     return { isError: true, content: [{ type: 'text', text: JSON.stringify({ error, ...(latest ? { latest } : {}) }) }] }
