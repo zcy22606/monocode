@@ -149,6 +149,21 @@ export function useIdeaSync() {
   }, [base]);
 }
 
+/**
+ * 项目栏里对一个想法做「移除」或「归档」时（App 的 onRemoveProject）：
+ * - 移除：底座已经删掉它在应用里的会话；想法的文件夹在应用自己的 workspace/ 里，没有别的用处，连文件夹和想法记录一起删掉；
+ * - 归档：想法标成「搁置」，概览页和项目栏说的是同一件事。
+ */
+export async function onIdeaRemoved(path: string, purge: boolean) {
+  if (purge) {
+    await deletePath(path).catch(() => undefined);
+    await mutateSoloyard("deleteIdea", path).catch(() => undefined);
+    return;
+  }
+  const idea = await soloyardCall<{ id: number; stage: string } | null>("findProjectByPath", path).catch(() => null);
+  if (idea?.stage === "idea") await mutateSoloyard("setProjectStage", idea.id, "parked").catch(() => undefined);
+}
+
 // ───────────── 新想法 ─────────────
 
 /**

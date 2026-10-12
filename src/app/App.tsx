@@ -70,6 +70,7 @@ import {
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
 import { setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { isBrainstormCwd, onIdeaRemoved } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
@@ -6171,6 +6172,8 @@ function Workspace({
         );
       }
       setRecents(remaining);
+      // Soloyard: an idea's folder lives in the app's own workspace/ — removing deletes it, archiving parks the idea.
+      if (isBrainstormCwd(normalized)) void onIdeaRemoved(normalized, options.purgeData);
 
       const tabs = tabsRef.current;
       const sessions = sessionsRef.current;
