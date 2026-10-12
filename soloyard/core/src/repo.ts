@@ -123,9 +123,10 @@ function makeKey(db: DB, name: string) {
   return key
 }
 
-export function createProject(db: DB, actor: Actor, p: { name: string; goal?: string; key?: string; path?: string }) {
+export function createProject(db: DB, actor: Actor, p: { name: string; goal?: string; key?: string; path?: string; stage?: string }) {
   return tx(db, () => {
-    const id = insert(db, actor, 'projects', { name: p.name, goal: p.goal ?? '', key: p.key ?? makeKey(db, p.name) })
+    // 添加文件夹建的项目直接是建造期（stage.ts）；想法 / 立项期由头脑风暴和提升传进来
+    const id = insert(db, actor, 'projects', { name: p.name, goal: p.goal ?? '', key: p.key ?? makeKey(db, p.name), stage: p.stage ?? 'building' })
     if (p.path) db.prepare('INSERT INTO soloyard_project_paths (project_id, path) VALUES (?, ?)').run(id, p.path)
     return id
   })

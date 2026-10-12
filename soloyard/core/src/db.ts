@@ -105,6 +105,11 @@ const MIGRATIONS: string[] = [
   `
   ALTER TABLE soloyard_issues ADD COLUMN repo_path TEXT;
   `,
+  // 项目阶段（stage.ts）：原来的默认值 scribble 没有含义。已有的项目都是添加文件夹或导入来的，算建造期；
+  // 立项期只给「提升为项目」进来的，想法期只给头脑风暴。
+  `
+  UPDATE soloyard_projects SET stage = 'building' WHERE stage NOT IN ('idea', 'initiating', 'building', 'launched', 'parked', 'killed');
+  `,
 ]
 
 export function openDb(path: string): DB {

@@ -248,3 +248,25 @@ test('MCP：多仓库项目里建 issue 标仓库（名字或路径），get_pro
     s.close()
   }
 })
+
+test('MCP：get_project / list_projects 带阶段和下一步；update_project 改阶段要原因', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app'), stage: 'initiating' })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const p = (await s.tool('get_project', { project: 'APP' })).data
+    assert.deepEqual([p.stage, p.stage_step], ['initiating', 'charter'])
+    assert.match(p.next_step, /立项覆盖表/)
+    assert.equal((await s.tool('list_projects', {})).data[0].stage, 'initiating')
+    assert.match((await s.tool('update_project', { project: 'APP', stage: 'launched', reason: '上线了' })).error.error, /建造期/)
+    const parked = (await s.tool('update_project', { project: 'APP', stage: 'parked', reason: '先做别的' })).data
+    assert.deepEqual([parked.stage, parked.stage_note.reason, parked.stage_note.by], ['parked', '先做别的', 'agent:test'])
+    assert.equal((await s.tool('update_project', { project: 'APP', stage: 'resume', reason: '回来做' })).data.stage, 'initiating')
+  } finally {
+    s.close()
+  }
+})

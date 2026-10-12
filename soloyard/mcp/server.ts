@@ -14,6 +14,7 @@ import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
 import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
+import { projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -21,7 +22,7 @@ export const DEFAULT_DB = join(homedir(), 'Library/Application Support/dev.indie
 const db = openDb(process.env.SOLOYARD_DB ?? DEFAULT_DB)
 
 const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收）。规则：
-- 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。
+- 开工前用 get_project（传当前工作目录 path）拿到项目 key，再 list_issues / get_issue 读要做的事。get_project 还返回项目阶段和下一步（立项期按它推进）。
 - 开始做某个 issue：update_issue 改成 in_progress。做完：改成 in_review，并 add_comment 写清改了什么、怎么验证的（命令和结果）。不要改成 done，验收是用户的事。
 - 发现要拆的子任务或前置依赖：create_issues（可带 parent / blocked_by / acceptance）。
 - 多仓库项目（get_project 返回 repos）：建 issue 时用 repo 标上在哪个仓库做，用户 Start work 会直接在那个仓库开会话；跨仓库的需求建主 issue（不标 repo），按仓库拆子 issue。
@@ -92,21 +93,43 @@ function featureIds(projectId: number, codes: string[]) {
     return id
   })
 }
+/** 阶段和下一步（给 agent 读的说明）。 */
+const NEXT_TEXT: Record<string, string> = {
+  idea: '想法期：在头脑风暴里把方向聊清楚，并随时维护 overview；用户点「提升为项目」后进入立项',
+  charter: '待立项：先盘点已有的 overview、证据、决策和 docs/，列立项覆盖表和预计耗时，用户点头后再跑 product-thinking 立项（只补缺的）',
+  decide: '待拍板：还有单向门决策没定，等用户在 Decisions 页拍板；依赖它的步骤（版本表）先不要跑',
+  versions: '待排版本：跑 product-thinking 加法的「版本表」，导入后迭代页出现版本表',
+  cut: '待减法：用户在迭代页挪功能，挪完可以跑减法审查；用户开始第一个迭代 = 立项结束',
+  building: '建造期：按 issue 干活',
+}
+const stageBrief = (s: StageInfo) => ({ stage: s.stage, ...(s.step ? { stage_step: s.step } : {}), ...(s.next ? { next_step: NEXT_TEXT[s.next.key] } : {}), ...(s.note ? { stage_note: s.note } : {}) })
+
 const featureBrief = (f: Json) => ({ code: f.code, name: f.name, level: f.level ?? undefined, issue: f.issue_ident ? `${f.issue_ident} (${f.issue_status})` : undefined })
 
 const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Json) => unknown }[] = [
   {
-    name: 'list_projects', description: '列出所有项目：key、名称、关联目录、未完成和待验收的 issue 数',
-    inputSchema: { type: 'object', properties: {} }, run: () => repo.listProjects(db),
+    name: 'list_projects', description: '列出所有项目：key、名称、阶段、关联目录、未完成和待验收的 issue 数',
+    inputSchema: { type: 'object', properties: {} }, run: () => repo.listProjects(db).map((p) => ({ ...p, ...stageBrief(projectStage(db, p.id)) })),
   },
   {
-    name: 'get_project', description: '按目录（传当前工作目录即可，worktree 也行）或 key 找项目。开工前先调它拿项目 key。',
+    name: 'get_project', description: '按目录（传当前工作目录即可，worktree 也行）或 key 找项目。开工前先调它拿项目 key。返回阶段（stage：idea 想法 / initiating 立项 / building 建造 / launched 上线 / parked 搁置 / killed 放弃）、立项期的小步和下一步。',
     inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef } },
     run: ({ project: ref }) => {
       const p = project(ref)
       const root = (db.prepare('SELECT path FROM soloyard_project_paths WHERE project_id = ? ORDER BY length(path) LIMIT 1').get(p.id) as { path?: string } | undefined)?.path
       const repos = root ? projectRepos(db, root)?.repos.map(({ name, path, description, branch }) => ({ name, path, description, branch })) ?? [] : []
-      return { ...p, ...(repos.length ? { root, repos } : {}), open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
+      return { ...p, ...stageBrief(projectStage(db, p.id)), ...(repos.length ? { root, repos } : {}), open_issues: repo.listIssues(db, { projectId: p.id, status: ['backlog', 'todo', 'in_progress', 'in_review'] }).map(({ id, ident, title, status, priority }) => ({ id, ident, title, status, priority })) }
+    },
+  },
+  {
+    name: 'update_project', description: '改项目阶段：parked 搁置 / killed 放弃 / launched 上线（只能从建造期）/ resume 从搁置或放弃恢复。只在用户明确说了时才调，reason 写用户的原话或理由。想法 → 立项只能由用户在应用里「提升为项目」，立项 → 建造是开始第一个迭代时自动的。',
+    inputSchema: { type: 'object', required: ['project', 'stage', 'reason'], properties: {
+      project: projectRef, stage: { type: 'string', enum: ['parked', 'killed', 'launched', 'resume'] }, reason: str('原因（用户的原话或理由）'),
+    } },
+    run: ({ project: ref, stage, reason }) => {
+      const p = project(ref)
+      setProjectStage(db, actor, p.id, stage, reason)
+      return { key: p.key, ...stageBrief(projectStage(db, p.id)) }
     },
   },
   {
