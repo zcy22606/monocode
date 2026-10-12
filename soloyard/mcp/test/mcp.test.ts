@@ -297,3 +297,28 @@ test('MCP：get_overview / update_overview，用户改过的节不覆盖', async
     s.close()
   }
 })
+
+test('MCP：决策和证据；record_decision 要原话；单向门定了阶段往下走', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-')))
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  repo.createProject(db, 'user', { name: 'App', key: 'APP', path: join(dir, 'app'), stage: 'initiating' })
+  repo.insert(db, 'user', 'documents', { project_id: 1, slug: '01-立项', title: '立项卡', body_md: '' })
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const { codes } = (await s.tool('add_evidence', { project: 'APP', items: [{ claim: '新手看不懂数据', level: 'B' }] })).data
+    assert.deepEqual(codes, ['E-1'])
+    await s.tool('upsert_decisions', { project: 'APP', decisions: [{ code: 'D-2', title: '首要人群', door: 'one-way', options: [{ key: 'A', label: '新手' }, { key: 'B', label: '腰部' }], evidence: codes }] })
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.stage_step, 'decide')
+    assert.match((await s.tool('record_decision', { project: 'APP', code: 'D-2', option: 'A', quote: '' })).error.error, /原话/)
+    const rec = (await s.tool('record_decision', { project: 'APP', code: 'D-2', option: 'A', quote: '就先做新手' })).data
+    assert.deepEqual([rec.status, rec.user.via, rec.user.quote], ['decided', '对话', '就先做新手'])
+    assert.deepEqual((await s.tool('list_decisions', { project: 'APP' })).data, [{ code: 'D-2', title: '首要人群', door: 'one-way', status: 'decided', user: { option: 'A', via: '对话', date: rec.user.date } }])
+    assert.equal((await s.tool('get_project', { project: 'APP' })).data.stage_step, 'versions')
+    assert.equal((await s.tool('list_evidence', { project: 'APP', codes: ['E-1'] })).data[0].claim, '新手看不懂数据')
+  } finally {
+    s.close()
+  }
+})

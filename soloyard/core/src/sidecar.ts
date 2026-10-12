@@ -15,6 +15,7 @@ import * as merge from './merge.ts'
 import * as stage from './stage.ts'
 import * as overview from './overview.ts'
 import * as ideas from './ideas.ts'
+import * as decisions from './decisions.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -80,7 +81,6 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   projectStage: { run: (projectId: number) => stage.projectStage(db, projectId) },
   getOverview: { run: (projectId: number) => overview.getOverview(db, projectId) },
   updateOverview: { write: true, run: (projectId: number, updates: overview.OverviewUpdate[]) => overview.updateOverview(db, actor, projectId, updates) },
-  // 概览页「等你拍板」：决策的标题、单向 / 双向门、状态（完整的决策页是 SOL-12）
   // 想法项目（头脑风暴）和提升为项目
   ideaForPath: { write: true, run: (p: string) => ideas.ideaForPath(db, actor, p) },
   ideasUnder: { run: (root: string) => ideas.ideasUnder(db, root) },
@@ -90,7 +90,11 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   checkPromote: { run: (ideaPath: string, input: ideas.PromoteInput) => ideas.checkPromote(db, ideaPath, input) },
   promoteIdea: { write: true, run: (ideaPath: string, input: ideas.PromoteInput) => ideas.promoteIdea(db, actor, ideaPath, input) },
   setProjectKey: { write: true, run: (projectId: number, key: string) => ideas.setProjectKey(db, actor, projectId, key) },
-  listDecisions: { run: (projectId: number) => db.prepare('SELECT id, code, title, door, status FROM soloyard_decisions WHERE project_id = ? ORDER BY id').all(projectId) },
+  // 决策和证据：用户在 Decisions 页拍板（via 应用）、双向门一键采纳 AI 建议
+  listDecisions: { run: (projectId: number) => decisions.listDecisions(db, projectId) },
+  decide: { write: true, run: (projectId: number, code: string, option: string, note?: string) => decisions.decide(db, actor, projectId, code, { option, note, via: '应用' }) },
+  adoptTwoWay: { write: true, run: (projectId: number) => decisions.adoptTwoWay(db, actor, projectId) },
+  listEvidence: { run: (projectId: number, filter?: { codes?: string[]; q?: string }) => decisions.listEvidence(db, projectId, filter) },
   setProjectStage: { write: true, run: (projectId: number, to: stage.StageChange, reason?: string) => stage.setProjectStage(db, actor, projectId, to, reason) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
   createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },

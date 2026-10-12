@@ -23,8 +23,7 @@
     "note": "Placeholder — layout and interaction preview only",
     "noteSamples": "Placeholder — layout and interaction preview only; sample rows open a detail tab",
     "sampleIssue": "Sample issue {{letter}}",
-    "sampleDoc": "Sample doc {{letter}}",
-    "sampleDecision": "Sample decision {{letter}}"
+    "sampleDoc": "Sample doc {{letter}}"
   },
   "status": {
     "backlog": "Backlog",
@@ -707,5 +706,34 @@
     "kill": "Drop…",
     "launch": "Mark launched",
     "resume": "Resume"
+  },
+  "decisions": {
+    "counts": "{{pending}} to decide · {{decided}} decided",
+    "adoptAll_one": "Adopt AI suggestion for {{count}} two-way door",
+    "adoptAll_other": "Adopt AI suggestions for {{count}} two-way doors",
+    "adoptHint": "Two-way doors can be changed later; one-way doors always need your own pick",
+    "adopted_one": "Adopted {{count}} AI suggestion.",
+    "adopted_other": "Adopted {{count}} AI suggestions.",
+    "undo": "Undo",
+    "empty": "No decisions yet. The agent adds them while researching or running initiation.",
+    "pending": "Waiting for your call",
+    "decided": "Decided",
+    "chose": "You chose {{option}}",
+    "options": "Options",
+    "aiPick": "AI suggests",
+    "reversibility": "Reversibility: {{value}}",
+    "pick": "Choose",
+    "change": "Switch to this",
+    "aiReason": "Why the AI suggests {{option}}",
+    "counter": "Strongest case against",
+    "needsInfo": "Needs your input: {{text}}",
+    "byApp": "You chose {{option}} in the app · {{date}}",
+    "byChat": "You chose {{option}} in a conversation · {{date}}"
+  },
+  "evidence": {
+    "search": "Search evidence",
+    "empty": "No evidence yet. The agent records what it finds while researching.",
+    "noMatch": "Nothing matches.",
+    "accessed": "accessed {{date}}"
   }
 }

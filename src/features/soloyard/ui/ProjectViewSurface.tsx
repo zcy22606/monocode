@@ -7,13 +7,13 @@ import { IssuesView } from "./issues/IssuesView";
 import { IterationsView } from "./iterations/IterationsView";
 import { ReposView } from "./repos/ReposView";
 import { OverviewView } from "./overview/OverviewView";
+import { DecisionsView, EvidenceView } from "./decisions/DecisionsView";
 import { ServiceLog } from "../services/ServiceLog";
 import { startNewBrainstorm } from "../model/brainstorm";
 
 /** 占位用的示例条目：只为验证「列表 → 点开详情标签」的交互，接数据时删掉。 */
 const SAMPLES = {
   docs: { detail: "doc", name: "sampleDoc", items: [["doc-1", "A"], ["doc-2", "B"]] },
-  decisions: { detail: "decision", name: "sampleDecision", items: [["D-1", "A"], ["D-2", "B"]] },
 } as const satisfies Partial<Record<ProjectViewId, { detail: ProjectViewId; name: string; items: readonly (readonly [string, string])[] }>>;
 
 const DETAIL_VIEWS: ProjectViewId[] = ["issue", "doc", "decision"];
@@ -29,10 +29,13 @@ function ProjectDataView({ cwd, source, title }: { cwd: string; source: ProjectV
   const { data: project, error } = useProjectForPath(cwd);
   // 迭代 = 功能全景 + 减法 + 迭代；旧的 features / scope 标签也落到这里
   const iterations = source.view === "cycles" || source.view === "features" || source.view === "scope";
-  if (source.view === "issues" || source.view === "issue" || source.view === "repos" || source.view === "overview" || iterations) {
+  const facts = source.view === "overview" || source.view === "decisions" || source.view === "decision" || source.view === "evidence";
+  if (source.view === "issues" || source.view === "issue" || source.view === "repos" || facts || iterations) {
     if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
     if (!project) return null;
     if (source.view === "overview") return <OverviewView project={project} cwd={cwd} />;
+    if (source.view === "decisions" || source.view === "decision") return <DecisionsView project={project} cwd={cwd} focus={source.itemId} />;
+    if (source.view === "evidence") return <EvidenceView project={project} />;
     if (iterations) return <IterationsView project={project} cwd={cwd} />;
     if (source.view === "repos") return <ReposView project={project} cwd={cwd} />;
     return source.view === "issues" ? <IssuesView project={project} cwd={cwd} /> : <IssueDetail issueId={Number(source.itemId)} cwd={cwd} />;

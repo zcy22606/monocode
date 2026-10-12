@@ -82,11 +82,13 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
             {pending.length ? (
               <ul className="flex flex-col">
                 {pending.slice(0, 5).map((d) => (
-                  <li key={d.id} className="flex items-center gap-2 border-t border-stroke py-1.5 text-[12.5px] first:border-t-0">
-                    <span className={`shrink-0 rounded px-1.5 text-[10.5px] ${d.door === "one-way" ? "bg-red-400/10 text-red-300" : "bg-content/5 text-content/55"}`}>
-                      {t(d.door === "one-way" ? "overview.oneWay" : "overview.twoWay")}
-                    </span>
-                    <span className="truncate text-content/85">{d.code} {d.title}</span>
+                  <li key={d.id} className="border-t border-stroke first:border-t-0">
+                    <button type="button" onClick={() => openProjectView({ cwd, view: "decision", itemId: d.code, title: `${d.code} ${d.title}` })} className="flex w-full items-center gap-2 py-1.5 text-left text-[12.5px] hover:text-content">
+                      <span className={`shrink-0 rounded px-1.5 text-[10.5px] ${d.door === "one-way" ? "bg-red-400/10 text-red-300" : "bg-content/5 text-content/55"}`}>
+                        {t(d.door === "one-way" ? "overview.oneWay" : "overview.twoWay")}
+                      </span>
+                      <span className="truncate text-content/85">{d.code} {d.title}</span>
+                    </button>
                   </li>
                 ))}
               </ul>

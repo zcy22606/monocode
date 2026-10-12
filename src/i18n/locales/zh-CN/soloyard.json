@@ -23,8 +23,7 @@
     "note": "占位内容，仅用于预览布局和交互",
     "noteSamples": "占位内容，仅用于预览布局和交互；点示例条目会打开详情标签",
     "sampleIssue": "示例 issue {{letter}}",
-    "sampleDoc": "示例文档 {{letter}}",
-    "sampleDecision": "示例决策 {{letter}}"
+    "sampleDoc": "示例文档 {{letter}}"
   },
   "status": {
     "backlog": "待排期",
@@ -674,5 +673,32 @@
     "kill": "放弃…",
     "launch": "标为上线",
     "resume": "恢复"
+  },
+  "decisions": {
+    "counts": "{{pending}} 个待拍板 · {{decided}} 个已定",
+    "adoptAll_other": "{{count}} 个双向门全部采纳 AI 建议",
+    "adoptHint": "双向门以后还能改；单向门一定要你自己选",
+    "adopted_other": "已采纳 {{count}} 个 AI 建议。",
+    "undo": "撤销",
+    "empty": "还没有决策。agent 调研或立项时会把要你拍板的事加进来。",
+    "pending": "等你拍板",
+    "decided": "已定",
+    "chose": "你选了 {{option}}",
+    "options": "选项",
+    "aiPick": "AI 推荐",
+    "reversibility": "可逆性：{{value}}",
+    "pick": "选这个",
+    "change": "改成这个",
+    "aiReason": "AI 为什么推荐 {{option}}",
+    "counter": "反方最强论证",
+    "needsInfo": "需要你补充：{{text}}",
+    "byApp": "你在应用里选了 {{option}} · {{date}}",
+    "byChat": "你在对话里选了 {{option}} · {{date}}"
+  },
+  "evidence": {
+    "search": "搜索证据",
+    "empty": "还没有证据。agent 调研时会把查到的记进来。",
+    "noMatch": "没有匹配的。",
+    "accessed": "访问于 {{date}}"
   }
 }

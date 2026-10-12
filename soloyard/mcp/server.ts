@@ -16,6 +16,7 @@ import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
 import { projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
 import { getOverview, OverviewConflict, updateOverview, FIELDS, SECTIONS } from '../core/src/overview.ts'
+import { addEvidence, decide, getDecision, listDecisions, listEvidence, upsertDecisions } from '../core/src/decisions.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -37,6 +38,8 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
   开始 / 完成迭代、删掉有内容的迭代、把功能标「不做」都由用户在应用里决定，agent 不做。
 - 头脑风暴：每个头脑风暴（应用数据目录 workspace/ 下的文件夹）是一个想法项目（stage = idea），get_project 传当前文件夹就能找到；
   从用户第一句起维护它的 overview（暂定标题 name、将来文件夹名 slug、一句话 goal 和各节）。提升为项目由用户在应用里点，agent 不做。
+- 决策和证据以应用为准：list_decisions / get_decision / upsert_decisions（写选项和推荐，不替用户拍板）/ record_decision（用户在对话里说了决定时代记，附原话）、
+  list_evidence / add_evidence。用户在应用的 Decisions 页拍板。
 - overview（get_overview / update_overview）是项目的产品说明书：做什么、为什么，不放技术。头脑风暴、立项相关的会话要随时维护它
   （方向变了、查到了、定了就改对应的节）；普通开发会话只在用户做了产品层面的决定时才改，技术决定不进 overview。
   改之前先读，带读到的版本；用户改过的节被拒时不要硬改，在对话里提建议。
@@ -154,6 +157,43 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
       const o = updateOverview(db, actor, p.id, updates)
       return o.entries.filter((e) => (updates as Json[]).some((u) => u.key === e.key)).map(({ key, version }) => ({ key, version }))
     },
+  },
+  {
+    name: 'list_decisions', description: '列项目的决策（单向门在前、没定的在前）：编号、标题、door（one-way 单向门 / two-way 双向门）、status（pending 等用户 / ai_default / decided 已定）、用户的决定。full=true 返回全部字段（背景、选项、推荐、反方……）。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, status: str('只列这个状态，如 pending'), full: { type: 'boolean' } } },
+    run: ({ project: ref, status, full }) => listDecisions(db, project(ref).id)
+      .filter((d) => !status || d.status === status)
+      .map((d) => (full ? d : { code: d.code, title: d.title, door: d.door, status: d.status, ai: d.ai?.option, user: d.user ? { option: d.user.option, via: d.user.via, date: d.user.date } : null })),
+  },
+  {
+    name: 'get_decision', description: '读一条决策的全部（编号或别名）。',
+    inputSchema: { type: 'object', required: ['project', 'code'], properties: { project: projectRef, code: str('决策编号，如 D-2') } },
+    run: ({ project: ref, code }) => getDecision(db, project(ref).id, code) ?? null,
+  },
+  {
+    name: 'upsert_decisions', description: '写决策（新建或补充）：code、title、door（one-way / two-way）、context、evidence（证据编号数组）、options（[{key,label,benefit,cost,reversibility}]，需要时含「不做 / 推迟」）、ai（{option,reason}）、counter（反方最强论证）、needs_info。不能替用户拍板：用户已定的决定保留不动。单向门不要设默认值。',
+    inputSchema: { type: 'object', required: ['project', 'decisions'], properties: { project: projectRef, decisions: { type: 'array', items: { type: 'object', required: ['code'] } } } },
+    run: ({ project: ref, decisions }) => upsertDecisions(db, actor, project(ref).id, decisions).map((d) => ({ code: d.code, status: d.status })),
+  },
+  {
+    name: 'record_decision', description: '用户在对话里明确说了某个决策选哪个时，代为记下（标「经对话」）。必须附上用户的原话 quote；不能自己替用户决定。',
+    inputSchema: { type: 'object', required: ['project', 'code', 'option', 'quote'], properties: {
+      project: projectRef, code: str('决策编号'), option: str('选项 key'), quote: str('用户的原话'), note: str('补充说明'),
+    } },
+    run: ({ project: ref, code, option, quote, note }) => {
+      const d = decide(db, actor, project(ref).id, code, { option, quote, note, via: '对话' })
+      return { code: d.code, status: d.status, user: d.user }
+    },
+  },
+  {
+    name: 'list_evidence', description: '列证据（编号、等级、摘要、原话、来源、访问日期）。codes 只取这些编号；q 按关键词搜。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, codes: { type: 'array', items: { type: 'string' } }, q: str('关键词') } },
+    run: ({ project: ref, codes, q }) => listEvidence(db, project(ref).id, { codes, q }),
+  },
+  {
+    name: 'add_evidence', description: '记证据（每条：claim 结论、quote 逐字摘录、url、platform、accessed 访问日期、level S/A/B+/B/B-/C/D、axis 做法/价值）。没给 code 的自动编 E-<n>；code 已有的覆盖。返回编号，overview 和文档里引用它。绝不用模型记忆编证据。',
+    inputSchema: { type: 'object', required: ['project', 'items'], properties: { project: projectRef, items: { type: 'array', items: { type: 'object', required: ['claim'] } } } },
+    run: ({ project: ref, items }) => ({ codes: addEvidence(db, actor, project(ref).id, items) }),
   },
   {
     name: 'list_issues', description: '列出项目的 issue，按优先级排（紧急 → 低，无优先级最后）。ready=true 只列可开工的（未开始且前置都已完成）',
