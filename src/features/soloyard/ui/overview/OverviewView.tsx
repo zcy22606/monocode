@@ -1,6 +1,7 @@
 /**
- * 概览页：项目的 overview（产品说明书）+ 阶段 + 下一步。agent 经 MCP 一直在改它，用户也能逐节直接改。
- * 每节显示最后谁、什么时候改的；保存时带读到的版本，期间被别人改过就提示重看，不覆盖。
+ * 概览页 = 项目主页（项目面板的栈底）：顶上是各模块的卡片（现状 + 入口），然后是阶段和下一步，再往下是产品说明书。
+ * 产品说明书（overview）agent 经 MCP 一直在改，用户也能逐节直接改；每节显示最后谁、什么时候改的，
+ * 保存时带读到的版本，期间被别人改过就提示重看，不覆盖。建造期以后说明书默认折起来，主页让给迭代和 Issues。
  */
 import { useState } from "react";
 import { useTranslation } from "../../../../i18n";
@@ -12,6 +13,8 @@ import {
 } from "../../model/overview";
 import { openProjectView, viewLabel } from "../../model/projectViews";
 import { ProjectSettingsDialog } from "./ProjectSettingsDialog";
+import { ModuleCards } from "./ModuleCards";
+import { ChevronDown, ChevronRight } from "../../../../shared/ui/icons";
 
 const card = "flex flex-col gap-2 rounded-lg border border-stroke p-4";
 const label = "flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-content/40";
@@ -23,6 +26,8 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
   const { data: decisions = [] } = useSoloyard<DecisionBrief[]>("listDecisions", project.id);
   const [notice, setNotice] = useState("");
   const [settings, setSettings] = useState(false);
+  /** 产品说明书展开与否：null = 按阶段（想法 / 立项期展开，建造期以后折起来）。 */
+  const [briefOpen, setBriefOpen] = useState<boolean | null>(null);
   if (error) return <p className="p-6 text-[12px] text-red-400">{error}</p>;
   if (!overview || !stage) return null;
 
@@ -37,6 +42,9 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
   const name = entryOf(overview, "name")!;
   const slug = entryOf(overview, "slug")!;
   const pending = pendingDecisions(decisions);
+  const planning = stage.stage === "idea" || stage.stage === "initiating";
+  const showBrief = briefOpen ?? planning;
+  const written = SECTION_KEYS.filter((key) => entryOf(overview, key)!.body.trim()).length;
 
   return (
     <div className="h-full overflow-y-auto overscroll-none">
@@ -53,6 +61,8 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
             {!project.key.startsWith("~") ? <span>· {project.key}</span> : null}
           </div>
         </header>
+
+        <ModuleCards project={project} cwd={cwd} />
 
         <StageBar stage={stage} />
         {stage.next && stage.next.key !== "building" && stage.next.key !== "idea" ? (
@@ -71,7 +81,8 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
         {notice ? <p role="alert" className="text-[12px] text-red-400/90">{notice}</p> : null}
 
         <SectionCard entry={entryOf(overview, "goal")!} onSave={save} big />
-        <div className="grid grid-cols-2 gap-3">
+        {/* 立项时要你拍板的事放在显眼处；建造期以后只看决策卡片上的数字 */}
+        {planning && pending.length ? (
           <div className={card}>
             <div className={label}>
               {t("overview.pending", { count: pending.length })}
@@ -79,38 +90,42 @@ export function OverviewView({ project, cwd }: { project: SoloyardProject; cwd: 
                 {t("overview.all")}
               </button>
             </div>
-            {pending.length ? (
-              <ul className="flex flex-col">
-                {pending.slice(0, 5).map((d) => (
-                  <li key={d.id} className="border-t border-stroke first:border-t-0">
-                    <button type="button" onClick={() => openProjectView({ cwd, view: "decision", itemId: d.code, title: `${d.code} ${d.title}` })} className="flex w-full items-center gap-2 py-1.5 text-left text-[12.5px] hover:text-content">
-                      <span className={`shrink-0 rounded px-1.5 text-[10.5px] ${d.door === "one-way" ? "bg-red-400/10 text-red-300" : "bg-content/5 text-content/55"}`}>
-                        {t(d.door === "one-way" ? "overview.oneWay" : "overview.twoWay")}
-                      </span>
-                      <span className="truncate text-content/85">{d.code} {d.title}</span>
-                    </button>
-                  </li>
+            <ul className="flex flex-col">
+              {pending.slice(0, 5).map((d) => (
+                <li key={d.id} className="border-t border-stroke first:border-t-0">
+                  <button type="button" onClick={() => openProjectView({ cwd, view: "decision", itemId: d.code, title: `${d.code} ${d.title}` })} className="flex w-full items-center gap-2 py-1.5 text-left text-[12.5px] hover:text-content">
+                    <span className={`shrink-0 rounded px-1.5 text-[10.5px] ${d.door === "one-way" ? "bg-red-400/10 text-red-300" : "bg-content/5 text-content/55"}`}>
+                      {t(d.door === "one-way" ? "overview.oneWay" : "overview.twoWay")}
+                    </span>
+                    <span className="truncate text-content/85">{d.code} {d.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <button type="button" onClick={() => setBriefOpen(!showBrief)} aria-expanded={showBrief} className="mt-2 flex items-center gap-1.5 text-left text-[13px] font-medium text-content/80 hover:text-content">
+          {showBrief ? <ChevronDown className="size-3.5" strokeWidth={2} /> : <ChevronRight className="size-3.5" strokeWidth={2} />}
+          {t("overview.brief")}
+          <span className="text-[11.5px] font-normal text-content/40">{t("overview.briefCount", { written, total: SECTION_KEYS.length })}</span>
+        </button>
+        {showBrief ? (
+          <>
+            <SectionCard entry={entryOf(overview, "stoploss")!} onSave={save} />
+            {SECTION_KEYS.map((key) => <SectionCard key={key} entry={entryOf(overview, key)!} onSave={save} />)}
+            <div className={card}>
+              <div className={label}>{t("overview.suggestTitle")}</div>
+              <div className="flex flex-wrap gap-2">
+                {SUGGESTIONS.map((key) => (
+                  <button key={key} type="button" title={t(`overview.suggest.${key}.hint`)} onClick={() => runSuggestion(cwd, key)} className="rounded-md border border-stroke px-2.5 py-1 text-[12px] text-content/70 hover:bg-content/10 hover:text-content">
+                    {t(`overview.suggest.${key}.label`)}
+                  </button>
                 ))}
-              </ul>
-            ) : (
-              <p className="text-[12px] text-content/40">{t("overview.noPending")}</p>
-            )}
-          </div>
-          <SectionCard entry={entryOf(overview, "stoploss")!} onSave={save} />
-        </div>
-
-        {SECTION_KEYS.map((key) => <SectionCard key={key} entry={entryOf(overview, key)!} onSave={save} />)}
-
-        <div className={card}>
-          <div className={label}>{t("overview.suggestTitle")}</div>
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTIONS.map((key) => (
-              <button key={key} type="button" title={t(`overview.suggest.${key}.hint`)} onClick={() => runSuggestion(cwd, key)} className="rounded-md border border-stroke px-2.5 py-1 text-[12px] text-content/70 hover:bg-content/10 hover:text-content">
-                {t(`overview.suggest.${key}.label`)}
-              </button>
-            ))}
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        ) : null}
         <p className="text-[11px] text-content/35">{t("overview.snapshotNote")}</p>
       </div>
       {settings ? <ProjectSettingsDialog project={project} overview={overview} stage={stage} onClose={() => setSettings(false)} /> : null}

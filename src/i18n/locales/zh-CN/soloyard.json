@@ -519,7 +519,8 @@
     "float": "悬浮",
     "dock": "停靠到右侧",
     "resize": "调整项目面板宽度",
-    "switchView": "切换视图"
+    "switchView": "切换视图",
+    "breadcrumb": "项目导航"
   },
   "titleTabs": {
     "collapse": "收起标签",
@@ -631,7 +632,9 @@
         "prompt": "整理这个项目的 PRD 交付包（product-thinking「PRD」）：根据 overview、决策和 docs/，产出编码 agent 能直接开工的 dev-pack（markdown）。还是默认值的地方标出来。"
       }
     },
-    "untitled": "未命名想法"
+    "untitled": "未命名想法",
+    "brief": "产品说明书",
+    "briefCount": "已写 {{written}} / {{total}} 节"
   },
   "settings": {
     "title": "设置",
@@ -696,5 +699,24 @@
   "ideas": {
     "new": "新想法",
     "group": "头脑风暴"
+  },
+  "modules": {
+    "active": "进行中",
+    "planned": "计划中",
+    "progress": "完成 {{done}} / {{total}}",
+    "noIssues": "还没有 issue",
+    "notStarted": "还没开始",
+    "noIteration": "还没有迭代",
+    "todo_other": "待办 {{count}}",
+    "inProgress_other": "进行中 {{count}}",
+    "inReview_other": "待验收 {{count}}",
+    "pending_other": "待拍板 {{count}}",
+    "oneWay_other": "单向门 {{count}}",
+    "allDecided_other": "都定了 · 共 {{count}}",
+    "noDecisions": "还没有决策",
+    "docs_other": "{{count}} 篇",
+    "evidence_other": "{{count}} 条",
+    "repos_other": "{{count}} 个仓库",
+    "singleRepo": "单个文件夹"
   }
 }

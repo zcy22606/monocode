@@ -544,7 +544,8 @@
     "float": "Float",
     "dock": "Dock to the side",
     "resize": "Resize project panel",
-    "switchView": "Switch view"
+    "switchView": "Switch view",
+    "breadcrumb": "Project navigation"
   },
   "titleTabs": {
     "collapse": "Collapse tabs",
@@ -663,7 +664,9 @@
         "prompt": "Put together the PRD package for this project (product-thinking \"PRD\"): a dev-pack in markdown a coding agent can start from, based on the overview, decisions and docs/. Mark anything still assumed as a default."
       }
     },
-    "untitled": "Untitled idea"
+    "untitled": "Untitled idea",
+    "brief": "Product brief",
+    "briefCount": "{{written}} of {{total}} sections written"
   },
   "settings": {
     "title": "Settings",
@@ -730,5 +733,33 @@
   "ideas": {
     "new": "New idea",
     "group": "Brainstorms"
+  },
+  "modules": {
+    "active": "In progress",
+    "planned": "Planned",
+    "progress": "{{done}} of {{total}} done",
+    "noIssues": "No issues yet",
+    "notStarted": "Not started",
+    "noIteration": "No iterations yet",
+    "todo_one": "{{count}} to do",
+    "todo_other": "{{count}} to do",
+    "inProgress_one": "{{count}} in progress",
+    "inProgress_other": "{{count}} in progress",
+    "inReview_one": "{{count}} to review",
+    "inReview_other": "{{count}} to review",
+    "pending_one": "{{count}} to decide",
+    "pending_other": "{{count}} to decide",
+    "oneWay_one": "{{count}} one-way",
+    "oneWay_other": "{{count}} one-way",
+    "allDecided_one": "All decided · {{count}}",
+    "allDecided_other": "All decided · {{count}}",
+    "noDecisions": "No decisions yet",
+    "docs_one": "{{count}} doc",
+    "docs_other": "{{count}} docs",
+    "evidence_one": "{{count}} item",
+    "evidence_other": "{{count}} items",
+    "repos_one": "{{count}} repo",
+    "repos_other": "{{count}} repos",
+    "singleRepo": "Single folder"
   }
 }

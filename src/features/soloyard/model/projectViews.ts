@@ -29,17 +29,11 @@ export type ProjectViewSource = {
   itemId?: string;
 };
 
-/** 项目面板标题栏下拉里的视图。默认打开哪个看阶段：想法 / 立项期是概览，建造期是 Issues（TitleBarTools）。 */
-export const PANEL_VIEWS: ProjectViewId[] = [
-  "overview",
-  "issues",
-  // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
-  "cycles",
-  "docs",
-  "repos",
-  "decisions",
-  "evidence",
-];
+/**
+ * 项目主页（概览）下面的模块：面包屑里模块那一段的下拉、主页的模块卡片都按这个顺序。
+ * 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代。
+ */
+export const PANEL_MODULES: ProjectViewId[] = ["issues", "cycles", "decisions", "docs", "evidence", "repos"];
 
 /** 详情 / 旧标签归到哪一项（issue 详情 → Issues，旧的功能全景 / 减法 → 迭代……）。 */
 const NAV_OF: Partial<Record<ProjectViewId, ProjectViewId>> = { issue: "issues", doc: "docs", decision: "decisions", features: "cycles", scope: "cycles" };
