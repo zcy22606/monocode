@@ -692,5 +692,9 @@
     "unknownBlock": "不支持的块：{{type}}",
     "featuresTable": "功能表：去迭代页看功能",
     "competitorMatrix": "竞品矩阵：去迭代页看功能"
+  },
+  "ideas": {
+    "new": "新想法",
+    "group": "头脑风暴"
   }
 }

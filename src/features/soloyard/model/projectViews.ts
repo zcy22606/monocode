@@ -67,9 +67,6 @@ export function useActiveProjectNav(cwd: string): ProjectViewId | null {
 }
 
 /** 头脑风暴不属于任何项目：标签挂在 ~ 下，侧栏的「头脑风暴」据此高亮。 */
-export const BRAINSTORM_CWD = "~";
-export const openBrainstorm = () => openProjectView({ cwd: BRAINSTORM_CWD, view: "brainstorm", title: viewLabel("brainstorm") });
-export const useBrainstormActive = () => useActiveProjectNav(BRAINSTORM_CWD) === "brainstorm";
 
 /** 渲染时调用，跟着当前语言走。 */
 export const viewLabel = (view: ProjectViewId) => t(`soloyard:view.${view}`);

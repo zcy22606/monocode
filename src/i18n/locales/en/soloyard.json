@@ -726,5 +726,9 @@
     "unknownBlock": "Unsupported block: {{type}}",
     "featuresTable": "Feature table — open Iterations to see features",
     "competitorMatrix": "Competitor matrix — open Iterations to see features"
+  },
+  "ideas": {
+    "new": "New idea",
+    "group": "Brainstorms"
   }
 }

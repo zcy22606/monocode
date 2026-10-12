@@ -32,8 +32,6 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
-import { useIsBrainstormRoot } from "../../features/soloyard/model/brainstorm"; // Soloyard
-import { BrainstormSidebarTitle } from "../../features/soloyard/ui/brainstorm/BrainstormSidebarTitle"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
@@ -1714,16 +1712,13 @@ function SidebarComponent({
       : []),
   ];
 
-  const brainstormRoot = useIsBrainstormRoot(cwd); // Soloyard: the brainstorm "project"
   const workspaceHeader = (
     <div
       className="flex h-10 shrink-0 select-none items-center gap-1 border-b border-stroke pl-3 pr-1.5"
       data-tauri-drag-region="deep"
     >
       <div className="flex min-w-0 flex-1 items-center">
-        {brainstormRoot ? (
-          <BrainstormSidebarTitle />
-        ) : !remoteProject && cwd && cwd !== "~" ? (
+        {!remoteProject && cwd && cwd !== "~" ? (
           <SidebarWorktreeSwitcher
             cwd={cwd}
             tabStats={worktreeTabStats}

@@ -69,9 +69,8 @@ import {
   type OrchestrationWorkerDetail,
 } from "../features/orchestration/ui/OrchestrationActions";
 import { flushSync } from "react-dom";
-import { BRAINSTORM_CWD, setActiveProjectView } from "../features/soloyard/model/projectViews";
+import { setActiveProjectView } from "../features/soloyard/model/projectViews";
 import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
-import { isBrainstormCwd, startNewBrainstorm, useBrainstormRoot } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
@@ -1869,22 +1868,11 @@ function Workspace({
   }, [activeSkillCwd, active?.id, active?.harness]);
 
   const activeFile = activeTab ? focusedFileTab(activeTab) : undefined;
-  // Soloyard: brainstorms show in the sidebar like a project whose root is the app's workspace/ folder.
-  const brainstormActive = !activeFile && isBrainstormCwd(active?.cwd);
-  const brainstormRoot = useBrainstormRoot(); // Soloyard
-  // Soloyard: the rail highlights Brainstorm only while no full-screen view (inbox, notes…) covers the session.
-  const brainstormShown = brainstormActive && !searchViewOpen && !inboxViewOpen && !notesViewOpen && !automationsViewOpen;
   // Soloyard: highlight the Project sidebar item for the focused project-view tab.
-  useEffect(
-    () =>
-      brainstormShown
-        ? setActiveProjectView(BRAINSTORM_CWD, { view: "brainstorm" })
-        : setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView),
-    [activeFile, brainstormShown],
-  );
+  useEffect(() => setActiveProjectView(activeFile?.projectCwd ?? activeFile?.cwd, activeFile?.projectView), [activeFile]);
   // A Mono belongs to no project, so its view keeps the project in place.
   const sidebarCwd =
-    activeFile?.projectCwd ?? activeFile?.cwd ?? (brainstormActive ? brainstormRoot ?? undefined : active?.cwd) ?? projectCwd; // Soloyard: brainstorm root
+    activeFile?.projectCwd ?? activeFile?.cwd ?? active?.cwd ?? projectCwd;
   const sidebarCwdRef = useRef(sidebarCwd);
   sidebarCwdRef.current = sidebarCwd;
   const [sidebarTabSelection, setSidebarTabSelection] = useState<{
@@ -2689,11 +2677,6 @@ function Workspace({
   );
 
   const onNew = useCallback(() => {
-    // Soloyard: a new session in a brainstorm is a new brainstorm (its own folder under workspace/).
-    if (isBrainstormCwd(active?.cwd)) {
-      void startNewBrainstorm();
-      return "";
-    }
     setSearchViewOpen(false);
     setInboxViewOpen(false);
     setNotesViewOpen(false);
@@ -8611,6 +8594,11 @@ function Workspace({
           sessionsRef.current = [...sessionsRef.current, session];
           setSessions(sessionsRef.current);
           appendTab(tab, request.cwd);
+          // A new idea's folder was just created: make it the selected, remembered project like any other.
+          if (request.remember) {
+            setProjectCwd(request.cwd);
+            setRecents(rememberProject(request.cwd));
+          }
           setActiveTabId(tab.id);
           setComposerFocused(true);
           if (request.send) setTimeout(() => submitSessionRef.current(session.id, request.prompt, []), 0);
@@ -8637,10 +8625,8 @@ function Workspace({
           setSessions((prev) =>
             prev.map((s) => (s.id === sessionId ? { ...s, cwd, branch: undefined, worktreeCwd: undefined, worktreeRemoved: undefined } : s)),
           );
-          if (!isBrainstormCwd(cwd)) {
-            setProjectCwd(cwd);
-            setRecents(rememberProject(cwd));
-          }
+          setProjectCwd(cwd);
+          setRecents(rememberProject(cwd));
           return undefined;
         },
         deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),
