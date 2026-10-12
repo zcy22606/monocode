@@ -8,7 +8,7 @@ import { useTranslation } from "../../../i18n";
 import { looksLikeProject } from "../../projects/model/recents";
 import { useDragResize } from "../../../shared/hooks/useDragResize";
 import { suppressTextSelection } from "../../../shared/lib/drag";
-import { ChevronDown, ChevronLeft, Maximize2, Minimize2, PanelRight, PictureInPicture } from "../../../shared/ui/icons";
+import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2, PanelRight, PictureInPicture } from "../../../shared/ui/icons";
 import {
   backProjectPanel,
   clampFloatRect,
@@ -16,6 +16,7 @@ import {
   openInProjectPanel,
   PANEL_DEFAULT_WIDTH,
   panelShown,
+  popProjectPanelTo,
   retargetProjectPanel,
   selectProjectPanelView,
   setProjectPanelFloat,
@@ -26,7 +27,7 @@ import {
   type FloatRect,
   type PanelMode,
 } from "../model/projectPanel";
-import { navOf, onOpenProjectView, PANEL_VIEWS, viewLabel, type ProjectViewId } from "../model/projectViews";
+import { navOf, onOpenProjectView, PANEL_MODULES, viewLabel, type ProjectViewId } from "../model/projectViews";
 import { Popover } from "../../../shared/ui/Popover";
 import { ProjectViewIcon } from "./ProjectViewIcon";
 import { ProjectViewSurface } from "./ProjectViewSurface";
@@ -107,7 +108,6 @@ export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focu
   // wasOpen 在收起的那次渲染里还是 true，元素留着给 effect 播动画
   if (hidden || !(shown || leaving || wasOpen.current) || !top || !looksLikeProject(view.cwd)) return null;
 
-  const root = view.stack[0];
   const floating = view.mode === "float";
   const full = view.mode === "full";
   const title = (entry: typeof top) => entry.title || viewLabel(entry.view);
@@ -122,15 +122,27 @@ export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focu
           <ChevronLeft className="size-3.5" strokeWidth={1.75} />
         </IconButton>
       ) : null}
-      <div className="flex min-w-0 flex-1 items-center gap-1 text-[12px]">
-        <ViewPicker current={root.view} label={title(root)} dimmed={view.stack.length > 1} />
-        {view.stack.length > 1 ? (
-          <>
-            <span className="shrink-0 text-content/30">/</span>
-            <span className="truncate font-medium text-content">{title(top)}</span>
-          </>
-        ) : null}
-      </div>
+      {/* 面包屑：概览 › 模块 ▾ › 详情…；点哪段退到哪层，模块那段的下拉平级换模块 */}
+      <nav aria-label={t("panel.breadcrumb")} className="flex min-w-0 flex-1 items-center gap-0.5 text-[12px]">
+        {view.stack.map((entry, index) => {
+          const last = index === view.stack.length - 1;
+          return (
+            <span key={`${index}:${entry.view}:${entry.itemId ?? ""}`} className={`flex items-center gap-0.5 ${last ? "min-w-0" : "min-w-0 shrink"}`}>
+              {index > 0 ? <ChevronRight className="size-3 shrink-0 text-content/30" strokeWidth={2} /> : null}
+              {index === 1 && !entry.itemId && navOf(entry.view) === entry.view ? (
+                <ModulePicker current={entry.view} label={title(entry)} last={last} onSelf={() => popProjectPanelTo(1)} />
+              ) : last ? (
+                <span className="truncate px-1.5 font-medium text-content">{title(entry)}</span>
+              ) : (
+                <button type="button" onClick={() => popProjectPanelTo(index)} className="flex h-6.5 min-w-0 items-center gap-1.5 rounded-md px-1.5 text-content/50 hover:bg-content/10 hover:text-content">
+                  {index === 0 ? <ProjectViewIcon view="overview" className="size-3.5 shrink-0" /> : null}
+                  <span className="truncate">{title(entry)}</span>
+                </button>
+              )}
+            </span>
+          );
+        })}
+      </nav>
       <IconButton label={t(full ? "panel.exitFullscreen" : "panel.fullscreen")} onClick={switchMode(toggleProjectPanelFull)}>
         {full ? <Minimize2 className="size-3.5" strokeWidth={1.75} /> : <Maximize2 className="size-3.5" strokeWidth={1.75} />}
       </IconButton>
@@ -226,7 +238,11 @@ const noMotion = (el: HTMLElement) =>
   typeof el.animate !== "function" || !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** 标题栏左边的视图下拉：点开换 Issues / 迭代 / 文档……，详情页时变暗当面包屑。 */
-function ViewPicker({ current, label, dimmed }: { current: ProjectViewId; label: string; dimmed: boolean }) {
+/**
+ * 面包屑里模块那一段：点开是模块列表，选别的模块平级切过去（不用先回主页）；选当前模块 = 回到它的列表。
+ * 不是最后一段时（下面还有详情）文字变暗。
+ */
+function ModulePicker({ current, label, last, onSelf }: { current: ProjectViewId; label: string; last: boolean; onSelf: () => void }) {
   const { t } = useTranslation("soloyard");
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   return (
@@ -237,7 +253,7 @@ function ViewPicker({ current, label, dimmed }: { current: ProjectViewId; label:
         aria-haspopup="menu"
         aria-expanded={!!anchor}
         onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
-        className={`flex h-6.5 min-w-0 shrink-0 items-center gap-1.5 rounded-md px-1.5 hover:bg-content/10 ${dimmed ? "text-content/50" : "font-medium text-content"}`}
+        className={`flex h-6.5 min-w-0 items-center gap-1.5 rounded-md px-1.5 hover:bg-content/10 ${last ? "font-medium text-content" : "text-content/50 hover:text-content"}`}
       >
         <ProjectViewIcon view={current} className="size-3.5 shrink-0 text-content/50" />
         <span className="truncate">{label}</span>
@@ -246,18 +262,19 @@ function ViewPicker({ current, label, dimmed }: { current: ProjectViewId; label:
       {anchor ? (
         <Popover anchor={anchor} side="bottom" align="start" width={200} onDismiss={() => setAnchor(null)} role="menu" aria-label={t("panel.switchView")}>
           <div className="flex flex-col p-1">
-            {PANEL_VIEWS.map((id) => (
+            {PANEL_MODULES.map((id) => (
               <button
                 key={id}
                 type="button"
                 role="menuitemradio"
-                aria-checked={navOf(current) === id}
+                aria-checked={current === id}
                 onClick={() => {
                   setAnchor(null);
-                  selectProjectPanelView(id);
+                  if (id === current) onSelf();
+                  else selectProjectPanelView(id);
                 }}
                 className={`flex h-8 items-center gap-2 rounded-md px-2 text-left text-[13px] ${
-                  navOf(current) === id ? "bg-selection text-content" : "text-content/75 hover:bg-content/10 hover:text-content"
+                  current === id ? "bg-selection text-content" : "text-content/75 hover:bg-content/10 hover:text-content"
                 }`}
               >
                 <ProjectViewIcon view={id} className="size-3.5 shrink-0" />

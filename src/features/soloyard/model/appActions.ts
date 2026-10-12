@@ -14,6 +14,8 @@ export type StartWorkRequest = {
   newWorktree?: boolean;
   /** 直接把提示词发出去（并行开工），而不是填进输入框等用户发。 */
   send?: boolean;
+  /** 把 cwd 记成当前项目（新想法：它的文件夹刚建出来，还不在项目列表里）。 */
+  remember?: boolean;
 };
 
 /** 先打开会话（没开就打开），再把消息发进去。 */

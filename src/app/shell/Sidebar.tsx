@@ -32,7 +32,6 @@ import {
   StickyNote,
   Zap,
 } from "../../shared/ui/icons";
-import { BrainstormSidebar } from "../../features/soloyard/ui/brainstorm/BrainstormSidebar"; // Soloyard
 import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // Soloyard
 import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
@@ -2299,7 +2298,6 @@ function SidebarComponent({
           onClose={() => setLinkingSession(null)}
         />
       ) : null}
-      <BrainstormSidebar activeSessionId={activeSessionId} />{/* Soloyard: brainstorm sessions list over the workspace panel */}
       <div
         role="separator"
         aria-orientation="vertical"

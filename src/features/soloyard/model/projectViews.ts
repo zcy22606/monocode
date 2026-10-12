@@ -29,17 +29,11 @@ export type ProjectViewSource = {
   itemId?: string;
 };
 
-/** 项目面板标题栏下拉里的视图，Issues 最常用、也是默认。 */
-export const PANEL_VIEWS: ProjectViewId[] = [
-  "issues",
-  // 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代
-  "cycles",
-  "overview",
-  "docs",
-  "repos",
-  "decisions",
-  "evidence",
-];
+/**
+ * 项目主页（概览）下面的模块：面包屑里模块那一段的下拉、主页的模块卡片都按这个顺序。
+ * 功能全景和减法并进了「迭代」：功能全景就是带版本号的迭代表，减法 = 把功能挪到别的迭代。
+ */
+export const PANEL_MODULES: ProjectViewId[] = ["issues", "cycles", "decisions", "docs", "evidence", "repos"];
 
 /** 详情 / 旧标签归到哪一项（issue 详情 → Issues，旧的功能全景 / 减法 → 迭代……）。 */
 const NAV_OF: Partial<Record<ProjectViewId, ProjectViewId>> = { issue: "issues", doc: "docs", decision: "decisions", features: "cycles", scope: "cycles" };
@@ -67,9 +61,6 @@ export function useActiveProjectNav(cwd: string): ProjectViewId | null {
 }
 
 /** 头脑风暴不属于任何项目：标签挂在 ~ 下，侧栏的「头脑风暴」据此高亮。 */
-export const BRAINSTORM_CWD = "~";
-export const openBrainstorm = () => openProjectView({ cwd: BRAINSTORM_CWD, view: "brainstorm", title: viewLabel("brainstorm") });
-export const useBrainstormActive = () => useActiveProjectNav(BRAINSTORM_CWD) === "brainstorm";
 
 /** 渲染时调用，跟着当前语言走。 */
 export const viewLabel = (view: ProjectViewId) => t(`soloyard:view.${view}`);

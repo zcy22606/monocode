@@ -12,7 +12,7 @@ const isBucket = (t: unknown): t is Bucket => BUCKETS.includes(t as Bucket)
 const FEATURE_COLS = ['id', 'backbone', 'module', 'name', 'layer', 'level', 'tier', 'plan']
 
 /**
- * 导入一个 product-thinking 项目目录：立项卡等文档、证据、决策、功能全景和 AI 的版本表。按编号覆盖，重复导入安全：
+ * 导入一个 product-thinking 项目目录：证据、决策、功能全景和 AI 的版本表（文档不进库，见下）。按编号覆盖，重复导入安全：
  * - 版本表（features.json 的 iterations）里没有的版本号才新建，已有的迭代不动（名称、目标可能被用户改过）。
  *   导入过、后来在应用里不见了的版本号（用户删了或改了名）不再重建：导入过的版本号记在项目 meta_json.imported_tags。
  * - 功能按 plan 放进迭代 / 待定 / 另立项 / 不做。已有的功能只在用户没挪过时（还在 AI 上次的安排里）才跟着新安排走，
@@ -29,18 +29,9 @@ export function importProductThinking(db: DB, actor: Actor, dir: string, project
     const p = getRow(db, 'projects', projectId)!
     if (!p.goal && project.idea) update(db, actor, 'projects', projectId, { goal: project.idea }, undefined, batch)
 
-    // 文档（节 + 块）
-    let docs = 0
+    // 文档（节 + 块）不进库：以项目 docs/ 里的文件为准，product-thinking 直接把文档写进去，Docs 页读文件渲染。这里只数一下
     const docDir = join(dir, 'docs')
-    for (const f of existsSync(docDir) ? readdirSync(docDir).filter((f) => f.endsWith('.json')).sort() : []) {
-      const d = readJson(join(docDir, f))
-      const kind = d.id?.startsWith('01') ? 'brief' : d.id?.startsWith('02') ? 'features' : 'free'
-      const row = { kind, title: d.title ?? d.id, blocks_json: JSON.stringify({ meta: d.meta, lead: d.lead, sections: d.sections }) }
-      const hit = db.prepare('SELECT id FROM soloyard_documents WHERE project_id = ? AND slug = ?').get(projectId, d.id) as Row | undefined
-      if (hit) update(db, actor, 'documents', hit.id, row, undefined, batch)
-      else insert(db, actor, 'documents', { project_id: projectId, slug: d.id, body_md: '', ...row }, batch)
-      docs++
-    }
+    const docs = existsSync(docDir) ? readdirSync(docDir).filter((f) => f.endsWith('.json')).length : 0
 
     // 证据：量大且只读，不进变更日志
     const ev = readJson(join(dir, 'evidence.json'))

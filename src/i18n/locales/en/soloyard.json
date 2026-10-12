@@ -20,11 +20,7 @@
   },
   "placeholder": {
     "project": "Project",
-    "note": "Placeholder — layout and interaction preview only",
-    "noteSamples": "Placeholder — layout and interaction preview only; sample rows open a detail tab",
-    "sampleIssue": "Sample issue {{letter}}",
-    "sampleDoc": "Sample doc {{letter}}",
-    "sampleDecision": "Sample decision {{letter}}"
+    "note": "Placeholder — layout and interaction preview only"
   },
   "status": {
     "backlog": "Backlog",
@@ -420,33 +416,34 @@
     "legacyCleanup": "Clean up"
   },
   "brainstorm": {
-    "rename": "Rename",
     "start": "New brainstorm",
-    "untitled": "New brainstorm (not started)",
-    "prompt": "Let's brainstorm. Help me think the idea through first: who it's for, how they solve it today, why they'd switch. Don't rush to conclusions.\nWhen a direction is worth pursuing, write it up as an idea card (one line, who, what problem, why better than today) in the current folder.\nAsk me before researching competitors or user voices. When I say \"start the project\", follow product-thinking's project brief workflow.",
     "promote": "Promote to project",
     "promoteDialog": {
       "title": "Promote to project",
       "name": "Project name",
       "location": "Parent folder",
       "pick": "Choose location…",
-      "folder": "Folder name",
+      "folder": "English name (folder)",
       "folderInvalid": "Folder names can only use letters, digits, dots, dashes and underscores",
       "willDo": "This will:",
       "stepFolder": "Create the project folder {{path}}",
-      "stepProject": "Create the Soloyard project “{{name}}”",
+      "stepProject": "Turn the idea into the project “{{name}}” (stage: initiation)",
       "stepSession": "Move the session to the project folder and keep the conversation going",
       "stepCleanup": "Clean up this brainstorm's temporary folder",
       "namePlaceholder": "e.g. Xiaohongshu topic assistant",
       "files": "Artifacts in the working folder",
       "noFiles": "The working folder has no files yet.",
-      "stepFiles_one": "Bring the {{count}} file in the working folder into the project (docs, decisions and evidence go to the database)",
-      "stepFiles_other": "Bring the {{count}} files in the working folder into the project (docs, decisions and evidence go to the database)",
+      "stepFiles_one": "Move {{count}} file from the working folder into the project (documents into docs/)",
+      "stepFiles_other": "Move {{count}} files from the working folder into the project (documents into docs/)",
       "folderExists": "{{path}} already exists. Choose another folder name or location.",
-      "busy": "The agent is still running. Wait for it to stop before promoting."
-    },
-    "empty": {
-      "body": "No brainstorms yet. Click + to start one; the session runs in Soloyard's own workspace, no project needed."
+      "busy": "The agent is still running. Wait for it to stop before promoting.",
+      "key": "Issue key",
+      "keyInvalid": "The issue key starts with a capital letter, 2–10 capital letters or digits (e.g. XHS)",
+      "slugInvalid": "The English name uses lowercase letters, digits and dashes (e.g. xhs-coach)",
+      "goal": "One-liner",
+      "goalPlaceholder": "Who it's for and what it solves, in one sentence",
+      "prefilled": "Prefilled from what the agent wrote during the brainstorm; change anything you like.",
+      "stepPrompt": "Tell the agent in this session it's now a project, so it updates the overview and starts initiation"
     },
     "folderChip": {
       "title": "Workspace folder name",
@@ -456,13 +453,8 @@
       "exists": "A brainstorm folder named {{name}} already exists",
       "hint": "Named after the start time by default. Can only be changed before the first message."
     },
-    "draft": "No message sent yet",
     "moved": "Brainstorm moved to the left: click Brainstorm under Inbox to start one; past ones are listed in the sidebar. You can close this old tab.",
-    "remove": {
-      "action": "Delete",
-      "title": "Delete “{{title}}”",
-      "body": "The session and everything in its working folder {{folder}} will be deleted. This can't be undone."
-    }
+    "promotedPrompt": "[Promoted to a project] Name \"{{name}}\", folder {{path}}, issue key {{key}}.\n1. Bring the overview up to date with what we've discussed so far (don't overwrite sections I edited).\n2. Then start initiation: take stock of the overview, evidence, decisions and docs/, list an initiation coverage table (for each part: covered / needs more / missing, with evidence IDs) and estimate the time. Wait for my go-ahead before running, and only fill the gaps."
   },
   "repos": {
     "intro": "Which repositories this project is made of. Every new session gets their locations and descriptions as a project map, plus access to all of them — no need to explain them again.",
@@ -552,7 +544,8 @@
     "float": "Float",
     "dock": "Dock to the side",
     "resize": "Resize project panel",
-    "switchView": "Switch view"
+    "switchView": "Switch view",
+    "breadcrumb": "Project navigation"
   },
   "titleTabs": {
     "collapse": "Collapse tabs",
@@ -580,5 +573,193 @@
   },
   "fileLink": {
     "copyFile": "Copy File"
+  },
+  "overview": {
+    "slugPlaceholder": "english-name",
+    "pending_one": "Waiting for your call · {{count}}",
+    "pending_other": "Waiting for your call · {{count}}",
+    "all": "All",
+    "oneWay": "One-way",
+    "twoWay": "Two-way",
+    "noPending": "Nothing to decide right now.",
+    "empty": "Not written yet. The agent fills this in as you talk; you can also write it yourself.",
+    "suggestTitle": "Suggested (optional)",
+    "snapshotNote": "A read-only copy is written to docs/overview.md in the project folder after every change.",
+    "stage": {
+      "idea": "Idea",
+      "initiating": "Initiation",
+      "building": "Building",
+      "launched": "Launched",
+      "parked": "Parked",
+      "killed": "Dropped"
+    },
+    "step": {
+      "charter": "Initiation brief",
+      "decide": "Decisions",
+      "versions": "Version plan",
+      "cut": "Cut scope",
+      "start": "Start first iteration"
+    },
+    "key": {
+      "name": "Project name",
+      "slug": "English name",
+      "goal": "One-liner",
+      "stoploss": "Stop-loss line",
+      "background": "Background and problem",
+      "users": "Target users",
+      "alternatives": "Alternatives and competitors",
+      "findings": "Research findings",
+      "decisions": "Key decisions",
+      "scope": "Scope and non-goals",
+      "metrics": "Success metrics",
+      "risks": "Risks and assumptions to test",
+      "open": "Still unclear"
+    },
+    "next": {
+      "charter": {
+        "title": "Next: run initiation",
+        "hint": "The agent first lists what is already covered and how long the rest takes; it only runs after you agree.",
+        "action": "Start in a new session"
+      },
+      "versions": {
+        "title": "Next: lay out the version plan",
+        "hint": "The agent puts every feature into a version on the Iterations page.",
+        "action": "Start in a new session"
+      },
+      "cut": {
+        "title": "Next: cut scope",
+        "hint": "Move features between versions on the Iterations page, then start the first iteration.",
+        "action": "Open Iterations"
+      },
+      "decide": {
+        "title_one": "Next: decide {{count}} one-way door",
+        "title_other": "Next: decide {{count}} one-way doors",
+        "hint": "The version plan waits until the primary audience, target market and other one-way doors are decided.",
+        "action": "Decide"
+      }
+    },
+    "prompt": {
+      "charter": "Run initiation for this project (product-thinking). First take stock of what already exists: the overview (get_overview), evidence, decisions and the files in docs/. List an initiation coverage table — for each part (restated idea, demand evidence, competitors and alternatives, primary audience and wedge, value, distribution and compliance pre-check, riskiest assumptions, stop-loss line) mark \"covered / needs more / missing\" with evidence IDs — and estimate the time. Wait for my go-ahead before running, and only fill the gaps. Afterwards update the overview.",
+      "versions": "Lay out the version plan for this project (product-thinking, the version-table part of \"add\"): put every feature into a version or Pending / Split / Cut, with reasons, and import it. Read my decisions first (single-door decisions are already made in the app)."
+    },
+    "suggest": {
+      "dig": {
+        "label": "Dig into v1 features",
+        "hint": "Research each v1 feature until it can be designed and built",
+        "prompt": "Dig into the features of the first version (product-thinking \"dig\"): how leading products do it, user voices, design options and acceptance criteria. Write the results to docs/ and update the overview where it changes."
+      },
+      "business": {
+        "label": "Business analysis",
+        "hint": "Market, pricing, cold start, financials, compliance",
+        "prompt": "Run the business analysis for this project (product-thinking \"business\"): market and competition, business model and pricing, cold start and distribution, financial estimate, compliance. Write it to docs/; put one-way decisions (like the pricing model) into the app for me to decide."
+      },
+      "tech": {
+        "label": "Tech choices",
+        "hint": "Open-source and cloud options first, then build / buy / adopt / fork",
+        "prompt": "Run the tech analysis for this project (product-thinking \"tech\"): look for open-source projects and cloud services first, then decide build / buy / adopt / fork, with feasibility and cost. Write it to docs/."
+      },
+      "prd": {
+        "label": "PRD package",
+        "hint": "A hand-off package a coding agent can build from",
+        "prompt": "Put together the PRD package for this project (product-thinking \"PRD\"): a dev-pack in markdown a coding agent can start from, based on the overview, decisions and docs/. Mark anything still assumed as a default."
+      }
+    },
+    "untitled": "Untitled idea",
+    "brief": "Product brief",
+    "briefCount": "{{written}} of {{total}} sections written"
+  },
+  "settings": {
+    "title": "Settings",
+    "save": "Save",
+    "key": "Issue key",
+    "stage": "Stage",
+    "slugLocked": "This is the project folder name; it can't change after promotion.",
+    "keyLocked": "The project already has issues, so the key can't change.",
+    "stageHint": "Initiation steps follow from the data. You can park, drop (with a reason), mark as launched, or resume.",
+    "reason": "Reason (required to drop)",
+    "kill": "Drop…",
+    "launch": "Mark launched",
+    "resume": "Resume"
+  },
+  "decisions": {
+    "counts": "{{pending}} to decide · {{decided}} decided",
+    "adoptAll_one": "Adopt AI suggestion for {{count}} two-way door",
+    "adoptAll_other": "Adopt AI suggestions for {{count}} two-way doors",
+    "adoptHint": "Two-way doors can be changed later; one-way doors always need your own pick",
+    "adopted_one": "Adopted {{count}} AI suggestion.",
+    "adopted_other": "Adopted {{count}} AI suggestions.",
+    "undo": "Undo",
+    "empty": "No decisions yet. The agent adds them while researching or running initiation.",
+    "pending": "Waiting for your call",
+    "decided": "Decided",
+    "chose": "You chose {{option}}",
+    "options": "Options",
+    "aiPick": "AI suggests",
+    "reversibility": "Reversibility: {{value}}",
+    "pick": "Choose",
+    "change": "Switch to this",
+    "aiReason": "Why the AI suggests {{option}}",
+    "counter": "Strongest case against",
+    "needsInfo": "Needs your input: {{text}}",
+    "byApp": "You chose {{option}} in the app · {{date}}",
+    "byChat": "You chose {{option}} in a conversation · {{date}}"
+  },
+  "evidence": {
+    "search": "Search evidence",
+    "empty": "No evidence yet. The agent records what it finds while researching.",
+    "noMatch": "Nothing matches.",
+    "accessed": "accessed {{date}}"
+  },
+  "docs": {
+    "noFolder": "This project has no docs/ folder yet. Agents write product docs (briefs, feature maps, research) into docs/ at the project root, and they show up here.",
+    "emptyFolder": "docs/ has no .md or .json files yet. Agents write product docs here, and they show up as soon as they are saved.",
+    "auto": "Auto-generated",
+    "autoHint": "Snapshot of the project overview, regenerated whenever it changes. Edit it on the Overview page.",
+    "missing": "This file no longer exists.",
+    "emptyDoc": "Empty document — click to write",
+    "readOnly": "Read-only",
+    "readOnlyHint": "Generated by product-thinking. Ask an agent to change it.",
+    "save": "Save",
+    "saveHint": "⌘S to save · Esc to cancel",
+    "conflict": "The file changed on disk while you were editing.",
+    "overwrite": "Overwrite",
+    "discard": "Discard my edits",
+    "badJson": "Couldn't parse this JSON file: {{error}}",
+    "rawJson": "Raw JSON",
+    "unknownBlock": "Unsupported block: {{type}}",
+    "featuresTable": "Feature table — open Iterations to see features",
+    "competitorMatrix": "Competitor matrix — open Iterations to see features"
+  },
+  "ideas": {
+    "new": "New idea",
+    "group": "Brainstorms"
+  },
+  "modules": {
+    "active": "In progress",
+    "planned": "Planned",
+    "progress": "{{done}} of {{total}} done",
+    "noIssues": "No issues yet",
+    "notStarted": "Not started",
+    "noIteration": "No iterations yet",
+    "todo_one": "{{count}} to do",
+    "todo_other": "{{count}} to do",
+    "inProgress_one": "{{count}} in progress",
+    "inProgress_other": "{{count}} in progress",
+    "inReview_one": "{{count}} to review",
+    "inReview_other": "{{count}} to review",
+    "pending_one": "{{count}} to decide",
+    "pending_other": "{{count}} to decide",
+    "oneWay_one": "{{count}} one-way",
+    "oneWay_other": "{{count}} one-way",
+    "allDecided_one": "All decided · {{count}}",
+    "allDecided_other": "All decided · {{count}}",
+    "noDecisions": "No decisions yet",
+    "docs_one": "{{count}} doc",
+    "docs_other": "{{count}} docs",
+    "evidence_one": "{{count}} item",
+    "evidence_other": "{{count}} items",
+    "repos_one": "{{count}} repo",
+    "repos_other": "{{count}} repos",
+    "singleRepo": "Single folder"
   }
 }
