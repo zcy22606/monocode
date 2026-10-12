@@ -75,19 +75,22 @@ async function workspaceRoot() {
 
 // ───────────── 想法 → 项目栏 ─────────────
 
-/** 项目栏里固定的「头脑风暴」分组：想法期的项目都归在这里，提升后移出。 */
+/**
+ * 项目栏里的「头脑风暴」分组：想法期的项目归在这里，提升后移出。
+ * 只在用户点「新想法」时建；用户把它删了，后台同步不会再建回来，想法就留在「项目」里。
+ */
 export const IDEAS_GROUP_ID = "soloyard-ideas";
 
-function ensureIdeasGroup() {
+export function ensureIdeasGroup() {
   const groups = loadProjectGroups();
   if (groups.some((g) => g.id === IDEAS_GROUP_ID)) return;
   saveProjectGroups([{ id: IDEAS_GROUP_ID, name: t("soloyard:ideas.group"), collapsed: false }, ...groups]);
 }
 
-/** 想法进项目栏：归进「头脑风暴」分组，项目栏里显示它的标题（不是文件夹名）。 */
+/** 想法进项目栏：分组还在就归进「头脑风暴」，项目栏里显示它的标题（不是文件夹名）。 */
 function adoptIdea(path: string, name: string) {
-  ensureIdeasGroup();
-  if (loadProjectGroupAssignments()[projectKey(path)] !== IDEAS_GROUP_ID) setProjectGroupAssignment(path, IDEAS_GROUP_ID);
+  const grouped = loadProjectGroups().some((g) => g.id === IDEAS_GROUP_ID);
+  if (grouped && loadProjectGroupAssignments()[projectKey(path)] !== IDEAS_GROUP_ID) setProjectGroupAssignment(path, IDEAS_GROUP_ID);
   if (loadTabGroupLabels()[projectKey(path)] !== name) saveTabGroupLabel(projectKey(path), name);
 }
 
@@ -192,6 +195,7 @@ export async function startBrainstorm(prompt: string): Promise<{ sessionId: stri
   }
   const idea = await mutateSoloyard<Idea>("ideaForPath", folder);
   seen.set(idea.id, { name: idea.name, stage: idea.stage });
+  ensureIdeasGroup();
   adoptIdea(folder, idea.name || t("soloyard:overview.untitled"));
   const sessionId = crypto.randomUUID();
   requestStartWork({ cwd: folder, sessionId, prompt, remember: true });

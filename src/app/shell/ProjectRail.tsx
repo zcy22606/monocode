@@ -459,7 +459,8 @@ export function ProjectRail({
               />
             ) : null}
 
-            {projectGroups.length > 0 ? (
+            {/* Soloyard: keep the Groups header (and its New group button) even with no groups left */}
+            {(
               <div className="mb-2 shrink-0">
                 <ProjectSectionHeader
                   label={t("projectRail.groups")}
@@ -499,7 +500,7 @@ export function ProjectRail({
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
 
             <ProjectSection
               label={t("projectRail.projects")}

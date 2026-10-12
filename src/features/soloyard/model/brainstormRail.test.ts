@@ -7,7 +7,8 @@ import { projectKey } from "../../../shared/lib/paths";
 import { archiveProject, loadArchivedProjects, loadRecents, rememberProject } from "../../projects/model/recents";
 import { loadProjectGroupAssignments, loadProjectGroups } from "../../projects/model/projectGroups";
 import { loadTabGroupLabels } from "../../workspace/model/tabGroups";
-import { IDEAS_GROUP_ID, syncIdeas, type Idea } from "./brainstorm";
+import { ensureIdeasGroup, IDEAS_GROUP_ID, syncIdeas, type Idea } from "./brainstorm";
+import { deleteProjectGroup } from "../../projects/model/projectGroups";
 
 const root = "/Users/me/Library/Application Support/x/workspace";
 const idea = (id: number, folder: string, extra: Partial<Idea> = {}): Idea => ({
@@ -37,6 +38,7 @@ describe("想法同步到项目栏", () => {
 
   it("第一次看到的想法进项目栏和「头脑风暴」分组，标题当项目名；标题变了跟着改", () => {
     const a = idea(1, "2026-10-13-0900", { name: "小红书复盘助手" });
+    ensureIdeasGroup(); // 点「新想法」时建分组
     syncIdeas([a]);
     expect(inRail(a.path)).toBe(true);
     expect(loadProjectGroups().some((g) => g.id === IDEAS_GROUP_ID)).toBe(true);
@@ -65,5 +67,16 @@ describe("想法同步到项目栏", () => {
     syncIdeas([c]);
     expect(inRail(c.path)).toBe(false);
     expect(archived(c.path)).toBe(true);
+  });
+
+  it("用户删了「头脑风暴」分组，后台同步不再建回来，想法留在项目里", () => {
+    ensureIdeasGroup();
+    deleteProjectGroup(IDEAS_GROUP_ID);
+    const d = idea(4, "2026-10-13-1200", { name: "第四个" });
+    syncIdeas([d]);
+    expect(inRail(d.path)).toBe(true);
+    expect(loadProjectGroups().some((g) => g.id === IDEAS_GROUP_ID)).toBe(false);
+    expect(loadProjectGroupAssignments()[projectKey(d.path)]).toBeUndefined();
+    expect(loadTabGroupLabels()[projectKey(d.path)]).toBe("第四个");
   });
 });
