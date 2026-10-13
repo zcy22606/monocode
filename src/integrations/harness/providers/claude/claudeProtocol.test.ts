@@ -304,6 +304,28 @@ describe("usage limits", () => {
     ).toBeNull();
   });
 
+  it("does not stop the session when only fast mode's usage credits run out", () => {
+    // Out of credits refuses fast mode until the monthly reset, while the plan
+    // still serves the session: Claude Code drops to standard speed.
+    expect(
+      usageLimitFromRateLimitEvent({
+        rate_limit_info: {
+          status: "rejected",
+          resetsAt: 1_793_491_200,
+          rateLimitType: "overage",
+          overageStatus: "rejected",
+          overageDisabledReason: "out_of_credits",
+          isUsingOverage: false,
+        },
+      }),
+    ).toBeNull();
+    expect(
+      usageLimitFromRateLimitEvent({
+        rate_limit_info: { status: "rejected", resetsAt: 1_793_491_200 },
+      }),
+    ).toBeNull();
+  });
+
   it("recognizes a limit in an errored result", () => {
     expect(
       isUsageLimitResult({

@@ -58,6 +58,7 @@
 - **输入框历史**（`model/composerHistory.ts`）：↑ / ↓ 在当前会话发过的消息（从会话的 user 块取，不另外存）和草稿之间切换，取代了底座的「↑ 编辑上一轮」（那个还有对话里的按钮）；Esc 照 Claude Code：有排队的消息先只把它们挪回输入框（不停），否则停下，agent 对最后一条还没任何输出时把它放回空输入框。上游挂载：`Composer.tsx`、`SessionPane.tsx`、`App.tsx`（Esc 停止处）。
 - **切换模型续接原会话**（SOL-73 / 74 / 75）：交接块记下切走时的 provider 会话（`fromProviderSessionId` / `fromProviderAccountId` / `fromCwd`）。切回同一个 harness、工作目录和账号都没变时续接原会话，交接摘要只写离开期间那段（`handoff.ts` 的 `resumableHandoff`，App.tsx 发送处 bind）；交出方写摘要报错时退回确定性摘要（`handoffTurn.ts`）。这两处是给上游的修复，上游合并前我们先带着，没加 Soloyard 注释，免得和上游版本冲突；同步时取上游的版本。历史导入跳过交接块里记着的 provider 会话（`history_import.rs` 的 `left_by_handoff`），不再导成重复会话。
 - **API 重试提示**（SOL-76）：Claude Code 重试失败的 API 请求时（断网、限流、过载，stream-json 的 `system/api_retry`），会话里显示一行「网络连接出错，正在重试（第 7/10 次）…」，每次重试原地更新；请求有了输出、这一轮结束、停止、进程退出时撤掉（`model/apiRetry.ts`，用底座带 key 的状态行，空文字 = 删掉）。上游挂载：`claude.ts`。Codex 的重试底座有意不显示（`codexProtocol.ts` 的 `willRetry`），没动。
+- **快速模式额度用完不算用量上限**（SOL-77）：`claudeProtocol.ts` 的 `usageLimitFromRateLimitEvent` 只把套餐窗口被拒（`five_hour` / `seven_day` / `seven_day_overage_included` / `seven_day_opus` / `seven_day_sonnet`，和 Claude Code 自己等重置的那几个一样）当成会话到了用量上限；`overage`（快速模式付费用的额外用量）被拒时 Claude Code 会退回普通速度继续，不再弹「已达到用量上限 · 重置后继续」。这是给上游的修复，没加 Soloyard 注释，同步时取上游的版本。
 - 请底座做事（开会话、切会话、发消息、开标签）一律用窗口事件（`model/appActions.ts`、`model/projectViews.ts`），App.tsx 里各只有一个监听。
 - 项目自己的待办就在应用里：`~/Playground/monocode` 对应项目 **Soloyard（SOL）**，开工前先看 SOL 的 issue。
 - 多语言：`src/i18n/` + `src-tauri/src/i18n.rs`，上游界面文字也改成了 i18n（这是用户明确决定的，同步上游时冲突会比较多，按「上游加了新文字就补 key」来合）。我们的界面用命名空间 `soloyard`。

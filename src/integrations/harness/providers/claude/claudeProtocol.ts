@@ -501,9 +501,23 @@ export function turnStatusFromResult(rec: Record<string, unknown>): {
 }
 
 /**
+ * The plan windows a refused session has to wait out, the same ones Claude Code
+ * itself continues after. Anything else (`overage`, the usage-credit pool fast
+ * mode bills to) refuses only credit-billed requests: Claude Code drops to
+ * standard speed and the plan keeps serving the session.
+ */
+const PLAN_LIMIT_WINDOWS = new Set([
+  "five_hour",
+  "seven_day",
+  "seven_day_overage_included",
+  "seven_day_opus",
+  "seven_day_sonnet",
+]);
+
+/**
  * A `rate_limit_event` that refuses requests, with when its window resets.
- * `null` once requests are allowed again, or while extra usage is paying for
- * them and the turn goes on.
+ * `null` once requests are allowed again, while extra usage is paying for
+ * them and the turn goes on, or when only credit-billed requests are refused.
  */
 export function usageLimitFromRateLimitEvent(
   rec: Record<string, unknown>,
@@ -511,6 +525,9 @@ export function usageLimitFromRateLimitEvent(
   const info = asRecord(rec.rate_limit_info);
   if (stringField(info, "status") !== "rejected") return null;
   if (info?.isUsingOverage === true) return null;
+  if (!PLAN_LIMIT_WINDOWS.has(stringField(info, "rateLimitType") ?? "")) {
+    return null;
+  }
   const resetsAt = parseResetTimestamp(info?.resetsAt);
   return resetsAt != null ? { resetsAt } : {};
 }
