@@ -761,5 +761,13 @@
     "repos_one": "{{count}} repo",
     "repos_other": "{{count}} repos",
     "singleRepo": "Single folder"
+  },
+  "apiRetry": {
+    "retrying": "{{reason}} · retrying ({{attempt}}/{{max}})…",
+    "connection": "Connection error",
+    "noResponse": "No response from the API",
+    "rateLimit": "Rate limited",
+    "overloaded": "API overloaded",
+    "status": "API error {{status}}"
   }
 }

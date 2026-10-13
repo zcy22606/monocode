@@ -8,6 +8,7 @@ import type {
 } from "../../../../features/sessions/model/session";
 import { loadClaudeHooks } from "../../../../features/settings/model/settings";
 import { soloyardClaudeAddDirArgs, soloyardClaudeSystemPromptArgs } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
+import { clearApiRetry, noteApiRetry } from "../../../../features/soloyard/model/apiRetry"; // Soloyard
 import {
   killChild,
   resolveClaudeBinary,
@@ -176,6 +177,7 @@ type Live = {
   pendingAssistantBoundary: boolean;
   manualCompaction: boolean;
   compactionConfirmed: boolean;
+  apiRetrying: boolean; // Soloyard：API 重试那一行还在
 };
 
 type Resume = {
@@ -358,6 +360,7 @@ export async function stopClaudeSession(sessionId: string): Promise<void> {
   const live = liveByThread.get(sessionId);
   liveByThread.delete(sessionId);
   if (live) {
+    clearApiRetry(live); // Soloyard
     live.muteUpdates = true;
     for (const [, pending] of live.approvals) pending.resolve("deny");
     live.approvals.clear();
@@ -513,6 +516,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
     pendingAssistantBoundary: false,
     manualCompaction: false,
     compactionConfirmed: false,
+    apiRetrying: false, // Soloyard
   };
   liveRef.current = live;
 
@@ -527,6 +531,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
       liveByThread.delete(input.sessionId);
       const current = liveRef.current;
       if (!current?.muteUpdates) {
+        if (current) clearApiRetry(current); // Soloyard
         (current?.onEvent ?? input.onEvent)({ type: "session.ended", code });
       }
       current?.turnFailed?.(new Error("Claude Code exited"));
@@ -698,6 +703,10 @@ function handleLine(sessionId: string, live: Live, line: string): void {
     markInitialized(live);
     return;
   }
+
+  // Soloyard：Claude Code 重试 API 请求时显示一行，请求有了输出就撤掉
+  if (noteApiRetry(live, rec)) return;
+  if (type !== "system" && type !== "rate_limit_event") clearApiRetry(live);
 
   if (live.manualCompaction && type !== "system" && type !== "result") {
     return;
@@ -1703,6 +1712,7 @@ function maybeFinishTurn(live: Live): void {
 
 function finishActiveTurn(live: Live, extraEvents: HarnessEvent[] = []): void {
   clearAwaitingResume(live);
+  clearApiRetry(live); // Soloyard
   live.turnEndPending = false;
   live.activeTurn = false;
   for (const event of extraEvents) live.onEvent(event);

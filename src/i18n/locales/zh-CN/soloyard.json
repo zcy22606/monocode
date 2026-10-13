@@ -718,5 +718,13 @@
     "evidence_other": "{{count}} 条",
     "repos_other": "{{count}} 个仓库",
     "singleRepo": "单个文件夹"
+  },
+  "apiRetry": {
+    "retrying": "{{reason}}，正在重试（第 {{attempt}}/{{max}} 次）…",
+    "connection": "网络连接出错",
+    "noResponse": "API 没有响应",
+    "rateLimit": "被限流",
+    "overloaded": "API 过载",
+    "status": "API 出错（{{status}}）"
   }
 }
