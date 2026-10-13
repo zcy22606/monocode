@@ -28,11 +28,14 @@ import {
   type PanelMode,
 } from "../model/projectPanel";
 import { navOf, onOpenProjectView, PANEL_MODULES, viewLabel, type ProjectViewId } from "../model/projectViews";
+import { onStartWork } from "../model/appActions";
 import { Popover } from "../../../shared/ui/Popover";
 import { ProjectViewIcon } from "./ProjectViewIcon";
 import { ProjectViewSurface } from "./ProjectViewSurface";
 
 const MIN_WIDTH = 360;
+/** 侧栏给会话区至少留这么宽：太宽会把会话挤到 0，开工 / 打开会话都在看不见的地方发生。 */
+const SESSION_MIN_WIDTH = 360;
 
 /** cwd：当前项目，面板跟着它换；focus：主区域正在显示什么（标签 + 窗格 + 文件），换了就退出满屏。 */
 export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focus: string; hidden?: boolean }) {
@@ -42,7 +45,8 @@ export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focu
   const motionRef = useRef<HTMLElement | null>(null);
   const resize = useDragResize({
     min: MIN_WIDTH,
-    max: () => Math.max(MIN_WIDTH, Math.round(window.innerWidth * 0.7)),
+    // 按 <main> 量：窗口宽度里还有项目栏和侧边栏
+    max: () => Math.max(MIN_WIDTH, (motionRef.current?.parentElement?.clientWidth ?? window.innerWidth) - SESSION_MIN_WIDTH),
     defaultWidth: PANEL_DEFAULT_WIDTH,
     initial: panel.width,
     direction: "left",
@@ -93,16 +97,20 @@ export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focu
     return () => animation?.cancel();
   }, [view.mode]);
 
-  // 打开了别的会话或文件：满屏的带动画退回侧栏（或悬浮），面板还开着
+  // 打开了别的会话或文件、点了开工：满屏的带动画退回侧栏（或悬浮），面板还开着
+  const leaveFull = () => {
+    const el = motionRef.current;
+    switchFrom.current = el ? { rect: el.getBoundingClientRect(), mode: "full" } : null;
+    exitProjectPanelFull();
+  };
   const lastFocus = useRef(focus);
   useLayoutEffect(() => {
     if (lastFocus.current === focus) return;
     lastFocus.current = focus;
-    if (!shown || panel.mode !== "full") return;
-    const el = motionRef.current;
-    switchFrom.current = el ? { rect: el.getBoundingClientRect(), mode: "full" } : null;
-    exitProjectPanelFull();
+    if (shown && panel.mode === "full") leaveFull();
   }, [focus]);
+  // 开工回到的就是当前会话时焦点不变，单独听
+  useEffect(() => (shown && panel.mode === "full" ? onStartWork(leaveFull) : undefined), [shown, panel.mode]);
 
   const top = view.stack[view.stack.length - 1];
   // wasOpen 在收起的那次渲染里还是 true，元素留着给 effect 播动画
@@ -207,6 +215,8 @@ export function ProjectPanel({ cwd, focus, hidden = false }: { cwd: string; focu
       key="side"
       ref={(el) => void (motionRef.current = el)}
       className={`relative z-10 flex h-full min-h-0 shrink-0 justify-end overflow-hidden bg-background-base ${full ? "w-full" : ""}`}
+      // 侧栏：拖出来的宽度是上限，窗口变窄 / 侧边栏变宽时让出来，会话区不少于 SESSION_MIN_WIDTH
+      style={full ? undefined : { maxWidth: `max(${MIN_WIDTH}px, 100% - ${SESSION_MIN_WIDTH}px)` }}
     >
       <aside
         ref={resize.setPaneRef}
@@ -328,7 +338,14 @@ function pinWidth(el: HTMLElement, width: number) {
 function playSwitchMotion(el: HTMLElement, mode: PanelMode, from: { rect: DOMRect; mode: PanelMode }): Animation | null {
   if (noMotion(el)) return null;
   if (mode !== "float" && from.mode !== "float") {
-    return el.animate([{ width: `${from.rect.width}px` }, { width: `${el.getBoundingClientRect().width}px` }], { ...OPEN_TIMING, duration: 260 });
+    // 过渡期间放开侧栏的最大宽度，从满屏退回时不会先跳到上限再动
+    return el.animate(
+      [
+        { width: `${from.rect.width}px`, maxWidth: "none" },
+        { width: `${el.getBoundingClientRect().width}px`, maxWidth: "none" },
+      ],
+      { ...OPEN_TIMING, duration: 260 },
+    );
   }
   return playPanelMotion(el, mode, false);
 }

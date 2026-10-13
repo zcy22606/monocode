@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { i18n } from "../../../i18n";
 import type { IssueDetail } from "./issues";
-import { startWorkPrompt } from "./startWork";
+import { newSession } from "../../sessions/model/session";
+import { newTab } from "../../workspace/model/layout";
+import { reusableStartTab, startWorkPrompt } from "./startWork";
 
 const issue: IssueDetail = {
   id: 1, project_id: 1, number: 1, ident: "SOL-1", title: "开工按钮", body_md: "详情页加开工。", status: "todo",
@@ -46,5 +48,21 @@ describe("startWorkPrompt", () => {
     expect(bare).not.toContain("Acceptance criteria:");
     expect(bare).not.toContain("Labels:");
     expect(bare).not.toContain("prerequisite");
+  });
+});
+
+describe("reusableStartTab", () => {
+  const blank = { ...newSession("claude", "/ws"), id: "s1" };
+  const tabs = [newTab("s1")];
+
+  it("goes back to the last start's tab while nothing has been sent in it", () => {
+    expect(reusableStartTab("s1", [blank], tabs)).toBe(tabs[0].id);
+  });
+
+  it("opens another once it was sent, its tab closed, or there was no earlier start", () => {
+    const sent = { ...blank, blocks: [{ id: "u1", role: "user" as const, text: "go" }] };
+    expect(reusableStartTab("s1", [sent], tabs)).toBeUndefined();
+    expect(reusableStartTab("s1", [blank], [])).toBeUndefined();
+    expect(reusableStartTab(undefined, [blank], tabs)).toBeUndefined();
   });
 });

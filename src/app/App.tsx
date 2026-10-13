@@ -74,6 +74,7 @@ import { setActiveProjectView } from "../features/soloyard/model/projectViews";
 import { isBrainstormCwd, onIdeaRemoved } from "../features/soloyard/model/brainstorm"; // Soloyard
 import { ProjectPanel } from "../features/soloyard/ui/ProjectPanel"; // Soloyard
 import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
+import { reusableStartTab } from "../features/soloyard/model/startWork"; // Soloyard
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
 import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
@@ -8710,6 +8711,12 @@ function Workspace({
           setInboxViewOpen(false);
           setNotesViewOpen(false);
           setAutomationsViewOpen(false);
+          // Start work again while the last click's session is still unsent: go back to it, don't open another.
+          const reuseTab = reusableStartTab(request.reuse, sessionsRef.current, tabsRef.current);
+          if (request.reuse && reuseTab) {
+            activateTab(reuseTab, request.reuse);
+            return request.reuse;
+          }
           const session = {
             ...newDefaultSession(request.cwd, sessionDefaults?.runtimeMode),
             id: request.sessionId,
@@ -8732,6 +8739,7 @@ function Workspace({
           setActiveTabId(tab.id);
           setComposerFocused(true);
           if (request.send) setTimeout(() => submitSessionRef.current(session.id, request.prompt, []), 0);
+          return session.id;
         },
         openSession: (sessionId) => {
           // Like startWork: bring the session to front over the search / inbox / notes / automations views.

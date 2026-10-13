@@ -5,8 +5,10 @@
 
 export type StartWorkRequest = {
   cwd: string;
-  /** 事先生成，先挂到 issue 上再开会话。 */
+  /** 新会话用的 id（回到了 reuse 那个就不用）。 */
   sessionId: string;
+  /** 上次开工开的会话：还开着、也还没发过消息就回到它，不再开一个。 */
+  reuse?: string;
   prompt: string;
   /** 多仓库项目：在哪个成员仓库干活（不给 = 项目根目录）。 */
   workCwd?: string;
@@ -31,7 +33,7 @@ export type MoveSessionRequest = { sessionId: string; cwd: string };
 export type SetWorkDirRequest = { sessionId: string; workCwd?: string; branch?: string; newWorktree?: boolean };
 
 type Actions = {
-  "soloyard:start-work": StartWorkRequest;
+  "soloyard:start-work": StartWorkRequest & { reply: (sessionId: string) => void };
   "soloyard:open-session": { sessionId: string };
   "soloyard:send-to-session": SendToSessionRequest;
   "soloyard:move-session": WithReply<MoveSessionRequest>;
@@ -51,8 +53,17 @@ function on<K extends keyof Actions>(name: K, handler: (detail: Actions[K]) => v
   return () => window.removeEventListener(name, listener);
 }
 
-/** 开一个新会话，开工提示词预先填进输入框；模型、工作区由用户在输入框里选，确认后自己发送。 */
-export const requestStartWork = (request: StartWorkRequest) => emit("soloyard:start-work", request);
+/**
+ * 开一个新会话，开工提示词预先填进输入框；模型、工作区由用户在输入框里选，确认后自己发送。
+ * 返回实际打开的会话 id：回到了 reuse 那个就是它。窗口事件是同步派发的，返回时 App 已经处理完。
+ */
+export function requestStartWork(request: StartWorkRequest): string {
+  let opened = request.sessionId;
+  emit("soloyard:start-work", { ...request, reply: (sessionId) => (opened = sessionId) });
+  return opened;
+}
+/** 开工时项目面板也要动（满屏的退回侧栏）：回到的就是当前会话时，面板看不出焦点变了。 */
+export const onStartWork = (handler: () => void) => on("soloyard:start-work", handler);
 export const requestOpenSession = (sessionId: string) => emit("soloyard:open-session", { sessionId });
 /** 把某个文件夹作为当前项目打开（合成多仓库项目后切过去）。 */
 export const requestOpenProject = (path: string) => emit("soloyard:open-project", { path });
@@ -75,7 +86,8 @@ export const requestDeleteSession = (sessionId: string) => withReply("soloyard:d
 export const requestRenameSession = (sessionId: string, title: string) => emit("soloyard:rename-session", { sessionId, title });
 
 export type SoloyardAppHandlers = {
-  startWork: (request: StartWorkRequest) => void;
+  /** 返回实际打开的会话 id。 */
+  startWork: (request: StartWorkRequest) => string;
   openSession: (sessionId: string) => void;
   sendToSession: (request: SendToSessionRequest) => void;
   /** 返回出错原因，成功返回 undefined。 */
@@ -88,7 +100,7 @@ export type SoloyardAppHandlers = {
 
 export function onSoloyardAppActions(handlers: SoloyardAppHandlers): () => void {
   const offs = [
-    on("soloyard:start-work", handlers.startWork),
+    on("soloyard:start-work", ({ reply, ...request }) => reply(handlers.startWork(request))),
     on("soloyard:open-session", ({ sessionId }) => handlers.openSession(sessionId)),
     on("soloyard:send-to-session", handlers.sendToSession),
     on("soloyard:move-session", ({ reply, ...request }) => reply(handlers.moveSession(request))),

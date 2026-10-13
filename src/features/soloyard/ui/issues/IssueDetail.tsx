@@ -20,6 +20,9 @@ const when = (iso: string, lang: string) => new Date(iso).toLocaleString(lang, {
 
 type Picker = { anchor: HTMLElement; kind: "status" | "priority" | "repo" | "iteration" };
 
+/** 每个 issue 上次开工开的会话（只记这次运行）：再点开工时它还没发就回到它。 */
+const startedSessions = new Map<number, string>();
+
 /** Issue 详情标签：标题、属性、描述、验收清单、关联会话、评论。 */
 export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) {
   const { t, i18n } = useTranslation("soloyard");
@@ -45,15 +48,18 @@ export function IssueDetail({ issueId, cwd }: { issueId: number; cwd: string }) 
   const placedIn = feature ? targetOf(feature) : undefined;
   const placedIteration = plan?.iterations.find((i) => i.id === placedIn);
   const placeLabel = placedIteration ? placedIteration.tag : typeof placedIn === "string" ? bucketLabel(placedIn) : t("detail.noIteration");
-  // 开工：先生成会话 id 挂到 issue 上，再请底座开新会话、把开工提示词填进输入框。
+  // 开工：请底座开新会话、把开工提示词填进输入框，再把会话挂到 issue 上；上次开的还没发就回到它，不重复开。
   // 不在这里改状态——用户可能只是看看就关了；真正开工后 agent 按提示词经 MCP 改成 in_progress。
   // 会话第一次发送后才存进库，没发出去的关联在列表里不显示。
-  const startWork = async () => {
-    const sessionId = crypto.randomUUID();
-    await mutateSoloyard("linkSession", sessionId, "issue", String(issue.id));
+  const startWork = () => {
+    const previous = startedSessions.get(issue.id);
     // 标了仓库的 issue 直接在那个仓库开会话，新建工作树（并行做几个 issue 互不干扰）；没标就在项目根目录
     const repo = issue.repo_path ?? undefined;
-    requestStartWork({ cwd, sessionId, prompt: startWorkPrompt(issue, project ?? { name: cwd }, cwd), workCwd: repo, newWorktree: !!repo });
+    const prompt = startWorkPrompt(issue, project ?? { name: cwd }, cwd);
+    const sessionId = requestStartWork({ cwd, sessionId: crypto.randomUUID(), reuse: previous, prompt, workCwd: repo, newWorktree: !!repo });
+    if (sessionId === previous) return;
+    startedSessions.set(issue.id, sessionId);
+    void mutateSoloyard("linkSession", sessionId, "issue", String(issue.id));
   };
   const openIssue = (target: { id: number; ident: string; title: string }) =>
     openProjectView({ cwd, view: "issue", itemId: String(target.id), title: `${target.ident} ${target.title}` });

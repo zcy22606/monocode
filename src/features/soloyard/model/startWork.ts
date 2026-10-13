@@ -1,5 +1,14 @@
 import { t } from "../../../i18n";
+import { isBlankSession } from "../../projects/model/projectReturn";
+import type { Session } from "../../sessions/model/session";
+import { leafIds, type WorkspaceTab } from "../../workspace/model/layout";
 import { repoName, type IssueDetail } from "./issues";
+
+/** 再点开工：上次开工开的会话还开着、也还没发过消息，就回到它所在的标签，不再开一个。 */
+export function reusableStartTab(sessionId: string | undefined, sessions: readonly Session[], tabs: readonly WorkspaceTab[]): string | undefined {
+  if (!sessionId || !isBlankSession(sessions.find((s) => s.id === sessionId))) return undefined;
+  return tabs.find((tab) => leafIds(tab.layout).includes(sessionId))?.id;
+}
 
 type ProjectInfo = { name: string; goal?: string };
 
