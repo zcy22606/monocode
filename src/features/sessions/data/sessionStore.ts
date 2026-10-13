@@ -1489,11 +1489,19 @@ function sanitizeHandoff(value: Block["handoff"]): HandoffMeta | undefined {
   if (!(HARNESSES as string[]).includes(value.to)) return undefined;
   if (!HANDOFF_STATUSES.includes(value.status)) return undefined;
   const interrupted = value.status === "preparing";
+  const text = (field: unknown) =>
+    typeof field === "string" && field ? field : undefined;
+  const fromProviderSessionId = text(value.fromProviderSessionId);
+  const fromProviderAccountId = text(value.fromProviderAccountId);
+  const fromCwd = text(value.fromCwd);
   return {
     from: value.from,
     to: value.to,
     status: "ready",
     pending: interrupted || !!value.pending,
+    ...(fromProviderSessionId ? { fromProviderSessionId } : {}),
+    ...(fromProviderAccountId ? { fromProviderAccountId } : {}),
+    ...(fromCwd ? { fromCwd } : {}),
   };
 }
 

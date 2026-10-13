@@ -143,6 +143,11 @@ fn import_scoped(conn: &Connection, home: &Path, scopes: &[String], store_cwd: &
             .optional()
             .map_err(|e| e.to_string())?;
         let target = match (&existing, &prev_ours) {
+            // 应用会话切到别的 harness 时丢下的那段对话：属于那个会话（切回去会续接它），不是终端会话
+            (None, _) if left_by_handoff(conn, &parsed.provider_session_id)? => {
+                remember(conn, &key, mtime, harness, Some(&work), 1, None, None)?;
+                continue;
+            }
             // 没导入过、MonoCode 里也没有：新建
             (None, _) => uuid::Uuid::new_v4().to_string(),
             // 我们导入的，且导入后没在 MonoCode 里续聊过：用终端里的新内容刷新
@@ -220,6 +225,14 @@ fn append_newer(conn: &Connection, id: &str, updated_at: i64, parsed: &Parsed) -
     )
     .map_err(|e| e.to_string())?;
     Ok(Some(true))
+}
+
+/// 切换 harness 时，交接块记下了丢下的 provider 会话（前端 `appendPreparingHandoff` 的 `fromProviderSessionId`）。
+fn left_by_handoff(conn: &Connection, provider_session_id: &str) -> Result<bool, String> {
+    // ponytail: 扫全部 blocks_json，只在碰到对不上任何会话的转录时跑一次（之后按 mtime 跳过）；慢了再建索引表
+    let needle = format!("\"fromProviderSessionId\":\"{provider_session_id}\"");
+    conn.query_row("SELECT EXISTS(SELECT 1 FROM sessions WHERE instr(blocks_json, ?1) > 0)", [needle], |r| r.get(0))
+        .map_err(|e| e.to_string())
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -599,6 +612,35 @@ mod tree_tests {
             (root.to_string(), Some(format!("{root}/rebuild/backend/.trellis/tasks")), "赛季排名".to_string()),
         ]);
         assert_eq!(import_scoped(&conn, &home, &scopes, root, true).unwrap().len(), 0, "unchanged files are skipped");
+        fs::remove_dir_all(&home).ok();
+    }
+}
+
+#[cfg(test)]
+mod handoff_tests {
+    use super::*;
+
+    #[test]
+    fn skips_conversations_left_behind_by_a_harness_switch() {
+        let home = std::env::temp_dir().join(format!("hist-left-{}", uuid::Uuid::new_v4()));
+        let cwd = "/work/app";
+        let dir = home.join(".claude/projects").join(claude_dir_name(cwd));
+        fs::create_dir_all(&dir).unwrap();
+        let left = "77777777-7777-4777-8777-777777777777";
+        let terminal = "88888888-8888-4888-8888-888888888888";
+        for id in [left, terminal] {
+            let line = json!({"type":"user","sessionId":id,"cwd":cwd,"timestamp":"2026-09-01T00:00:00Z","message":{"content":"hi"}});
+            fs::write(dir.join(format!("{id}.jsonl")), line.to_string()).unwrap();
+        }
+        let conn = Connection::open_in_memory().unwrap();
+        crate::session_store::migrate(&conn).unwrap();
+        // 应用会话从 Claude 切到了 Codex：当前 provider 会话是 Codex 的，Claude 那段只记在交接块上
+        let blocks = json!([{"id":"h","role":"handoff","text":"","handoff":{"from":"claude","to":"codex","status":"ready","fromProviderSessionId":left}}]);
+        conn.execute("INSERT INTO sessions (id, cwd, harness, model, runtime_mode, title, provider_session_id, blocks_json, created_at, updated_at) VALUES ('app', ?1, 'codex', 'codex:gpt', 'supervised', 'app', 'codex-thread', ?2, 1, 1)", params![cwd, blocks.to_string()]).unwrap();
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 1, "only the terminal session");
+        let n: i64 = conn.query_row("SELECT COUNT(*) FROM sessions WHERE provider_session_id = ?1", params![left], |r| r.get(0)).unwrap();
+        assert_eq!(n, 0);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 0, "remembered, not rechecked");
         fs::remove_dir_all(&home).ok();
     }
 }

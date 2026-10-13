@@ -127,6 +127,11 @@ export type HandoffMeta = {
   status: HandoffStatus;
   /** Inject this brief into prompts to `to` until that harness accepts a turn. */
   pending?: boolean;
+  /** The conversation `from` left behind, so switching back can resume it. */
+  fromProviderSessionId?: string;
+  fromProviderAccountId?: string;
+  /** Provider conversations are bound to the directory they ran in. */
+  fromCwd?: string;
 };
 
 /** One persisted question/answer in a completed turn's side conversation. */

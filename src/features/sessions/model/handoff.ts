@@ -5,6 +5,7 @@ import { displayPath } from "../../../shared/lib/paths";
 import { sameProviderAccountId } from "../../providers/model/providerAccounts";
 import {
   HARNESS_TITLE,
+  sessionWorkCwd,
   type Block,
   type HarnessId,
   type HandoffMeta,
@@ -160,22 +161,65 @@ export function isPreparingHandoff(session: Session): boolean {
   );
 }
 
-export function pendingHandoff(session: Session): {
+export type HandoffWrap = {
   from: HarnessId;
   to: HarnessId;
   text: string;
-} | null {
+  /** `to` resumes its own earlier conversation; the recap covers what it missed. */
+  resumed?: boolean;
+};
+
+export function pendingHandoff(session: Session): HandoffWrap | null {
   const last = lastHandoffBlock(session.blocks);
   if (!last?.handoff?.pending || last.handoff.status !== "ready") return null;
   const text = last.text.trim() || buildDeterministicHandoff(session);
   if (!text.trim()) return null;
-  return { from: last.handoff.from, to: last.handoff.to, text };
+  return {
+    from: last.handoff.from,
+    to: last.handoff.to,
+    text,
+    ...(resumableHandoff(session) ? { resumed: true } : {}),
+  };
+}
+
+/**
+ * The conversation `harness` left behind in this chat, if switching back can
+ * resume it: same directory (provider sessions are bound to it) and account.
+ */
+export function resumableHandoff(
+  session: Session,
+  harness: HarnessId = session.harness,
+): HandoffMeta | undefined {
+  const index = resumableHandoffIndex(session, harness);
+  return index < 0 ? undefined : session.blocks[index].handoff;
+}
+
+function resumableHandoffIndex(session: Session, harness: HarnessId): number {
+  for (let i = session.blocks.length - 1; i >= 0; i--) {
+    const handoff = session.blocks[i].handoff;
+    if (session.blocks[i].role !== "handoff" || handoff?.from !== harness) {
+      continue;
+    }
+    const resumable =
+      !!handoff.fromProviderSessionId &&
+      handoff.fromCwd === sessionWorkCwd(session) &&
+      sameProviderAccountId(
+        handoff.fromProviderAccountId,
+        session.providerAccountId,
+      );
+    return resumable ? i : -1;
+  }
+  return -1;
 }
 
 export function appendPreparingHandoff(
   session: Session,
   from: HarnessId,
   to: HarnessId,
+  left?: Pick<
+    PendingHarnessSwitch,
+    "fromProviderSessionId" | "fromProviderAccountId"
+  >,
 ): Session {
   return appendHandoffBlock(session, {
     from,
@@ -183,6 +227,15 @@ export function appendPreparingHandoff(
     status: "preparing",
     text: "",
     pending: false,
+    ...(left?.fromProviderSessionId
+      ? {
+          fromProviderSessionId: left.fromProviderSessionId,
+          ...(left.fromProviderAccountId
+            ? { fromProviderAccountId: left.fromProviderAccountId }
+            : {}),
+          fromCwd: sessionWorkCwd(session),
+        }
+      : {}),
   });
 }
 
@@ -238,7 +291,15 @@ export function chooseHandoffBrief(
   request?: string,
 ): string {
   const agent = stripGoalSections(agentText);
-  const fallback = handoffParts(session, request, session.cwd);
+  // Switching back resumes the conversation this harness left; recap only what it missed.
+  const missed = session.blocks.slice(
+    resumableHandoffIndex(session, session.harness) + 1,
+  );
+  const fallback = handoffParts(
+    { ...session, blocks: missed },
+    request,
+    session.cwd,
+  );
   return formatHandoffBrief(
     agent.length >= MIN_AGENT_BRIEF ? agent : stripGoalSections(fallback.brief),
     fallback.ciContext,
@@ -404,6 +465,7 @@ export function wrapHandoffPrompt(
   from: HarnessId,
   userText: string,
   earlierRequests: string[] = [],
+  resumed = false,
 ): string {
   const fromTitle = HARNESS_TITLE[from];
   const request = userText.trim();
@@ -413,6 +475,12 @@ export function wrapHandoffPrompt(
     earlier.length > 0
       ? `\n\nAfter the switch, before this message, the user also sent:\n\n${earlier.join("\n\n")}`
       : "";
+  if (resumed) {
+    const back = `You are back in this conversation. While you were away, the user continued it with ${fromTitle}.\n\n${request}${earlierBlock}`;
+    return body
+      ? `${back}\n\nWhat happened with ${fromTitle} while you were away:\n\n<handoff>\n${body}\n</handoff>`
+      : `${back}\n\nNo recap of the ${fromTitle} turns is available. Check the working tree before relying on earlier state.`;
+  }
   const lead = `You are continuing an existing conversation handed off from ${fromTitle}. This is not a new session. Do not say you have no prior context.\n\n${request}${earlierBlock}`;
   if (!body) {
     return `${lead}\n\nContinue from a ${fromTitle} session. Do not invent prior work.`;
@@ -428,7 +496,7 @@ ${body}
 
 function appendHandoffBlock(
   session: Session,
-  input: HandoffMeta & { text: string },
+  { text, pending, ...meta }: HandoffMeta & { text: string },
 ): Session {
   return {
     ...session,
@@ -437,13 +505,8 @@ function appendHandoffBlock(
       {
         id: crypto.randomUUID(),
         role: "handoff",
-        text: input.text,
-        handoff: {
-          from: input.from,
-          to: input.to,
-          status: input.status,
-          ...(input.pending ? { pending: true } : {}),
-        },
+        text,
+        handoff: { ...meta, ...(pending ? { pending: true } : {}) },
       },
     ],
   };
