@@ -51,7 +51,8 @@ describe("想法同步到项目栏", () => {
 
   it("搁置 / 放弃 = 归档项目，恢复 = 回到项目栏；用户自己归档过的想法不被捞回来", () => {
     const b = idea(2, "2026-10-13-1000", { name: "营销日历" });
-    syncIdeas([b]);
+    syncIdeas([b]); // 还没有「头脑风暴」分组时（升级后第一次启动）建一次，想法归进去
+    expect(loadProjectGroupAssignments()[projectKey(b.path)]).toBe(IDEAS_GROUP_ID);
     syncIdeas([{ ...b, stage: "parked" }]);
     expect(inRail(b.path)).toBe(false);
     expect(archived(b.path)).toBe(true);

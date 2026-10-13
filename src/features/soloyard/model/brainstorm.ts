@@ -77,11 +77,13 @@ async function workspaceRoot() {
 
 /**
  * 项目栏里的「头脑风暴」分组：想法期的项目归在这里，提升后移出。
- * 只在用户点「新想法」时建；用户把它删了，后台同步不会再建回来，想法就留在「项目」里。
+ * 第一次有想法时（点「新想法」，或启动时同步到已有的想法）建一次；用户把它删了，后台同步不会再建回来，想法就留在「项目」里。
  */
 export const IDEAS_GROUP_ID = "soloyard-ideas";
+const GROUP_MADE_KEY = "soloyard.ideasGroupMade";
 
 export function ensureIdeasGroup() {
+  localStorage.setItem(GROUP_MADE_KEY, "1");
   const groups = loadProjectGroups();
   if (groups.some((g) => g.id === IDEAS_GROUP_ID)) return;
   saveProjectGroups([{ id: IDEAS_GROUP_ID, name: t("soloyard:ideas.group"), collapsed: false }, ...groups]);
@@ -109,6 +111,7 @@ export function syncIdeas(ideas: Idea[]) {
   const inRail = (p: string) => loadRecents().some((r) => sameProjectPath(r.path, p));
   const archived = (p: string) => loadArchivedProjects().some((r) => sameProjectPath(r.path, p));
   let changed = false;
+  if (!localStorage.getItem(GROUP_MADE_KEY) && ideas.some((i) => i.stage === "idea")) ensureIdeasGroup();
   for (const idea of ideas) {
     const prev = seen.get(idea.id);
     seen.set(idea.id, { name: idea.name, stage: idea.stage });

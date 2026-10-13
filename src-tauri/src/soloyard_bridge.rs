@@ -17,7 +17,7 @@ use tauri::{AppHandle, Emitter, Manager};
 /**
  * Soloyard 脚本（数据进程、MCP 服务）的位置：开发版跑仓库里的源码；正式版跑打包时复制进应用的那份
  * （tauri.conf.json 的 bundle.resources），这样改着的代码和数据库迁移碰不到日常用的正式版数据。
- * Node 两边都用登录 shell 里的。
+ * Node 两边都用底座找 CLI 的那套（交互式登录 shell 的 PATH，nvm 在 .zshrc 里初始化，`zsh -lc` 找不到）。
  */
 pub fn soloyard_script(app: &AppHandle, rel: &str) -> Result<std::path::PathBuf, String> {
     if cfg!(debug_assertions) {
@@ -39,10 +39,10 @@ static PENDING: LazyLock<Mutex<HashMap<u64, Sender<Reply>>>> = LazyLock::new(|| 
 
 fn start(app: &AppHandle) -> Result<Sidecar, String> {
     let db = app.path().app_data_dir().map_err(|e| e.to_string())?.join("monocode.db");
-    // 从程序坞启动的应用拿不到终端的 PATH（nvm 等），经登录 shell 找 node。
-    let mut child = Command::new("/bin/zsh")
-        .arg("-lc")
-        .arg(r#"exec node --no-warnings "$0" "$1""#)
+    // 从程序坞启动的应用拿不到终端的 PATH（nvm 等）
+    let node = crate::harness::resolve_gui_binary("node").ok_or("node not found on the login shell PATH")?;
+    let mut child = Command::new(node)
+        .arg("--no-warnings")
         .arg(soloyard_script(app, "core/src/sidecar.ts")?)
         .arg(&db)
         .stdin(Stdio::piped())

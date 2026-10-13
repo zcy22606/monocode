@@ -16,6 +16,8 @@ use tauri::{AppHandle, Emitter};
 use crate::session_store::{upsert_session, SessionUpsert};
 
 const MAX_TEXT: usize = 20_000;
+/// 从终端转录追加进应用会话的 block 带这个标记，见 `append_newer`
+const IMPORTED: &str = "soloyardImported";
 
 /// 列项目会话前调用；出错只记日志，不影响列表。
 /// 开发版默认不导入：终端历史是同一批 Claude / Codex 会话，正式版已经导入，两边都能接着聊会冲突。
@@ -209,16 +211,27 @@ fn append_newer(conn: &Connection, id: &str, updated_at: i64, parsed: &Parsed) -
     if running {
         return Ok(None);
     }
-    let start = parsed
-        .blocks
-        .iter()
-        .position(|b| b["role"] == "user" && b["startedAt"].as_i64().is_some_and(|at| at > updated_at));
-    let Some(start) = start else { return Ok(Some(false)) };
     let blocks_json: String = conn
         .query_row("SELECT blocks_json FROM sessions WHERE id = ?1", [id], |r| r.get(0))
         .map_err(|e| e.to_string())?;
     let mut blocks: Vec<Value> = serde_json::from_str(&blocks_json).unwrap_or_default();
-    blocks.extend_from_slice(&parsed.blocks[start..]);
+    // 上次追加时终端那一轮可能还没跑完（updated_at 已经推到了那时的最后一行）：
+    // 应用之后没接着聊，就把上次追加的尾巴整段换成转录里最新的
+    let mut cutoff = updated_at;
+    let tail = blocks.iter().rposition(|b| b[IMPORTED] != true).map_or(0, |i| i + 1);
+    if let Some(at) = blocks.get(tail).and_then(|b| b["startedAt"].as_i64()) {
+        cutoff = at - 1;
+        blocks.truncate(tail);
+    }
+    let start = parsed
+        .blocks
+        .iter()
+        .position(|b| b["role"] == "user" && b["startedAt"].as_i64().is_some_and(|at| at > cutoff));
+    let Some(start) = start else { return Ok(Some(false)) };
+    blocks.extend(parsed.blocks[start..].iter().cloned().map(|mut b| {
+        b[IMPORTED] = json!(true);
+        b
+    }));
     conn.execute(
         "UPDATE sessions SET blocks_json = ?2, updated_at = ?3 WHERE id = ?1",
         params![id, Value::Array(blocks).to_string(), parsed.updated_at.max(updated_at)],
@@ -573,6 +586,18 @@ mod tests {
         let texts: Vec<&str> = blocks.iter().map(|b| b["text"].as_str().unwrap_or("")).collect();
         assert_eq!(texts, ["", "终端里接着问", "终端里答\n\n补一句"]);
         assert_eq!(updated, t("2026-09-04T00:00:02Z"));
+
+        // 追加时终端那一轮还没跑完：跑完后把那段换成完整的，不丢回复也不重复
+        lines.extend([line("2026-09-05T00:00:00Z", "user", "又问"), line("2026-09-05T00:00:01Z", "assistant", "先看看")]);
+        rewrite(&lines, 3);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 1);
+        lines.push(line("2026-09-05T00:00:09Z", "assistant", "结论"));
+        rewrite(&lines, 4);
+        assert_eq!(import_with_home(&conn, &home, cwd).unwrap().len(), 1);
+        let blocks: String = conn.query_row("SELECT blocks_json FROM sessions WHERE id = 'app'", [], |r| r.get(0)).unwrap();
+        let blocks: Vec<Value> = serde_json::from_str(&blocks).unwrap();
+        let texts: Vec<&str> = blocks.iter().map(|b| b["text"].as_str().unwrap_or("")).collect();
+        assert_eq!(texts, ["", "终端里接着问", "终端里答\n\n补一句", "又问", "先看看\n\n结论"]);
         fs::remove_dir_all(&home).ok();
     }
 }

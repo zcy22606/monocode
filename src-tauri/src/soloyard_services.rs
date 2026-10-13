@@ -336,6 +336,8 @@ fn spawn_logged(app: &AppHandle, cwd: &str, command: &str) -> Result<String, Str
     let mut child = Command::new("/bin/zsh")
         .arg("-lc")
         .arg(command)
+        // `-lc` 不读 .zshrc，nvm / fnm 装的 node、pnpm 就找不到；用底座读出的终端 PATH（`-lic`，有缓存）。
+        .env("PATH", crate::harness::gui_search_path())
         .current_dir(cwd)
         .stdin(Stdio::null())
         .stdout(log.try_clone().map_err(|e| e.to_string())?)

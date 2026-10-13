@@ -4,7 +4,6 @@
 //! 原型的技能和钩子由 MCP 服务自带的 instructions 取代，这里只清不装。
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 use serde::Serialize;
@@ -83,17 +82,11 @@ fn legacy_files(home: &Path) -> Vec<String> {
         .collect()
 }
 
-/// 从程序坞启动的应用拿不到终端的 PATH（nvm 等），经登录 shell 找 node，写进 MCP 配置的是绝对路径。
+/// 从程序坞启动的应用拿不到终端的 PATH（nvm 等），用底座找 CLI 的 PATH 找 node，写进 MCP 配置的是绝对路径。
 fn node() -> Result<String, String> {
-    let output = Command::new("/bin/zsh")
-        .args(["-lc", "command -v node"])
-        .output()
-        .map_err(|e| e.to_string())?;
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    match stdout.lines().last().map(str::trim) {
-        Some(path) if output.status.success() && path.starts_with('/') => Ok(path.to_owned()),
-        _ => Err("node not found on the login shell PATH".into()),
-    }
+    crate::harness::resolve_gui_binary("node")
+        .map(|p| p.display().to_string())
+        .ok_or_else(|| "node not found on the login shell PATH".into())
 }
 
 fn server(app: &AppHandle) -> Result<String, String> {
