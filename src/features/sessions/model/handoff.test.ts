@@ -12,6 +12,7 @@ import {
   hasSessionEdits,
   pendingHandoff,
   planComposerSwitch,
+  resumableHandoff,
   sessionChildHarnesses,
   sessionThroughTurn,
   shouldAskOutgoingAgent,
@@ -275,6 +276,91 @@ describe("handoff block lifecycle", () => {
   });
 });
 
+describe("switching back to a harness used earlier", () => {
+  // Claude worked, the user went to Codex for a turn, and has switched back.
+  function backOnClaude(extra?: Partial<Session>): Session {
+    const left = appendPreparingHandoff(
+      sessionWith([
+        { id: "u1", role: "user", text: "train the s2 model" },
+        { id: "a1", role: "assistant", text: "Collecting data on the A100." },
+      ]),
+      "claude",
+      "codex",
+      { fromProviderSessionId: "claude-1" },
+    );
+    return {
+      ...left,
+      harness: "claude",
+      blocks: [
+        ...left.blocks,
+        { id: "u2", role: "user", text: "check the worker" },
+        { id: "a2", role: "assistant", text: "Fixed the completion check." },
+      ],
+      ...extra,
+    };
+  }
+
+  // The moment the first message after switching back is sent.
+  function sending(session: Session): Session {
+    const prepared = appendPreparingHandoff(session, "codex", "claude", {
+      fromProviderSessionId: "codex-1",
+    });
+    return {
+      ...prepared,
+      blocks: [
+        ...prepared.blocks,
+        { id: "u3", role: "user", text: "how fast is it now?" },
+      ],
+    };
+  }
+
+  it("records the conversation each harness left on its divider", () => {
+    expect(resumableHandoff(backOnClaude())).toMatchObject({
+      from: "claude",
+      fromProviderSessionId: "claude-1",
+      fromCwd: "/tmp/project",
+    });
+    expect(resumableHandoff(sending(backOnClaude()), "codex")).toMatchObject({
+      fromProviderSessionId: "codex-1",
+    });
+  });
+
+  it("does not resume a conversation bound to another directory or account", () => {
+    expect(
+      resumableHandoff(backOnClaude({ worktreeCwd: "/tmp/wt" })),
+    ).toBeUndefined();
+    expect(
+      resumableHandoff(backOnClaude({ providerAccountId: "work" })),
+    ).toBeUndefined();
+  });
+
+  it("only looks at the last time the harness left", () => {
+    const session = backOnClaude();
+    const leftAgain = appendReadyHandoff(session, "claude", "claude", "moved");
+    expect(resumableHandoff(leftAgain)).toBeUndefined();
+  });
+
+  it("recaps only what the resumed harness missed", () => {
+    const brief = chooseHandoffBrief(
+      "",
+      sending(backOnClaude()),
+      "how fast is it now?",
+    );
+    expect(brief).toContain("check the worker");
+    expect(brief).toContain("Fixed the completion check.");
+    expect(brief).not.toContain("train the s2 model");
+  });
+
+  it("marks the retried wrap as resumed", () => {
+    const ready = completeHandoff(sending(backOnClaude()), "Codex fixed it.");
+    expect(pendingHandoff(ready)).toMatchObject({
+      from: "codex",
+      to: "claude",
+      resumed: true,
+    });
+  });
+});
+
 describe("sessionThroughTurn", () => {
   it("keeps blocks through the chosen turn and drops later ones", () => {
     const first: Block[] = [
@@ -365,6 +451,23 @@ describe("wrapHandoffPrompt", () => {
     expect(prompt).toContain("hello");
     expect(prompt).toContain("hey what is this");
     expect(prompt).toContain("before this message");
+  });
+
+  it("tells a resumed agent what it missed instead of announcing a handoff", () => {
+    const prompt = wrapHandoffPrompt(
+      "## Session so far\nFixed the completion check.",
+      "codex",
+      "how fast is it now?",
+      [],
+      true,
+    );
+    expect(prompt).toContain("You are back in this conversation");
+    expect(prompt).toContain("while you were away");
+    expect(prompt).toContain("Fixed the completion check.");
+    expect(prompt.indexOf("how fast is it now?")).toBeLessThan(
+      prompt.indexOf("Fixed the completion check."),
+    );
+    expect(prompt).not.toContain("not a new session");
   });
 
   it("tells the outgoing agent not to inspect git", () => {

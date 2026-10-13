@@ -333,10 +333,12 @@ import {
   pendingHandoff,
   pendingComposerSwitch,
   planComposerSwitch,
+  resumableHandoff,
   sessionChildHarnesses,
   sessionThroughTurn,
   shouldAskOutgoingAgent,
   type HandoffComposerCard,
+  type HandoffWrap,
   userMessagesAfterHandoff,
   wrapHandoffPrompt,
 } from "../features/sessions/model/handoff";
@@ -7524,6 +7526,7 @@ function Workspace({
                 sealed,
                 pendingSwitch.from,
                 next.harness,
+                pendingSwitch,
               );
               return queuedMonoMessage
                 ? acknowledgeMonoMessage(prepared, queuedMonoMessage, {
@@ -7730,7 +7733,7 @@ function Workspace({
             ),
           );
         }
-        let wrap = handoffCard
+        let wrap: HandoffWrap | null = handoffCard
           ? {
               from: handoffCard.from,
               to: current.harness,
@@ -7762,7 +7765,23 @@ function Workspace({
           const brief = chooseHandoffBrief(agentText, latest ?? current, text);
           await forgetHarnessSession(pendingSwitch.from, sessionId);
           if (turnGen.current.get(sessionId) !== gen) return;
-          wrap = { from: pendingSwitch.from, to: current.harness, text: brief };
+          // Switching back: resume this harness's own earlier conversation.
+          const resume = resumableHandoff(latest ?? current);
+          if (resume?.fromProviderSessionId) {
+            bindHarnessSession(
+              current.harness,
+              sessionId,
+              resume.fromProviderSessionId,
+              workCwd,
+              resume.fromProviderAccountId,
+            );
+          }
+          wrap = {
+            from: pendingSwitch.from,
+            to: current.harness,
+            text: brief,
+            ...(resume ? { resumed: true } : {}),
+          };
         }
 
         const revealHandoff = (brief: string) => {
@@ -7994,6 +8013,7 @@ function Workspace({
                     wrap.from,
                     turnPrompt.trim() || CONTINUE_PROMPT,
                     earlier,
+                    wrap.resumed,
                   )
                 : turnPrompt,
             ),

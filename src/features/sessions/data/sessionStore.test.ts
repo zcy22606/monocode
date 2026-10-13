@@ -662,6 +662,35 @@ describe("sanitizeSessionForPersist", () => {
     });
   });
 
+  it("keeps the conversation a handoff left behind so switching back can resume it", () => {
+    const session = newSession("claude", "/tmp/project");
+    session.blocks = [
+      { id: "u1", role: "user", text: "hey" },
+      {
+        id: "h1",
+        role: "handoff",
+        text: "recap",
+        handoff: {
+          from: "claude",
+          to: "codex",
+          status: "ready",
+          fromProviderSessionId: "claude-1",
+          fromProviderAccountId: "work",
+          fromCwd: "/tmp/project",
+        },
+      },
+    ];
+    expect(sanitizeSessionForPersist(session).blocks[1].handoff).toEqual({
+      from: "claude",
+      to: "codex",
+      status: "ready",
+      pending: false,
+      fromProviderSessionId: "claude-1",
+      fromProviderAccountId: "work",
+      fromCwd: "/tmp/project",
+    });
+  });
+
   it("keeps valid interjection chrome only on system blocks", () => {
     const session = newSession("pi", "/tmp/project");
     session.blocks = [
