@@ -1,6 +1,6 @@
 //! Soloyard：工作树在应用外被删掉（`git worktree remove`、`rm -rf`）后，会话还指着不存在的目录，
 //! 点开发不了消息。读会话时发现工作树目录没了，就按应用内「删除工作树」的方式把会话摘下来
-//! （同 worktrees.rs 的 prepare_removal），输入框会让用户重新选分支 / 工作树继续。
+//! （同 worktrees.rs 的 prepare_removal，但留着 provider 会话 id），输入框会让用户重新选在哪继续。
 
 use std::path::Path;
 
@@ -36,7 +36,8 @@ fn try_detach(conn: &Connection, column: &str, value: &str) -> rusqlite::Result<
         }
         let tx = conn.unchecked_transaction()?;
         tx.execute(
-            "UPDATE sessions SET worktree_removed = 1, branch = NULL, provider_session_id = NULL,
+            // provider_session_id 留着：在别处重选「在哪干活」时按 id 续上原来的对话（前端 placeSession）。
+            "UPDATE sessions SET worktree_removed = 1, branch = NULL,
                context_used = NULL, context_window = NULL WHERE id = ?1",
             params![id],
         )?;
@@ -93,7 +94,7 @@ mod tests {
             )
             .unwrap()
         };
-        assert_eq!(state("s-gone"), (1, None));
+        assert_eq!(state("s-gone"), (1, Some("p".into())));
         assert_eq!(state("s-alive"), (0, Some("p".into())));
         let paths = [&gone, &alive].map(|path| path.to_string_lossy().into_owned());
         assert_eq!(soloyard_missing_worktrees(paths.to_vec()), vec![paths[0].clone()]);

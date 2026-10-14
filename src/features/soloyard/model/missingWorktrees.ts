@@ -50,29 +50,29 @@ export function useMissingWorktrees(
 }
 
 /**
- * Multi-repo "where to work" for a blank session, or for one whose worktree was deleted. The latter's
- * provider conversation stayed with the deleted folder (detaching dropped it), so it continues with a
- * recap of the transcript, like the base's worktree picker does.
+ * Multi-repo "where to work" for a blank session, or for one whose worktree was deleted. The latter keeps
+ * its provider conversation (detaching leaves the id): Claude Code and Codex resume it by id from any
+ * folder, so only a note about the move goes along. A new worktree only exists once the next message
+ * creates it, so that choice starts over with a recap of the transcript, like the base's worktree picker.
  */
 export function placeSession(
   session: Session,
   { workCwd, branch, newWorktree }: { workCwd?: string; branch?: string; newWorktree?: boolean },
 ): Session {
-  const base =
-    session.worktreeRemoved && !isBlankSession(session)
-      ? appendReadyHandoff(
-          session,
-          session.harness,
-          session.harness,
-          `The previous working copy was deleted. Continue this conversation in the current working directory. Recheck the files before making changes.\n\n${buildDeterministicHandoff(session)}`,
-        )
-      : session;
-  return {
-    ...base,
+  const placed: Session = {
+    ...session,
     worktreeCwd: workCwd,
     branch,
     worktreeRemoved: undefined,
     workspaceMode: newWorktree ? "worktree" : undefined,
     worktreeBase: newWorktree ? "HEAD" : undefined,
+  };
+  if (!session.worktreeRemoved || isBlankSession(session)) return placed;
+  const resume = newWorktree ? undefined : session.providerSessionId;
+  const note =
+    "The previous working copy was deleted. Continue this conversation in the current working directory. Recheck the files before making changes.";
+  return {
+    ...appendReadyHandoff(placed, session.harness, session.harness, resume ? note : `${note}\n\n${buildDeterministicHandoff(session)}`),
+    providerSessionId: resume,
   };
 }

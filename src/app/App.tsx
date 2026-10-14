@@ -2374,9 +2374,10 @@ function Workspace({
 
   // Soloyard: detach open sessions whose worktree folder was deleted outside the app, like an in-app removal.
   useMissingWorktrees(sessions, (gone) => {
-    const detach = <T extends { id: string; cwd: string; worktreeCwd?: string; worktreeRemoved?: boolean }>(entry: T) =>
+    // The provider conversation id stays, so "Where to work" can resume it in another folder (placeSession).
+    const detach = <T extends { id: string; cwd: string; worktreeCwd?: string; worktreeRemoved?: boolean; providerSessionId?: string }>(entry: T) =>
       gone.has(entry.id) && !entry.worktreeRemoved && entry.worktreeCwd && !removingSessionIds.current.has(entry.id) && !switchingWorktrees.current.has(entry.id)
-        ? detachSessionWorktree(entry, entry.cwd, entry.worktreeCwd)
+        ? { ...detachSessionWorktree(entry, entry.cwd, entry.worktreeCwd), providerSessionId: entry.providerSessionId }
         : entry;
     sessionsRef.current = sessionsRef.current.map(detach);
     setSessions(sessionsRef.current);
@@ -8795,11 +8796,18 @@ function Workspace({
           const session = sessionsRef.current.find((s) => s.id === sessionId);
           if (!session) return "session not open";
           if (session.busy || (!isBlankSession(session) && !session.worktreeRemoved)) return "busy";
+          const placed = placeSession(session, { workCwd, branch, newWorktree });
           if (session.worktreeRemoved) {
-            for (const harness of sessionChildHarnesses(session)) void forgetHarnessSession(harness, sessionId);
-            if (!newWorktree) void keepSessionChanges(sessionId, workCwd ?? session.cwd).catch(() => undefined);
+            // Drop the process still sitting in the deleted folder, then resume its conversation in the new one.
+            void Promise.all(sessionChildHarnesses(session).map((harness) => forgetHarnessSession(harness, sessionId))).then(() => {
+              if (placed.providerSessionId)
+                bindHarnessSession(placed.harness, sessionId, placed.providerSessionId, sessionWorkCwd(placed), placed.providerAccountId, placed.blocks);
+            });
+            // Its recorded turns point into the deleted folder; kept, they make the next turn fail to record
+            // in a folder without Git (the project root).
+            void forgetSessionCheckpoint(sessionId).catch(() => undefined);
           }
-          sessionsRef.current = sessionsRef.current.map((s) => (s.id === sessionId ? placeSession(s, { workCwd, branch, newWorktree }) : s));
+          sessionsRef.current = sessionsRef.current.map((s) => (s.id === sessionId ? placed : s));
           setSessions(sessionsRef.current);
           return undefined;
         },
