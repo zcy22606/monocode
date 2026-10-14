@@ -11,7 +11,7 @@ import { findProjectByPath, type Row } from './repo.ts'
 
 /**
  * 文档规范的要点（全文见 docs/soloyard/docs-convention.md）。MCP 的 instructions 和「整理文档」的提示词都用这一份：
- * 会话不一定连着 MCP（Codex、开发版没注册 soloyard-dev 时），提示词里要自带规范。
+ * 会话不一定连着 MCP（终端里直接跑的 agent、别的工具），提示词里要自带规范。
  */
 export const DOC_CONVENTION = `文档规范：
 - 每个仓库一个 docs/：跨仓库、项目级的放项目根目录的 docs/，只关于一个成员仓库的放那个仓库的 docs/。

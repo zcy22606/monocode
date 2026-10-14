@@ -28,8 +28,6 @@ const db = openDb(path)
 const actor = 'user'
 // 头脑风暴的工作区和库在同一个应用数据目录里；这个功能之前开的头脑风暴各补一条想法项目
 const workspace = join(dirname(path), 'workspace')
-// 开发版的库在 dev.indiedesk.desktop.dev 下，它注册的 MCP 叫 soloyard-dev（src-tauri/src/soloyard_agents.rs）
-const mcpName = dirname(path).endsWith('.dev') ? 'soloyard-dev' : 'soloyard'
 const inWorkspace = (p: string) => p.replace(/\/+$/, '').startsWith(workspace + '/')
 try {
   ideas.backfillIdeas(db, workspace)
@@ -70,7 +68,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   sessionContext: {
     run: (sessionId: string, message?: string, cwd?: string, workCwd?: string) => {
       const links = repo.sessionContext(db, sessionId, message)
-      const project = repos.projectSessionContext(db, cwd, workCwd, mcpName)
+      const project = repos.projectSessionContext(db, cwd, workCwd)
       return { ...links, dirs: [...new Set([...links.dirs, ...project.dirs])], map: project.map }
     },
   },
@@ -78,7 +76,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   // 验收即合并：issue 工作树的分支合进仓库主检出（只动 git，不改库，所以不广播）
   issueBranch: { run: (issueId: number) => merge.issueBranch(db, issueId) },
   mergeIssueBranch: { run: (issueId: number) => merge.mergeIssueBranch(db, issueId) },
-  projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd, mcpName).map },
+  projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd).map },
   memberRepoPaths: { run: () => repos.memberRepoPaths(db) },
   setupSuggestion: { run: (cwd: string) => repos.setupSuggestion(db, cwd) },
   mergeIntoParent: { write: true, run: (cwd: string, parent: string, paths: string[]) => repos.mergeIntoParent(db, actor, cwd, parent, paths) },

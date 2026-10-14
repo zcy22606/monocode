@@ -403,7 +403,7 @@
   },
   "mcp": {
     "title": "Soloyard MCP",
-    "description": "Let Claude Code and Codex read and write this app's projects and issues. Adds a user-level MCP server named soloyard through each CLI.",
+    "description": "Sessions opened in this app already get this build's Soloyard MCP (reading and writing this app's projects and issues) — nothing to connect here for them. Connect is for Claude Code and Codex run directly in a terminal: it adds a user-level MCP server through each CLI.",
     "checking": "Checking…",
     "notInstalled": "CLI not found",
     "connected": "Connected",
