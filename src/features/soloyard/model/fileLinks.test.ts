@@ -1,5 +1,16 @@
-import { describe, expect, it } from "vitest";
-import { inlinePath } from "./fileLinks";
+import { describe, expect, it, vi } from "vitest";
+import { inlinePath, memoryFile } from "./fileLinks";
+import { resolveOpenablePath } from "../../files/model/fileIndex";
+
+const cwd = "/Users/me/Workspace/openroboto";
+const memory = "/Users/me/.claude/projects/-Users-me-Workspace-openroboto/memory";
+const onDisk = new Set([`${cwd}/web/src/App.tsx`, `${memory}/state-1014.md`, `${memory}/App.tsx`]);
+
+vi.mock("../../../platform/tauri/fs", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../platform/tauri/fs")>()),
+  listProjectFiles: vi.fn(async () => [{ name: "App.tsx", path: `${cwd}/web/src/App.tsx`, relative: "web/src/App.tsx" }]),
+  statFiles: vi.fn(async (paths: string[]) => paths.map((path) => ({ path, mtimeMs: onDisk.has(path) ? 1 : null }))),
+}));
 
 describe("inlinePath", () => {
   it("reads folders from a trailing slash or an absolute / home path", () => {
@@ -22,5 +33,34 @@ describe("inlinePath", () => {
     expect(inlinePath("git status")).toBeUndefined();
     expect(inlinePath("https://x.dev/a/")).toBeUndefined();
     expect(inlinePath("/")).toBeUndefined();
+  });
+});
+
+
+describe("memoryFile", () => {
+  it("puts a bare name in Claude Code's memory folder for the cwd", () => {
+    expect(memoryFile("state-1014.md", cwd)).toBe(`${memory}/state-1014.md`);
+    expect(memoryFile("state-1014.md", `${cwd}/`)).toBe(`${memory}/state-1014.md`);
+  });
+
+  it("leaves paths with folders alone", () => {
+    expect(memoryFile("docs/a.md", cwd)).toBeUndefined();
+    expect(memoryFile("", cwd)).toBeUndefined();
+  });
+});
+
+describe("resolveOpenablePath with Claude memory files", () => {
+  // AgentMarkdown hands over the name already joined onto the cwd.
+  it("opens a memory file the project has no match for", async () => {
+    await expect(resolveOpenablePath(cwd, `${cwd}/state-1014.md`)).resolves.toBe(`${memory}/state-1014.md`);
+  });
+
+  it("still prefers the project's own file", async () => {
+    await expect(resolveOpenablePath(cwd, `${cwd}/App.tsx`)).resolves.toBe(`${cwd}/web/src/App.tsx`);
+  });
+
+  it("keeps the path when neither has it", async () => {
+    await expect(resolveOpenablePath(cwd, `${cwd}/nope.md`)).resolves.toBe(`${cwd}/nope.md`);
+    await expect(resolveOpenablePath(cwd, "/tmp/nope.md")).resolves.toBe("/tmp/nope.md");
   });
 });
