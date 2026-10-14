@@ -17,6 +17,7 @@ import * as overview from './overview.ts'
 import * as ideas from './ideas.ts'
 import * as decisions from './decisions.ts'
 import { exportDocuments } from './docs-export.ts'
+import * as docs from './docs.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -106,6 +107,10 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   decide: { write: true, run: (projectId: number, code: string, option: string, note?: string) => decisions.decide(db, actor, projectId, code, { option, note, via: '应用' }) },
   adoptTwoWay: { write: true, run: (projectId: number) => decisions.adoptTwoWay(db, actor, projectId) },
   listEvidence: { run: (projectId: number, filter?: { codes?: string[]; q?: string }) => decisions.listEvidence(db, projectId, filter) },
+  // 文档：项目根目录和成员仓库 docs/ 里的文件（数据库不存），新建按规范续编号
+  listDocs: { run: (cwd: string) => docs.listDocs(db, cwd) },
+  docConvention: { run: () => docs.DOC_CONVENTION },
+  newDoc: { run: (cwd: string, input: docs.NewDocInput) => docs.newDoc(db, cwd, { ...input, author: input.author ?? '用户' }) },
   setProjectStage: { write: true, run: (projectId: number, to: stage.StageChange, reason?: string) => stage.setProjectStage(db, actor, projectId, to, reason) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
   createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },

@@ -14,9 +14,10 @@ import * as repo from '../core/src/repo.ts'
 import * as iter from '../core/src/iterations.ts'
 import { projectRepos, resolveRepo } from '../core/src/repos.ts'
 import { importProductThinking } from '../core/src/import-pt.ts'
-import { projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
+import { projectRoot, projectStage, setProjectStage, type StageInfo } from '../core/src/stage.ts'
 import { getOverview, OverviewConflict, updateOverview, FIELDS, SECTIONS } from '../core/src/overview.ts'
 import { addEvidence, decide, getDecision, listDecisions, listEvidence, upsertDecisions } from '../core/src/decisions.ts'
+import { DOC_CONVENTION, DOC_TYPES, listDocs, newDoc } from '../core/src/docs.ts'
 
 const actor = process.env.SOLOYARD_ACTOR ?? 'agent:unknown'
 // 数据目录沿用 dev.indiedesk.desktop；改成 Soloyard 命名放在改名任务（SOL-6）里，连同数据迁移一起做
@@ -43,7 +44,9 @@ const INSTRUCTIONS = `Soloyard 是用户的项目台（项目、issue、验收�
 - overview（get_overview / update_overview）是项目的产品说明书：做什么、为什么，不放技术。头脑风暴、立项相关的会话要随时维护它
   （方向变了、查到了、定了就改对应的节）；普通开发会话只在用户做了产品层面的决定时才改，技术决定不进 overview。
   改之前先读，带读到的版本；用户改过的节被拒时不要硬改，在对话里提建议。
-- 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。`
+- 跑 product-thinking 时：命令结束后 import_product_thinking 写进应用；命令开始前 get_iteration_plan 读用户在应用里挪过的功能，以应用为准。
+- 文档：写之前先 list_docs 看有没有同主题的，有就更新原文件；新建一律用 new_doc（编号和文件头由应用给）。
+${DOC_CONVENTION.replace(/^/gm, '  ')}`
 
 type Json = Record<string, any>
 const str = (description: string) => ({ type: 'string', description })
@@ -194,6 +197,29 @@ const TOOLS: { name: string; description: string; inputSchema: Json; run: (a: Js
     name: 'add_evidence', description: '记证据（每条：claim 结论、quote 逐字摘录、url、platform、accessed 访问日期、level S/A/B+/B/B-/C/D、axis 做法/价值）。没给 code 的自动编 E-<n>；code 已有的覆盖。返回编号，overview 和文档里引用它。绝不用模型记忆编证据。',
     inputSchema: { type: 'object', required: ['project', 'items'], properties: { project: projectRef, items: { type: 'array', items: { type: 'object', required: ['claim'] } } } },
     run: ({ project: ref, items }) => ({ codes: addEvidence(db, actor, project(ref).id, items) }),
+  },
+  {
+    name: 'list_docs', description: '列项目的文档：根目录和成员仓库 docs/ 里的 .md / .json，带编号（类型/NN）、标题、状态、日期、所在仓库。type 只看某类；q 按标题搜。写新文档前先查有没有同主题的。',
+    inputSchema: { type: 'object', required: ['project'], properties: { project: projectRef, type: { type: 'string', enum: [...DOC_TYPES] }, q: str('标题关键词') } },
+    run: ({ project: ref, type, q }) => {
+      const root = projectRoot(db, project(ref).id)
+      if (!root) throw new Error('这个项目没有关联目录')
+      return listDocs(db, root)
+        .filter((d) => (!type || d.type === type) && (!q || d.title.toLowerCase().includes(String(q).toLowerCase())))
+        .map(({ path, repoName, type: t, no, title, status, date, dateFrom }) => ({ code: t && no ? `${t}/${no}` : null, title, status, date, dateFrom, repo: repoName, path }))
+    },
+  },
+  {
+    name: 'new_doc', description: `按文档规范新建一篇：放进 <仓库>/docs/<type>/NN-标题.md，编号续上，文件头（日期、状态草稿、作者、关联）写好，返回路径，再往里写正文。type：${DOC_TYPES.filter((t) => t !== 'archive').join(' / ')}。repo 不传 = 项目根目录（跨仓库、项目级的文档）；只关于一个成员仓库的传仓库名。kind=json 给 product-thinking 的节 + 块文档用。`,
+    inputSchema: { type: 'object', required: ['project', 'type', 'title'], properties: {
+      project: projectRef, type: { type: 'string', enum: DOC_TYPES.filter((t) => t !== 'archive') }, title: str('中文标题（代码标识符保持英文）'),
+      repo: str('成员仓库名或路径；不传 = 根目录'), related: str('关联：issue、决策、其他文档的编号，如「OPE-45、ADR 06」'), kind: { type: 'string', enum: ['md', 'json'] },
+    } },
+    run: ({ project: ref, type, title, repo: repoRef, related, kind }) => {
+      const root = projectRoot(db, project(ref).id)
+      if (!root) throw new Error('这个项目没有关联目录')
+      return newDoc(db, root, { type, title, repo: repoRef, related, kind, author: actor.replace(/^agent:/, '') })
+    },
   },
   {
     name: 'list_issues', description: '列出项目的 issue，按优先级排（紧急 → 低，无优先级最后）。ready=true 只列可开工的（未开始且前置都已完成）',
