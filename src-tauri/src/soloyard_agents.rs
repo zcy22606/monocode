@@ -1,4 +1,5 @@
-//! Soloyard：设置里把 Claude Code / Codex 接入 Soloyard MCP，并清掉原型 indie-desk 留下的 MCP、技能软链和钩子。
+//! Soloyard：应用开的会话自动带上本版本的 Soloyard MCP（`soloyard_mcp_launch`，会话参数里传，不写用户配置）；
+//! 设置里的「接入」把它写进 Claude Code / Codex 的用户配置，给终端里直接跑的会话用；并清掉原型 indie-desk 留下的 MCP、技能软链和钩子。
 //!
 //! 是否已接入由前端用底座的 `mcp_discover` 读配置判断；增删 MCP 一律走各家官方 CLI（底座 harness 里的辅助函数）。
 //! 原型的技能和钩子由 MCP 服务自带的 instructions 取代，这里只清不装。
@@ -12,7 +13,9 @@ use tauri::{AppHandle, Manager, State};
 
 use crate::harness::{add_mcp_via_cli, mcp_command, resolve_mcp_binary, HarnessHost};
 
-/// 正式版注册成 `soloyard`、读写正式版的库；开发版注册成 `soloyard-dev`、读写开发版自己的库，两边互不覆盖。
+/// 写进用户配置时：正式版注册成 `soloyard`、开发版注册成 `soloyard-dev`，两边互不覆盖。
+/// 应用开的会话一律叫 `soloyard`：会话参数里传的同名项会整个盖过用户配置里的（Claude Code 2.1 / Codex 0.162 实测），
+/// 所以开发版的会话只看到开发版自己的库。
 const MCP_NAME: &str = if cfg!(debug_assertions) { "soloyard-dev" } else { "soloyard" };
 const LEGACY_HOOK: &str = "indie-desk/packages/mcp/src/hook.ts";
 const PROVIDERS: [&str; 2] = ["claude", "codex"];
@@ -120,6 +123,17 @@ pub fn soloyard_agents_status(app: AppHandle, host: State<'_, HarnessHost>) -> R
         installed,
         legacy_files: legacy_files(&home()?),
     })
+}
+
+/// 应用开会话时带上的 MCP：本版本的服务脚本、本版本的库。actor 由前端按 provider 填。
+#[tauri::command(async)]
+pub fn soloyard_mcp_launch(app: AppHandle) -> Result<Value, String> {
+    let db = app.path().app_data_dir().map_err(|e| e.to_string())?.join("monocode.db");
+    Ok(json!({
+        "command": node()?,
+        "args": ["--no-warnings", server(&app)?],
+        "env": { "SOLOYARD_DB": db.display().to_string() },
+    }))
 }
 
 #[tauri::command(async)]

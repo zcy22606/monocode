@@ -387,7 +387,7 @@
   },
   "mcp": {
     "title": "Soloyard MCP",
-    "description": "让 Claude Code 和 Codex 读写本应用的项目和 issue。通过各自的 CLI 添加一个名为 soloyard 的用户级 MCP 服务。",
+    "description": "应用里开的会话已经自动带上本版本的 Soloyard MCP（读写本应用的项目和 issue），不用在这里接入。这里的「接入」是给终端里直接跑的 Claude Code、Codex 用的：通过各自的 CLI 添加一个用户级 MCP 服务。",
     "checking": "正在检查…",
     "notInstalled": "没找到 CLI",
     "connected": "已接入",
@@ -447,6 +447,7 @@
     "rootHint": "在根目录开的会话能改所有仓库，适合联调、排查跨仓库的问题。",
     "members": "成员仓库",
     "addFolder": "添加文件夹…",
+    "addFolderHint": "可以选任意位置的文件夹，不必在根目录下",
     "pickFolders": "把仓库加入这个项目",
     "empty": "还没有成员仓库。加入下面扫描到的，或者放在别处的文件夹（比如白标前端）。",
     "worktreeHint": "工作树自动归到它所属的仓库下。",
@@ -679,8 +680,7 @@
     "accessed": "访问于 {{date}}"
   },
   "docs": {
-    "noFolder": "这个项目还没有 docs/ 文件夹。Agent 会把产品文档（立项卡、功能全集、调研……）写进项目根目录的 docs/，写好就会出现在这里。",
-    "emptyFolder": "docs/ 里还没有 .md 或 .json 文件。Agent 会把产品文档写进来，保存后就会出现在这里。",
+    "noFolder": "还没有文档。Agent 会按文档规范把产品文档、技术方案、报告写进 docs/，也可以点「新建文档」，写好就会出现在这里。",
     "auto": "自动生成",
     "autoHint": "项目概览的快照，概览每次变动都会重新生成。要改请去概览页。",
     "missing": "这个文件已经不在了。",
@@ -696,7 +696,71 @@
     "rawJson": "原始 JSON",
     "unknownBlock": "不支持的块：{{type}}",
     "featuresTable": "功能表：去迭代页看功能",
-    "competitorMatrix": "竞品矩阵：去迭代页看功能"
+    "competitorMatrix": "竞品矩阵：去迭代页看功能",
+    "scopeRoot": "项目根目录的 docs/",
+    "scope_other": "项目根目录和 {{count}} 个成员仓库的 docs/",
+    "root": "根目录",
+    "group": {
+      "type": "按类型",
+      "repo": "按仓库",
+      "time": "时间线"
+    },
+    "type": {
+      "product": "产品",
+      "specs": "规格",
+      "architecture": "架构",
+      "adr": "决策",
+      "plans": "计划",
+      "research": "调研",
+      "reports": "报告",
+      "runbooks": "手册",
+      "archive": "归档",
+      "unsorted": "未归类"
+    },
+    "typeHint": {
+      "product": "PRD、需求、立项卡、功能",
+      "specs": "接口契约、数据格式、业务规则",
+      "architecture": "架构设计、技术方案",
+      "adr": "难以逆转的决策",
+      "plans": "开发计划、排期",
+      "research": "竞品、用户、方法调研",
+      "reports": "实验、事故、审计、进展记录",
+      "runbooks": "部署、运维、上手、操作流程",
+      "archive": "被取代或过时的，不删",
+      "unsorted": "不在类型目录里：点「整理文档」让 Agent 按规范归位"
+    },
+    "state": {
+      "draft": "草稿",
+      "active": "进行中",
+      "confirmed": "已确认",
+      "done": "已结束",
+      "partial": "部分被取代",
+      "superseded": "已废弃",
+      "archived": "已归档",
+      "none": "未标状态"
+    },
+    "showRetired_other": "已废弃 / 已归档 {{count}}",
+    "search": "搜标题",
+    "dateFromFile": "文件头没写日期，这是文件的创建时间",
+    "overviewRow": "产品说明书",
+    "new": "新建文档",
+    "organize": "整理文档",
+    "organizeHint": "开一个会话，让 Agent 按文档规范列整理清单，你点头再改",
+    "organizePrompt": "按下面的文档规范整理这个项目的文档。\n\n{{convention}}\n\n步骤：\n1. 先扫：项目根目录和每个成员仓库的 docs/，以及散在 docs/ 外面的 markdown（项目文件夹最外层、子文件夹里的）。不碰工作树副本、隐藏的工具目录和 node_modules。有 soloyard 的 MCP 工具时，list_docs 能列出应用看到的文档。\n2. 先列整理清单给我看，不要先改：按仓库分组，每条写动作（改名归位 / 移进 docs/ / 补文件头 / 归档 / 删重复副本 / 不动）、原路径 → 新路径、类型和理由；编号在每个类型目录里按文档日期从早到晚续编。规范没说清、你拿不准的，单独列出来问我，带上你的建议。\n3. 规范落到仓库里：看每个仓库（根目录和成员仓库）的 AGENTS.md / CLAUDE.md 里有没有文档约定。没有的，清单里加一条「补文档约定」：在 AGENTS.md 末尾加一节「文档约定」，内容照抄上面的规范要点（只有 CLAUDE.md 的加在 CLAUDE.md；CLAUDE.md 只是引用 AGENTS.md 的，加在 AGENTS.md）。已经有、但和上面不一样的，列出差别问我，不要直接改；两个文件都没有的仓库，问我要不要建。\n4. 补文件头：日期取 git 首次提交时间（没有 git 就用文件创建时间），作者写「整理时补」。文件里已经写了的状态照用，没写的留空，不要替我判断一篇文档还算不算数。\n5. 等我点头再执行：改名用 git mv，同时改掉所有指向旧路径的引用（AGENTS.md、CLAUDE.md、其他文档）。不在 git 里的目录，执行前先打个备份包。改完列出改了什么，先不要提交，等我确认。",
+    "newDialog": {
+      "title": "新建文档",
+      "type": "类型",
+      "where": "放在哪",
+      "whereRoot": "根目录（跨仓库、项目级的）",
+      "whereRepo": "{{name}}（只关于这个仓库的）",
+      "titleLabel": "标题",
+      "titlePlaceholder": "中文标题，代码标识符保持英文",
+      "related": "关联",
+      "relatedPlaceholder": "issue、决策、其他文档的编号，比如 SOL-80、ADR 03",
+      "note": "建在 {{dir}} 下，编号自动续上，文件头写好，状态是草稿。",
+      "create": "新建",
+      "cancel": "取消"
+    }
   },
   "ideas": {
     "new": "新想法",

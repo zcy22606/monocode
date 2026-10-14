@@ -3,7 +3,7 @@
  * 放模块里（同 projectViews 的高亮），上游的 ProjectRail / Sidebar 只多一两行。
  */
 import { useSyncExternalStore } from "react";
-import { locateWorkDir, type ProjectRepos } from "./repos";
+import { locateWorkDir, useProjectRepos, type ProjectRepos } from "./repos";
 
 /** "root" = 在根目录跑的会话；否则是成员仓库的路径。 */
 export type RepoFilter = "root" | string;
@@ -42,6 +42,25 @@ export function matchesRepoFilter(
   if (!filter || !info?.repos?.length) return true;
   return sessionRepo(info, session) === filter;
 }
+
+/**
+ * 侧栏选了根目录或某个仓库时，文件 / 更改 / ⌘P 都看那里：当前的会话或文件已经在它里面（含它的工作树）就不动，
+ * 否则换成它（根目录 = 项目文件夹）。没选、或选的仓库已经移出 / 不在了，照旧。
+ */
+export function repoBrowseCwd(
+  info: ProjectRepos | null | undefined,
+  filter: RepoFilter | undefined,
+  root: string | undefined,
+  cwd: string,
+): string {
+  if (!filter || !root || !info?.repos?.length) return cwd;
+  if (filter !== "root" && !info.repos.some((r) => r.path === filter && !r.missing)) return cwd;
+  if (sessionRepo(info, { worktreeCwd: cwd }) === filter) return cwd;
+  return filter === "root" ? root : filter;
+}
+
+export const useRepoBrowseCwd = (root: string | undefined, cwd: string) =>
+  repoBrowseCwd(useProjectRepos(root), useRepoFilter(root), root, cwd);
 
 /** 各仓库的会话数：会话列表（Sidebar）算好放这里，侧栏项目下的仓库行显示在右边。 */
 const counts = new Map<string, Map<RepoFilter, number>>();

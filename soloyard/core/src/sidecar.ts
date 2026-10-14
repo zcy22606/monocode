@@ -17,6 +17,7 @@ import * as overview from './overview.ts'
 import * as ideas from './ideas.ts'
 import * as decisions from './decisions.ts'
 import { exportDocuments } from './docs-export.ts'
+import * as docs from './docs.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -27,8 +28,6 @@ const db = openDb(path)
 const actor = 'user'
 // 头脑风暴的工作区和库在同一个应用数据目录里；这个功能之前开的头脑风暴各补一条想法项目
 const workspace = join(dirname(path), 'workspace')
-// 开发版的库在 dev.indiedesk.desktop.dev 下，它注册的 MCP 叫 soloyard-dev（src-tauri/src/soloyard_agents.rs）
-const mcpName = dirname(path).endsWith('.dev') ? 'soloyard-dev' : 'soloyard'
 const inWorkspace = (p: string) => p.replace(/\/+$/, '').startsWith(workspace + '/')
 try {
   ideas.backfillIdeas(db, workspace)
@@ -69,7 +68,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   sessionContext: {
     run: (sessionId: string, message?: string, cwd?: string, workCwd?: string) => {
       const links = repo.sessionContext(db, sessionId, message)
-      const project = repos.projectSessionContext(db, cwd, workCwd, mcpName)
+      const project = repos.projectSessionContext(db, cwd, workCwd)
       return { ...links, dirs: [...new Set([...links.dirs, ...project.dirs])], map: project.map }
     },
   },
@@ -77,7 +76,7 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   // 验收即合并：issue 工作树的分支合进仓库主检出（只动 git，不改库，所以不广播）
   issueBranch: { run: (issueId: number) => merge.issueBranch(db, issueId) },
   mergeIssueBranch: { run: (issueId: number) => merge.mergeIssueBranch(db, issueId) },
-  projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd, mcpName).map },
+  projectMap: { run: (cwd: string, workCwd?: string) => repos.projectSessionContext(db, cwd, workCwd).map },
   memberRepoPaths: { run: () => repos.memberRepoPaths(db) },
   setupSuggestion: { run: (cwd: string) => repos.setupSuggestion(db, cwd) },
   mergeIntoParent: { write: true, run: (cwd: string, parent: string, paths: string[]) => repos.mergeIntoParent(db, actor, cwd, parent, paths) },
@@ -106,6 +105,10 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   decide: { write: true, run: (projectId: number, code: string, option: string, note?: string) => decisions.decide(db, actor, projectId, code, { option, note, via: '应用' }) },
   adoptTwoWay: { write: true, run: (projectId: number) => decisions.adoptTwoWay(db, actor, projectId) },
   listEvidence: { run: (projectId: number, filter?: { codes?: string[]; q?: string }) => decisions.listEvidence(db, projectId, filter) },
+  // 文档：项目根目录和成员仓库 docs/ 里的文件（数据库不存），新建按规范续编号
+  listDocs: { run: (cwd: string) => docs.listDocs(db, cwd) },
+  docConvention: { run: () => docs.DOC_CONVENTION },
+  newDoc: { run: (cwd: string, input: docs.NewDocInput) => docs.newDoc(db, cwd, { ...input, author: input.author ?? '用户' }) },
   setProjectStage: { write: true, run: (projectId: number, to: stage.StageChange, reason?: string) => stage.setProjectStage(db, actor, projectId, to, reason) },
   iterationPlan: { run: (projectId: number) => it.iterationPlan(db, projectId) },
   createIteration: { write: true, run: (projectId: number, input: it.IterationInput, beforeId: number | null) => it.createIteration(db, actor, projectId, input, beforeId) },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesRepoFilter, sessionRepo } from "./repoFilter";
+import { matchesRepoFilter, repoBrowseCwd, sessionRepo } from "./repoFilter";
 import type { ProjectRepos } from "./repos";
 
 const info = {
@@ -24,5 +24,14 @@ describe("repo filter", () => {
     expect(matchesRepoFilter(info, "/ws/backend", { worktreeCwd: "/ws/wt-rotate" })).toBe(true);
     expect(matchesRepoFilter(info, "/ws/backend", { worktreeCwd: "/ws/web" })).toBe(false);
     expect(matchesRepoFilter(info, "root", {})).toBe(true);
+  });
+
+  it("points Files at the picked repo or root unless the current session is already there", () => {
+    expect(repoBrowseCwd(info, undefined, "/ws", "/ws/web")).toBe("/ws/web");
+    expect(repoBrowseCwd(info, "/ws/web", "/ws", "/ws")).toBe("/ws/web");
+    expect(repoBrowseCwd(info, "/ws/backend", "/ws", "/ws/wt-rotate")).toBe("/ws/wt-rotate");
+    expect(repoBrowseCwd(info, "root", "/ws", "/ws/wt-rotate")).toBe("/ws");
+    expect(repoBrowseCwd(info, "root", "/ws", "/ws")).toBe("/ws");
+    expect(repoBrowseCwd(info, "/ws/gone", "/ws", "/ws")).toBe("/ws");
   });
 });

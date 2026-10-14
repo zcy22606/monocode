@@ -8,6 +8,7 @@ import type {
 } from "../../../../features/sessions/model/session";
 import { loadClaudeHooks } from "../../../../features/settings/model/settings";
 import { soloyardClaudeAddDirArgs, soloyardClaudeSystemPromptArgs } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
+import { soloyardClaudeMcpArgs } from "../../../../features/soloyard/model/sessionMcp"; // Soloyard
 import { clearApiRetry, noteApiRetry } from "../../../../features/soloyard/model/apiRetry"; // Soloyard
 import {
   killChild,
@@ -548,7 +549,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
   await spawnChild(
     input.sessionId,
     path,
-    [...buildClaudeSpawnArgs(launch), ...soloyardClaudeAddDirArgs(input.sessionId), ...soloyardClaudeSystemPromptArgs(input.sessionId)], // Soloyard: 关联的文件夹 + 项目地图
+    [...buildClaudeSpawnArgs(launch), ...soloyardClaudeAddDirArgs(input.sessionId), ...soloyardClaudeSystemPromptArgs(input.sessionId), ...(await soloyardClaudeMcpArgs())], // Soloyard: 关联的文件夹 + 项目地图 + 本版本的 MCP
     input.cwd,
     { provider: "claude", id: input.providerAccountId ?? "default" },
     "claude",
