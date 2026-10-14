@@ -162,7 +162,8 @@
       "TerminalToggleDock": "Terminal: Toggle Dock",
       "EditorFind": "Editor: Find",
       "EditorReplace": "Editor: Replace",
-      "AppToggleMono": "App: Toggle Mono"
+      "AppToggleMono": "App: Toggle Mono",
+      "SessionStop": "Session: Stop"
     },
     "when": {
       "Always": "Always",

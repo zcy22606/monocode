@@ -455,7 +455,8 @@
     "notes_other": "{{count}} notes",
     "statusUpdate": "Status update",
     "thinking": "Thinking",
-    "thought": "Thought"
+    "thought": "Thought",
+    "working": "Working"
   },
   "pane": {
     "closeTitle": "Close Pane ({{shortcut}})",

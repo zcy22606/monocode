@@ -29,6 +29,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Popover } from "../../../shared/ui/Popover";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import {
   GitHistoryGraph,
@@ -129,7 +130,7 @@ export function GitChangesPanel({
   const { index, reload } = useDiffIndex(cwd, enabled);
   const files = index?.files ?? [];
   const paneRef = useRef<HTMLDivElement>(null);
-  const branchMenuRef = useRef<HTMLDivElement>(null);
+  const branchMenuRef = useRef<HTMLButtonElement>(null);
   const [branchMenuOpen, setBranchMenuOpen] = useState(false);
   // Shared across the header and the changed-files list so no two Git
   // mutations ever run against the same checkout at once.
@@ -143,17 +144,6 @@ export function GitChangesPanel({
     const timer = window.setTimeout(() => setStatus(null), 4000);
     return () => window.clearTimeout(timer);
   }, [status]);
-
-  useEffect(() => {
-    if (!branchMenuOpen) return;
-    const onPointer = (event: PointerEvent) => {
-      if (!branchMenuRef.current?.contains(event.target as Node)) {
-        setBranchMenuOpen(false);
-      }
-    };
-    window.addEventListener("pointerdown", onPointer);
-    return () => window.removeEventListener("pointerdown", onPointer);
-  }, [branchMenuOpen]);
 
   const canPull = Boolean(index?.remote) && Boolean(index?.upstream);
 
@@ -204,10 +194,7 @@ export function GitChangesPanel({
           </span>
         ) : null}
         {index?.branch ? (
-          <div
-            ref={branchMenuRef}
-            className="relative ml-auto flex min-w-0 items-center gap-1"
-          >
+          <div className="relative ml-auto flex min-w-0 items-center gap-2">
             <span className="flex min-w-0 items-center gap-1 text-[11px] text-content/50">
               <GitBranch className="size-3 shrink-0" strokeWidth={1.75} />
               <span className="min-w-0 truncate">{index.branch}</span>
@@ -223,6 +210,7 @@ export function GitChangesPanel({
               ) : null}
             </span>
             <button
+              ref={branchMenuRef}
               type="button"
               aria-haspopup="menu"
               aria-label={t("panel.branchActions")}
@@ -238,10 +226,13 @@ export function GitChangesPanel({
               )}
             </button>
             {branchMenuOpen ? (
-              <div
+              <Popover
+                anchor={branchMenuRef}
+                align="end"
+                onDismiss={() => setBranchMenuOpen(false)}
                 role="menu"
                 aria-label={t("panel.branchActions")}
-                className="absolute top-full right-0 z-30 mt-1 min-w-36 rounded-md border border-content/10 bg-background-base py-1 shadow-lg"
+                className="min-w-36 p-1"
               >
                 <button
                   type="button"
@@ -253,7 +244,7 @@ export function GitChangesPanel({
                       : t("panel.pullUnavailable")
                   }
                   onClick={() => void pull()}
-                  className="flex h-7 w-full items-center gap-2 px-3 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
+                  className="flex h-7 w-full items-center gap-2 rounded-lg px-2 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
                 >
                   {busy === "pull" ? (
                     <Loader
@@ -265,7 +256,7 @@ export function GitChangesPanel({
                   )}
                   {busy === "pull" ? t("panel.pulling") : t("panel.pull")}
                 </button>
-              </div>
+              </Popover>
             ) : null}
           </div>
         ) : (
@@ -438,15 +429,6 @@ function ChangedFiles({
     },
     [cwd, setBusy],
   );
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointer = (event: PointerEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    window.addEventListener("pointerdown", onPointer);
-    return () => window.removeEventListener("pointerdown", onPointer);
-  }, [menuOpen]);
 
   const toggleView = () => {
     changesView = view === "tree" ? "list" : "tree";
@@ -788,17 +770,20 @@ function ChangedFiles({
             <ChevronDown className="size-3.5" strokeWidth={2} />
           </button>
           {menuOpen ? (
-            <div
+            <Popover
+              anchor={menuRef}
+              align="end"
+              onDismiss={() => setMenuOpen(false)}
               role="menu"
               aria-label={t("commit.options")}
-              className="absolute top-full right-0 z-30 mt-1 min-w-48 rounded-md border border-content/10 bg-background-base py-1 shadow-lg"
+              className="min-w-48 p-1"
             >
               <button
                 type="button"
                 role="menuitem"
                 disabled={!canCommitPush}
                 onClick={() => void commit(true)}
-                className="flex h-7 w-full items-center px-3 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
+                className="flex h-7 w-full items-center rounded-lg px-2 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
               >
                 {t("commit.commitPush")}
               </button>
@@ -807,17 +792,17 @@ function ChangedFiles({
                 role="menuitem"
                 disabled={!canCommitPushPr}
                 onClick={() => void commit(true, true)}
-                className="flex h-7 w-full items-center px-3 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
+                className="flex h-7 w-full items-center rounded-lg px-2 text-left text-[12px] text-content hover:bg-content/10 disabled:opacity-40"
               >
                 {t("commit.commitPushPr")}
               </button>
-              <div className="my-1 border-t border-content/10" />
+              <div className="mx-1 my-1 border-t border-content/10" />
               <button
                 type="button"
                 role="menuitemcheckbox"
                 aria-checked={amend}
                 onClick={() => void toggleAmend()}
-                className="flex h-7 w-full items-center justify-between gap-2 px-3 text-left text-[12px] text-content hover:bg-content/10"
+                className="flex h-7 w-full items-center justify-between gap-2 rounded-lg px-2 text-left text-[12px] text-content hover:bg-content/10"
               >
                 {t("commit.amendLast")}
                 <span className="grid size-3.5 shrink-0 place-items-center">
@@ -826,7 +811,7 @@ function ChangedFiles({
                   ) : null}
                 </span>
               </button>
-            </div>
+            </Popover>
           ) : null}
         </div>
         {index ? (

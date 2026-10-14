@@ -501,23 +501,11 @@ export function turnStatusFromResult(rec: Record<string, unknown>): {
 }
 
 /**
- * The plan windows a refused session has to wait out, the same ones Claude Code
- * itself continues after. Anything else (`overage`, the usage-credit pool fast
- * mode bills to) refuses only credit-billed requests: Claude Code drops to
- * standard speed and the plan keeps serving the session.
- */
-const PLAN_LIMIT_WINDOWS = new Set([
-  "five_hour",
-  "seven_day",
-  "seven_day_overage_included",
-  "seven_day_opus",
-  "seven_day_sonnet",
-]);
-
-/**
  * A `rate_limit_event` that refuses requests, with when its window resets.
  * `null` once requests are allowed again, while extra usage is paying for
- * them and the turn goes on, or when only credit-billed requests are refused.
+ * them and the turn goes on, or when only the extra-usage pool is refused:
+ * fast mode bills to it, and Claude Code drops to standard speed and goes on
+ * under the plan.
  */
 export function usageLimitFromRateLimitEvent(
   rec: Record<string, unknown>,
@@ -525,9 +513,7 @@ export function usageLimitFromRateLimitEvent(
   const info = asRecord(rec.rate_limit_info);
   if (stringField(info, "status") !== "rejected") return null;
   if (info?.isUsingOverage === true) return null;
-  if (!PLAN_LIMIT_WINDOWS.has(stringField(info, "rateLimitType") ?? "")) {
-    return null;
-  }
+  if (stringField(info, "rateLimitType") === "overage") return null;
   const resetsAt = parseResetTimestamp(info?.resetsAt);
   return resetsAt != null ? { resetsAt } : {};
 }
@@ -616,6 +602,21 @@ export function inputJsonDeltaFromEvent(
 export function isSubagentMessage(rec: Record<string, unknown>): boolean {
   const parent = rec.parent_tool_use_id;
   return typeof parent === "string" && parent.length > 0;
+}
+
+/**
+ * On resume, the CLI re-reports every background task the session started
+ * that it considers unfinished — even ones already stopped and reported —
+ * and answers each with an empty, zero-turn result. That result belongs to
+ * no turn, so it must not end the one MonoCode is waiting on.
+ */
+export function isReplayedTaskNotificationResult(
+  rec: Record<string, unknown>,
+): boolean {
+  return (
+    stringField(asRecord(rec.origin), "kind") === "task-notification" &&
+    rec.num_turns === 0
+  );
 }
 
 export function isAgentTaskType(taskType: string | undefined): boolean {

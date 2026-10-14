@@ -162,7 +162,8 @@
       "TerminalToggleDock": "终端：切换停靠",
       "EditorFind": "编辑器：查找",
       "EditorReplace": "编辑器：替换",
-      "AppToggleMono": "应用：切换 Mono"
+      "AppToggleMono": "应用：切换 Mono",
+      "SessionStop": "会话：停止"
     },
     "when": {
       "Always": "始终",

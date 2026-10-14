@@ -439,7 +439,8 @@
     "notes_other": "{{count}} 条备注",
     "statusUpdate": "状态更新",
     "thinking": "思考中",
-    "thought": "已思考"
+    "thought": "已思考",
+    "working": "进行中"
   },
   "pane": {
     "closeTitle": "关闭窗格（{{shortcut}}）",

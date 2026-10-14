@@ -29,7 +29,11 @@
     "experimental": "Experimental",
     "body": "Agents of your own that live on the rail and work across your projects. They remember what matters and pick up habits they run on their own.",
     "create": "Create your mono",
-    "later": "Not now"
+    "later": "Not now",
+    "show": "Show monos",
+    "hideHint": "Hide monos from the rail. Turn them back on in Settings › Monos.",
+    "cardBody": "Agents of your own that work across your projects and run habits on their own.",
+    "createShort": "Create mono"
   },
   "details": {
     "label": "{{name}} details",
@@ -294,7 +298,10 @@
     "emptyDocuments": "Ask {{name}} to write something up, like a plan or a summary, and it shows up here.",
     "searchPlaceholder": "Search sessions...",
     "search": "Search sessions",
-    "filter": "Filter sessions"
+    "filter": "Filter sessions",
+    "activityEmpty": "Select the activity on one of {{name}}'s messages to see each step it took.",
+    "showActivity": "Show activity",
+    "hideActivity": "Hide activity"
   },
   "sessionList": {
     "noSearchMatch": "No sessions match this search.",

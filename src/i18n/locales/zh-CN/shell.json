@@ -322,7 +322,8 @@
       "hours": "{{hours}} 小时",
       "hoursMinutes": "{{hours}} 小时 {{minutes}} 分钟",
       "days": "{{days}} 天"
-    }
+    },
+    "sessionsNewReplies": "会话，有新回复"
   },
   "monoRail": {
     "newMono": "新建 Mono",

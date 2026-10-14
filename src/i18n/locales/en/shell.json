@@ -329,7 +329,8 @@
       "hours": "{{hours}}h",
       "hoursMinutes": "{{hours}}h {{minutes}}m",
       "days": "{{days}}d"
-    }
+    },
+    "sessionsNewReplies": "Sessions, new replies"
   },
   "monoRail": {
     "newMono": "New mono",

@@ -29,7 +29,11 @@
     "experimental": "实验性",
     "body": "属于你自己的 Agent，住在侧栏上，跨项目干活。它们记得重要的事，还会养成习惯，自己按时去做。",
     "create": "创建你的 Mono",
-    "later": "以后再说"
+    "later": "以后再说",
+    "show": "显示 Monos",
+    "hideHint": "从项目栏隐藏 Monos。可以在「设置 › Monos」里重新打开。",
+    "cardBody": "属于你自己的 Agent，跨项目干活，还会自己跑习惯任务。",
+    "createShort": "新建 Mono"
   },
   "details": {
     "label": "{{name}} 的详情",
@@ -292,7 +296,10 @@
     "emptyDocuments": "让 {{name}} 写点东西，比如一份计划或总结，文档就会出现在这里。",
     "searchPlaceholder": "搜索会话…",
     "search": "搜索会话",
-    "filter": "筛选会话"
+    "filter": "筛选会话",
+    "activityEmpty": "点 {{name}} 某条消息上的活动，查看它的每一步。",
+    "showActivity": "显示活动",
+    "hideActivity": "隐藏活动"
   },
   "sessionList": {
     "noSearchMatch": "没有符合搜索的会话。",
