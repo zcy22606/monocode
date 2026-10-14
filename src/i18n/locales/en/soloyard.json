@@ -464,6 +464,7 @@
     "rootHint": "A session started in the root can change every repository — good for cross-repo debugging and integration.",
     "members": "Repositories",
     "addFolder": "Add folder…",
+    "addFolderHint": "Pick any folder, inside the project root or anywhere else",
     "pickFolders": "Add repositories to this project",
     "empty": "No repositories yet. Add the ones found below, or folders that live elsewhere (like white-label front ends).",
     "worktreeHint": "Worktrees are grouped under the repository they belong to.",

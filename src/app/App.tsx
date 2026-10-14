@@ -81,6 +81,7 @@ import { placeSession, useMissingWorktrees } from "../features/soloyard/model/mi
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
 import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
 import { useOnRepoMembersChanged } from "../features/soloyard/ui/repos/RepoNav"; // Soloyard
+import { useRepoBrowseCwd } from "../features/soloyard/model/repoFilter"; // Soloyard
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, message } from "@tauri-apps/plugin-dialog";
@@ -1935,8 +1936,11 @@ function Workspace({
     sidebarCwdKey != null &&
     !loadedProjects.has(sidebarCwdKey) &&
     !historyFailed;
-  const gitCwd =
-    activeFile?.cwd ?? (active ? sessionWorkCwd(active) : sidebarCwd);
+  // Soloyard: the root / repo row picked in the project rail decides what Files and Changes show.
+  const gitCwd = useRepoBrowseCwd(
+    sidebarCwd,
+    activeFile?.cwd ?? (active ? sessionWorkCwd(active) : sidebarCwd),
+  );
   const terminalCwd = newTerminalCwd({
     activeFile,
     session: active,

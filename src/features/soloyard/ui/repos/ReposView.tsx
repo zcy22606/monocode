@@ -103,7 +103,7 @@ export function ReposView({ project, cwd }: { project: SoloyardProject; cwd: str
                   {drafting ? t("repos.drafting") : t("repos.draft", { count: undescribed.length })}
                 </button>
               ) : null}
-              <button type="button" onClick={() => void addFolders()} className="flex h-6 items-center gap-1 rounded px-1.5 text-[12px] text-content/60 hover:bg-content/10 hover:text-content">
+              <button type="button" title={t("repos.addFolderHint")} onClick={() => void addFolders()} className="flex h-6 items-center gap-1 rounded px-1.5 text-[12px] text-content/60 hover:bg-content/10 hover:text-content">
                 <Plus className="size-3.5" />
                 {t("repos.addFolder")}
               </button>
