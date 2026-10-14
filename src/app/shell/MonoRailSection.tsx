@@ -219,7 +219,7 @@ export function MonoRailSection({
                   <span
                     aria-hidden
                     data-mono-unread={unseen}
-                    className="grid h-4 min-w-4 shrink-0 place-items-center rounded-full bg-content/15 px-1 text-[10px] font-medium tabular-nums leading-none text-content/80 group-hover:hidden group-has-[:focus-visible]:hidden"
+                    className="grid h-4 min-w-4 shrink-0 place-items-center rounded-full bg-content/15 px-1 text-[10px] font-medium tabular-nums leading-none text-content/80 group-hover:hidden group-has-[button:focus-visible]:hidden"
                   >
                     {unreadBadge(unseen)}
                   </span>
