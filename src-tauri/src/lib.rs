@@ -315,6 +315,7 @@ pub fn run() {
             soloyard_services::soloyard_service_log, // Soloyard
             soloyard_agents::soloyard_agents_status, // Soloyard
             soloyard_agents::soloyard_mcp_connect, // Soloyard
+            soloyard_agents::soloyard_mcp_launch, // Soloyard
             soloyard_agents::soloyard_mcp_remove, // Soloyard
             soloyard_agents::soloyard_legacy_cleanup, // Soloyard
             remote::remote_machines,

@@ -7,6 +7,7 @@ import {
 } from "../../../../features/providers/model/rateLimits";
 import type { RuntimeMode } from "../../../../features/sessions/model/session";
 import { soloyardCodexInstructions, withSoloyardWritableRoots } from "../../../../features/soloyard/model/sessionContext"; // Soloyard
+import { soloyardCodexMcpConfig } from "../../../../features/soloyard/model/sessionMcp"; // Soloyard
 import {
   questionPromptTitle,
   type UserQuestionReply,
@@ -695,6 +696,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
           model,
           serviceTier,
         });
+        params.config = { ...(params.config as Record<string, unknown> | undefined), ...(await soloyardCodexMcpConfig()) }; // Soloyard: 本版本的 MCP
         const opened = await rpc.request<{ thread?: { id?: string } }>(
           "thread/resume",
           {
@@ -731,6 +733,7 @@ async function ensureLive(input: HarnessSessionInput): Promise<Live> {
         model,
         serviceTier,
       });
+      params.config = { ...(params.config as Record<string, unknown> | undefined), ...(await soloyardCodexMcpConfig()) }; // Soloyard: 本版本的 MCP
       const opened = await rpc.request<{ thread?: { id?: string } }>(
         "thread/start",
         {

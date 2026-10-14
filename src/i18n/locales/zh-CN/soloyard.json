@@ -387,7 +387,7 @@
   },
   "mcp": {
     "title": "Soloyard MCP",
-    "description": "让 Claude Code 和 Codex 读写本应用的项目和 issue。通过各自的 CLI 添加一个名为 soloyard 的用户级 MCP 服务。",
+    "description": "应用里开的会话已经自动带上本版本的 Soloyard MCP（读写本应用的项目和 issue），不用在这里接入。这里的「接入」是给终端里直接跑的 Claude Code、Codex 用的：通过各自的 CLI 添加一个用户级 MCP 服务。",
     "checking": "正在检查…",
     "notInstalled": "没找到 CLI",
     "connected": "已接入",
