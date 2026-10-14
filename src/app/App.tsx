@@ -77,7 +77,7 @@ import { onSoloyardAppActions } from "../features/soloyard/model/appActions";
 import { reusableStartTab } from "../features/soloyard/model/startWork"; // Soloyard
 import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
-import { useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
+import { placeSession, useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
 import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
 import { useOnRepoMembersChanged } from "../features/soloyard/ui/repos/RepoNav"; // Soloyard
@@ -8790,17 +8790,17 @@ function Workspace({
         deleteSession: (sessionId) => onRemoveHistorySession(sessionId, "delete", true),
         renameSession: (sessionId, title) => void onRenameHistorySession(sessionId, title),
         // Multi-repo project: a blank session picks the root, a member repo, one of its worktrees, or a new worktree.
+        // So does a session whose worktree was deleted (it can't send until it does).
         setWorkDir: ({ sessionId, workCwd, branch, newWorktree }) => {
           const session = sessionsRef.current.find((s) => s.id === sessionId);
           if (!session) return "session not open";
-          if (session.busy || !isBlankSession(session)) return "busy";
-          setSessions((prev) =>
-            prev.map((s) =>
-              s.id === sessionId
-                ? { ...s, worktreeCwd: workCwd, branch, worktreeRemoved: undefined, workspaceMode: newWorktree ? "worktree" : undefined, worktreeBase: newWorktree ? "HEAD" : undefined }
-                : s,
-            ),
-          );
+          if (session.busy || (!isBlankSession(session) && !session.worktreeRemoved)) return "busy";
+          if (session.worktreeRemoved) {
+            for (const harness of sessionChildHarnesses(session)) void forgetHarnessSession(harness, sessionId);
+            if (!newWorktree) void keepSessionChanges(sessionId, workCwd ?? session.cwd).catch(() => undefined);
+          }
+          sessionsRef.current = sessionsRef.current.map((s) => (s.id === sessionId ? placeSession(s, { workCwd, branch, newWorktree }) : s));
+          setSessions(sessionsRef.current);
           return undefined;
         },
         openProject: (path) => onSelectProject(path),

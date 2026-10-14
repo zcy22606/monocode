@@ -20,23 +20,27 @@ type Props = {
   /** 第一次发送时在 workCwd 这个仓库里新建工作树。 */
   newWorktree: boolean;
   locked: boolean;
+  /** workCwd 被删了（比如 agent 自己删了工作树）：不能发送，要重新选在哪干活。 */
+  removed?: boolean;
 };
 
 const chip = "flex h-6 shrink-0 items-center gap-1.5 rounded px-1.5 text-[12px] text-content/60";
 
-export function WorkDirChip({ sessionId, cwd, workCwd, newWorktree, locked }: Props) {
+export function WorkDirChip({ sessionId, cwd, workCwd, newWorktree, locked, removed }: Props) {
   const { t } = useTranslation("soloyard");
   const info = useProjectRepos(cwd);
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   if (!info?.repos?.length) return null;
   const at = locateWorkDir(info, workCwd);
-  const label = !at
+  const label = removed
+    ? t("repos.where.removed")
+    : !at
     ? t("repos.where.root")
     : `${at.repo.name}${at.worktree ? ` · ${at.worktree.name}` : newWorktree ? ` · ${t("repos.where.newWorktree")}` : ""}`;
-  const branch = at && !newWorktree ? (at.worktree?.branch ?? at.repo.branch) : null;
+  const branch = at && !newWorktree && !removed ? (at.worktree?.branch ?? at.repo.branch) : null;
   const Icon = at ? GitBranch : Folder;
-  if (locked)
+  if (locked && !removed)
     return (
       <span className={chip} title={t("repos.where.locked")}>
         <Icon className="size-3.5" />
@@ -51,13 +55,13 @@ export function WorkDirChip({ sessionId, cwd, workCwd, newWorktree, locked }: Pr
         type="button"
         data-no-drag
         data-soloyard-workdir-trigger
-        title={t("repos.where.title")}
+        title={removed ? t("repos.where.removedHint") : t("repos.where.title")}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className={`${chip} text-content hover:bg-content/10 ${open ? "bg-content/10" : ""}`}
+        className={`${chip} ${removed ? "text-amber-400" : "text-content"} hover:bg-content/10 ${open ? "bg-content/10" : ""}`}
       >
         <Icon className="size-3.5" />
         <span className="max-w-56 truncate">{label}</span>

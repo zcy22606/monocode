@@ -663,7 +663,7 @@ const LocalSessionPane = memo(function LocalSessionPane({
         soloyardLinks ? ( // Soloyard
           <>
             {brainstorm ? <BrainstormFolderChip sessionId={session.id} cwd={session.cwd} title={session.title} harness={session.harness} locked={!isEmpty} /> : null}
-            {multiRepo ? <WorkDirChip sessionId={session.id} cwd={session.cwd} workCwd={session.worktreeCwd} newWorktree={session.workspaceMode === "worktree"} locked={!isEmpty} /> : null}
+            {multiRepo ? <WorkDirChip sessionId={session.id} cwd={session.cwd} workCwd={session.worktreeCwd} newWorktree={session.workspaceMode === "worktree"} locked={!isEmpty} removed={session.worktreeRemoved} /> : null}
             <ProjectMapChip cwd={session.cwd} workCwd={session.worktreeCwd} />
             <SessionLinksButton sessionId={session.id} cwd={session.cwd} onOpenFile={onOpenFile} />
           </>

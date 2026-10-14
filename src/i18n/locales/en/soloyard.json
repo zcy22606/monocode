@@ -454,7 +454,7 @@
       "hint": "Named after the start time by default. Can only be changed before the first message."
     },
     "moved": "Brainstorm moved to the left: click Brainstorm under Inbox to start one; past ones are listed in the sidebar. You can close this old tab.",
-    "promotedPrompt": "[Promoted to a project] Name \"{{name}}\", folder {{path}}, issue key {{key}}.\n1. Bring the overview up to date with what we've discussed so far (don't overwrite sections I edited).\n2. Then start initiation: take stock of the overview, evidence, decisions and docs/, list an initiation coverage table (for each part: covered / needs more / missing, with evidence IDs) and estimate the time. Wait for my go-ahead before running, and only fill the gaps."
+    "promotedPrompt": "[Promoted to a project] Name \"{{name}}\", folder {{path}}, issue key {{key}}.\n1. Bring the overview up to date with what we've discussed so far (don't overwrite sections I edited).\n2. Then start initiation with product-thinking: take stock of the overview, evidence, decisions and docs/, list an initiation coverage table (for each part: covered / needs more / missing, with evidence IDs) and estimate the time. Wait for my go-ahead before running, and only fill the gaps."
   },
   "repos": {
     "intro": "Which repositories this project is made of. Every new session gets their locations and descriptions as a project map, plus access to all of them — no need to explain them again.",
@@ -493,7 +493,9 @@
       "newWorktree": "New worktree",
       "newWorktreeHint": "A new branch from {{branch}}, created on the first message",
       "worktrees": "Existing worktrees",
-      "locked": "Set when the conversation started"
+      "locked": "Set when the conversation started",
+      "removed": "Worktree deleted · choose where to continue",
+      "removedHint": "This session’s worktree was deleted. Choose where to continue; the agent gets a recap of the conversation."
     },
     "count_one": "{{count}} repo",
     "count_other": "{{count}} repos",

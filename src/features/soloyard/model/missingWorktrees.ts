@@ -5,6 +5,8 @@
 import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Session } from "../../sessions/model/session";
+import { appendReadyHandoff, buildDeterministicHandoff } from "../../sessions/model/handoff";
+import { isBlankSession } from "../../projects/model/projectReturn";
 
 const watched = (session: Session) =>
   !session.busy && !session.worktreeRemoved && !!session.worktreeCwd;
@@ -45,4 +47,32 @@ export function useMissingWorktrees(
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [key]);
+}
+
+/**
+ * Multi-repo "where to work" for a blank session, or for one whose worktree was deleted. The latter's
+ * provider conversation stayed with the deleted folder (detaching dropped it), so it continues with a
+ * recap of the transcript, like the base's worktree picker does.
+ */
+export function placeSession(
+  session: Session,
+  { workCwd, branch, newWorktree }: { workCwd?: string; branch?: string; newWorktree?: boolean },
+): Session {
+  const base =
+    session.worktreeRemoved && !isBlankSession(session)
+      ? appendReadyHandoff(
+          session,
+          session.harness,
+          session.harness,
+          `The previous working copy was deleted. Continue this conversation in the current working directory. Recheck the files before making changes.\n\n${buildDeterministicHandoff(session)}`,
+        )
+      : session;
+  return {
+    ...base,
+    worktreeCwd: workCwd,
+    branch,
+    worktreeRemoved: undefined,
+    workspaceMode: newWorktree ? "worktree" : undefined,
+    worktreeBase: newWorktree ? "HEAD" : undefined,
+  };
 }
