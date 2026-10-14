@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { DB } from './db.ts'
 import { tx } from './db.ts'
@@ -29,9 +29,9 @@ export function importProductThinking(db: DB, actor: Actor, dir: string, project
     const p = getRow(db, 'projects', projectId)!
     if (!p.goal && project.idea) update(db, actor, 'projects', projectId, { goal: project.idea }, undefined, batch)
 
-    // 文档（节 + 块）不进库：以项目 docs/ 里的文件为准，product-thinking 直接把文档写进去，Docs 页读文件渲染。这里只数一下
-    const docDir = join(dir, 'docs')
-    const docs = existsSync(docDir) ? readdirSync(docDir).filter((f) => f.endsWith('.json')).length : 0
+    // 文档（节 + 块）不进库：以项目 docs/ 里的文件为准，product-thinking 直接把文档写进去，Docs 页读文件渲染。
+    // 这里只数 project.json 登记了、文件也在的（连着 Soloyard 时工作目录是 .product-thinking/，文档在 ../docs/）
+    const docs = (project.docs ?? []).filter((d: Row) => d.file && existsSync(join(dir, d.file))).length
 
     // 证据：量大且只读，不进变更日志
     const ev = readJson(join(dir, 'evidence.json'))

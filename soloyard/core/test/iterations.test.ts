@@ -98,7 +98,8 @@ test('导入 product-thinking：建版本、按 plan 放功能；重新导入保
   const dir = mkdtempSync(join(tmpdir(), 'pt-'))
   mkdirSync(join(dir, 'docs'))
   const write = (f: string, v: unknown) => writeFileSync(join(dir, f), JSON.stringify(v))
-  write('project.json', { name: 'app', idea: '做个 app' })
+  // 登记了但文件不在的不算（连着 Soloyard 时文档在工作目录外的 ../docs/，按登记的路径找）
+  write('project.json', { name: 'app', idea: '做个 app', docs: [{ id: '01-立项', file: 'docs/01-立项.json' }, { id: '02', file: 'docs/02-功能全集.json' }] })
   write('docs/01-立项.json', { id: '01-立项', title: '立项卡', sections: [] })
   write('evidence.json', { items: [{ id: 'E-1', level: 'A', quote: 'x' }] })
   write('decisions.json', { decisions: [{ id: 'D-1', title: '人群', door: 'one-way', status: 'pending', user: null }] })
