@@ -322,3 +322,33 @@ test('MCP：决策和证据；record_decision 要原话；单向门定了阶段�
     s.close()
   }
 })
+
+test('MCP：new_doc 按规范建文档（编号续上、作者是 agent），list_docs 列根目录和成员仓库的文档', async () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'soloyard-mcp-docs-')))
+  const backend = join(dir, 'backend')
+  execFileSync('git', ['init', '-q', backend])
+  const dbPath = join(dir, 'monocode.db')
+  const db = openDb(dbPath)
+  const pid = repo.createProject(db, 'user', { name: 'Robo', key: 'ROB', path: dir })
+  db.prepare('INSERT INTO soloyard_project_repos (project_id, path, description, sort) VALUES (?, ?, ?, 0)').run(pid, backend, '后端')
+  db.close()
+
+  const s = server(dbPath)
+  try {
+    const init = await s.rpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } })
+    assert.match(init.result.instructions, /NN-中文标题\.md/, 'instructions 里带着文档规范')
+    const adr = await s.tool('new_doc', { project: 'ROB', type: 'adr', title: '提交费按赛事配置', repo: 'backend', related: 'ROB-1' })
+    assert.equal(adr.data.code, 'adr/01')
+    assert.equal(adr.data.path, join(backend, 'docs', 'adr', '01-提交费按赛事配置.md'))
+    assert.equal((await s.tool('new_doc', { project: 'ROB', type: 'product', title: '立项卡', kind: 'json' })).data.path, join(dir, 'docs', 'product', '01-立项卡.json'))
+    assert.match((await s.tool('new_doc', { project: 'ROB', type: 'notes', title: 'x' })).error.error, /类型只能是/)
+
+    const all = (await s.tool('list_docs', { project: 'ROB' })).data
+    assert.deepEqual(all.map((d: any) => [d.code, d.title, d.repo, d.status]), [['product/01', '立项卡', null, '草稿'], ['adr/01', 'ADR 01：提交费按赛事配置', 'backend', '草稿']])
+    assert.deepEqual((await s.tool('list_docs', { project: dir, q: '提交费' })).data.map((d: any) => d.code), ['adr/01'])
+    const { readFileSync } = await import('node:fs')
+    assert.match(readFileSync(adr.data.path, 'utf8'), /- 作者：test\n- 关联：ROB-1/)
+  } finally {
+    s.close()
+  }
+})

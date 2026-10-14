@@ -26,11 +26,12 @@ export function projectRoot(db: DB, projectId: number): string | undefined {
   return (db.prepare('SELECT path FROM soloyard_project_paths WHERE project_id = ? ORDER BY length(path) LIMIT 1').get(projectId) as { path?: string } | undefined)?.path
 }
 
-/** 立项卡在不在：product-thinking 的 docs/01-立项.*（或文件名带「立项」），旧数据看文档表的 slug。 */
+/** 立项卡在不在：docs/product/ 里（文档规范）或 docs/ 根下（之前的写法）文件名带「立项」，旧数据看文档表的 slug。 */
 function hasCharter(db: DB, projectId: number) {
   const root = projectRoot(db, projectId)
-  const docs = root ? join(root, 'docs') : ''
-  if (docs && existsSync(docs) && readdirSync(docs).some((f) => /立项|charter/i.test(f))) return true
+  for (const dir of root ? [join(root, 'docs', 'product'), join(root, 'docs')] : []) {
+    if (existsSync(dir) && readdirSync(dir).some((f) => /立项|charter/i.test(f))) return true
+  }
   return !!db.prepare("SELECT 1 FROM soloyard_documents WHERE project_id = ? AND (slug LIKE '01-%' OR title LIKE '%立项%')").get(projectId)
 }
 

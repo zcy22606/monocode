@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asPtDoc, blockKind, chartToTable, decisionIndex, linkRefsInMarkdown, parseInline, sortDocs, splitRefs, type DocEntry } from "./docs";
+import { asPtDoc, blockKind, chartToTable, decisionIndex, linkRefsInMarkdown, docCode, filterDocs, groupDocs, parseInline, splitRefs, type DocEntry } from "./docs";
 
 describe("D-x / E-x 引用", () => {
   it("认决策和证据编号，不认功能编号里的", () => {
@@ -72,12 +72,60 @@ describe("product-thinking 块", () => {
   });
 });
 
-it("列表排序：overview 在前，根目录先于子目录", () => {
-  const doc = (rel: string): DocEntry => {
-    const i = rel.lastIndexOf("/");
-    return { rel, path: `/p/docs/${rel}`, dir: i < 0 ? "" : rel.slice(0, i), name: rel.slice(i + 1), kind: "md", mtimeMs: 0 };
+describe("文档列表", () => {
+  const doc = (rel: string, extra: Partial<DocEntry> = {}): DocEntry => {
+    const [type, file] = rel.split("/");
+    const typed = file && ["product", "specs", "adr", "reports", "archive"].includes(type);
+    return {
+      path: `/p/${extra.repo ? "backend/" : ""}docs/${rel}`, repo: null, repoName: null, rel, kind: "md",
+      type: typed ? (type as DocEntry["type"]) : null, no: typed ? (/^(\d{2})-/.exec(file)?.[1] ?? null) : null,
+      title: rel, date: "2026-09-01", dateFrom: "header", status: null, state: null, related: null, author: null, mtimeMs: 0, ...extra,
+    };
   };
-  expect(sortDocs(["b/x.md", "z.md", "a.md", "overview.md", "a/y.json"].map(doc)).map((d) => d.rel)).toEqual(["overview.md", "a.md", "z.md", "a/y.json", "b/x.md"]);
+  const docs = [
+    doc("adr/03-赛事.md", { repo: "/p/backend", repoName: "backend", date: "2026-08-24", state: "confirmed" }),
+    doc("adr/01-配置源.md", { repo: "/p/backend", repoName: "backend", date: "2026-08-17" }),
+    doc("product/01-立项卡.json", { date: "2026-10-01" }),
+    doc("handover/OPS.md", { date: "2026-08-13" }),
+    doc("archive/01-工程规范.md", { state: "superseded" }),
+    doc("overview.md", { auto: true }),
+  ];
+
+  it("按类型分组，类里先根目录再仓库、按编号排，未归类最后；按仓库根目录在前；时间线按月新的在前", () => {
+    const all = filterDocs(docs, { repos: new Set(), showRetired: true, q: "" });
+    expect(groupDocs(all, "type").map((g) => [g.key, g.docs.map((d) => d.rel)])).toEqual([
+      ["product", ["product/01-立项卡.json"]],
+      ["adr", ["adr/01-配置源.md", "adr/03-赛事.md"]],
+      ["archive", ["archive/01-工程规范.md"]],
+      ["unsorted", ["handover/OPS.md"]],
+    ]);
+    expect(groupDocs(all, "repo").map((g) => [g.key, g.docs.map((d) => d.rel)])).toEqual([
+      ["", ["product/01-立项卡.json", "archive/01-工程规范.md", "handover/OPS.md"]],
+      ["/p/backend", ["adr/01-配置源.md", "adr/03-赛事.md"]],
+    ]);
+    expect(groupDocs(all, "time").map((g) => g.key)).toEqual(["2026-10", "2026-09", "2026-08"]);
+  });
+
+  it("按编号排，不按日期：编号文件夹里按自己的序号（10 排在 02 后面），按类型时根目录在前", () => {
+    const list = [
+      doc("reports/01-尽调/10-附录.md", { date: "2026-08-01" }),
+      doc("reports/02-复盘.md", { date: "2026-07-01" }),
+      doc("reports/01-尽调/02-安全.md", { date: "2026-09-01" }),
+      doc("reports/01-周报.md", { repo: "/p/backend", repoName: "backend", date: "2026-01-01" }),
+    ];
+    expect(groupDocs(list, "type")[0].docs.map((d) => `${d.repoName ?? "root"}:${docCode(d)}`)).toEqual(["root:reports/01/02", "root:reports/01/10", "root:reports/02", "backend:reports/01"]);
+    expect(groupDocs(list, "repo")[0].docs.map((d) => docCode(d))).toEqual(["reports/01/02", "reports/01/10", "reports/02"]);
+  });
+
+  it("默认藏已废弃 / 已归档和说明书快照；按仓库、标题筛", () => {
+    const visible = (f: Partial<Parameters<typeof filterDocs>[1]>) => filterDocs(docs, { repos: new Set(), showRetired: false, q: "", ...f }).map((d) => d.rel);
+    expect(visible({})).not.toContain("archive/01-工程规范.md");
+    expect(visible({})).not.toContain("overview.md");
+    expect(visible({ repos: new Set(["/p/backend"]) })).toEqual(["adr/03-赛事.md", "adr/01-配置源.md"]);
+    expect(visible({ repos: new Set([""]), q: "立项" })).toEqual(["product/01-立项卡.json"]);
+    expect([docCode(docs[0]), docCode({ type: "archive", no: null, rel: "archive/x.md" }), docCode({ type: null, no: null, rel: "x.md" })]).toEqual(["adr/03", "archive", null]);
+    expect(docCode({ type: "reports", no: "01", rel: "reports/01-技术尽调/03-安全策略.md" })).toBe("reports/01/03");
+  });
 });
 
 it("引用锚点经过底座 markdown 的清洗还在（外层按 href 接管点击）", async () => {

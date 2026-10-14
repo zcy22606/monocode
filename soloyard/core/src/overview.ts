@@ -133,7 +133,7 @@ export const brainstormGuide = (mcp = 'soloyard') => [
   '## Brainstorm (Soloyard idea project)',
   'This session is a brainstorm. Help the user think the idea through first — who it is for, how they cope today, what would make them switch — and do not rush to conclusions. Reply in the user\'s language.',
   `The current folder is an idea project in Soloyard (the ${mcp} MCP server\'s get_project with the current folder finds it; use that server, not another Soloyard one). From the user\'s first message on, keep its overview current with update_overview: a working title (name), an English name for the future project folder (slug: lowercase letters, digits and dashes), a one-liner (goal), and the sections as they become clear (background, users, alternatives, findings, risks, open). If the direction is not clear yet, title it "Untitled idea" in the user\'s language; when the direction changes, update it. Do not overwrite sections the user edited — suggest instead.`,
-  'Record evidence (add_evidence) and decisions (upsert_decisions) in the app, not only in the chat. Ask the user before researching competitors or user voices. Notes and idea cards go into docs/ in the current folder.',
+  'Record evidence (add_evidence) and decisions (upsert_decisions) in the app, not only in the chat. Ask the user before researching competitors or user voices. Write notes and idea cards with the new_doc tool (type research for notes and findings, product for the idea card): it files them into docs/ in the current folder by the docs convention.',
   'Promoting the idea to a project is the user\'s call in the app; do not do it yourself.',
 ].join('\n')
 

@@ -713,8 +713,7 @@
     "accessed": "accessed {{date}}"
   },
   "docs": {
-    "noFolder": "This project has no docs/ folder yet. Agents write product docs (briefs, feature maps, research) into docs/ at the project root, and they show up here.",
-    "emptyFolder": "docs/ has no .md or .json files yet. Agents write product docs here, and they show up as soon as they are saved.",
+    "noFolder": "No docs yet. The agent writes product docs, technical designs and reports into docs/ following the docs convention, or use New doc; they show up here once saved.",
     "auto": "Auto-generated",
     "autoHint": "Snapshot of the project overview, regenerated whenever it changes. Edit it on the Overview page.",
     "missing": "This file no longer exists.",
@@ -730,7 +729,73 @@
     "rawJson": "Raw JSON",
     "unknownBlock": "Unsupported block: {{type}}",
     "featuresTable": "Feature table — open Iterations to see features",
-    "competitorMatrix": "Competitor matrix — open Iterations to see features"
+    "competitorMatrix": "Competitor matrix — open Iterations to see features",
+    "scopeRoot": "docs/ in the project root",
+    "scope_one": "docs/ in the project root and {{count}} member repo",
+    "scope_other": "docs/ in the project root and {{count}} member repos",
+    "root": "Root",
+    "group": {
+      "type": "By type",
+      "repo": "By repo",
+      "time": "Timeline"
+    },
+    "type": {
+      "product": "Product",
+      "specs": "Specs",
+      "architecture": "Architecture",
+      "adr": "Decisions (ADR)",
+      "plans": "Plans",
+      "research": "Research",
+      "reports": "Reports",
+      "runbooks": "Runbooks",
+      "archive": "Archive",
+      "unsorted": "Unsorted"
+    },
+    "typeHint": {
+      "product": "PRDs, requirements, initiation brief, features",
+      "specs": "Interface contracts, data formats, business rules",
+      "architecture": "Architecture and technical designs",
+      "adr": "Hard-to-reverse decisions",
+      "plans": "Development plans and schedules",
+      "research": "Competitor, user and method research",
+      "reports": "Experiments, incidents, audits, progress logs",
+      "runbooks": "Deploy, operate, onboard, procedures",
+      "archive": "Superseded or outdated, kept not deleted",
+      "unsorted": "Not in a type folder: use Organize docs to let the agent file them"
+    },
+    "state": {
+      "draft": "Draft",
+      "active": "In progress",
+      "confirmed": "Confirmed",
+      "done": "Ended",
+      "partial": "Partly superseded",
+      "superseded": "Superseded",
+      "archived": "Archived",
+      "none": "No status"
+    },
+    "showRetired_one": "Superseded / archived {{count}}",
+    "showRetired_other": "Superseded / archived {{count}}",
+    "search": "Search titles",
+    "dateFromFile": "The header has no date; this is the file's creation time",
+    "overviewRow": "Product brief",
+    "new": "New doc",
+    "organize": "Organize docs",
+    "organizeHint": "Opens a session where the agent lists how to file the docs per the convention; nothing changes until you agree",
+    "organizePrompt": "Organize this project's docs per the docs convention below.\n\n{{convention}}\n\nSteps:\n1. Scan first: docs/ in the project root and in every member repo, plus markdown scattered outside docs/ (the top of the project folder, subfolders). Skip worktree copies, hidden tool folders and node_modules. With the soloyard MCP tools, list_docs lists what the app sees.\n2. Show me the plan before changing anything: grouped by repo, each line with the action (rename into place / move into docs/ / add header / archive / remove duplicate copy / leave), old path → new path, type and reason; numbers continue in each type folder in order of the documents' dates. List anything the convention doesn't settle or you are unsure about separately and ask me, with your suggestion.\n3. Put the convention in each repo: check whether AGENTS.md / CLAUDE.md in each repo (root and member repos) has a docs convention. Where it doesn't, add an item 「add docs convention」 to the plan: append a 「文档约定」 section to AGENTS.md copying the convention points above (to CLAUDE.md when there is only CLAUDE.md; to AGENTS.md when CLAUDE.md just points at it). Where one exists but differs from the above, list the differences and ask me instead of changing it; for repos with neither file, ask me whether to create one.\n4. Headers: date from the first git commit (file creation time when there is no git), author 「整理时补」. Keep a status the file already states and leave it empty otherwise — don't judge for me whether a doc still holds.\n5. Only after I agree: rename with git mv and update every reference to the old paths (AGENTS.md, CLAUDE.md, other docs). For folders not in git, make a backup archive first. Afterwards list what changed and don't commit until I confirm.",
+    "newDialog": {
+      "title": "New doc",
+      "type": "Type",
+      "where": "Where",
+      "whereRoot": "Root (cross-repo, project-level)",
+      "whereRepo": "{{name}} (about this repo only)",
+      "titleLabel": "Title",
+      "titlePlaceholder": "A title; keep code identifiers as they are",
+      "related": "Related",
+      "relatedPlaceholder": "Issue, decision or doc numbers, e.g. SOL-80, ADR 03",
+      "note": "Goes in {{dir}} with the next number and a header filled in, status draft.",
+      "create": "Create",
+      "cancel": "Cancel"
+    }
   },
   "ideas": {
     "new": "New idea",

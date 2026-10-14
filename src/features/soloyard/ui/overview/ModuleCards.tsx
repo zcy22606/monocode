@@ -4,9 +4,9 @@
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "../../../../i18n";
-import { useSoloyard, type SoloyardProject } from "../../data/api";
+import { soloyardCall, useSoloyard, type SoloyardProject } from "../../data/api";
 import type { Decision, Evidence } from "../../model/decisions";
-import { scanDocs } from "../../model/docs";
+import { isRetired, type DocEntry } from "../../model/docs";
 import type { Issue } from "../../model/issues";
 import type { IterationPlan } from "../../model/iterations";
 import { issueCounts, iterationSummary, pendingDecisions } from "../../model/overview";
@@ -24,7 +24,7 @@ export function ModuleCards({ project, cwd }: { project: SoloyardProject; cwd: s
   const [docs, setDocs] = useState<number | null>(null);
   useEffect(() => {
     let alive = true;
-    void scanDocs(cwd).then((list) => alive && setDocs(list?.filter((d) => d.rel.toLowerCase() !== "overview.md").length ?? 0), () => undefined);
+    void soloyardCall<DocEntry[]>("listDocs", cwd).then((list) => alive && setDocs(list.filter((d) => !d.auto && !isRetired(d)).length), () => undefined);
     return () => {
       alive = false;
     };

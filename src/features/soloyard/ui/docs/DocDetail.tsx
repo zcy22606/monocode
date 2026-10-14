@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "../../../../i18n";
 import { basename, readTextFile, statFiles, writeTextFile } from "../../../../platform/tauri/fs";
 import { AgentMarkdown } from "../../../sessions/ui/AgentMarkdown";
-import { asPtDoc, decisionIndex, docKind, docsRoot, isOverviewDoc, linkRefsInMarkdown, REF_HREF, usePoll, type DecisionInfo, type RefKind } from "../../model/docs";
+import { asPtDoc, decisionIndex, docKind, docPath, docsRoot, linkRefsInMarkdown, REF_HREF, usePoll, type DecisionInfo, type RefKind } from "../../model/docs";
 import { openProjectView, viewLabel } from "../../model/projectViews";
 import { isComposing } from "../keys";
 import { PtDocView, RawJson } from "./DocBlocks";
@@ -10,12 +10,17 @@ import { docTime } from "./DocsView";
 
 type Loaded = { text: string; mtimeMs: number | null };
 
-/** 一篇文档：.md 渲染（可编辑，存回文件），.json 只读（SCHEMA 的节 + 块用块渲染器，其余原样折叠）。文件被外面改了自动重读。 */
+/**
+ * 一篇文档：.md 渲染（可编辑，存回文件），.json 只读（SCHEMA 的节 + 块用块渲染器，其余原样折叠）。文件被外面改了自动重读。
+ * rel 是文件的绝对路径（根目录或成员仓库的 docs/ 里）；之前存下的相对根目录 docs/ 的路径照样能开。
+ */
 export function DocDetail({ cwd, rel }: { cwd: string; rel: string }) {
   const { t, i18n } = useTranslation("soloyard");
-  const root = docsRoot(cwd);
-  const path = `${root}/${rel}`;
-  const kind = docKind(rel);
+  const path = docPath(cwd, rel);
+  const kind = docKind(path);
+  const isOverview = path === `${docsRoot(cwd)}/overview.md`;
+  /** 标题栏显示相对项目根目录的路径。 */
+  const shown = path.startsWith(`${cwd.replace(/\/+$/, "")}/`) ? path.slice(cwd.replace(/\/+$/, "").length + 1) : path;
   const [file, setFile] = useState<Loaded | null>(); // null = 文件没了
   const [draft, setDraft] = useState<string | null>(null);
   /** 开始编辑时文件的 mtime：保存时对不上 = agent 在这期间改过，不直接覆盖。 */
@@ -129,9 +134,9 @@ export function DocDetail({ cwd, rel }: { cwd: string; rel: string }) {
             hardBreaks
             cwd={path.slice(0, path.lastIndexOf("/"))}
             onOpenFile={(target) => {
-              // 文档里链到 docs/ 下另一篇：在面板里打开
-              if (target.startsWith(`${root}/`) && /\.(md|markdown|json)$/i.test(target)) {
-                openProjectView({ cwd, view: "doc", itemId: target.slice(root.length + 1), title: basename(target) });
+              // 文档里链到某个 docs/ 下的另一篇（根目录或成员仓库）：在面板里打开
+              if (/\/docs\//.test(target) && /\.(md|markdown|json)$/i.test(target)) {
+                openProjectView({ cwd, view: "doc", itemId: target, title: basename(target) });
               }
             }}
           />
@@ -147,7 +152,7 @@ export function DocDetail({ cwd, rel }: { cwd: string; rel: string }) {
       <article className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-8 py-8">
         <header className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-[11px] text-content/40">
-            <span className="truncate font-mono">docs/{rel}</span>
+            <span className="truncate font-mono">{shown}</span>
             {file?.mtimeMs != null ? <span className="shrink-0">· {docTime(file.mtimeMs, i18n.language)}</span> : null}
             {kind === "md" && file && draft == null ? (
               <button type="button" onClick={startEdit} className="ml-auto shrink-0 text-[12px] text-content/50 hover:text-content">{t("detail.edit")}</button>
@@ -155,8 +160,8 @@ export function DocDetail({ cwd, rel }: { cwd: string; rel: string }) {
               <span className="ml-auto shrink-0" title={t("docs.readOnlyHint")}>{t("docs.readOnly")}</span>
             ) : null}
           </div>
-          {kind === "json" ? <JsonTitle text={file?.text} fallback={basename(rel)} /> : null}
-          {isOverviewDoc(rel) ? <p className="text-[12px] text-content/50">{t("docs.autoHint")}</p> : null}
+          {kind === "json" ? <JsonTitle text={file?.text} fallback={basename(path)} /> : null}
+          {isOverview ? <p className="text-[12px] text-content/50">{t("docs.autoHint")}</p> : null}
         </header>
         {error ? <p role="alert" className="text-[12px] text-red-400/90">{error}</p> : null}
         {body}
