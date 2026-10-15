@@ -209,3 +209,25 @@ test('头脑风暴：按目录列会话（转义通配符、排除归档），�
   r.addDocument(db, 'user', pid, { title: '竞品速查', body_md: '…' })
   assert.equal((db.prepare('SELECT COUNT(*) AS n FROM soloyard_documents WHERE project_id = ?').get(pid) as { n: number }).n, 2)
 })
+
+test('子任务开工，还没开始的主任务跟着进行中；批量改时同一个 batch，整批撤销一起回去', () => {
+  const db = openDb(':memory:')
+  const p = r.projectForPath(db, '/work/rollup')
+  const top = r.createIssue(db, 'user', p.id, { title: '总', status: 'todo' })
+  const parent = r.createIssue(db, 'user', p.id, { title: '主', status: 'todo', parent_id: top })
+  const [a, b] = ['A', 'B'].map((title) => r.createIssue(db, 'user', p.id, { title, status: 'todo', parent_id: parent }))
+  const status = (id: number) => r.getIssue(db, id)!.status
+
+  r.updateIssue(db, 'agent:claude-code', a, { title: 'A2' })
+  assert.equal(status(parent), 'todo', '没改状态不动主任务')
+  r.updateIssue(db, 'agent:claude-code', a, { status: 'in_progress' })
+  assert.deepEqual([status(parent), status(top)], ['in_progress', 'in_progress'], '一层层往上')
+  r.updateIssue(db, 'agent:claude-code', a, { status: 'in_review' })
+  assert.equal(status(parent), 'in_progress', '主任务的 in_review 不自动改')
+
+  r.updateIssue(db, 'user', parent, { status: 'todo' })
+  const batch = r.updateIssues(db, 'user', [b], { status: 'in_progress' })!
+  assert.equal(status(parent), 'in_progress')
+  it.revertBatch(db, 'user', batch)
+  assert.deepEqual([status(b), status(parent)], ['todo', 'todo'])
+})

@@ -183,14 +183,26 @@ export function createIssue(db: DB, actor: Actor, projectId: number, i: NewIssue
   })
 }
 
-/** 改 issue；状态变成 done 时记 completed_at，离开 done 时清掉。 */
-export function updateIssue(db: DB, actor: Actor, id: number, patch: Row, expectedVersion?: number, batch?: string) {
+/**
+ * 改 issue；状态变成 done 时记 completed_at，离开 done 时清掉。
+ * 子任务开工了（改成 in_progress / in_review / done），还没开始的主任务跟着改成 in_progress，同一个 batch；
+ * 再往上一层也一样。主任务的 in_review / done 不自动改：它可能还有自己的事（联调），验收归用户。
+ */
+export function updateIssue(db: DB, actor: Actor, id: number, patch: Row, expectedVersion?: number, batch?: string): Row {
   const p = { ...patch }
   if (Array.isArray(p.labels)) p.labels = JSON.stringify(p.labels)
   if (p.status === 'done') p.completed_at = now()
   else if (p.status) p.completed_at = null
-  return update(db, actor, 'issues', id, p, expectedVersion, batch)
+  return tx(db, () => {
+    const after = update(db, actor, 'issues', id, p, expectedVersion, batch)
+    if (STARTED.has(p.status) && after.parent_id) {
+      const parent = getRow(db, 'issues', after.parent_id)
+      if (parent && (parent.status === 'backlog' || parent.status === 'todo')) updateIssue(db, actor, parent.id, { status: 'in_progress' }, undefined, batch)
+    }
+    return after
+  })
 }
+const STARTED = new Set(['in_progress', 'in_review', 'done'])
 
 /** 批量改 issue（列表多选）：一个 batch，界面按 batch 整批撤销（iterations.revertBatch）。一条都没变返回 null。 */
 export function updateIssues(db: DB, actor: Actor, ids: number[], patch: Row): string | null {
