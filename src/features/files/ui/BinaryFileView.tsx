@@ -594,7 +594,8 @@ function ZoomButton({
   );
 }
 
-function FileCard({
+// Soloyard: exported for the unsupported-file card (soloyard/ui/FilePreviews.tsx).
+export function FileCard({
   path,
   cwd,
   title,

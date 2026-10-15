@@ -97,6 +97,14 @@ import { editorSearch } from "../editor/editorSearch";
 import { editorScrollbar } from "../editor/editorScrollbar";
 import { FilePreviewSearch } from "./FilePreviewSearch";
 import { useTranslation } from "../../../i18n";
+import {
+  isUnreadableTextError,
+  previewKindForPath,
+} from "../../soloyard/model/filePreviews"; // Soloyard
+import {
+  SoloyardFilePreview,
+  UnreadableFile,
+} from "../../soloyard/ui/FilePreviews"; // Soloyard
 
 type EditorNavigationRequest = EditorNavigation & { token: number };
 
@@ -149,6 +157,7 @@ export function FileEditor({
   } | null>(null);
   const markdown = isMarkdownPath(path);
   const svg = isSvgPath(path);
+  const soloyardPreview = previewKindForPath(path); // Soloyard: CSV / TSV / JSONL / Mermaid / HTML
   // Diff tabs open as source: the git gutter only renders in the editor.
   const [mode, setMode] = useMarkdownMode(
     showDiff ? `review:${path}` : path,
@@ -158,13 +167,13 @@ export function FileEditor({
   useEffect(() => {
     if (
       !navigation ||
-      (!markdown && !svg) ||
+      (!markdown && !svg && !soloyardPreview) ||
       sourceNavigationToken.current === navigation.token
     )
       return;
     sourceNavigationToken.current = navigation.token;
     setMode("source");
-  }, [markdown, svg, navigation, setMode]);
+  }, [markdown, svg, soloyardPreview, navigation, setMode]);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const saveGeneration = useRef(0);
   const loadGeneration = useRef(0);
@@ -426,6 +435,11 @@ export function FileEditor({
     );
   }
 
+  // Soloyard: binary / non-UTF-8 / oversized files get open-externally instead of an error.
+  if (loadState.status === "error" && isUnreadableTextError(loadState.message)) {
+    return <UnreadableFile path={path} cwd={cwd} message={loadState.message} />;
+  }
+
   if (loadState.status === "error") {
     return (
       <div className="grid h-full place-items-center p-6">
@@ -462,7 +476,7 @@ export function FileEditor({
             : t("editor.eolUnstaged")}
         </p>
       )}
-      {markdown || svg ? (
+      {markdown || svg || soloyardPreview ? (
         <MarkdownViewShell
           mode={mode}
           onModeChange={(next) => {
@@ -482,6 +496,16 @@ export function FileEditor({
                   onOpenFile={onOpenFile}
                 />
               </FilePreviewSearch>
+            ) : soloyardPreview ? (
+              // Soloyard
+              <SoloyardFilePreview
+                kind={soloyardPreview}
+                path={path}
+                cwd={cwd}
+                text={draft}
+                active={active && mode === "preview"}
+                onOpenFile={onOpenFile}
+              />
             ) : (
               <SvgPreview source={draft} />
             )

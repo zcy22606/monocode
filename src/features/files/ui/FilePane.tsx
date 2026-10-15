@@ -33,6 +33,8 @@ import {
 import { AgentTabView } from "../../sessions/ui/AgentTabView";
 import { MarkdownPreview } from "../../sessions/ui/AgentMarkdown";
 import { BinaryFileView } from "./BinaryFileView";
+import { isPdfPath } from "../../soloyard/model/filePreviews"; // Soloyard
+import { PdfPreview } from "../../soloyard/ui/PdfPreview"; // Soloyard
 import { ReleaseNotesSurface } from "../../../app/ui/ReleaseNotesSurface";
 import { ProjectViewSurface } from "../../soloyard/ui/ProjectViewSurface";
 import { isRemoteProjectPath } from "../../projects/model/recents";
@@ -217,6 +219,9 @@ function FilePaneComponent({
                     onTerminalMetaChange?.(file.id, patch)
                   }
                 />
+              ) : isPdfPath(file.path) ? (
+                // Soloyard
+                <PdfPreview path={file.path} cwd={file.cwd} />
               ) : isImagePath(file.path) || isVideoPath(file.path) ? (
                 <BinaryFileView
                   path={file.path}

@@ -837,5 +837,29 @@
     "rateLimit": "Rate limited",
     "overloaded": "API overloaded",
     "status": "API error {{status}}"
+  },
+  "csv": {
+    "empty": "Empty file",
+    "rows_one": "{{rows}} row",
+    "rows_other": "{{rows}} rows",
+    "firstRows_one": "First {{rows}} row",
+    "firstRows_other": "First {{rows}} rows",
+    "columns_one": "{{columns}} column",
+    "columns_other": "{{columns}} columns",
+    "truncated": "Showing the first {{rows}} rows. Switch to Source for the rest."
+  },
+  "filePreview": {
+    "reload": "Reload",
+    "openInBrowser": "Open in browser",
+    "frameTitle": "Preview: {{name}}",
+    "noPreview": "This file type can’t be previewed here."
+  },
+  "jsonl": {
+    "records_one": "{{rows}} record",
+    "records_other": "{{rows}} records",
+    "firstRecords_one": "First {{rows}} record",
+    "firstRecords_other": "First {{rows}} records",
+    "truncated": "Showing the first {{rows}} records. Switch to Source for the rest.",
+    "invalid": "Not valid JSON"
   }
 }

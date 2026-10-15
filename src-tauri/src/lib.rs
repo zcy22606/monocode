@@ -22,6 +22,7 @@ mod i18n; // Soloyard
 mod soloyard_agents; // Soloyard
 mod soloyard_bridge; // Soloyard
 mod soloyard_missing_worktree; // Soloyard
+mod soloyard_preview; // Soloyard
 mod soloyard_project_repos; // Soloyard
 #[cfg(unix)]
 mod soloyard_services; // Soloyard
@@ -263,6 +264,10 @@ pub fn run() {
         )
         .register_uri_scheme_protocol(artifacts::HTML_SCHEME, |ctx, request| {
             artifacts::serve_html(ctx.app_handle(), &request)
+        })
+        // Soloyard: HTML / PDF file previews; off the main thread, a PDF can be big.
+        .register_asynchronous_uri_scheme_protocol(soloyard_preview::SCHEME, |_ctx, request, responder| {
+            std::thread::spawn(move || responder.respond(soloyard_preview::serve(&request)));
         })
         .manage(harness::HarnessHost::new())
         .manage(pty::PtyHost::new())

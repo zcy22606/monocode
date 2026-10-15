@@ -792,5 +792,24 @@
     "rateLimit": "被限流",
     "overloaded": "API 过载",
     "status": "API 出错（{{status}}）"
+  },
+  "csv": {
+    "empty": "空文件",
+    "rows_other": "{{rows}} 行",
+    "firstRows_other": "前 {{rows}} 行",
+    "columns_other": "{{columns}} 列",
+    "truncated": "只显示前 {{rows}} 行，其余的切到源码看。"
+  },
+  "filePreview": {
+    "reload": "刷新",
+    "openInBrowser": "在浏览器中打开",
+    "frameTitle": "预览：{{name}}",
+    "noPreview": "这种文件没法在这里预览。"
+  },
+  "jsonl": {
+    "records_other": "{{rows}} 条记录",
+    "firstRecords_other": "前 {{rows}} 条记录",
+    "truncated": "只显示前 {{rows}} 条记录，其余的切到源码看。",
+    "invalid": "不是有效的 JSON"
   }
 }
