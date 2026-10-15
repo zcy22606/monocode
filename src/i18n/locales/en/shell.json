@@ -165,7 +165,8 @@
     "hideOverview": "Hide overview",
     "showOverview": "Show overview",
     "overview": "Overview",
-    "monoSettings": "{{name}} settings"
+    "monoSettings": "{{name}} settings",
+    "closeAllTabs": "Close All Tabs"
   },
   "footer": {
     "removedAccount": "This conversation uses a removed account",

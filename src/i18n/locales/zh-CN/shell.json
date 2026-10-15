@@ -162,7 +162,8 @@
     "hideOverview": "隐藏概览",
     "showOverview": "显示概览",
     "overview": "概览",
-    "monoSettings": "{{name}} 设置"
+    "monoSettings": "{{name}} 设置",
+    "closeAllTabs": "关闭所有标签页"
   },
   "footer": {
     "removedAccount": "这个对话使用的账号已被移除",

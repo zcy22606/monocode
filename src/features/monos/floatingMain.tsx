@@ -23,6 +23,7 @@ import {
 import { FloatingMonoChat } from "./ui/FloatingMonoChat";
 import { homeDir } from "../../platform/tauri/fs";
 import { setHomeDir } from "../../shared/lib/paths";
+import { installNativeContextMenuGuard } from "../../shared/lib/nativeContextMenu";
 import "../../styles/index.css";
 import { initLanguage } from "../../i18n"; // Soloyard
 
@@ -57,6 +58,7 @@ function applyFloatingAppearance() {
 applyFloatingAppearance();
 watchSystemColorScheme();
 initLanguage(); // Soloyard
+installNativeContextMenuGuard();
 window.addEventListener("storage", applyFloatingAppearance);
 void homeDir()
   .then(setHomeDir)

@@ -50,7 +50,7 @@
       "port": "SSH port",
       "portPlaceholder": "From SSH config",
       "about": "MonoCode installs and starts its background host, then connects securely. Your SSH keys and config are used automatically. Enable SSH on the host and sign in to Codex or Claude Code there. On Windows and Mac, keep the host’s desktop account signed in and the machine awake. Locking the desktop is fine.",
-      "linux": "On Linux, setup installs a systemd user service and turns on lingering for your account (<code>{{command}}</code>), so the host and your other user services keep running after you log out. The host keeps running until you stop it on that machine; removing it here only disconnects this desktop.",
+      "linux": "On Linux, setup installs a systemd user service and turns on lingering for your account (<code>{{command}}</code>), so the host and your other user services keep running after you log out. Without systemd, as in many containers and microVMs, the host runs as a background process instead and is started again when you reconnect. The host keeps running until you stop it on that machine; removing it here only disconnects this desktop.",
       "connect": "Connect",
       "connecting": "Connecting…"
     },

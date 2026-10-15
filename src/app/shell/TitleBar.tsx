@@ -128,6 +128,8 @@ type Props = {
   onOpenNotes?: () => void;
   onClose: (id: string) => void;
   onCloseMany: (ids: string[], fallbackId: string) => void;
+  /** Closes the given tabs, keeping the active one as a blank session. */
+  onCloseAll?: (ids: string[]) => void;
   onArchiveTab?: (id: string) => void;
   onDeleteTab?: (id: string) => void;
   onReorder: (ids: string[], movedId?: string) => void;
@@ -206,6 +208,11 @@ export function tabStripOverflow(
 
 export function titleTabClosable(tab: Tab, tabCount: number): boolean {
   return tabCount > 1 || !tab.blank;
+}
+
+/** Close All has work unless the only tab left is already blank. */
+export function titleTabsCanCloseAll(tabs: readonly Tab[]): boolean {
+  return tabs.some((tab) => titleTabClosable(tab, tabs.length));
 }
 
 export type TitleTabContextAction = "others" | "right" | "left";
@@ -664,6 +671,7 @@ function TitleBarComponent({
   onOpenNotes,
   onClose,
   onCloseMany,
+  onCloseAll,
   onArchiveTab,
   onDeleteTab,
   onReorder,
@@ -845,6 +853,17 @@ function TitleBarComponent({
           label: t("titleBar.closeTabsLeft"),
           disabled: contextCloseIds?.left.length === 0,
         },
+        ...(onCloseAll
+          ? [
+              {
+                kind: "item" as const,
+                id: "all",
+                label: t("titleBar.closeAllTabs"),
+                shortcut: `${MOD}${SHIFT}W`,
+                disabled: !titleTabsCanCloseAll(tabs),
+              },
+            ]
+          : []),
         ...(contextTab.sessionCount > 0 && (onArchiveTab || onDeleteTab)
           ? [
               { kind: "sep" as const },
@@ -897,6 +916,10 @@ function TitleBarComponent({
     }
     if (id === "delete") {
       onDeleteTab?.(contextTab.id);
+      return;
+    }
+    if (id === "all") {
+      onCloseAll?.(tabIds);
       return;
     }
     if (id === "others" || id === "right" || id === "left") {

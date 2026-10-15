@@ -50,7 +50,7 @@
       "port": "SSH 端口",
       "portPlaceholder": "取自 SSH 配置",
       "about": "MonoCode 会安装并启动后台主机，然后建立安全连接。会自动使用你的 SSH 密钥和配置。请在主机上启用 SSH，并在那里登录 Codex 或 Claude Code。在 Windows 和 Mac 上，请保持主机的桌面账户处于登录状态、机器不休眠；锁屏没关系。",
-      "linux": "在 Linux 上，安装过程会创建一个 systemd 用户服务，并为你的账户开启 lingering（<code>{{command}}</code>），这样退出登录后主机和你的其他用户服务也会继续运行。主机会一直运行，直到你在那台机器上停止它；在这里移除只会断开这台桌面端。",
+      "linux": "在 Linux 上，安装过程会创建一个 systemd 用户服务，并为你的账户开启 lingering（<code>{{command}}</code>），这样退出登录后主机和你的其他用户服务也会继续运行。没有 systemd 时（很多容器和微型虚拟机都是这样），主机改为后台进程运行，重新连接时会再启动。主机会一直运行，直到你在那台机器上停止它；在这里移除只会断开这台桌面端。",
       "connect": "连接",
       "connecting": "正在连接…"
     },
