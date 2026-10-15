@@ -943,6 +943,10 @@ pub fn harness_spawn(
         .stderr(Stdio::piped());
     prepare_child(&mut cmd, &command);
     apply_provider_account(&app, &mut cmd, account.as_ref())?;
+    // Soloyard：会话带了 --mcp-config 时 Claude Code 第一轮要等所有 MCP 连上（用户 npx 起的那种要 2–17 秒），0 = 像直接跑 claude 一样先开工、MCP 后台接着连
+    if binary_provider.as_deref() == Some("claude") {
+        cmd.env("CLAUDE_CODE_MCP_STARTUP_WAIT_MS", "0");
+    }
     let codex_store = match codex_store.as_deref() {
         None => None,
         Some("mono")
