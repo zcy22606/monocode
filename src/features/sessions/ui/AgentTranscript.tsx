@@ -2304,8 +2304,20 @@ const TranscriptBlock = memo(function TranscriptBlock({
     );
   }
 
+  // Soloyard: reasoning gets its own row (groupTurnItems' showThinking) and
+  // reads in full, dimmed, the way an opened thought does in the work trail.
   if (block.role === "reasoning") {
-    return null;
+    if (!block.text.trim()) return null;
+    return (
+      <div className={`min-w-0 pt-1 pb-1 ${embedded ? "" : "px-4"}`}>
+        <AgentMarkdown
+          className="agent-reasoning"
+          text={block.text}
+          cwd={cwd}
+          onOpenFile={onOpenFile}
+        />
+      </div>
+    );
   }
 
   if (block.role === "tasks") {

@@ -82,7 +82,7 @@ export class TranscriptTurnCache {
             undeliveredMessageIds,
           }),
         )
-      : groupTurnItems(visible(turn), { settled });
+      : groupTurnItems(visible(turn), { settled, showThinking: true }); // Soloyard
     if (!variants) {
       variants = new Map();
       this.items.set(turn, variants);

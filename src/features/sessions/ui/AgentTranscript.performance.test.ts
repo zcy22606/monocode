@@ -88,6 +88,7 @@ it("regroups only the changing live turn, including after a tab revisit", async 
   expect(activity.groupTurnItems).toHaveBeenCalledTimes(1);
   expect(vi.mocked(activity.groupTurnItems).mock.calls[0][1]).toEqual({
     settled: false,
+    showThinking: true, // Soloyard: reasoning gets its own row
   });
   expect(host.textContent).toContain("Latest output");
 

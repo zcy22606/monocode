@@ -494,14 +494,18 @@ export function groupMonoTurns(blocks: Block[], managed = false): Block[][] {
  */
 export function groupTurnItems(
   blocks: Block[],
-  options?: { settled?: boolean },
+  options?: { settled?: boolean; showThinking?: boolean },
 ): TurnItem[] {
   const settled = options?.settled ?? false;
-  const visible = withoutSupersededInitialThinking(
-    blocks.filter(
-      (block) => !isIgnoredTurnBlock(block) && !isHiddenTool(block),
-    ),
+  // Soloyard: with showThinking, reasoning is read like the agent's words, on
+  // its own row and kept once the reply arrives, not a step in the work.
+  const showThinking = options?.showThinking ?? false;
+  const shown = blocks.filter(
+    (block) => !isIgnoredTurnBlock(block) && !isHiddenTool(block),
   );
+  const visible = showThinking
+    ? shown
+    : withoutSupersededInitialThinking(shown);
   const items: TurnItem[] = [];
   let activity: Block[] = [];
   const flush = () => {
@@ -527,7 +531,10 @@ export function groupTurnItems(
       else items.push({ type: "subagents", blocks: [block] });
       return;
     }
-    if (isActivityBlock(block) || (settled && !!block.interjection)) {
+    if (
+      (isActivityBlock(block) && !(showThinking && isThinkingBlock(block))) ||
+      (settled && !!block.interjection)
+    ) {
       activity.push(block);
       return;
     }

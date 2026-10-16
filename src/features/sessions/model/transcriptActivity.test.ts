@@ -415,6 +415,33 @@ describe("groupMonoTurnItems", () => {
 });
 
 describe("groupTurnItems", () => {
+  // Soloyard
+  it("gives reasoning its own row with showThinking, and keeps the opening one", () => {
+    const blocks: Block[] = [
+      thought("open", "Checking the install log."),
+      note("reply", "Looking now."),
+      shell("a"),
+      thought("mid", "It is the new build."),
+      shell("b"),
+    ];
+    expect(
+      groupTurnItems(blocks, { showThinking: true }).map((item) =>
+        item.type === "block"
+          ? item.block.id
+          : item.blocks.map((block) => block.id).join("+"),
+      ),
+    ).toEqual(["open", "reply", "a", "mid", "b"]);
+    // Without it, the opening thought gives way to the reply and the other
+    // one is a step in the work, as upstream has it.
+    expect(
+      groupTurnItems(blocks).map((item) =>
+        item.type === "block"
+          ? item.block.id
+          : item.blocks.map((block) => block.id).join("+"),
+      ),
+    ).toEqual(["reply", "a+mid+b"]);
+  });
+
   it("keeps consecutive shell calls in one activity stack", () => {
     const items = groupTurnItems([
       shell("a"),
