@@ -4,7 +4,7 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export class SoloyardError extends Error {
   /** 版本冲突时带回的最新一行。 */
@@ -30,8 +30,37 @@ export async function soloyardCall<T = unknown>(method: string, ...args: unknown
   }
 }
 
+// 每个打开的会话（包括藏起来的标签）都挂着几个 useSoloyard，一次刷新就是几百个请求、几百次重渲染。
+// 同样的请求只发一个；结果和上次一样就给同一个对象，React 不重渲染。
+// ponytail: latest 不清理，键数 ≈ 会话数 × 方法数，很小
+const inflight = new Map<string, Promise<unknown>>();
+const latest = new Map<string, { json: string; value: unknown }>();
+
+function sharedCall<T>(method: string, args: unknown[]): Promise<T> {
+  const id = `${method}:${JSON.stringify(args)}`;
+  let pending = inflight.get(id);
+  if (!pending) {
+    pending = soloyardCall(method, ...args)
+      .then((value) => {
+        const json = JSON.stringify(value);
+        const previous = latest.get(id);
+        if (previous?.json === json) return previous.value;
+        latest.set(id, { json, value });
+        return value;
+      })
+      .finally(() => {
+        if (inflight.get(id) === pending) inflight.delete(id);
+      });
+    inflight.set(id, pending);
+  }
+  return pending as Promise<T>;
+}
+
 const bus = new EventTarget();
-export const refreshSoloyard = () => bus.dispatchEvent(new Event("refresh"));
+export const refreshSoloyard = () => {
+  inflight.clear(); // 刷新之后的读不能接上变更前发出的请求
+  bus.dispatchEvent(new Event("refresh"));
+};
 
 let listening = false;
 function listenForChanges() {
@@ -53,15 +82,22 @@ export async function mutateSoloyard<T = unknown>(method: string, ...args: unkno
 export function useSoloyard<T>(method: string, ...args: unknown[]) {
   const [data, setData] = useState<T>();
   const [error, setError] = useState<string>();
+  const shown = useRef<{ data?: T; error?: string }>({});
   const key = JSON.stringify(args);
   const load = useCallback(() => {
     if (args.some((arg) => arg === undefined)) return;
-    soloyardCall<T>(method, ...args).then(
+    sharedCall<T>(method, args).then(
       (value) => {
+        if (value === shown.current.data && shown.current.error === undefined) return; // 没变，连组件函数都不跑
+        shown.current = { data: value };
         setData(value);
         setError(undefined);
       },
-      (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+      (e: unknown) => {
+        const message = e instanceof Error ? e.message : String(e);
+        shown.current = { ...shown.current, error: message };
+        setError(message);
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method, key]);
