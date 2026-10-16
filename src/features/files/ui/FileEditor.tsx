@@ -494,6 +494,7 @@ export function FileEditor({
                   metadataLabel={t("editor.properties")}
                   cwd={cwd}
                   onOpenFile={onOpenFile}
+                  documentPath={path}
                 />
               </FilePreviewSearch>
             ) : soloyardPreview ? (

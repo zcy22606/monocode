@@ -24,6 +24,28 @@ function render(
   );
 }
 
+describe("AgentTranscript running turn clock", () => {
+  it("times a message sent mid-turn from the turn it joined", () => {
+    vi.spyOn(Date, "now").mockReturnValue(100_000);
+    try {
+      const markup = render(
+        [
+          { id: "user", role: "user", text: "Go", startedAt: 10_000 },
+          tool("first"),
+          { id: "steer", role: "user", text: "Also this", sentAt: 95_000 },
+          { id: "reply", role: "assistant", text: "On it", streaming: true },
+        ],
+        true,
+      );
+      // Started 90s ago; without the joined turn's start it read from mount.
+      // Soloyard: was "1m 30s"; a mid-turn message is timed from its own sentAt (e84458c).
+      expect(markup).toContain("Working for 5s");
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});
+
 describe("AgentTranscript collapsed work", () => {
   it("keeps the completed time beside actions when a turn has no BTW control", () => {
     const markup = render([
