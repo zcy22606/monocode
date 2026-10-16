@@ -623,6 +623,51 @@ thread_local! {
         const { RefCell::new(None) };
 }
 
+struct QuitEventTargetIvars {
+    app: AppHandle,
+}
+
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[name = "MonoCodeQuitEventTarget"]
+    #[ivars = QuitEventTargetIvars]
+    struct QuitEventTarget;
+
+    impl QuitEventTarget {
+        #[unsafe(method(handleQuitEvent:withReplyEvent:))]
+        fn handle_quit_event(&self, _event: Option<&NSObject>, _reply: Option<&NSObject>) {
+            crate::window::request_quit(&self.ivars().app);
+        }
+    }
+);
+
+/// A Quit Apple Event (Dock > Quit, `osascript … to quit`, logout) makes AppKit
+/// terminate on the spot: no busy-turn prompt, and the live transcripts the
+/// ⌘Q path saves first are lost. Send it down the ⌘Q path instead. Must run
+/// after launch (`RunEvent::Ready`), once AppKit has installed its own handler.
+pub(crate) fn route_quit_event(app: &AppHandle) {
+    if MainThreadMarker::new().is_none() {
+        return;
+    }
+    let target = QuitEventTarget::alloc().set_ivars(QuitEventTargetIvars { app: app.clone() });
+    let target: Retained<QuitEventTarget> = unsafe { msg_send![super(target), init] };
+    let core_event_class = u32::from_be_bytes(*b"aevt");
+    let quit_application = u32::from_be_bytes(*b"quit");
+    unsafe {
+        let manager: Retained<NSObject> =
+            msg_send![objc2::class!(NSAppleEventManager), sharedAppleEventManager];
+        let _: () = msg_send![
+            &*manager,
+            setEventHandler: &*target,
+            andSelector: sel!(handleQuitEvent:withReplyEvent:),
+            forEventClass: core_event_class,
+            andEventID: quit_application
+        ];
+    }
+    // The event manager does not retain its handler.
+    std::mem::forget(target);
+}
+
 /// Since macOS 12, `NSDockTile` badge updates are ignored unless the app has
 /// requested `UNUserNotificationCenter` authorization with the badge option.
 /// Must run on the main thread after launch (`RunEvent::Ready`), not in setup.

@@ -468,7 +468,8 @@ describe("AgentTranscript collapsed work", () => {
     ];
     const markup = render(blocks);
     expect(markup).toContain("The project checks passed.");
-    expect(markup).toContain("Show the work");
+    // Soloyard: no fold over the turn; the work is one collapsed line.
+    expect(markup).toContain("Ran 1357 commands");
     expect(markup.includes("hidden-detail-")).toBe(false);
     const short = render([blocks[0], tool("one"), tool("two"), blocks.at(-1)!]);
     const tagCount = (html: string) => html.match(/<[a-z]/g)?.length ?? 0;
@@ -621,16 +622,12 @@ describe("AgentTranscript collapsed work", () => {
       true,
     );
 
-    // The line the work folds behind sits above everything it folds, and a
-    // stack of delegated runs no longer pushes it down the turn.
-    const statusAt = markup.indexOf("Show the work");
+    // Soloyard: nothing folds the agent's words, so the notes stay in place
+    // around the stack (the work after it is still live, so still open).
+    const planAt = markup.indexOf("Splitting the review in two.");
     const stackAt = markup.indexOf("Independently review");
-    expect(statusAt).toBeGreaterThan(-1);
-    expect(stackAt).toBeGreaterThan(statusAt);
-    // The work around it is collapsed away, and the stack is still on screen:
-    // it is pinned outside the fold's body, not inside it.
-    expect(markup).not.toContain("hidden-detail-t1");
-    expect(markup).not.toContain("Splitting the review in two.");
+    expect(planAt).toBeGreaterThan(-1);
+    expect(stackAt).toBeGreaterThan(planAt);
     // A row-length name is capped, and the whole brief stays on the hover.
     expect(markup).toContain(
       "Independently review the current repository&#x27;s recent…",

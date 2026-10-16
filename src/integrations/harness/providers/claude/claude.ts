@@ -1662,26 +1662,59 @@ function settleBackgroundRow(
 /**
  * What Claude was told when a task finished. A command's row takes the
  * summary; a subagent's is kept for the trail until Claude picks back up.
+ *
+ * A task with no row yet, left running in a turn that has since ended, wakes
+ * Claude after its answer. It gets its row under that answer, as if the turn
+ * had waited for it, so the work it wakes Claude to do doesn't fold the answer
+ * away.
  */
 function noteTaskNotification(
   live: Live,
   notice: ClaudeAgentTaskNotification,
 ): void {
-  if (!live.activeTurn) return;
   if (live.backgroundRows.has(notice.taskId)) {
-    settleBackgroundRow(
-      live,
-      notice.taskId,
-      notice.status,
-      notice.summary || undefined,
-    );
+    if (live.activeTurn) {
+      settleBackgroundRow(
+        live,
+        notice.taskId,
+        notice.status,
+        notice.summary || undefined,
+      );
+    }
     return;
   }
+  // Before Claude yields, a notification is one it reads mid-turn or the CLI
+  // replaying old tasks on resume; after a stop, the tasks it stopped.
+  if (!live.turnResultSeen || live.cancelled || live.muteUpdates) return;
   const tool = notice.toolUseId ? live.toolsById.get(notice.toolUseId) : null;
   const agent =
     (tool && isAgentToolName(tool.name)) || live.agentTasks.has(notice.taskId);
-  if (!agent || !live.turnResultSeen) return;
-  live.taskNotes.push(notice.summary || "Subagent finished.");
+  if (agent && live.activeTurn) {
+    live.taskNotes.push(notice.summary || "Subagent finished.");
+    return;
+  }
+  const source = agent ? null : tool;
+  const callId = `background:${notice.taskId}`;
+  live.backgroundRows.set(notice.taskId, callId);
+  live.onEvent({
+    type: "tool.started",
+    callId,
+    title: source
+      ? toolTitle(source.name, source.input)
+      : notice.summary || notice.taskId,
+    kind: source ? toolKindFromName(source.name) : "execute",
+    status: "in_progress",
+    background: true,
+    ...(source
+      ? { preview: previewFromTool(source.name, source.input) }
+      : {}),
+  });
+  settleBackgroundRow(
+    live,
+    notice.taskId,
+    notice.status,
+    source ? notice.summary || undefined : undefined,
+  );
 }
 
 function clearAwaitingResume(live: Live): void {
