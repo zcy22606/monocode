@@ -1,6 +1,6 @@
 /**
  * Soloyard：输入框的「已发送消息」历史。
- * - ↑ / ↓ 在当前会话发过的消息和正在写的草稿之间切换（历史直接从会话的 user 块里取，不另外存）。
+ * - ↑ / ↓ 在当前会话发过的消息和正在写的草稿之间切换（历史直接从会话的 user 块和 `!` 命令块里取，不另外存）。
  * - Esc：有排队的消息先挪回输入框；否则停下，agent 还没回复的那条放回输入框（同 Claude Code）。
  */
 import { isOperatorUserTurn, operatorUserPrompt } from "../../sessions/model/operatorCommand";
@@ -23,13 +23,12 @@ function isSentPrompt(block: Block): boolean {
   );
 }
 
-/** 当前会话发过的消息，旧的在前；连续重复的只留一条。 */
+/** 当前会话发过的消息（含跑过的 `!` 命令），旧的在前；连续重复的只留一条。 */
 export function sentPrompts(blocks: Block[]): string[] {
   const out: string[] = [];
   for (const block of blocks) {
-    if (!isSentPrompt(block)) continue;
-    const text = userText(block);
-    if (out[out.length - 1] !== text) out.push(text);
+    const text = block.role === "shell" ? `!${block.text}` : isSentPrompt(block) ? userText(block) : null;
+    if (text && out[out.length - 1] !== text) out.push(text);
   }
   return out;
 }
@@ -93,11 +92,11 @@ const RESTORE_EVENT = "soloyard:restore-draft";
 /** 有输出就算 agent 已经开始回复（system / handoff 这类状态行不算）。 */
 const AGENT_OUTPUT = new Set<Block["role"]>(["assistant", "reasoning", "tool", "image", "approval", "tasks", "plan"]);
 
-/** 最后一条发出去、agent 还没任何输出的消息。 */
+/** 最后一条发出去、agent 还没任何输出的消息。之后跑过 `!` 命令的不算（停的是命令，不是这条）。 */
 function unansweredPrompt(blocks: Block[]): Block | undefined {
   for (let i = blocks.length - 1; i >= 0; i -= 1) {
     if (isSentPrompt(blocks[i])) return blocks[i];
-    if (AGENT_OUTPUT.has(blocks[i].role)) return undefined;
+    if (AGENT_OUTPUT.has(blocks[i].role) || blocks[i].role === "shell") return undefined;
   }
   return undefined;
 }

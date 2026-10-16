@@ -642,5 +642,14 @@
   },
   "media": {
     "openImage": "Open image"
+  },
+  "shellCommand": {
+    "label": "Shell command you ran: {{command}}",
+    "running": "Running…",
+    "stopped": "Stopped",
+    "failed": "Failed to start",
+    "exit": "Exit {{code}}",
+    "killed": "Killed",
+    "truncated": "Output truncated"
   }
 }

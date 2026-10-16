@@ -24,6 +24,11 @@ describe("sent prompts", () => {
     ];
     expect(sentPrompts(blocks)).toEqual(["one", "two"]);
   });
+
+  it("includes `!` commands, written the way they were typed", () => {
+    const shell = { id: "c", role: "shell", text: "git status", shell: { cwd: "/repo", status: "done" } } as Block;
+    expect(sentPrompts([user("one"), shell, agent("ok"), user("two")])).toEqual(["one", "!git status", "two"]);
+  });
 });
 
 describe("history step", () => {
@@ -88,5 +93,8 @@ describe("restore after Esc", () => {
     expect(unansweredRestoreRequest(session([user("latest"), agent("working on it")]))).toBeNull();
     expect(unansweredRestoreRequest(session([user("latest"), { id: "t", role: "tool", text: "" } as Block]))).toBeNull();
     expect(unansweredRestoreRequest(session([]))).toBeNull();
+    // Stopping a `!` command run after it does not hand the message back.
+    const shell = { id: "c", role: "shell", text: "npm test", shell: { cwd: "/repo", status: "running" } } as Block;
+    expect(unansweredRestoreRequest(session([user("latest"), shell]))).toBeNull();
   });
 });

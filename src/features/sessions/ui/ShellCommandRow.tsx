@@ -1,3 +1,4 @@
+import { useTranslation } from "../../../i18n";
 import type { Block } from "../model/session";
 import { TerminalSpinner } from "./TerminalSpinner";
 
@@ -9,26 +10,27 @@ export function ShellCommandRow({
   block: Block;
   embedded?: boolean;
 }) {
+  const { t } = useTranslation("sessions");
   const shell = block.shell;
   if (!shell) return null;
   const running = shell.status === "running";
   const failed = shell.status === "failed" || (shell.exitCode ?? 0) !== 0;
   const outcome = running
-    ? "Running…"
+    ? t("shellCommand.running")
     : shell.status === "stopped"
-      ? "Stopped"
+      ? t("shellCommand.stopped")
       : shell.status === "failed"
-        ? "Failed to start"
+        ? t("shellCommand.failed")
         : shell.exitCode != null
-          ? `Exit ${shell.exitCode}`
-          : "Killed";
+          ? t("shellCommand.exit", { code: shell.exitCode })
+          : t("shellCommand.killed");
   const stdout = shell.stdout?.replace(/\n+$/, "");
   const stderr = shell.stderr?.replace(/\n+$/, "");
   return (
     <div className={`${embedded ? "" : "px-4"} py-2`}>
       <div
         data-shell-command={block.id}
-        aria-label={`Shell command you ran: ${block.text}`}
+        aria-label={t("shellCommand.label", { command: block.text })}
         className="overflow-hidden rounded-lg border border-content/10 bg-content/[0.03] font-mono text-[12px] leading-5"
       >
         <div className="flex min-w-0 items-start gap-2 px-3 py-1.5">
@@ -56,7 +58,7 @@ export function ShellCommandRow({
         ) : null}
         {shell.truncated ? (
           <div className="border-t border-stroke px-3 py-1 font-sans text-[11px] text-content/45">
-            Output truncated
+            {t("shellCommand.truncated")}
           </div>
         ) : null}
       </div>

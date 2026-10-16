@@ -120,5 +120,8 @@
   },
   "session": {
     "unavailable": "这个会话已不存在。"
+  },
+  "shellCommand": {
+    "busy": "Shell 命令只能在两轮之间运行——等这一轮结束，或者先停下它。"
   }
 }

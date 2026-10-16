@@ -10308,7 +10308,7 @@ function Workspace({
         if (!shellCommandRunning(current)) {
           enqueueHarnessEvent(sessionId, {
             type: "status",
-            text: "Shell commands run between turns — wait for this one to finish, or stop it first.",
+            text: t("app:shellCommand.busy"),
           });
           flushHarnessEvents();
         }

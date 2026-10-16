@@ -622,5 +622,14 @@
   },
   "media": {
     "openImage": "打开图片"
+  },
+  "shellCommand": {
+    "label": "你运行的 Shell 命令：{{command}}",
+    "running": "运行中…",
+    "stopped": "已停止",
+    "failed": "没能启动",
+    "exit": "退出码 {{code}}",
+    "killed": "被终止",
+    "truncated": "输出过长，已截断"
   }
 }

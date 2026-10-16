@@ -121,5 +121,8 @@
   },
   "session": {
     "unavailable": "This session is no longer available."
+  },
+  "shellCommand": {
+    "busy": "Shell commands run between turns — wait for this one to finish, or stop it first."
   }
 }
