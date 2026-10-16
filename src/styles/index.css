@@ -5,6 +5,12 @@
 
 @custom-variant dark (&:where(html:not(.theme-light), html:not(.theme-light) *));
 
+/* Tailwind's own `:is(:where(.group):focus-within *)` hides `.group` from
+   WebKit's invalidation, so every focus move rechecks the whole page (about
+   45 ms per click with a long transcript open). With the whole group inside
+   `:where()` WebKit keys the rule on `.group` and a focus move costs nothing. */
+@custom-variant group-focus-within (&:where(.group:focus-within *));
+
 @container settings (width < 560px) {
   .settings-row {
     flex-direction: column;
