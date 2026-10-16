@@ -1,0 +1,17 @@
+npm warn Unknown user config "home". This will stop working in the next major version of npm.
+
+ RUN  v3.2.7 /Users/zcy22606/Playground/monocode
+
+stdout | output/soloyard-input-investigation-20261016/composer.probe.ts > characterizes draft write-back when a parent refresh and composition input share a batch
+{"case":"overlapping-parent-refresh","dom":"你好","cachedDraft":"你好shi"}
+
+stdout | output/soloyard-input-investigation-20261016/composer.probe.ts > characterizes draft write-back when a parent refresh and composition input share a batch
+{"case":"next-parent-refresh","dom":"你好shi","cachedDraft":"你好shi"}
+
+ ✓ output/soloyard-input-investigation-20261016/composer.probe.ts (2 tests) 72ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  04:15:52
+   Duration  2.18s (transform 1.08s, setup 0ms, collect 1.65s, tests 72ms, environment 215ms, prepare 56ms)
+
