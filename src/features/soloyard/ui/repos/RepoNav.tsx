@@ -10,6 +10,7 @@ import { Modal } from "../../../../shared/ui/Modal";
 import { Check, Folder, GitBranch, Loader, Plus } from "../../../../shared/ui/icons";
 import { mutateSoloyard, useSoloyard } from "../../data/api";
 import { requestOpenProject } from "../../model/appActions";
+import { pressToOpen } from "../../model/pressToOpen";
 import { publishRepoCounts, setRepoFilter, sessionRepo, useRepoCounts, useRepoFilter, type RepoFilter } from "../../model/repoFilter";
 import { useProjectRepos, type RepoCandidate } from "../../model/repos";
 
@@ -42,7 +43,7 @@ export function RepoRailChildren({ cwd }: { cwd: string }) {
             key={row.value}
             type="button"
             data-no-drag
-            onClick={() => setRepoFilter(cwd, on ? null : row.value)}
+            {...pressToOpen(() => setRepoFilter(cwd, on ? null : row.value))}
             className={`flex h-7 w-full items-center gap-2 rounded-md pr-2 pl-8 text-left text-[12.5px] ${on ? "bg-selection text-content" : "text-content/55 hover:bg-content/8 hover:text-content"}`}
           >
             <Icon className="size-3.5 shrink-0 opacity-70" />

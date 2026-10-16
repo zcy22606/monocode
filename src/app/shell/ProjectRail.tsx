@@ -71,6 +71,7 @@ import { RailAction, RailSearch } from "./RailAction";
 import { BrainstormRailAction } from "../../features/soloyard/ui/brainstorm/BrainstormRailAction"; // Soloyard
 import { useWithoutMemberRepos } from "../../features/soloyard/model/repos"; // Soloyard
 import { RepoCountBadge, RepoRailChildren } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
+import { openedOnPress, opensOnPress } from "../../features/soloyard/model/pressToOpen"; // Soloyard
 import { DevModeSlot, TabVisitNav } from "./TitleBar";
 import { SidebarUpdateFooter } from "./SidebarUpdate";
 import type { InstalledUpdate } from "../model/updateNotice";
@@ -972,6 +973,7 @@ function ProjectCard({
         if ((event.target as HTMLElement | null)?.closest("[data-no-drag]")) {
           return;
         }
+        if (opensOnPress(event)) onSelect(item.path); // Soloyard: open on press
         sortable.onItemPointerDown(item.path, event);
       }}
       onClick={(event) => {
@@ -979,6 +981,7 @@ function ProjectCard({
           return;
         }
         if (sortable.consumeClick()) return;
+        if (openedOnPress(event)) return; // Soloyard
         onSelect(item.path);
       }}
       onContextMenu={(event) => onContextMenu(item.path, event)}

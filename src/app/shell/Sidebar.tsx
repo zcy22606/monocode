@@ -36,6 +36,7 @@ import { ServicesNav } from "../../features/soloyard/services/ServicesNav"; // S
 import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
 import { useProjectRepos } from "../../features/soloyard/model/repos"; // Soloyard
+import { openedOnPress, opensOnPress } from "../../features/soloyard/model/pressToOpen"; // Soloyard
 import {
   memo,
   useEffect,
@@ -3654,6 +3655,7 @@ export const SessionCard = memo(function SessionCard({
       prefetchTimer.current = null;
     }
     onPrefetch?.(session.id);
+    if (opensOnPress(event)) onSelect(session.id, event); // Soloyard: open on press
     if (!onPlaceOnPane && !onListDrop) return;
     const handle = event.currentTarget;
     const pointerId = event.pointerId;
@@ -3805,6 +3807,7 @@ export const SessionCard = memo(function SessionCard({
         onPointerLeave={cancelScheduledPrefetch}
         onClick={(event) => {
           if (performance.now() < skipClickUntil.current) return;
+          if (openedOnPress(event)) return; // Soloyard
           onSelect(session.id, event);
         }}
         onContextMenu={

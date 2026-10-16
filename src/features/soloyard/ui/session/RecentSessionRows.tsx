@@ -12,6 +12,7 @@ import {
   resolveTabGroupLabel,
   resolveTabGroupMascot,
 } from "../../../workspace/model/tabGroups";
+import { pressToOpen } from "../../model/pressToOpen";
 import { removeRecentSession, type RecentSession } from "../../model/recentSessions";
 
 const COLLAPSED = 5;
@@ -80,7 +81,7 @@ function RecentRow({
         type="button"
         title={`${item.title}\n${project}`}
         aria-current={selected ? "true" : undefined}
-        onClick={() => onSelect?.(item.id)}
+        {...pressToOpen(() => onSelect?.(item.id))}
         className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1 text-left"
       >
         <ProjectMascot

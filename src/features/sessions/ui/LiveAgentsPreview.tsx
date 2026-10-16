@@ -18,6 +18,7 @@ import { ProjectMascot } from "../../projects/ui/ProjectMascot";
 import { TerminalSpinner } from "./TerminalSpinner";
 import { useRecentSessions } from "../../soloyard/model/recentSessions"; // Soloyard
 import { RecentSessionRows } from "../../soloyard/ui/session/RecentSessionRows"; // Soloyard
+import { pressToOpen } from "../../soloyard/model/pressToOpen"; // Soloyard
 
 const LIVE_AGENT_MIN = 2;
 const LIVE_AGENT_CAP = 4;
@@ -198,7 +199,7 @@ function LiveAgentCard({
         .join(", ")}
       aria-current={selected ? "true" : undefined}
       data-live-agent-card={agent.id}
-      onClick={() => onSelect?.(agent.id)}
+      {...pressToOpen(() => onSelect?.(agent.id))} // Soloyard
       className={`relative flex w-full flex-col rounded-md px-2 py-1.5 text-left ${
         selected ? "bg-selection" : "hover:bg-content/8"
       }`}
