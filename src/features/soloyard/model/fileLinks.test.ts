@@ -4,7 +4,14 @@ import { resolveOpenablePath } from "../../files/model/fileIndex";
 
 const cwd = "/Users/me/Workspace/openroboto";
 const memory = "/Users/me/.claude/projects/-Users-me-Workspace-openroboto/memory";
-const onDisk = new Set([`${cwd}/web/src/App.tsx`, `${memory}/state-1014.md`, `${memory}/App.tsx`]);
+const elsewhere = "/Users/me/Playground/proof/x/App.tsx";
+const onDisk = new Set([
+  `${cwd}/web/src/App.tsx`,
+  `${memory}/state-1014.md`,
+  `${memory}/App.tsx`,
+  elsewhere,
+  `${cwd}/dist/App.tsx`,
+]);
 
 vi.mock("../../../platform/tauri/fs", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../platform/tauri/fs")>()),
@@ -62,5 +69,16 @@ describe("resolveOpenablePath with Claude memory files", () => {
   it("keeps the path when neither has it", async () => {
     await expect(resolveOpenablePath(cwd, `${cwd}/nope.md`)).resolves.toBe(`${cwd}/nope.md`);
     await expect(resolveOpenablePath(cwd, "/tmp/nope.md")).resolves.toBe("/tmp/nope.md");
+  });
+});
+
+describe("resolveOpenablePath with real files the index skips", () => {
+  it("opens a file outside the project as named, not the project's same-named file", async () => {
+    await expect(resolveOpenablePath(cwd, elsewhere)).resolves.toBe(elsewhere);
+    await expect(resolveOpenablePath(cwd, "~/Playground/proof/x/App.tsx")).resolves.toBe(elsewhere);
+  });
+
+  it("opens a gitignored file inside the project as named", async () => {
+    await expect(resolveOpenablePath(cwd, `${cwd}/dist/App.tsx`)).resolves.toBe(`${cwd}/dist/App.tsx`);
   });
 });

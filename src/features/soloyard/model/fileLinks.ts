@@ -37,3 +37,17 @@ export async function claudeMemoryFile(name: string, cwd: string, direct: string
     return undefined;
   }
 }
+
+/**
+ * Soloyard: whether a link names a real file. `resolveOpenablePath` then opens it as named; otherwise a
+ * file outside the project or gitignored (`~/x/index.html`, `dist/index.html`) is "suffix-matched" to the
+ * project's own `index.html`.
+ */
+export async function isFileOnDisk(path: string): Promise<boolean> {
+  try {
+    const [stat] = await statFiles([path]);
+    return stat?.mtimeMs != null;
+  } catch {
+    return false;
+  }
+}

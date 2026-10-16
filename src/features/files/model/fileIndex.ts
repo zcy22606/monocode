@@ -3,7 +3,7 @@ import { subscribeDirsChanged } from "./fileTree";
 import { scorePath, type FuzzyHit } from "../../../shared/lib/fuzzy";
 import { resolveWorkspacePath, slash } from "../../../shared/lib/paths";
 import { looksLikeProject } from "../../projects/model/recents";
-import { claudeMemoryFile } from "../../soloyard/model/fileLinks"; // Soloyard
+import { claudeMemoryFile, isFileOnDisk } from "../../soloyard/model/fileLinks"; // Soloyard
 import {
   normalizeEditorPath,
   type FileOpenOptions,
@@ -214,6 +214,7 @@ export async function resolveOpenablePath(
   const normalizedDirect = normalizeEditorPath(direct);
   const exact = byPath.get(normalizedDirect);
   if (exact) return exact.path;
+  if (await isFileOnDisk(direct)) return direct; // Soloyard
 
   const relHint = relativePathHint(href, cwd, direct);
   const exactRelative = files.find(
