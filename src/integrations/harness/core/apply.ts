@@ -197,6 +197,17 @@ export function applyHarnessEvent(
     }
     case "turn.ready":
       return session.busy ? { ...session, turnReady: true } : session;
+    case "background.jobs":
+      if (event.jobs.length === 0) {
+        if (!session.backgroundJobs) return session;
+        const { backgroundJobs: _cleared, ...rest } = session;
+        return rest;
+      }
+      return { ...session, backgroundJobs: event.jobs };
+    case "session.woke":
+      return session.busy ? session : { ...session, busy: true };
+    case "session.idle":
+      return session.busy ? stopStreaming(session) : session;
     case "session.configChanged":
       return {
         ...session,
@@ -533,10 +544,13 @@ export function appendSteerUser(
 }
 
 export function stopStreaming(session: Session, endedAt = Date.now()): Session {
-  const { backgroundTasks: _cleared, ...settled } = stampFollowUpDuration(
-    settlePendingApprovals(session),
-    endedAt,
-  );
+  // A turn only ends once its background work is done, or by a stop that
+  // ends that work too.
+  const {
+    backgroundTasks: _cleared,
+    backgroundJobs: _stopped,
+    ...settled
+  } = stampFollowUpDuration(settlePendingApprovals(session), endedAt);
   return {
     ...settled,
     busy: false,

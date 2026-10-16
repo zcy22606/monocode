@@ -491,6 +491,10 @@
       "cancelled": "会话已取消：{{title}}"
     }
   },
+  "backgroundJobs": {
+    "stop": "停止",
+    "stopLabel": "停止 {{title}}"
+  },
   "composer": {
     "dropFiles": "拖放文件以附加",
     "placeholder": {
