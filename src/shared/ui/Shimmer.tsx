@@ -31,7 +31,6 @@ function ShimmerComponent({
       }
     >
       {children}
-      <span aria-hidden className="shimmer-glint" data-text={children} />
     </Component>
   );
 }

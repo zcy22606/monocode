@@ -2270,36 +2270,32 @@ html:not(.theme-light) .markdown-code-token {
   }
 }
 
-/* The dim text stays put; a bright copy in a moving window sweeps over it.
-   Both halves only move by transform, so the compositor runs the sweep
-   instead of the main thread repainting the text every frame. */
+/* Stepped rather than every frame: background-position on text can only be
+   repainted by the main thread, and a running agent keeps this on screen. */
 .shimmer-text {
-  color: hsl(
-    var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
-  );
-}
-
-.shimmer-glint {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  mask-image: linear-gradient(
-    90deg,
-    transparent calc(50% - var(--spread)),
-    #000 50%,
-    transparent calc(50% + var(--spread))
-  );
-  animation: shimmer-glint var(--shimmer-duration, 2s) linear infinite;
-}
-
-.shimmer-glint::before {
-  content: attr(data-text);
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--color-content);
-  animation: shimmer-glint-text var(--shimmer-duration, 2s) linear infinite;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - var(--spread)),
+      var(--color-content) calc(50%),
+      transparent calc(50% + var(--spread))
+    ),
+    linear-gradient(
+      hsl(
+        var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
+      ),
+      hsl(
+        var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
+      )
+    );
+  background-size:
+    250% 100%,
+    auto;
+  background-repeat: no-repeat, padding-box;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer-text var(--shimmer-duration, 2s) steps(30) infinite;
 }
 
 /* One light sweep across a composer mode command as it appears. */
@@ -2761,21 +2757,12 @@ html.theme-light .mono-pill {
   }
 }
 
-@keyframes shimmer-glint {
+@keyframes shimmer-text {
   from {
-    transform: translateX(-75%);
+    background-position: 100% center;
   }
   to {
-    transform: translateX(75%);
-  }
-}
-
-@keyframes shimmer-glint-text {
-  from {
-    transform: translateX(75%);
-  }
-  to {
-    transform: translateX(-75%);
+    background-position: 0% center;
   }
 }
 
