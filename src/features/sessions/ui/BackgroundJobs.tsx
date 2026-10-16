@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "../../../i18n";
 import { Bot, Square, Terminal } from "../../../shared/ui/icons";
 import type { BackgroundJob } from "../model/session";
 import { formatElapsed, useElapsedFrom } from "./AgentTranscript";
@@ -54,6 +55,7 @@ function BackgroundJobRow({
   stopping: boolean;
   onStop?: () => void;
 }) {
+  const { t } = useTranslation("sessions");
   const elapsed = formatElapsed(useElapsedFrom(job.startedAt, false));
   const Icon = job.command ? Terminal : Bot;
   return (
@@ -74,8 +76,8 @@ function BackgroundJobRow({
       {onStop ? (
         <button
           type="button"
-          title="Stop"
-          aria-label={`Stop ${job.title}`}
+          title={t("backgroundJobs.stop")}
+          aria-label={t("backgroundJobs.stopLabel", { title: job.title })}
           disabled={stopping}
           onClick={onStop}
           className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-content/10 hover:text-content disabled:opacity-30"
