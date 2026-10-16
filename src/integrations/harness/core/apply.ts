@@ -152,7 +152,12 @@ export function applyHarnessEvent(
         const { backgroundTasks: _cleared, ...rest } = session;
         return rest;
       }
-      return { ...session, backgroundTasks: event.tasks };
+      // Claude yielded with work still running: what it said to a follow-up
+      // is done, even though the turn stays open for the tasks.
+      return {
+        ...stampFollowUpDuration(session, Date.now()),
+        backgroundTasks: event.tasks,
+      };
     case "plan":
       return upsertPlan(session, event);
     case "session.error":
@@ -192,6 +197,17 @@ export function applyHarnessEvent(
     }
     case "turn.ready":
       return session.busy ? { ...session, turnReady: true } : session;
+    case "background.jobs":
+      if (event.jobs.length === 0) {
+        if (!session.backgroundJobs) return session;
+        const { backgroundJobs: _cleared, ...rest } = session;
+        return rest;
+      }
+      return { ...session, backgroundJobs: event.jobs };
+    case "session.woke":
+      return session.busy ? session : { ...session, busy: true };
+    case "session.idle":
+      return session.busy ? stopStreaming(session) : session;
     case "session.configChanged":
       return {
         ...session,
@@ -508,11 +524,12 @@ export function appendSteerUser(
   attachments: Attachment[] = [],
   extra?: UserTurnExtra,
 ): Session {
+  const stamped = stampFollowUpDuration(session, Date.now());
   return {
-    ...session,
+    ...stamped,
     busy: true,
     blocks: [
-      ...session.blocks,
+      ...stamped.blocks,
       {
         id: crypto.randomUUID(),
         role: "user",
@@ -527,8 +544,13 @@ export function appendSteerUser(
 }
 
 export function stopStreaming(session: Session, endedAt = Date.now()): Session {
-  const { backgroundTasks: _cleared, ...settled } =
-    settlePendingApprovals(session);
+  // A turn only ends once its background work is done, or by a stop that
+  // ends that work too.
+  const {
+    backgroundTasks: _cleared,
+    backgroundJobs: _stopped,
+    ...settled
+  } = stampFollowUpDuration(settlePendingApprovals(session), endedAt);
   return {
     ...settled,
     busy: false,
@@ -728,6 +750,31 @@ function stampTurnDuration(blocks: Block[], endedAt: number): Block[] {
     durationMs: Math.max(0, endedAt - user.startedAt),
   };
   return next;
+}
+
+/**
+ * A message sent mid-turn reads as a turn of its own, so it keeps a clock of
+ * its own: from when it was sent until Claude yields, the next message joins,
+ * or the turn ends, whichever comes first.
+ */
+function stampFollowUpDuration(session: Session, endedAt: number): Session {
+  let index = session.blocks.length - 1;
+  while (index >= 0 && session.blocks[index].role !== "user") index--;
+  const user = session.blocks[index];
+  if (
+    user?.sentAt == null ||
+    user.startedAt != null ||
+    user.durationMs != null ||
+    // A Mono's outbox bubble has not reached the agent yet.
+    session.queuedMessages?.some((message) => message.blockId === user.id)
+  )
+    return session;
+  const blocks = session.blocks.slice();
+  blocks[index] = {
+    ...user,
+    durationMs: Math.max(0, endedAt - user.sentAt),
+  };
+  return { ...session, blocks };
 }
 
 /** Status pings repeat; keep one row per run instead of stacking identical lines. */

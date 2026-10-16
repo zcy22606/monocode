@@ -509,6 +509,10 @@
       "cancelled": "Session cancelled: {{title}}"
     }
   },
+  "backgroundJobs": {
+    "stop": "Stop",
+    "stopLabel": "Stop {{title}}"
+  },
   "composer": {
     "dropFiles": "Drop files to attach",
     "placeholder": {

@@ -31,6 +31,7 @@ import { sessionEditPaths } from "../model/checkpointEdits";
 import { PromptOutline } from "./PromptOutline";
 import {
   canCompactHarnessContext,
+  stopHarnessBackgroundJob,
   type ApprovalDecision,
   type UserQuestionReply,
 } from "../../../integrations/harness";
@@ -786,6 +787,13 @@ const LocalSessionPane = memo(function LocalSessionPane({
           : (command) => onRunShellCommand(session.id, command)
       }
       onPlaceInFolder={(target) => onPlaceSessionInFolder(session.id, target)}
+      backgroundJobs={session.backgroundJobs}
+      onStopBackgroundJob={
+        remote
+          ? undefined
+          : (jobId) =>
+              stopHarnessBackgroundJob(session.harness, session.id, jobId)
+      }
       queuedMessages={session.queuedMessages}
       queueStatus={session.queueStatus}
       onDeleteQueuedMessage={(messageId) =>

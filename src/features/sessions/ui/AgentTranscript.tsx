@@ -4657,7 +4657,7 @@ function ToolCallStatusIcon({ state }: { state: ToolCallState }) {
   return null;
 }
 
-function useElapsedFrom(
+export function useElapsedFrom(
   startedAt: number | undefined,
   paused: boolean,
 ): number | null {
@@ -4709,7 +4709,7 @@ function formatWorkingDuration(
   return translate(`sessions:transcript.work.${key}`, { who, elapsed });
 }
 
-function formatElapsed(elapsedMs: number | null): string | null {
+export function formatElapsed(elapsedMs: number | null): string | null {
   if (elapsedMs == null) return null;
   const totalSec = Math.max(1, Math.round(elapsedMs / 1000));
   if (totalSec < 60) return `${totalSec}s`;
