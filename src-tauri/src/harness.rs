@@ -1570,7 +1570,7 @@ fn isolate_child(cmd: &mut Command) {
     }
 }
 
-fn spawn_managed(cmd: &mut Command) -> std::io::Result<std::process::Child> {
+pub(crate) fn spawn_managed(cmd: &mut Command) -> std::io::Result<std::process::Child> {
     #[cfg(windows)]
     {
         crate::windows::spawn_managed(cmd)
@@ -1608,7 +1608,7 @@ fn is_text_file_busy(error: &std::io::Error) -> bool {
     error.raw_os_error() == Some(libc::ETXTBSY)
 }
 
-fn terminate(pid: u32) {
+pub(crate) fn terminate(pid: u32) {
     terminate_after(pid, KILL_ESCALATE);
 }
 
@@ -3007,7 +3007,7 @@ pub(crate) fn apply_gui_env(cmd: &mut Command) {
     }
 }
 
-fn prepare_child(cmd: &mut Command, command: &str) {
+pub(crate) fn prepare_child(cmd: &mut Command, command: &str) {
     apply_gui_env(cmd);
     if command_basename(command) == "fx" {
         apply_fx_env(cmd);

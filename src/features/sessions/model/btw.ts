@@ -214,6 +214,7 @@ const SNAPSHOT_ROLES: Record<Block["role"], true | undefined> = {
   approval: undefined,
   system: undefined,
   handoff: undefined,
+  shell: undefined,
 };
 
 const PRIVATE_ROLES: Record<Block["role"], true | undefined> = {
@@ -227,6 +228,7 @@ const PRIVATE_ROLES: Record<Block["role"], true | undefined> = {
   tasks: undefined,
   plan: undefined,
   tool: undefined,
+  shell: undefined,
 };
 
 /** Keep isolated prompts below the context limits of the supported runners. */
