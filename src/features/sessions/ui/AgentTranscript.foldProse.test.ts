@@ -38,7 +38,9 @@ function tool(id: string): Block {
 }
 
 describe("prose folded into the work trail", () => {
-  it("marks a mid-turn note as process, leaving the answer at full strength", () => {
+  // Soloyard: the agent's words never fold (only its work does), so the note
+  // is on screen as it is, beside the answer, with no fold to open.
+  it("leaves a mid-turn note on screen, unmarked, beside the answer", () => {
     const blocks: Block[] = [
       { id: "user", role: "user", text: "Keep me posted" },
       tool("t1"),
@@ -52,30 +54,11 @@ describe("prose folded into the work trail", () => {
     ];
     act(() => root.render(createElement(AgentTranscript, { blocks })));
 
-    // The trail stays collapsed until asked for, so none of what it holds —
-    // the note included — is in the DOM yet.
+    expect(
+      container.querySelector('button[aria-label="Show the work"]'),
+    ).toBeNull();
     expect(container.querySelector(".zen-fold-prose")).toBeNull();
-    const toggle = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Show the work"]',
-    )!;
-    expect(toggle).not.toBeNull();
-
-    act(() => toggle.click());
-
-    // Only the mid-turn note carries the marker; the tool rows it sits
-    // between stay ordinary rail entries.
-    const prose = container.querySelectorAll(".zen-fold-prose");
-    expect(prose).toHaveLength(1);
-    expect(prose[0].textContent).toContain("Trying the other config.");
-    expect(prose[0].textContent).not.toContain(
-      "The investigation is complete.",
-    );
-
-    // The answer renders the same markdown root, outside the demoted wrapper.
-    const answer = Array.from(
-      container.querySelectorAll(".agent-markdown"),
-    ).find((el) => el.textContent?.includes("The investigation is complete."));
-    expect(answer).not.toBeUndefined();
-    expect(answer?.closest(".zen-fold-prose")).toBeNull();
+    expect(container.textContent).toContain("Trying the other config.");
+    expect(container.textContent).toContain("The investigation is complete.");
   });
 });

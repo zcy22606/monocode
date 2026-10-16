@@ -209,10 +209,8 @@ describe("tool diff popovers", () => {
         ),
       );
       expect(container.textContent).not.toContain("before");
-      const expand = container.querySelector<HTMLButtonElement>(
-        'button[aria-label="Show the work"]',
-      )!;
-      act(() => expand.click());
+      // Soloyard: no fold over the turn, so the lone edit's row is already
+      // on screen; there is nothing to expand.
       const trigger = container.querySelector<HTMLButtonElement>(
         'button[aria-haspopup="dialog"]',
       )!;

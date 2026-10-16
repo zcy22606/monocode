@@ -1173,7 +1173,9 @@ function AgentTranscriptComponent({
               ))}
             </div>
           );
-          const fold = inlineWork ? undefined : foldableWork(items);
+          // Soloyard: the agent's own words never fold, only its work does,
+          // each group on a line of its own, the way Claude Code shows a turn.
+          const fold = undefined as ReturnType<typeof foldableWork>;
           const folded = fold ? foldedBlocks(items, fold) : [];
           const summarizedWork = inlineWork
             ? items.flatMap((item) =>
