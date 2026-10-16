@@ -2270,30 +2270,36 @@ html:not(.theme-light) .markdown-code-token {
   }
 }
 
+/* The dim text stays put; a bright copy in a moving window sweeps over it.
+   Both halves only move by transform, so the compositor runs the sweep
+   instead of the main thread repainting the text every frame. */
 .shimmer-text {
-  background-image:
-    linear-gradient(
-      90deg,
-      transparent calc(50% - var(--spread)),
-      var(--color-content) calc(50%),
-      transparent calc(50% + var(--spread))
-    ),
-    linear-gradient(
-      hsl(
-        var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
-      ),
-      hsl(
-        var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
-      )
-    );
-  background-size:
-    250% 100%,
-    auto;
-  background-repeat: no-repeat, padding-box;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: shimmer-text var(--shimmer-duration, 2s) linear infinite;
+  color: hsl(
+    var(--theme-hue) var(--theme-saturation) var(--content-lightness) / 0.4
+  );
+}
+
+.shimmer-glint {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(
+    90deg,
+    transparent calc(50% - var(--spread)),
+    #000 50%,
+    transparent calc(50% + var(--spread))
+  );
+  animation: shimmer-glint var(--shimmer-duration, 2s) linear infinite;
+}
+
+.shimmer-glint::before {
+  content: attr(data-text);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-content);
+  animation: shimmer-glint-text var(--shimmer-duration, 2s) linear infinite;
 }
 
 /* One light sweep across a composer mode command as it appears. */
@@ -2329,56 +2335,52 @@ html:not(.theme-light) .markdown-code-token {
 
 /* Two-frame mascot loop — a hard swap plus a one-pixel hop, arcade style. */
 .mascot-active {
-  animation: mascot-hop var(--mascot-beat, 460ms) infinite;
+  animation: mascot-hop var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
 }
 
 .mascot-rest {
-  animation: mascot-rest var(--mascot-beat, 460ms) infinite;
+  animation: mascot-rest var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
 }
 
 .mascot-talk {
-  animation: mascot-talk var(--mascot-beat, 460ms) infinite;
+  animation: mascot-talk var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
 }
 
+/* Two frames as steps(2, jump-none), so the page updates at each swap
+   instead of every frame for the animation's whole life. */
 @keyframes mascot-hop {
-  0%,
-  49.99% {
+  from {
     transform: translateY(0);
   }
-  50%,
-  100% {
+  to {
     transform: translateY(-1px);
   }
 }
 
 @keyframes mascot-rest {
-  0%,
-  49.99% {
+  from {
     opacity: 1;
   }
-  50%,
-  100% {
+  to {
     opacity: 0;
   }
 }
 
 @keyframes mascot-talk {
-  0%,
-  49.99% {
+  from {
     opacity: 0;
   }
-  50%,
-  100% {
+  to {
     opacity: 1;
   }
 }
 
 .composer-coin-face {
-  animation: mascot-rest 320ms infinite;
+  animation: mascot-rest 320ms steps(2, jump-none) infinite;
 }
 
 .composer-coin-edge {
-  animation: mascot-talk 320ms infinite;
+  animation: mascot-talk 320ms steps(2, jump-none) infinite;
 }
 
 /* Freeze the hop while the runner is seeing stars after a chevron bonk. */
@@ -2759,12 +2761,21 @@ html.theme-light .mono-pill {
   }
 }
 
-@keyframes shimmer-text {
+@keyframes shimmer-glint {
   from {
-    background-position: 100% center;
+    transform: translateX(-75%);
   }
   to {
-    background-position: 0% center;
+    transform: translateX(75%);
+  }
+}
+
+@keyframes shimmer-glint-text {
+  from {
+    transform: translateX(75%);
+  }
+  to {
+    transform: translateX(-75%);
   }
 }
 
