@@ -2460,6 +2460,10 @@ function Workspace({
       if (
         shouldPersistSession(session) &&
         (!session.busy ||
+          // Yielded with background work left: the turn stays open, and the
+          // agent can wake itself for hours. Save each reply, or a webview
+          // crash in that wait loses all of them.
+          !!session.backgroundTasks?.length ||
           parked ||
           newlyBound ||
           newUserTurn ||
