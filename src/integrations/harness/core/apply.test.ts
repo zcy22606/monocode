@@ -539,9 +539,47 @@ describe("appendSteerUser", () => {
         startedAt: 1000,
         durationMs: 4000,
       });
-      expect(session.blocks.at(-1)?.durationMs).toBeUndefined();
+      // The follow-up keeps its own clock (sent → turn end), so its
+      // row in the transcript says how long the agent worked on it.
+      expect(session.blocks.at(-1)?.durationMs).toBe(2000);
       const saved = sanitizeSessionForPersist(session);
       expect(saved.blocks.at(-1)).toMatchObject({ sentAt: 3000 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops a follow-up's clock when Claude yields or the next one joins", () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(1000);
+      let session = appendUser(newSession("claude", "/tmp"), "watch it");
+      session = applyHarnessEvent(session, {
+        type: "background.updated",
+        tasks: ["monitor"],
+      });
+      // The turn's own clock runs until the turn ends, tasks and all.
+      expect(session.blocks[0]?.durationMs).toBeUndefined();
+
+      vi.setSystemTime(10_000);
+      session = appendSteerUser(session, "why 30 minutes?");
+      session = applyHarnessEvent(session, {
+        type: "background.updated",
+        tasks: [],
+      });
+      vi.setSystemTime(32_000);
+      session = applyHarnessEvent(session, {
+        type: "background.updated",
+        tasks: ["monitor"],
+      });
+      expect(session.blocks.at(-1)?.durationMs).toBe(22_000);
+
+      vi.setSystemTime(40_000);
+      session = appendSteerUser(session, "and this?");
+      vi.setSystemTime(45_000);
+      session = appendSteerUser(session, "one more");
+      expect(session.blocks.at(-2)?.durationMs).toBe(5_000);
+      expect(session.blocks.at(-1)?.durationMs).toBeUndefined();
     } finally {
       vi.useRealTimers();
     }
