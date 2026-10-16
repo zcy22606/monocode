@@ -41,6 +41,20 @@ describe("AgentTranscript collapsed work", () => {
     expect(markup).not.toContain("ml-auto flex shrink-0 items-center gap-2.5");
   });
 
+  it("times a message sent mid-turn from when it was sent", () => {
+    const now = Date.now();
+    const markup = render(
+      [
+        { id: "u1", role: "user", text: "go", startedAt: now - 9 * 60_000 },
+        { id: "a1", role: "assistant", text: "on it" },
+        { id: "u2", role: "user", text: "done yet?", sentAt: now - 3_000 },
+      ],
+      true,
+    );
+    expect(markup).toMatch(/Working for [345]s/);
+    expect(markup).not.toContain("Working for 9m");
+  });
+
   it("shows a /operator request without the command in its amber bubble", () => {
     const markup = render([
       { id: "user", role: "user", text: "list my notes", monocode: true },
