@@ -869,6 +869,48 @@ describe("headless session ownership", () => {
     expect(store.events(id, 100_000).snapshot?.session.id).toBe(id);
   });
 
+  // Soloyard (SOL-89)
+  it("continues an imported conversation with its provider session", async () => {
+    const { engine, store, turns, provider, project } = setup("claude");
+    const { sessionId } = engine.command({
+      type: "create",
+      commandId: "import",
+      projectId: project.id,
+      harness: "claude",
+      model: "claude:test",
+      runtimeMode: "supervised",
+      import: {
+        providerSessionId: "desktop-thread",
+        title: "Fix the login bug",
+        blocks: [
+          { id: "u1", role: "user", text: "Fix login" },
+          { id: "a1", role: "assistant", text: "Looking", streaming: true },
+          { id: "d1", role: "user", text: "unsent", draft: true },
+        ],
+      },
+    });
+    expect(provider.bind).toHaveBeenCalledWith(sessionId, "desktop-thread", project.cwd);
+    const imported = store.session(sessionId).session;
+    expect(imported.providerSessionId).toBe("desktop-thread");
+    expect(imported.blocks.map((block) => block.id)).toEqual(["u1", "a1"]);
+    expect(imported.blocks.some((block) => block.streaming)).toBe(false);
+    engine.command({ type: "send", commandId: "next", sessionId, text: "Keep going" });
+    await vi.waitFor(() => expect(turns).toHaveLength(1));
+    expect(store.session(sessionId).session.title).toBe("Fix the login bug");
+    turns[0].finish();
+    expect(() =>
+      parseCommand({
+        type: "create",
+        commandId: "bad",
+        projectId: project.id,
+        harness: "claude",
+        model: "claude:test",
+        runtimeMode: "supervised",
+        import: { providerSessionId: "x", title: "t", blocks: [{ role: "user" }] },
+      }),
+    ).toThrow("Invalid imported transcript");
+  });
+
   it("validates untrusted commands before execution", () => {
     expect(() =>
       parseCommand({ type: "send", commandId: "x", sessionId: "y", text: "" }),

@@ -811,5 +811,30 @@
     "firstRecords_other": "前 {{rows}} 条记录",
     "truncated": "只显示前 {{rows}} 条记录，其余的切到源码看。",
     "invalid": "不是有效的 JSON"
+  },
+  "hostSessions": {
+    "label": "在手机上",
+    "hint": "这些会话在家里的主机上跑（手机上开的，或者在手机上接着聊的）。点一下拿回电脑上接着聊。",
+    "take": "拿回电脑上接着聊",
+    "running": "主机上这一轮还在跑，跑完再拿回来。",
+    "runningShort": "运行中",
+    "needsInput": "等你处理",
+    "more_other": "还有 {{count}} 个",
+    "showLess": "收起",
+    "failed": "没拿回来：{{error}}"
+  },
+  "sync": {
+    "title": "手机同步",
+    "description": "连上家里主机的 Soloyard 网关：这台电脑的会话手机上看得到、能在主机上接着聊；手机上的会话也能拿回这里接着聊。",
+    "url": "网关地址",
+    "token": "设备凭据",
+    "how": "在主机上运行",
+    "connect": "连接",
+    "connecting": "正在连接…",
+    "connected": "已连上 {{host}}",
+    "pushed_other": "已同步 {{count}} 个会话 · {{time}}",
+    "waiting": "正在同步…",
+    "error": "同步出错：{{error}}",
+    "disconnect": "断开"
   }
 }

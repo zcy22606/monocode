@@ -106,6 +106,7 @@ import UngroupItemsIcon from "@hugeicons/core-free-icons/UngroupItemsIcon";
 import ViewIcon from "@hugeicons/core-free-icons/ViewIcon";
 import WholeWordIcon from "@hugeicons/core-free-icons/WholeWordIcon";
 import ServerStack01Icon from "@hugeicons/core-free-icons/ServerStack01Icon"; // Soloyard
+import SmartPhone01Icon from "@hugeicons/core-free-icons/SmartPhone01Icon"; // Soloyard
 import Wrench01Icon from "@hugeicons/core-free-icons/Wrench01Icon";
 import { forwardRef, type Ref } from "react";
 
@@ -284,6 +285,7 @@ export const Wrench = wrap(Wrench01Icon, "Wrench");
 export const X = wrap(Cancel01Icon, "X");
 export const Zap = wrap(FlashIcon, "Zap");
 export const Server = wrap(ServerStack01Icon, "Server"); // Soloyard
+export const Smartphone = wrap(SmartPhone01Icon, "Smartphone"); // Soloyard
 
 // Soloyard: session link kinds (kept in one block at the end to stay clear of upstream edits).
 import Link01Icon from "@hugeicons/core-free-icons/Link01Icon";

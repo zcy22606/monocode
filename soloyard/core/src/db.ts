@@ -119,6 +119,12 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, UNIQUE (project_id, section));
   ALTER TABLE soloyard_projects ADD COLUMN slug TEXT;
   `,
+  // 会话镜像（mirror.ts）：推给家里主机网关的配置（地址、这台电脑的凭据）和推到哪了。
+  // mirror.ts 启动时也会建（IF NOT EXISTS）：别的分支占过这个迁移号的库（开发版跑过 SOL-68）会跳过这一条
+  `
+  CREATE TABLE IF NOT EXISTS soloyard_sync (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE IF NOT EXISTS soloyard_mirror (session_id TEXT PRIMARY KEY, updated_at INTEGER NOT NULL);
+  `,
 ]
 
 export function openDb(path: string): DB {

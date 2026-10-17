@@ -861,5 +861,32 @@
     "firstRecords_other": "First {{rows}} records",
     "truncated": "Showing the first {{rows}} records. Switch to Source for the rest.",
     "invalid": "Not valid JSON"
+  },
+  "hostSessions": {
+    "label": "On your phone",
+    "hint": "Sessions running on your home host, started or continued on your phone. Click one to continue it here.",
+    "take": "Continue on this computer",
+    "running": "Still running on the host. Take it back when the turn finishes.",
+    "runningShort": "Running",
+    "needsInput": "Needs you",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more",
+    "showLess": "Show less",
+    "failed": "Couldn't take it back: {{error}}"
+  },
+  "sync": {
+    "title": "Phone sync",
+    "description": "Connect to the Soloyard gateway on your home host. Sessions on this computer show up on your phone and can continue on the host; sessions from your phone can come back here.",
+    "url": "Gateway address",
+    "token": "Device credential",
+    "how": "On the host, run",
+    "connect": "Connect",
+    "connecting": "Connecting…",
+    "connected": "Connected to {{host}}",
+    "pushed_one": "{{count}} session synced · {{time}}",
+    "pushed_other": "{{count}} sessions synced · {{time}}",
+    "waiting": "Syncing…",
+    "error": "Sync failed: {{error}}",
+    "disconnect": "Disconnect"
   }
 }

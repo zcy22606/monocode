@@ -18,6 +18,7 @@ import * as ideas from './ideas.ts'
 import * as decisions from './decisions.ts'
 import { exportDocuments } from './docs-export.ts'
 import * as docs from './docs.ts'
+import * as mirror from './mirror.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -45,6 +46,15 @@ try {
 
 /** 界面能调的方法（白名单）。写操作在名字里标 write，执行后广播 changed。 */
 const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknown }> = {
+  // 手机同步：把电脑上的会话推给家里主机的网关
+  syncStatus: { run: () => mirror.syncStatus(db) },
+  connectSync: { run: (url: string, token: string) => mirror.connectSync(db, url, token) },
+  disconnectSync: { run: () => mirror.disconnectSync(db) },
+  hostSessions: { run: (cwd: string) => mirror.hostSessions(db, cwd) },
+  relayInbox: { run: () => mirror.relayInbox(db) },
+  livePush: { run: (id: string, live: { from?: string; blocks: unknown[]; busy: boolean }) => mirror.livePush(db, id, live) },
+  // write：拿回来以后各处的「在手机上」列表跟着刷新
+  takeHostSession: { write: true, run: (sessionId: string) => mirror.takeHostSession(db, sessionId) },
   // 不广播：只在第一次打开时建项目，调用方直接拿返回值；广播会让读它的界面反复重取
   // 头脑风暴的工作文件夹对应想法项目，不当普通项目建
   projectForPath: { run: (p: string) => (inWorkspace(p) ? ideas.ideaForPath(db, actor, p) : repo.projectForPath(db, p)) },
@@ -158,14 +168,18 @@ createInterface({ input: process.stdin }).on('line', (line) => {
   }
   const m = METHODS[req.method]
   if (!m) return send({ id: req.id, error: `unknown method: ${req.method}` })
-  try {
-    const result = m.run(...(req.args ?? []))
-    send({ id: req.id, result: result ?? null })
-    if (m.write) {
-      lastSignature = signature() // 自己写的已经广播过，轮询不再重复
-      send({ event: 'changed' })
-    }
-  } catch (e) {
-    send({ id: req.id, error: e instanceof Error ? e.message : String(e), latest: e instanceof repo.VersionConflict || e instanceof overview.OverviewConflict ? e.latest : undefined })
-  }
+  // 大多数方法是同步的；连网关这类要等网络的返回 Promise，等到结果再回
+  new Promise((ok) => ok(m.run(...(req.args ?? [])))).then(
+    (result) => {
+      send({ id: req.id, result: result ?? null })
+      if (m.write) {
+        lastSignature = signature() // 自己写的已经广播过，轮询不再重复
+        send({ event: 'changed' })
+      }
+    },
+    (e) => send({ id: req.id, error: e instanceof Error ? e.message : String(e), latest: e instanceof repo.VersionConflict || e instanceof overview.OverviewConflict ? e.latest : undefined }),
+  )
 }).on('close', () => process.exit(0))
+
+// 手机同步：配了网关就每 5 秒推一轮变了的会话
+mirror.startMirror(db, (msg) => process.stderr.write(msg + '\n'))

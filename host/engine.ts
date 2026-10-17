@@ -74,6 +74,31 @@ function modelSettings(value: unknown): Record<string, string> {
   return Object.fromEntries(entries) as Record<string, string>;
 }
 
+// Soloyard: a conversation started on another machine, continued here (SOL-89)
+function parseImport(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Invalid import");
+  const v = value as Record<string, unknown>;
+  if (
+    !Array.isArray(v.blocks) ||
+    v.blocks.length > 2000 ||
+    v.blocks.some(
+      (block) =>
+        !block ||
+        typeof block !== "object" ||
+        typeof block.id !== "string" ||
+        typeof block.role !== "string" ||
+        typeof block.text !== "string",
+    )
+  )
+    throw new Error("Invalid imported transcript");
+  return {
+    providerSessionId: text(v.providerSessionId, "provider session ID", 200),
+    title: text(v.title, "title", 500),
+    blocks: v.blocks as Session["blocks"],
+  };
+}
+
 export function parseCommand(input: unknown): HostCommand {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new Error("Invalid command");
@@ -108,6 +133,7 @@ export function parseCommand(input: unknown): HostCommand {
         ? { modelSettings: modelSettings(v.modelSettings) }
         : {}),
       runtimeMode: v.runtimeMode as Session["runtimeMode"],
+      ...(v.import !== undefined ? { import: parseImport(v.import) } : {}), // Soloyard
     };
   }
   const sessionId = text(v.sessionId, "session ID");
@@ -452,6 +478,25 @@ export class HostEngine {
             blocks: [],
           },
         };
+        // Soloyard: the provider resumes the imported conversation on the first send
+        const imported = command.import;
+        if (imported) {
+          value.session = stopStreaming(
+            {
+              ...value.session,
+              title: imported.title,
+              providerSessionId: imported.providerSessionId,
+              blocks: imported.blocks.filter((block) => !block.draft),
+            },
+            now,
+          );
+          effect = (saved) =>
+            this.provider(saved.session.harness).bind(
+              saved.session.id,
+              imported.providerSessionId,
+              saved.session.cwd,
+            );
+        }
       } else {
         value = this.store.session(command.sessionId);
         if (

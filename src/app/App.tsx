@@ -79,6 +79,8 @@ import { soloyardTurnContext } from "../features/soloyard/model/sessionContext";
 import { queuedRestoreRequest, requestRestoreDraft, unansweredRestoreRequest } from "../features/soloyard/model/composerHistory"; // Soloyard
 import { placeSession, useMissingWorktrees } from "../features/soloyard/model/missingWorktrees"; // Soloyard
 import { useImportedSessions } from "../features/soloyard/model/importedSessions"; // Soloyard
+import { useRelayInbox } from "../features/soloyard/model/relayInbox"; // Soloyard
+import { useLiveMirror } from "../features/soloyard/model/liveMirror"; // Soloyard
 import { useRecordRecentSessions } from "../features/soloyard/model/recentSessions"; // Soloyard
 import { useOnRepoMembersChanged } from "../features/soloyard/ui/repos/RepoNav"; // Soloyard
 import { useRepoBrowseCwd } from "../features/soloyard/model/repoFilter"; // Soloyard
@@ -4456,6 +4458,8 @@ function Workspace({
 
   // Soloyard: terminal turns were imported into these sessions, or they moved under a multi-repo project root;
   // swap in the stored transcript and place of idle loaded ones.
+  useRelayInbox(); // Soloyard: messages sent from the phone run in their desktop session (SOL-89)
+  useLiveMirror(sessions); // Soloyard: the phone watches running turns live (SOL-89)
   useImportedSessions((ids) => {
     for (const id of ids) {
       invalidateLoadedSession(id);
@@ -8816,6 +8820,7 @@ function Workspace({
           const session = {
             ...newDefaultSession(request.cwd, sessionDefaults?.runtimeMode),
             id: request.sessionId,
+            ...request.seed, // Soloyard: a session taken back from the host (SOL-89)
             ...(request.send ? {} : { composerSeed: request.prompt }),
             // A multi-repo issue starts in its member repo, in a new worktree there when asked (see setWorkDir).
             ...(request.workCwd

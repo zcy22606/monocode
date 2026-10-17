@@ -44,6 +44,7 @@ import { JiraSettings } from "./JiraSettings";
 import { GradientBlurBackground } from "./GradientBlurBackground";
 import { McpSettings } from "./McpSettings";
 import { SoloyardMcpSettings } from "../../soloyard/ui/SoloyardMcpSettings"; // Soloyard
+import { SoloyardSyncSettings } from "../../soloyard/ui/SoloyardSyncSettings"; // Soloyard
 import { InboxProviderMark } from "../../inbox/ui/InboxProviderMark";
 import { RemoveProjectDialog } from "../../projects/ui/RemoveProjectDialog";
 import { WindowControls } from "../../../app/shell/WindowControls";
@@ -600,7 +601,12 @@ export function SettingsView({
               {section === "general" ? (
                 <GeneralPage onOpenWhatsNew={onOpenWhatsNew} />
               ) : null}
-              {section === "connections" ? <ConnectionsSettings /> : null}
+              {section === "connections" ? (
+                <>
+                  <SoloyardSyncSettings /> {/* Soloyard */}
+                  <ConnectionsSettings />
+                </>
+              ) : null}
               {section === "appearance" ? (
                 <AppearancePage appearance={appearance} />
               ) : null}

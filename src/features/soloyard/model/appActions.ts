@@ -2,6 +2,7 @@
  * Soloyard 请底座做的事（开会话、切到会话、给会话发消息）。用窗口事件传给 App，
  * 不用把回调一层层传进标签内容；App 里只有一个监听（见 App.tsx 里的 Soloyard 注释）。
  */
+import type { Session } from "../../sessions/model/session";
 
 export type StartWorkRequest = {
   cwd: string;
@@ -18,6 +19,8 @@ export type StartWorkRequest = {
   send?: boolean;
   /** 把 cwd 记成当前项目（新想法：它的文件夹刚建出来，还不在项目列表里）。 */
   remember?: boolean;
+  /** 新会话预先带上的内容（从主机拿回来的会话：对话、模型、provider 会话 id）。 */
+  seed?: Partial<Session>;
 };
 
 /** 先打开会话（没开就打开），再把消息发进去。 */

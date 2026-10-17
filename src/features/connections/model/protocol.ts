@@ -152,6 +152,8 @@ export type HostCommand =
       model: string;
       modelSettings?: Record<string, string>;
       runtimeMode: RuntimeMode;
+      /** Soloyard: continue a conversation started elsewhere (SOL-89). */
+      import?: { providerSessionId: string; title: string; blocks: Block[] };
     }
   | {
       type: "configure";
