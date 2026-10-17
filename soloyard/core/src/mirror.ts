@@ -14,7 +14,7 @@ import { resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import type { DB } from './db.ts'
 import { readSharedFile } from './file-share.ts'
-import { listeners, openService, projectListeners, projectServices } from './services.ts'
+import { listeners, mentionedPorts, openService, projectListeners, projectServices } from './services.ts'
 import { repoKey } from './repokey.ts'
 
 export type MirrorConfig = { url: string; token: string; machine: string }
@@ -214,7 +214,8 @@ async function answerServices(db: DatabaseSync, config: MirrorConfig, ask: FileA
     const row = sessionRow(db, ask.sessionId)
     const roots = [row.cwd, row.worktree_cwd].filter((r): r is string => !!r)
     const all = await listeners()
-    const result = ask.kind === 'open' ? await openService(Number(ask.port), projectListeners(all, roots)) : await projectServices(all, roots)
+    const mentioned = mentionedPorts(row.blocks_json ?? '')
+    const result = ask.kind === 'open' ? await openService(Number(ask.port), projectListeners(all, roots, mentioned)) : await projectServices(all, roots, mentioned)
     await rpc(config, 'soloyard.relay.answer', { id: ask.id, result })
   } catch (e) {
     await rpc(config, 'soloyard.relay.answer', { id: ask.id, error: (e as Error).message })

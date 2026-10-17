@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { createConnection, createServer } from 'node:net'
 import { test } from 'node:test'
-import { closeForwards, openService, parseLsof, parseSs, projectListeners, projectServices, type Listener } from '../src/services.ts'
+import { closeForwards, mentionedPorts, openService, parseLsof, parseSs, projectListeners, projectServices, type Listener } from '../src/services.ts'
 
 test('本地服务：解析 lsof / ss，只列会话目录里的进程，同端口合并', () => {
   const mac = parseLsof('p101\ncnode\nf20\nn127.0.0.1:5173\nf21\nn[::1]:5173\np202\ncpython3\nf3\nn*:8000\np303\ncsshd\nf4\nn*:22\n')
@@ -15,6 +15,12 @@ test('本地服务：解析 lsof / ss，只列会话目录里的进程，同端�
   for (const l of mac) l.cwd = cwd[l.pid]
   assert.deepEqual(projectListeners(mac, ['/repo']).map((l) => l.port), [5173, 5173])
   assert.deepEqual(projectListeners(mac, ['/rep']), [], '前缀相同的别的目录不算')
+
+  // agent 在项目外起的服务：对话里写过它的网址就算这个会话的；只提到端口号、数据库连接串这类不算
+  const said = mentionedPorts('服务起来了：http://127.0.0.1:8000/ 或 http://localhost:8000，数据库在 127.0.0.1:5432，另见 [::1]:22')
+  assert.deepEqual([...said], [8000])
+  assert.deepEqual(projectListeners(mac, ['/repo'], said).map((l) => l.port), [5173, 5173, 8000])
+  assert.deepEqual(projectListeners(mac, ['/repo'], new Set([22])).map((l) => l.port), [5173, 5173], '系统端口提到了也不开')
 })
 
 test('本地服务：只列说 HTTP 的；不吭声的要是 node 这类运行时起的才算', async (t) => {

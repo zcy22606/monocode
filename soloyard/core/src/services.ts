@@ -70,9 +70,17 @@ export async function listeners(): Promise<Listener[]> {
 
 const under = (path: string, root: string) => path === root || path.startsWith(`${root.replace(/\/+$/, '')}/`)
 
-/** 会话目录里的进程在监听的（不含系统端口和自己）。只有这些能打开，电脑上别的本地服务不会被手机开出去。 */
-export function projectListeners(all: Listener[], roots: string[]) {
-  return all.filter((l) => l.port >= 1024 && l.pid !== process.pid && !!l.cwd && roots.some((r) => under(l.cwd!, r)))
+/** 对话里提到过的本地网址的端口（agent 回复里写了 http://127.0.0.1:8765）：在项目外起的服务也算这个会话的。 */
+export function mentionedPorts(text: string) {
+  return new Set([...text.matchAll(/https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):(\d{2,5})/gi)].map((m) => Number(m[1])))
+}
+
+/**
+ * 这个会话的服务：会话目录里的进程在监听的，加上对话里提到过的端口（不含系统端口和自己）。
+ * 只有这些能打开，电脑上别的本地服务不会被手机开出去。
+ */
+export function projectListeners(all: Listener[], roots: string[], mentioned = new Set<number>()) {
+  return all.filter((l) => l.port >= 1024 && l.pid !== process.pid && (mentioned.has(l.port) || (!!l.cwd && roots.some((r) => under(l.cwd!, r)))))
 }
 
 /** 只在本机地址上听的连 127.0.0.1 还是 ::1。 */
@@ -97,9 +105,9 @@ export function probe(port: number, host: string, timeout = 800): Promise<'http'
 /** 不吭声时，是这些运行时起的才算开发服务器（Next.js 第一次访问要先编译，几秒才回）。 */
 const RUNTIMES = /^(node|bun|deno|python[\d.]*|ruby|php|java|go|uvicorn|gunicorn|dotnet|next-server)$/i
 
-/** 给手机列的：会话目录里说 HTTP 的端口（同一个端口 IPv4 / IPv6 各一条，合成一条）。 */
-export async function projectServices(all: Listener[], roots: string[]): Promise<Service[]> {
-  const mine = projectListeners(all, roots)
+/** 给手机列的：这个会话的服务里说 HTTP 的端口（同一个端口 IPv4 / IPv6 各一条，合成一条）。 */
+export async function projectServices(all: Listener[], roots: string[], mentioned?: Set<number>): Promise<Service[]> {
+  const mine = projectListeners(all, roots, mentioned)
   const ports = [...new Set(mine.map((l) => l.port))].sort((a, b) => a - b)
   const found = await Promise.all(
     ports.map(async (port) => {

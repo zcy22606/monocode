@@ -21,7 +21,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { repoKey } from '../core/src/repokey.ts'
 import { MAX_FILE, readSharedFile, type SharedFile } from '../core/src/file-share.ts'
 import { sessionFiles } from '../core/src/session-files.ts'
-import { listeners, openService, projectListeners, projectServices } from '../core/src/services.ts'
+import { listeners, mentionedPorts, openService, projectListeners, projectServices } from '../core/src/services.ts'
 
 const PROTOCOL = 1
 const BEARER = /^Bearer ([A-Za-z0-9_-]{43})$/
@@ -557,7 +557,8 @@ async function hostServices(sessionId: string, port: number | undefined, host: H
   const { session } = (await host('sessions.get', { sessionId })) as HostedSession
   const roots = [session.cwd, session.worktreeCwd].filter((r): r is string => !!r)
   const all = await listeners()
-  return port === undefined ? projectServices(all, roots) : openService(port, projectListeners(all, roots))
+  const mentioned = mentionedPorts(JSON.stringify(session.blocks))
+  return port === undefined ? projectServices(all, roots, mentioned) : openService(port, projectListeners(all, roots, mentioned))
 }
 
 /**
