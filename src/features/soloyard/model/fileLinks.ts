@@ -1,4 +1,4 @@
-import { statFiles } from "../../../platform/tauri/fs";
+import { listDir, openPathWithDefaultApp, statFiles } from "../../../platform/tauri/fs";
 import { resolveWorkspacePath } from "../../../shared/lib/paths";
 
 // Soloyard: inline code paths the upstream check misses — folders (`output/`, `~/Playground/x`)
@@ -12,8 +12,11 @@ export function inlinePath(value: string): { name: string; isDir: boolean } | un
   const name = bare.split("/").filter(Boolean).pop() ?? "";
   if (bare.endsWith("/")) return name ? { name, isDir: true } : undefined;
   if (/\.[A-Za-z][A-Za-z0-9+-]{0,11}$/.test(name)) return { name, isDir: false };
-  return bare.startsWith("/") || bare.startsWith("~/") ? { name, isDir: true } : undefined;
+  return bare.startsWith("~/") || FS_ROOTS.test(bare) ? { name, isDir: true } : undefined;
 }
+
+// An extensionless absolute path is a folder only under a real filesystem root; `/mcp`, `/chat/open` are URL routes.
+const FS_ROOTS = /^\/(Users|home|tmp|private|var|opt|etc|usr|Volumes|Applications|Library|System|mnt|srv|root)(\/|$)/;
 
 // Soloyard: agents name Claude Code's memory files (`MEMORY.md`, `state-….md`) without their folder,
 // which is ~/.claude/projects/<cwd, every non-alphanumeric as ->/memory/, not the project.
@@ -50,4 +53,61 @@ export async function isFileOnDisk(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// Soloyard: agents name a file bare (`MNEMONICS.txt`) after naming it, or its folder, in full earlier
+// (`~/.bittensor/wallets/company-miner/`). Absolute and home paths in rendered agent text, newest last.
+// ponytail: rendering order stands in for conversation order, app-wide; per-session lists if names clash.
+const mentioned: string[] = [];
+const MENTION_LIMIT = 300;
+const PATH_IN_TEXT = /(?<![\w:./~-])~?\/[^\s`'"<>()[\]{}，。；：！？、|*]+/gu;
+
+export function rememberMentionedPaths(text: string, cwd?: string): void {
+  for (const [token] of text.matchAll(PATH_IN_TEXT)) {
+    const raw = token.replace(/[.,;:!?]+$/, "");
+    if (!raw.startsWith("~/") && raw.split("/").length < 3) continue;
+    const path = resolveWorkspacePath(raw, cwd)?.replace(/\/+$/, "");
+    if (!path) continue;
+    const seen = mentioned.indexOf(path);
+    if (seen >= 0) mentioned.splice(seen, 1);
+    mentioned.push(path);
+  }
+  if (mentioned.length > MENTION_LIMIT) mentioned.splice(0, mentioned.length - MENTION_LIMIT);
+}
+
+/** A file of this bare name that was mentioned in full, or sits in a mentioned folder; newest first. */
+export async function mentionedFile(name: string): Promise<string | undefined> {
+  if (!name || /[/\\]/.test(name)) return undefined;
+  const candidates = [
+    ...new Set([...mentioned].reverse().map((path) => (path.endsWith(`/${name}`) ? path : `${path}/${name}`))),
+  ].slice(0, 100);
+  if (candidates.length === 0) return undefined;
+  try {
+    const found = new Set((await statFiles(candidates)).filter((stat) => stat.mtimeMs != null).map((stat) => stat.path));
+    return candidates.find((path) => found.has(path));
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Soloyard: `inlinePath` guesses folder for an extensionless path, but `~/.ssh/id_ed25519`, `…/coldkey`
+ * and `Makefile` are files, so the disk decides. Unknown stays a folder, as guessed.
+ */
+export async function isFolder(path: string): Promise<boolean> {
+  const trimmed = path.replace(/[/\\]+$/, "");
+  const slash = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
+  const name = trimmed.slice(slash + 1);
+  try {
+    const entries = await listDir(trimmed.slice(0, slash) || "/");
+    return entries.find((entry) => entry.name === name)?.isDir ?? true;
+  } catch {
+    return true;
+  }
+}
+
+/** Soloyard: a folder link opens in Finder, or in the app when it turns out to be a file. */
+export async function openPathLink(path: string, onOpenFile?: (path: string) => void): Promise<void> {
+  if (onOpenFile && !(await isFolder(path))) onOpenFile(path);
+  else await openPathWithDefaultApp(path);
 }

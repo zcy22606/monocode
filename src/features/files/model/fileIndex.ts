@@ -3,7 +3,7 @@ import { subscribeDirsChanged } from "./fileTree";
 import { scorePath, type FuzzyHit } from "../../../shared/lib/fuzzy";
 import { resolveWorkspacePath, slash } from "../../../shared/lib/paths";
 import { looksLikeProject } from "../../projects/model/recents";
-import { claudeMemoryFile, isFileOnDisk } from "../../soloyard/model/fileLinks"; // Soloyard
+import { claudeMemoryFile, isFileOnDisk, mentionedFile } from "../../soloyard/model/fileLinks"; // Soloyard
 import {
   normalizeEditorPath,
   type FileOpenOptions,
@@ -256,7 +256,7 @@ export async function resolveOpenablePath(
   const baseName = relHint.split("/").filter(Boolean).pop() ?? relHint;
   const byName = files.filter((file) => file.name === baseName);
   if (byName.length === 0)
-    return (await claudeMemoryFile(relHint, cwd, direct)) ?? direct; // Soloyard
+    return (await claudeMemoryFile(relHint, cwd, direct)) ?? (await mentionedFile(relHint)) ?? direct; // Soloyard
   if (byName.length === 1) return byName[0].path;
 
   return pickOpenableFile(byName, cwd, relHint).path;

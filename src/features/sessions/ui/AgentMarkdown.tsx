@@ -49,7 +49,8 @@ import {
   openPathWithDefaultApp,
   revealPath,
 } from "../../../platform/tauri/fs";
-import { inlinePath } from "../../soloyard/model/fileLinks"; // Soloyard
+import { inlinePath, isFolder, openPathLink, rememberMentionedPaths } from "../../soloyard/model/fileLinks"; // Soloyard
+import { resolveOpenablePath } from "../../files/model/fileIndex"; // Soloyard
 import { INBOX_MEDIA_PREFIXES, isInboxMediaUrl } from "../../inbox/model/inboxMedia";
 import { isNoteImagePath } from "../../notes";
 import { IS_MAC, IS_WIN } from "../../../platform/tauri/platform";
@@ -375,7 +376,7 @@ function MarkdownCode({
       : undefined;
     const open =
       file && folder
-        ? () => void openPathWithDefaultApp(file.path).catch(console.error)
+        ? () => void openPathLink(file.path, onOpenFile).catch(console.error) // Soloyard: may be an extensionless file
         : file && onOpenFile
         ? () => onOpenFile(file.path, file.navigation)
         : undefined;
@@ -677,6 +678,7 @@ export const AgentMarkdown = memo(function AgentMarkdown({
   documentPath?: string;
 }) {
   const { t } = useTranslation("sessions");
+  useEffect(() => rememberMentionedPaths(text, cwd), [text, cwd]); // Soloyard: bare file names resolve against these
   const [fileMenu, setFileMenu] = useState<FileLinkMenu | null>(null);
   const [fileActionError, setFileActionError] = useState<string | null>(null);
   const onFileContextMenu = useCallback(
@@ -684,8 +686,16 @@ export const AgentMarkdown = memo(function AgentMarkdown({
       event.preventDefault();
       event.stopPropagation();
       setFileMenu({ x: event.clientX, y: event.clientY, path, navigation, isDir });
+      // Soloyard: copy / reveal / open act on the file a click would open, not the path joined onto the cwd,
+      // and a guessed folder that is an extensionless file (`~/.ssh/id_ed25519`) can open in the app.
+      if (cwd)
+        void (async () => {
+          const dir = !!isDir && (await isFolder(path));
+          const resolved = dir ? path : ((await resolveOpenablePath(cwd, path)) ?? path);
+          setFileMenu((menu) => (menu?.path === path ? { ...menu, path: resolved, isDir: dir } : menu));
+        })();
     },
-    [],
+    [cwd],
   );
   const fileOpen = useMemo(
     () => ({

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { inlinePath, memoryFile } from "./fileLinks";
+import { inlinePath, memoryFile, rememberMentionedPaths } from "./fileLinks";
 import { resolveOpenablePath } from "../../files/model/fileIndex";
 
 const cwd = "/Users/me/Workspace/openroboto";
@@ -11,6 +11,9 @@ const onDisk = new Set([
   `${memory}/App.tsx`,
   elsewhere,
   `${cwd}/dist/App.tsx`,
+  "/Users/me/.bittensor/wallets/company-miner/MNEMONICS.txt",
+  "/Users/me/old/notes.txt",
+  "/Users/me/new/notes.txt",
 ]);
 
 vi.mock("../../../platform/tauri/fs", async (importOriginal) => ({
@@ -40,6 +43,8 @@ describe("inlinePath", () => {
     expect(inlinePath("git status")).toBeUndefined();
     expect(inlinePath("https://x.dev/a/")).toBeUndefined();
     expect(inlinePath("/")).toBeUndefined();
+    expect(inlinePath("/mcp")).toBeUndefined();
+    expect(inlinePath("/chat/open")).toBeUndefined();
   });
 });
 
@@ -80,5 +85,21 @@ describe("resolveOpenablePath with real files the index skips", () => {
 
   it("opens a gitignored file inside the project as named", async () => {
     await expect(resolveOpenablePath(cwd, `${cwd}/dist/App.tsx`)).resolves.toBe(`${cwd}/dist/App.tsx`);
+  });
+});
+
+describe("resolveOpenablePath with a bare name mentioned earlier in full", () => {
+  it("finds it in a folder the conversation named", async () => {
+    rememberMentionedPaths("钱包在 `~/.bittensor/wallets/company-miner/` 下，文档见 https://x.dev/wallets/a", cwd);
+    await expect(resolveOpenablePath(cwd, `${cwd}/MNEMONICS.txt`)).resolves.toBe(
+      "/Users/me/.bittensor/wallets/company-miner/MNEMONICS.txt",
+    );
+  });
+
+  it("prefers the newest mention and still keeps the path when none has it", async () => {
+    rememberMentionedPaths("旧的在 /Users/me/old/notes.txt。", cwd);
+    rememberMentionedPaths("新的放进了 `/Users/me/new/`", cwd);
+    await expect(resolveOpenablePath(cwd, `${cwd}/notes.txt`)).resolves.toBe("/Users/me/new/notes.txt");
+    await expect(resolveOpenablePath(cwd, `${cwd}/missing.txt`)).resolves.toBe(`${cwd}/missing.txt`);
   });
 });
