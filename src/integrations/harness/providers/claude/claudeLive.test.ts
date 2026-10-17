@@ -6,6 +6,7 @@ import {
   foldedBlocks,
   groupTurnItems,
   workSummaryLine,
+  toolCallState,
 } from "../../../../features/sessions/model/transcriptActivity";
 
 const sent: string[] = [];
@@ -1830,6 +1831,32 @@ describe("claude background tasks", () => {
     expect(
       (fold ? foldedBlocks(items, fold) : []).map((block) => block.text),
     ).not.toContain("waiting");
+  });
+
+  it("settles a background task that was stopped as stopped, not failed", async () => {
+    // Stopped by the user, or with the session it ran in: the command did not fail.
+    const { events, turn } = await startTurn("s1");
+    emit({
+      type: "assistant",
+      session_id: "sess_1",
+      message: { content: [{ type: "text", text: "Started it." }] },
+    });
+    emit({ type: "result", subtype: "success", session_id: "sess_1" });
+    await turn;
+    emit({
+      type: "system",
+      subtype: "task_notification",
+      task_id: "b7",
+      status: "stopped",
+      summary: "Background command stopped",
+    });
+    const session = events.reduce(
+      applyHarnessEvent,
+      newSession("claude", "/repo"),
+    );
+    const row = session.blocks.find((block) => block.tool?.background);
+    expect(row?.tool?.status).toBe("stopped");
+    expect(toolCallState(row!)).toBe("accepted");
   });
 
   it("keeps the answer above what a task from an earlier turn wakes Claude to do", async () => {

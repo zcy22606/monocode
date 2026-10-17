@@ -1711,7 +1711,13 @@ function settleBackgroundRow(
   live.onEvent({
     type: "tool.updated",
     callId,
-    status: status === "completed" ? "completed" : "failed",
+    // A job the user stopped, or that went down with the session, did not fail.
+    status:
+      status === "completed"
+        ? "completed"
+        : status === "stopped" || status === "killed"
+          ? "stopped"
+          : "failed",
     ...(detail ? { detail } : {}),
   });
 }

@@ -49,7 +49,8 @@ export function toolCallState(block: Block): ToolCallState {
   if (decided === "deny") return "rejected";
   if (isFailedStatus(status)) return "rejected";
   if (needsApproval(block)) return "pending";
-  if (status === "completed" || status === "success") return "accepted";
+  if (status === "completed" || status === "success" || status === "stopped")
+    return "accepted";
   if (
     block.streaming ||
     status === "in_progress" ||
