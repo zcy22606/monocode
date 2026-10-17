@@ -8,7 +8,7 @@ import { isNumericColumn, parseCsv } from "../../../src/features/soloyard/model/
 import type { SessionFile } from "../../../soloyard/core/src/session-files";
 import { android, fileError, fileInfo, fileUrl, isImagePath, shortPath, type FileInfo, type FileSource } from "../host/files";
 import { HostError } from "../host/rpc";
-import { listServices, openLocalService, type LocalService } from "../host/host";
+import { listServices, type LocalService } from "../host/host";
 import { Globe } from "../../../src/shared/ui/icons";
 import { t, useTranslation } from "../i18n";
 import { FileTypeIcon, formatRelative } from "../ui/desktop";
@@ -138,7 +138,7 @@ function Action({ icon, label, onClick }: { icon: IconName; label: string; onCli
   );
 }
 
-function FileProblem({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function FileProblem({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-10 text-center">
       <Icon name="alert" size={26} className="text-content/35" />
@@ -426,12 +426,7 @@ export function SessionFiles({ source, load }: { source: FileSource | null; load
           onClose={sheet.close}
           source={source}
           load={load}
-          onService={({ port }) =>
-            openLocalService(source.source, source.id, port).then(
-              ({ url }) => sheet.close().then(() => nav.push({ name: "web", url, port })),
-              (e) => toast(fileError(e)),
-            )
-          }
+          onService={({ port }) => sheet.close().then(() => nav.push({ name: "web", source: source.source, id: source.id, port, path: "/" }))}
           // 等面板关掉（历史记录退回去）再推新页面，不然返回键的顺序会乱
           onOpen={(path) => void sheet.close().then(() => nav.push({ name: "file", source: source.source, id: source.id, path }))}
         />

@@ -24,7 +24,7 @@ export type Route =
   /** 一个 issue（SOL-100）：cwd 是项目目录（经网关问电脑），projectId 是主机上的项目（选模型、开会话页用）。 */
   | { name: "issue"; cwd: string; id: number; ident: string; projectId: string }
   /** 电脑 / 主机上跑着的本地服务（SOL-97）：url 是手机能连的地址，port 是那台机器上的端口。 */
-  | { name: "web"; url: string; port: number };
+  | { name: "web"; source: "mirror" | "host"; id: string; port: number; path: string };
 
 type Entry = { key: string; route: Route };
 type Nav = { push: (route: Route) => void; back: () => void };

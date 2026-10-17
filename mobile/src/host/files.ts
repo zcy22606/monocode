@@ -8,8 +8,6 @@ import { absolutePath } from "../../../soloyard/core/src/session-files";
 import { t } from "../i18n";
 import { useNav } from "../ui/nav";
 import { HostError } from "./rpc";
-import { openLocalService } from "./host";
-import { toast } from "../ui/kit";
 
 /** mirror = 电脑上的会话，host = 主机上的会话；cwd 是相对路径的起点（有工作树就是工作树）。 */
 export type FileSource = { source: "mirror" | "host"; id: string; cwd: string };
@@ -49,16 +47,12 @@ export function localService(href: string) {
   return m ? { port: Number(m[1] ?? 80), path: m[2] ?? "/" } : undefined;
 }
 
-/** 在会话页里：打开会话所在机器上的一个本地服务（那台机器先开好转发）。不在会话页里是 undefined。 */
+/** 在会话页里：打开会话所在机器上的一个本地服务（网页页里再请那台机器开转发）。不在会话页里是 undefined。 */
 export function useOpenService() {
   const source = useContext(FileSourceContext);
   const nav = useNav();
   if (!source) return undefined;
-  return (port: number, path = "/") =>
-    openLocalService(source.source, source.id, port).then(
-      ({ url }) => nav.push({ name: "web", url: url + path, port }),
-      (e) => toast(fileError(e)),
-    );
+  return (port: number, path = "/") => nav.push({ name: "web", source: source.source, id: source.id, port, path });
 }
 
 export async function fileInfo(source: Omit<FileSource, "cwd">, path: string, options: FileOptions = {}) {

@@ -202,7 +202,9 @@
   "web": {
     "address": "Address",
     "refresh": "Refresh",
-    "openInBrowser": "Open in browser"
+    "openInBrowser": "Open in browser",
+    "loading": "Opening it on your computer…",
+    "loadingHost": "Opening it on the host…"
   },
   "activity": {
     "files_one": "{{count}} files",

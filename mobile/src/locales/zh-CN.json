@@ -197,7 +197,9 @@
   "web": {
     "address": "地址",
     "refresh": "刷新",
-    "openInBrowser": "在浏览器中打开"
+    "openInBrowser": "在浏览器中打开",
+    "loading": "正在从电脑打开…",
+    "loadingHost": "正在从主机打开…"
   },
   "activity": {
     "files_other": "{{count}} 个文件",

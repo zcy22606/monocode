@@ -1,22 +1,43 @@
 /**
  * 电脑 / 主机上跑着的本地服务（开发服务器，SOL-97），在 app 里打开：上面一条地址栏（显示成 localhost:端口，路径能改）、
  * 刷新、用浏览器打开。页面是另一个来源（那台机器的 Tailscale 地址），碰不到 app；热更新的 WebSocket 经同一个转发照样通。
+ * 点了先进这一页、转着圈，再请那台机器开转发、等页面加载完（走中继时要一两秒）。
  */
-import { useState } from "react";
-import { android } from "../host/files";
+import { useEffect, useState } from "react";
+import { android, fileError } from "../host/files";
+import { openLocalService } from "../host/host";
 import { t, useTranslation } from "../i18n";
 import { Icon } from "../ui/icons";
-import { haptic, toast } from "../ui/kit";
+import { Spinner, haptic, toast } from "../ui/kit";
 import { useNav, type Route } from "../ui/nav";
+import { FileProblem } from "./File";
 
 export function WebScreen({ route }: { route: Extract<Route, { name: "web" }> }) {
   useTranslation();
   const nav = useNav();
-  const base = new URL(route.url);
-  const [path, setPath] = useState(base.pathname + base.search + base.hash);
+  const [origin, setOrigin] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [attempt, setAttempt] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [path, setPath] = useState(route.path);
   const [draft, setDraft] = useState(path);
   const [round, setRound] = useState(0);
-  const src = `${base.origin}${path.startsWith("/") ? path : `/${path}`}`;
+  useEffect(() => {
+    let live = true;
+    setError(undefined);
+    openLocalService(route.source, route.id, route.port).then(
+      ({ url }) => live && setOrigin(url),
+      (e) => live && setError(fileError(e)),
+    );
+    return () => {
+      live = false;
+    };
+  }, [route.source, route.id, route.port, attempt]);
+  const src = origin && `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+  const reload = () => {
+    setLoaded(false);
+    setRound((n) => n + 1);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -30,7 +51,7 @@ export function WebScreen({ route }: { route: Extract<Route, { name: "web" }> })
             e.preventDefault();
             (document.activeElement as HTMLElement | null)?.blur();
             setPath(draft.trim() || "/");
-            setRound((n) => n + 1);
+            reload();
           }}
         >
           {/* 那台机器上的地址：手机连的是转发出来的 Tailscale 地址，给人看还是 localhost */}
@@ -51,7 +72,8 @@ export function WebScreen({ route }: { route: Extract<Route, { name: "web" }> })
           className="press grid size-11 shrink-0 place-items-center rounded-full text-content/60 active:bg-selection"
           onClick={() => {
             haptic();
-            setRound((n) => n + 1);
+            if (error) setAttempt((n) => n + 1);
+            else reload();
           }}
         >
           <Icon name="refresh" size={19} />
@@ -59,15 +81,30 @@ export function WebScreen({ route }: { route: Extract<Route, { name: "web" }> })
         <button
           aria-label={t("web.openInBrowser")}
           className="press grid size-11 shrink-0 place-items-center rounded-full text-content/60 active:bg-selection"
+          disabled={!src}
           onClick={() => {
             haptic();
-            android("browse", src).catch((e: Error) => toast(e.message));
+            if (src) android("browse", src).catch((e: Error) => toast(e.message));
           }}
         >
           <Icon name="openWith" size={19} />
         </button>
       </header>
-      <iframe key={`${src}:${round}`} title={`localhost:${route.port}`} src={src} allow="clipboard-write; fullscreen" className="min-h-0 w-full flex-1 border-0 bg-white" />
+      <div className="relative min-h-0 flex-1">
+        {src ? (
+          <iframe key={`${src}:${round}`} title={`localhost:${route.port}`} src={src} allow="clipboard-write; fullscreen" onLoad={() => setLoaded(true)} className="h-full w-full border-0 bg-white" />
+        ) : null}
+        {error ? (
+          <div className="absolute inset-0 bg-background-base">
+            <FileProblem message={error} onRetry={() => setAttempt((n) => n + 1)} />
+          </div>
+        ) : !loaded ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background-base text-[13px] text-content/45">
+            <Spinner size={20} />
+            {t(route.source === "host" ? "web.loadingHost" : "web.loading")}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
