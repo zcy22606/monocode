@@ -66,6 +66,18 @@
 - **`!` 跑 shell 命令**（SOL-94，上游 PR #1042，Closes #968）：输入框内容以 `!` 开头时不发给模型，在会话实际干活的目录（有工作树就是工作树）里用终端同款 shell 跑（`src-tauri/src/shell_command.rs`，每路输出留前 30,000 字节），结果是单独一行的 `shell` 块（`sessions/model/shellCommand.ts`、`sessions/ui/ShellCommandRow.tsx`），存进会话；下一条发给模型的消息前面带上这期间跑过的命令（Claude Code 的 `<bash-input>` / `<bash-stdout>` / `<bash-stderr>`）。跑着时会话算忙：停止 / Esc 只停命令，期间发的消息排队。远程会话和 Mono 对话里不拦截（照常发给 agent）。这是从上游 PR cherry-pick 过来的，没加 Soloyard 注释；上游合并后同步时取上游的版本，再把 i18n（`sessions:shellCommand.*`、`app:shellCommand.busy`）叠回去。Soloyard 这边的配合在 `composerHistory.ts`：↑ / ↓ 能翻到 `!` 命令，Esc 停命令时不把之前的消息放回输入框。
 - **文件预览**（`model/filePreviews.ts`、`ui/FilePreviews.tsx`）：CSV / TSV、JSONL / NDJSON、Mermaid（`.mmd`）、HTML 和 Markdown、SVG 一样有「预览 / 源码」切换。CSV 是圆角卡片里的表格（表头固定、行号、数字列右对齐、顶上行列数，`model/csv.ts`、`ui/CsvPreview.tsx`）；JSONL 一条一行、点开格式化（`model/jsonl.ts`）；两者都只显示前 1000 条，⌘F 沿用底座的预览搜索。HTML 和 PDF 走自己的协议 `soloyardpreview://localhost/<base64url 根目录>/<路径>`（`src-tauri/src/soloyard_preview.rs`）：只读根目录（文件所在项目，不在项目里就是所在文件夹）里的文件，所以页面能加载同项目的 css / js / 图片；除 PDF 外都带 `sandbox allow-scripts` 的 CSP（不能 fetch、提交表单、碰应用），PDF 不能加 sandbox（会禁掉 PDF 插件），用 WebKit 自带的查看器（`ui/PdfPreview.tsx`）。HTML 预览在编辑停下约 1.2 秒（等自动保存）后刷新，另有「刷新」「在浏览器中打开」；以 `/` 开头的绝对路径资源加载不到。编辑器读不了的文件（二进制、非 UTF-8、超 8 MB）显示「在外部打开 / 显示位置 / 复制路径」卡片（`UnreadableFile`，用底座 `BinaryFileView.tsx` 的 `FileCard`）。点文件链接时，路径指向磁盘上真实存在的文件就按原路径打开（`fileLinks.ts` 的 `isFileOnDisk`，挂在 `fileIndex.ts` 的 `resolveOpenablePath`），不再被底座按后缀猜成项目里同名的文件（项目外的 `~/x/index.html`、被 gitignore 的 `dist/index.html` 都会打开根目录的 `index.html`）。上游挂载：`FileEditor.tsx`（预览分支 + 读不了的文件）、`FilePane.tsx`（PDF）、`BinaryFileView.tsx`（导出 `FileCard`）、`lib.rs`（注册协议）、`tauri.conf.json`（`frame-src` 加 `soloyardpreview:`）。
 - **按下就切**（`model/pressToOpen.ts`）：会话行（「进行中」、最近会话、工作区会话列表）、项目栏的项目和仓库行，鼠标左键按下就打开，不等松开（松开要多等按住的约 100 毫秒）；按下已经打开过的那次点击跳过，⌘ / ⇧ / 右键 / 键盘回车照旧走点击。工作区会话卡片和项目可拖动，拖的时候会先切过去（上游原本特意等松开再切，就是为了拖动时不切）。上游挂载：`LiveAgentsPreview.tsx`、`Sidebar.tsx`（会话卡片的 `onPointerDown` / `onClick`）、`ProjectRail.tsx`（项目行）。
+- **手机端**（D-20 / D-22，方案 `docs/architecture/01-手机端和常驻主机技术方案.md`，交互按原型 `~/Playground/proof/prototypes/soloyard-mobile-v1/` 的 A）。手机只当遥控器，会话在哪台机器上就在哪台跑。
+  - `mobile/`：Tauri 2 安卓 app。凭据只在 Rust 层（`src-tauri/src/lib.rs`）。
+    - 会话里的文件走 `soloyardfile` 协议（`src-tauri/src/files.rs`）。
+    - 分享、用其他应用打开、存到「下载」在 `MainActivity.kt`。
+    - 界面尽量直接引电脑的源码（`src/ui/desktop.ts`）；连着电脑 i18n 的照抄一份，文案原样搬。
+    - 打包用 `sh mobile/scripts/release-apk.sh`（每次版本号加一）。在模拟器里调试用 `sh mobile/scripts/webview.sh '<JS>'`。
+  - 网关 `soloyard/host/gateway.ts`（跑在常驻主机上，手机唯一的入口）：
+    - 电脑推会话镜像（`soloyard/core/src/mirror.ts`，数据进程里每 5 秒一轮），正在跑的这一轮和后台任务由界面推（`model/liveMirror.ts`）。
+    - 手机发的消息、停后台任务、从 issue 开工，交给那台电脑的界面（`model/relayInbox.ts`）。
+    - 取文件、列 / 开本地服务、读写 issue，交给那台电脑的数据进程（`file-share.ts`、`services.ts`、`phone.ts`，手机只能调 `phone.ts` 白名单里的）。
+    - 主机上的会话由网关自己处理。
+  - 上游挂载：`App.tsx`（`useRelayInbox` / `useLiveMirror`）、`Sidebar.tsx`（`HostSessions`）、`SettingsView.tsx`（手机同步配置）、`host/`（`create` 带 `import`，把电脑会话导进主机）、`claude.ts`（停掉的后台任务记成 stopped，给上游的修复）。
 - 请底座做事（开会话、切会话、发消息、开标签）一律用窗口事件（`model/appActions.ts`、`model/projectViews.ts`），App.tsx 里各只有一个监听。
 - 项目自己的待办就在应用里：`~/Playground/monocode` 对应项目 **Soloyard（SOL）**，开工前先看 SOL 的 issue。
 - 多语言：`src/i18n/` + `src-tauri/src/i18n.rs`，上游界面文字也改成了 i18n（这是用户明确决定的，同步上游时冲突会比较多，按「上游加了新文字就补 key」来合）。我们的界面用命名空间 `soloyard`。
