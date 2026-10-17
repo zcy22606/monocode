@@ -19,6 +19,7 @@ import * as decisions from './decisions.ts'
 import { exportDocuments } from './docs-export.ts'
 import * as docs from './docs.ts'
 import * as mirror from './mirror.ts'
+import * as phone from './phone.ts'
 
 const path = process.argv[2]
 if (!path) {
@@ -53,6 +54,8 @@ const METHODS: Record<string, { write?: boolean; run: (...args: any[]) => unknow
   hostSessions: { run: (cwd: string) => mirror.hostSessions(db, cwd) },
   relayInbox: { run: () => mirror.relayInbox(db) },
   livePush: { run: (id: string, live: { from?: string; blocks: unknown[]; busy: boolean }) => mirror.livePush(db, id, live) },
+  jobsPush: { run: (id: string, jobs: unknown[]) => mirror.jobsPush(db, id, jobs) },
+  projectIssues: { run: (cwd: string) => phone.projectIssues(db, cwd) },
   // write：拿回来以后各处的「在手机上」列表跟着刷新
   takeHostSession: { write: true, run: (sessionId: string) => mirror.takeHostSession(db, sessionId) },
   // 不广播：只在第一次打开时建项目，调用方直接拿返回值；广播会让读它的界面反复重取
@@ -181,5 +184,16 @@ createInterface({ input: process.stdin }).on('line', (line) => {
   )
 }).on('close', () => process.exit(0))
 
-// 手机同步：配了网关就每 5 秒推一轮变了的会话
-mirror.startMirror(db, (msg) => process.stderr.write(msg + '\n'))
+// 手机同步：配了网关就每 5 秒推一轮变了的会话；手机经网关要的 issue 数据，只给 phone.ts 白名单里的（SOL-100）
+mirror.startMirror(db, (msg) => process.stderr.write(msg + '\n'), async (method, args) => {
+  const route = phone.PHONE_METHODS[method]
+  if (!route) throw new Error(`Not available from the phone: ${method}`)
+  const [name, real] = route(args)
+  const m = METHODS[name]
+  const result = await m.run(...real)
+  if (m.write) {
+    lastSignature = signature()
+    send({ event: 'changed' })
+  }
+  return result ?? null
+})
