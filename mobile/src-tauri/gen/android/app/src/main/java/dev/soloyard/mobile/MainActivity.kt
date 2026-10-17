@@ -98,7 +98,13 @@ class MainActivity : TauriActivity() {
   /** 常驻服务被系统杀了的话，回到 app 时拉起来。 */
   override fun onResume() {
     super.onResume()
+    NotifyService.visible = true
     NotifyService.start(this)
+  }
+
+  override fun onPause() {
+    NotifyService.visible = false
+    super.onPause()
   }
 
   /** 通知开没开、系统允不允许弹、有没有被省电管住（ColorOS 上还要另外开「自启动」，系统查不到）、连没连上网关。 */

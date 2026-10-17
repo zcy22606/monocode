@@ -445,9 +445,10 @@ test('手机通知（SOL-104）：电脑上的这一轮跑完了、开始等你�
 test('手机通知：主机上的会话从在跑变成停了、开始等你处理（只在有手机等着时去问主机）', async () => {
   const store = new GatewayStore(join(mkdtempSync(join(tmpdir(), 'soloyard-gateway-')), 'g.db'))
   let state = { status: 'running', needsInput: false }
+  let more: object[] = []
   const host = async (method: string) => {
     if (method === 'projects.list') return [{ id: 'p1', cwd: '/repo' }]
-    if (method === 'sessions.list') return [{ id: 'h1', projectId: 'p1', title: '修登录', harness: 'claude', updatedAt: 1, ...state }]
+    if (method === 'sessions.list') return [{ id: 'h1', projectId: 'p1', title: '修登录', harness: 'claude', updatedAt: 1, ...state }, ...more]
     if (method === 'sessions.get') return { session: { blocks: [{ role: 'assistant', text: '好了' }] } }
     throw new Error(method)
   }
@@ -457,12 +458,19 @@ test('手机通知：主机上的会话从在跑变成停了、开始等你处�
   try {
     await settle()
     state = { status: 'running', needsInput: true }
+    // 两次查询之间开始又跑完的新会话（短的一轮）要通知；早就停了的老会话、还没跑过的空会话不通知
+    more = [
+      { id: 'h2', projectId: 'p1', title: '短的一轮', harness: 'claude', status: 'idle', updatedAt: Date.now(), providerSessionId: 'x' },
+      { id: 'h3', projectId: 'p1', title: '老会话', harness: 'claude', status: 'idle', updatedAt: 1, providerSessionId: 'y' },
+      { id: 'h4', projectId: 'p1', title: '空会话', harness: 'claude', status: 'idle', updatedAt: Date.now() },
+    ]
     await settle()
     state = { status: 'idle', needsInput: false }
     await settle()
     const { events } = await store.waitEvents(0, 0)
     assert.deepEqual(events.map((e) => [e.kind, e.source, e.sessionId, e.projectId, e.body]), [
       ['input', 'host', 'h1', 'p1', ''],
+      ['done', 'host', 'h2', 'p1', '好了'],
       ['done', 'host', 'h1', 'p1', '好了'],
     ])
   } finally {

@@ -633,9 +633,12 @@ let phoneWaiting = 0
 export function watchHost(store: GatewayStore, host: HostCall, every = 5000) {
   const seen = new Map<string, { running: boolean; input: boolean }>()
   let busy = false
+  // 上一轮查完的时间：第一次见到的会话，在这之后更新过、已经停了的，是在两次查询之间开始又跑完的（短的一轮）
+  let since = Date.now()
   const tick = async () => {
     if (busy || Date.now() - phoneWaiting > 120_000) return
     busy = true
+    const started = Date.now()
     try {
       const projects = (await host('projects.list', {})) as { id: string; cwd: string }[]
       for (const project of projects) {
@@ -645,14 +648,16 @@ export function watchHost(store: GatewayStore, host: HostCall, every = 5000) {
           const now = { running: s.status === 'running', input: !!s.needsInput }
           const before = seen.get(s.id)
           seen.set(s.id, now)
-          if (!before) continue
+          const missed = !before && !now.running && s.updatedAt > since && !!s.providerSessionId
+          if (!before && !missed) continue
           const base = { source: 'host' as const, sessionId: s.id, title: s.title, cwd: project.cwd, projectId: project.id }
-          if (before.running && !now.running) {
+          if (missed || (before!.running && !now.running)) {
             const full = (await host('sessions.get', { sessionId: s.id }).catch(() => null)) as { session?: { blocks?: unknown } } | null
             store.addEvent({ ...base, kind: 'done', body: lastReply(full?.session?.blocks) })
-          } else if (!before.input && now.input) store.addEvent({ ...base, kind: 'input', body: '' })
+          } else if (!before!.input && now.input) store.addEvent({ ...base, kind: 'input', body: '' })
         }
       }
+      since = started
     } catch (e) {
       console.error(`watch host: ${(e as Error).message}`)
     } finally {

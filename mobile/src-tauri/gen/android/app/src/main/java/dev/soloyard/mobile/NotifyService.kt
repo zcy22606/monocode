@@ -1,6 +1,5 @@
 package dev.soloyard.mobile
 
-import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -36,6 +35,9 @@ class NotifyService : Service() {
 
     /** 界面正开着的会话（MainActivity 的 viewing）。 */
     @Volatile var viewing = ""
+
+    /** 界面在前台（MainActivity 的 onResume / onPause）。不问系统的进程状态：ColorOS 上报得不准。 */
+    @Volatile var visible = false
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun enabled(context: Context) = prefs(context).getBoolean("enabled", false)
@@ -159,14 +161,8 @@ class NotifyService : Service() {
     }
   }
 
-  private fun foreground(): Boolean {
-    val info = ActivityManager.RunningAppProcessInfo()
-    ActivityManager.getMyMemoryState(info)
-    return info.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-  }
-
   private fun show(event: JSONObject) {
-    if (foreground() && event.optString("sessionId") == viewing) return
+    if (visible && event.optString("sessionId") == viewing) return
     // 主机起的标题带着「claude · 」前缀，和 app 里一样去掉
     val title = event.optString("title").replace(Regex("^[a-z]+\\s*·\\s*", RegexOption.IGNORE_CASE), "").ifEmpty { getString(R.string.notify_untitled) }
     val input = event.optString("kind") == "input"
