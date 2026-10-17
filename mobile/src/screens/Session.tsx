@@ -26,7 +26,7 @@ import { useActive, useNav, type Route } from "../ui/nav";
 import { CopyButton, DaySeparator, ImageBlock, ShellRow, WorkGroup, Markdown, Reasoning, SystemRow, TaskList, ToolRow, TurnDone, UserBubble, WorkingLine, cleanTitle, visibleBlock } from "./blocks";
 import { toolLabel } from "../ui/desktop";
 import { groupWork } from "../ui/activity";
-import { FileSourceContext } from "../host/files";
+import { FileSourceContext, fileError } from "../host/files";
 import { useViewing } from "../host/notify";
 import { sessionFiles } from "../../../soloyard/core/src/session-files";
 import { SessionFiles } from "./File";
@@ -252,11 +252,21 @@ export function SessionScreen({ route }: { route: Extract<Route, { name: "sessio
 
       <div className="relative min-h-0 flex-1">
         <div ref={scroller} onScroll={onScroll} className="scroll-y h-full px-4 pb-4 pt-3">
-          {!session && (sessionId || !pending.length) ? (
-            <div className="flex flex-col items-center gap-2 pb-6 pt-16 text-content/40">
-              <Spinner size={20} />
-              {sessionId ? <span className="text-xs">{t("session.loading")}</span> : null}
-            </div>
+          {/* 打开已有的会话时转圈；刚从首页开的新会话没有历史，只显示发出的那条 */}
+          {!session && (!pending.length || (poll.error && sessionId)) ? (
+            poll.error && sessionId ? (
+              <div className="flex flex-col items-center gap-3 pb-6 pt-16 text-center text-[13px] text-content/50">
+                {fileError(poll.error)}
+                <button className="press rounded-full bg-selection px-4 py-2 text-[13px] text-content/80" onClick={() => void poll.refresh()}>
+                  {t("files.retry")}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 pb-6 pt-16 text-content/40">
+                <Spinner size={20} />
+                {sessionId ? <span className="text-xs">{t("session.loading")}</span> : null}
+              </div>
+            )
           ) : null}
           {blocks.length > shown.length ? (
             <button className="press mx-auto mb-3 block rounded-full bg-selection px-3 py-1.5 text-[12px] text-content/60" onClick={showEarlier}>

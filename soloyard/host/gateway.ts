@@ -874,12 +874,21 @@ export async function startGateway({ dataDir, listen = '127.0.0.1:3775', hostUrl
     if (input.version !== PROTOCOL) return send(400, { error: 'Incompatible protocol version' })
     const method = String(input.method ?? '')
     const params = input.params && typeof input.params === 'object' && !Array.isArray(input.params) ? (input.params as Record<string, unknown>) : {}
+    // 排查「手机上拉不到」用：手机的请求出错了或超过 5 秒，记一行（等通知的长连接本来就慢，不记）
+    const started = Date.now()
+    let failure = ''
+    if (device.kind === 'phone' && method !== 'soloyard.events.wait')
+      res.on('finish', () => {
+        const ms = Date.now() - started
+        if (res.statusCode >= 400 || ms > 5000) console.log(`${new Date().toLocaleString('zh-CN')} ${device.name} ${method} ${res.statusCode} ${ms}ms ${failure}`.trim())
+      })
 
     if (method.startsWith('soloyard.')) {
       try {
         return send(200, { result: await soloyard(store, files, device, method, params, host) })
       } catch (e) {
-        return send(400, { error: (e as Error).message })
+        failure = (e as Error).message
+        return send(400, { error: failure })
       }
     }
     if (device.kind !== 'phone') return send(403, { error: 'This device can only sync sessions' })
@@ -887,9 +896,12 @@ export async function startGateway({ dataDir, listen = '127.0.0.1:3775', hostUrl
       const response = await toHost(raw)
       // 网关自己的主机凭据失效是主机这边的事，别让手机以为它自己被吊销了
       if (response.status === 401) return send(502, { error: LOST })
-      return send(response.status, await response.text())
+      const text = await response.text()
+      if (response.status >= 400) failure = text.slice(0, 300)
+      return send(response.status, text)
     } catch (e) {
-      return send(502, { error: `Host unreachable: ${(e as Error).message}` })
+      failure = (e as Error).message
+      return send(502, { error: `Host unreachable: ${failure}` })
     }
   })
 
