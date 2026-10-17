@@ -4458,7 +4458,7 @@ function Workspace({
 
   // Soloyard: terminal turns were imported into these sessions, or they moved under a multi-repo project root;
   // swap in the stored transcript and place of idle loaded ones.
-  useRelayInbox(); // Soloyard: messages sent from the phone run in their desktop session (SOL-89)
+  useRelayInbox(sessions); // Soloyard: messages sent from the phone run in their desktop session (SOL-89)
   useLiveMirror(sessions); // Soloyard: the phone watches running turns live (SOL-89)
   useImportedSessions((ids) => {
     for (const id of ids) {

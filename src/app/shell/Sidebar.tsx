@@ -37,6 +37,7 @@ import { RepoCountsPublisher, RepoSetupPrompt } from "../../features/soloyard/ui
 import { matchesRepoFilter, useRepoFilter } from "../../features/soloyard/model/repoFilter"; // Soloyard
 import { useProjectRepos } from "../../features/soloyard/model/repos"; // Soloyard
 import { openedOnPress, opensOnPress } from "../../features/soloyard/model/pressToOpen"; // Soloyard
+import { HostSessions } from "../../features/soloyard/ui/session/HostSessions"; // Soloyard
 import {
   memo,
   useEffect,
@@ -1937,6 +1938,7 @@ function SidebarComponent({
             {/* Soloyard: per-repo session counts for the rail; spot repos when a project opens and offer a multi-repo setup */}
             <RepoCountsPublisher cwd={cwd} sessions={projectSessionsInFocus} />
             <RepoSetupPrompt key={cwd} cwd={cwd} />
+            {remoteProject ? null : <HostSessions cwd={cwd} />}
           </>
         ) : null}
         <div
