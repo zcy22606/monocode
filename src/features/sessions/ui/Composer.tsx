@@ -112,7 +112,7 @@ import type { Worktree } from "../../source-control/model/worktrees";
 import { CwdPicker } from "../../projects/ui/CwdPicker";
 import { FileMentionPicker } from "./FileMentionPicker";
 import { NO_SOLOYARD_MENTIONS, isSoloyardMentionPath, rankSoloyardMentions } from "../../soloyard/model/sessionMentions"; // Soloyard
-import { IDLE_HISTORY_NAV, caretOnEdgeLine, historyStep, onRestoreDraft } from "../../soloyard/model/composerHistory"; // Soloyard
+import { IDLE_HISTORY_NAV, caretOnEdgeLine, historyStep, onRestoreDraft, type SentPrompt } from "../../soloyard/model/composerHistory"; // Soloyard
 import { McpServerPicker } from "./McpServerPicker";
 import { FileTypeIcon } from "../../files/ui/FileTypeIcon";
 import { InboxMiniCard } from "../../inbox/ui/InboxMiniCard";
@@ -232,7 +232,7 @@ type Props = {
   /** Soloyard: linked items offered in the @ picker. */
   soloyardMentions?: ProjectFile[];
   /** Soloyard: this session's sent messages for ↑ / ↓, read only on key press. */
-  soloyardSentHistory?: () => string[];
+  soloyardSentHistory?: () => SentPrompt[];
   hideTopBar?: boolean;
   /** Keeps local file mentions, skills, and app modes off for host sessions. */
   remoteSession?: boolean;
@@ -1657,7 +1657,7 @@ export function Composer({
       }
     }
 
-    // Soloyard: ↑ / ↓ walk this session's sent messages (edit-last-turn keeps its transcript button).
+    // Soloyard: ↑ / ↓ walk this session's sent messages, files included (edit-last-turn keeps its transcript button).
     const historyEl = e.currentTarget;
     const step =
       soloyardSentHistory &&
@@ -1668,18 +1668,22 @@ export function Composer({
           selectionStart: historyEl.selectionStart,
           selectionEnd: historyEl.selectionEnd,
           onEdgeLine: (up) => caretOnEdgeLine(historyEl, up),
+          draft: () => ({
+            text: historyEl.value,
+            attachments: attachmentsRef.current,
+            borrowedIds: new Set(borrowedAttachmentIdsRef.current),
+          }),
         },
         historyNavRef.current,
         soloyardSentHistory,
       );
     if (step) {
       e.preventDefault();
+      // ponytail: the draft's own files stay alive while a sent message is shown; sending that one leaves them unrevoked.
+      if (step.nav.index != null) for (const file of attachmentsRef.current) borrowedAttachmentIdsRef.current.add(file.id);
       historyNavRef.current = step.nav;
-      historyEl.value = step.text;
-      resizeComposer(historyEl);
+      restoreDraft(step.text, step.attachments, step.borrowedIds);
       historyEl.setSelectionRange(step.caret, step.caret);
-      setDraft(step.text);
-      syncHasValue(step.text, attachmentsRef.current);
       setSlash(null);
       setMention(null);
       return;

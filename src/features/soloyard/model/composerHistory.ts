@@ -23,23 +23,46 @@ function isSentPrompt(block: Block): boolean {
   );
 }
 
+/** 一条发过的消息：文字 + 当时带的图片 / 附件（附件属于对话里那条消息，输入框只借用）。 */
+export type SentPrompt = { text: string; attachments: Attachment[] };
+
+const promptKey = (prompt: SentPrompt) => `${prompt.text}\0${prompt.attachments.map((file) => file.id).join(",")}`;
+
 /** 当前会话发过的消息（含跑过的 `!` 命令），旧的在前；连续重复的只留一条。 */
-export function sentPrompts(blocks: Block[]): string[] {
-  const out: string[] = [];
+export function sentPrompts(blocks: Block[]): SentPrompt[] {
+  const out: SentPrompt[] = [];
   for (const block of blocks) {
-    const text = block.role === "shell" ? `!${block.text}` : isSentPrompt(block) ? userText(block) : null;
-    if (text && out[out.length - 1] !== text) out.push(text);
+    const prompt =
+      block.role === "shell"
+        ? { text: `!${block.text}`, attachments: [] }
+        : isSentPrompt(block)
+          ? { text: userText(block), attachments: block.attachments ?? [] }
+          : null;
+    if (prompt && (!out.length || promptKey(out[out.length - 1]) !== promptKey(prompt))) out.push(prompt);
   }
   return out;
 }
 
-/** index = null 表示在编辑草稿；shown 是最后放进输入框的那条，用来发现用户改过。 */
-export type HistoryNav = { index: number | null; draft: string; shown: string };
-export const IDLE_HISTORY_NAV: HistoryNav = { index: null, draft: "", shown: "" };
+/** 输入框里正在写的：文字、附件，以及其中哪些附件是借来的。 */
+export type ComposerDraft = { text: string; attachments: Attachment[]; borrowedIds: ReadonlySet<string> };
+
+/** index = null 表示在编辑草稿；shown 是最后放进输入框的那条文字，用来发现用户改过。 */
+export type HistoryNav = { index: number | null; draft: ComposerDraft; shown: string };
+export const IDLE_HISTORY_NAV: HistoryNav = {
+  index: null,
+  draft: { text: "", attachments: [], borrowedIds: new Set() },
+  shown: "",
+};
 
 type Key = { key: string; altKey: boolean; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean };
-/** onEdgeLine(up)：光标是否在（自动换行后的）第一行 / 最后一行，按需才量。 */
-type Field = { value: string; selectionStart: number; selectionEnd: number; onEdgeLine: (up: boolean) => boolean };
+/** onEdgeLine(up)：光标是否在（自动换行后的）第一行 / 最后一行，按需才量；draft：现在输入框里的内容。 */
+type Field = {
+  value: string;
+  selectionStart: number;
+  selectionEnd: number;
+  onEdgeLine: (up: boolean) => boolean;
+  draft: () => ComposerDraft;
+};
 
 /**
  * ↑ 只在光标处在第一行时翻历史，↓ 只在最后一行时往回翻，其余时候照常移动光标。
@@ -50,22 +73,28 @@ export function historyStep(
   key: Key,
   field: Field,
   nav: HistoryNav,
-  history: () => string[],
-): { nav: HistoryNav; text: string; caret: number } | null {
+  history: () => SentPrompt[],
+): { nav: HistoryNav; caret: number } & ComposerDraft | null {
   const up = key.key === "ArrowUp";
   if (!up && key.key !== "ArrowDown") return null;
   if (key.altKey || key.metaKey || key.ctrlKey || key.shiftKey) return null;
   if (field.selectionStart !== field.selectionEnd) return null;
-  const at: HistoryNav =
-    nav.index != null && field.value === nav.shown ? nav : { index: null, draft: field.value, shown: field.value };
-  if (!up && at.index == null) return null;
+  const browsing = nav.index != null && field.value === nav.shown;
+  if (!up && !browsing) return null;
   if (!field.onEdgeLine(up)) return null;
+  const at: HistoryNav = browsing ? nav : { index: null, draft: field.draft(), shown: field.value };
   const entries = history();
   const index = up ? (at.index ?? entries.length) - 1 : at.index! + 1;
   if (index < 0) return null;
-  if (index >= entries.length) return { nav: IDLE_HISTORY_NAV, text: at.draft, caret: at.draft.length };
-  const text = entries[index];
-  return { nav: { index, draft: at.draft, shown: text }, text, caret: text.length };
+  if (index >= entries.length) return { nav: IDLE_HISTORY_NAV, ...at.draft, caret: at.draft.text.length };
+  const { text, attachments } = entries[index];
+  return {
+    nav: { index, draft: at.draft, shown: text },
+    text,
+    attachments,
+    borrowedIds: new Set(attachments.map((file) => file.id)),
+    caret: text.length,
+  };
 }
 
 // ---- Esc：照 Claude Code 的做法把消息放回输入框 ----
