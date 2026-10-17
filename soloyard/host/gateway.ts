@@ -568,6 +568,8 @@ async function hostServices(sessionId: string, port: number | undefined, host: H
 function projectComputer(store: GatewayStore, files: FileRelay, cwd: string, machine: unknown, need: 'data' | 'ui') {
   const owners = store.db.prepare('SELECT device_id, machine, MAX(pushed_at) AS at FROM mirror_sessions WHERE repo_key = ? GROUP BY device_id ORDER BY at DESC')
     .all(repoKey(cwd)) as { device_id: string; machine: string }[]
+  // 没有一台电脑推过这个仓库的会话：多半是只在主机上开过的文件夹，电脑上还不是项目
+  if (!owners.length) throw new Error('No computer has this project')
   const alive = owners.filter((o) => (need === 'data' ? files.alive(o.device_id, true) : store.online(o.device_id)))
   const owner = alive.find((o) => o.machine === machine) ?? alive[0]
   if (!owner) throw new Error('The computer is offline')

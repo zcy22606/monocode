@@ -363,7 +363,7 @@ test('手机看会话里的文件（SOL-92）：电脑上的会话交给那台�
   const asked = await call(gw.url, phone.token, 'soloyard.data', { cwd: repo, method: 'projectIssues', args: [repo] })
   assert.deepEqual(asked.body.result, { method: 'projectIssues', args: [repo] })
   assert.equal((await call(gw.url, phone.token, 'soloyard.data', { cwd: repo, method: 'boom' })).body.error, 'nope')
-  assert.equal((await call(gw.url, phone.token, 'soloyard.data', { cwd: '/nobody/has/this', method: 'projectIssues' })).body.error, 'The computer is offline')
+  assert.equal((await call(gw.url, phone.token, 'soloyard.data', { cwd: '/nobody/has/this', method: 'projectIssues' })).body.error, 'No computer has this project', '没有一台电脑有这个项目')
   assert.equal((await call(gw.url, desktop.token, 'soloyard.data', { cwd: repo, method: 'projectIssues' })).status, 400, '只有手机能要')
 
   // 从 issue 开工：交给这个项目所在那台电脑的界面去开会话（界面开着 = 在取手机的消息）
@@ -374,7 +374,7 @@ test('手机看会话里的文件（SOL-92）：电脑上的会话交给那台�
   assert.deepEqual((await call(gw.url, desktop.token, 'soloyard.relay.pull')).body.result, [
     { id: 'w1', sessionId: '', text: '', action: { kind: 'startWork', cwd: repo, prompt: '开始处理 SOL-3', issueId: 3, workCwd: `${repo}/src` } },
   ])
-  assert.equal((await call(gw.url, phone.token, 'soloyard.startWork', { cwd: '/nobody/has/this', prompt: 'x', issueId: 1, commandId: 'w2' })).body.error, 'The computer is offline')
+  assert.equal((await call(gw.url, phone.token, 'soloyard.startWork', { cwd: '/nobody/has/this', prompt: 'x', issueId: 1, commandId: 'w2' })).body.error, 'No computer has this project')
 
   // 主机上的会话：网关自己读
   const hosted = await fetchFile({ source: 'host', id: 'h1', path: 'src/a.txt' })

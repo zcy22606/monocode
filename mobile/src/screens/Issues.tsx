@@ -48,6 +48,10 @@ const STATUS_TONE: Record<IssueStatus, string> = {
 };
 
 /** 状态永远是「形状 + 名字」，颜色只是辅助。 */
+
+/** 网关的英文原因换成给人看的：电脑不在线 / 电脑上没有这个项目（只在主机上开过的文件夹）。 */
+const issueError = (e: { message: string }) =>
+  /No computer has this project/i.test(e.message) ? t("issues.noProject") : /offline/i.test(e.message) ? t("issues.offline") : e.message;
 export function StatusIcon({ status, className = "" }: { status: IssueStatus; className?: string }) {
   return (
     <svg viewBox="0 0 14 14" className={`size-3.5 shrink-0 ${STATUS_TONE[status]} ${className}`} role="img" aria-label={statusLabel(status)}>
@@ -126,7 +130,7 @@ export function IssuesTab({
   useTranslation();
   const [all, setAll] = useState(false);
   const [showDone, setShowDone] = useState(false);
-  if (error && !data) return <div className="px-6 py-16 text-center text-[14px] text-content/50">{/offline/i.test(error.message) ? t("issues.offline") : error.message}</div>;
+  if (error && !data) return <div className="px-6 py-16 text-center text-[14px] text-content/50">{issueError(error)}</div>;
   if (data === undefined)
     return (
       <div className="flex justify-center py-16">
@@ -303,7 +307,7 @@ export function IssueScreen({ route }: { route: Extract<Route, { name: "issue" }
       <div className="scroll-y min-h-0 flex-1 pb-6">
         {issue === undefined ? (
           detail.error ? (
-            <div className="px-6 py-16 text-center text-[14px] text-content/50">{/offline/i.test(detail.error.message) ? t("issues.offline") : detail.error.message}</div>
+            <div className="px-6 py-16 text-center text-[14px] text-content/50">{issueError(detail.error)}</div>
           ) : (
             <div className="flex justify-center py-16">
               <Spinner size={18} />
@@ -446,7 +450,7 @@ export function IssueScreen({ route }: { route: Extract<Route, { name: "issue" }
                   setPrompt(undefined);
                   setTimeout(() => void refresh(), 4000);
                 },
-                (e: HostError) => toast(/offline/i.test(e.message) ? t("issues.offline") : e.message),
+                (e: HostError) => toast(issueError(e)),
               )
             }
           />
