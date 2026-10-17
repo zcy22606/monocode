@@ -1,0 +1,13 @@
+{
+  "name": "soloyard-mobile",
+  "private": true,
+  "version": "0.9.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "tauri": "tauri",
+    "android": "sh scripts/android.sh"
+  }
+}

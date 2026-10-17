@@ -1,0 +1,410 @@
+@import "tailwindcss";
+@source "../../node_modules/streamdown/dist/*.js";
+@source "../../node_modules/@streamdown/code/dist/*.js";
+/* 手机端只有深色：dark: 一直生效（代码高亮等按深色主题取色，和电脑 index.css 的写法一致） */
+@custom-variant dark (&:where(html, html *));
+
+/* 和桌面端同一套颜色名（bg-background-base、text-content/60、border-stroke、bg-selection…），深色。 */
+@theme {
+  --color-background-base: #171717;
+  --color-raised: #1f1f1f;
+  --color-raised-2: #2a2a2a;
+  --color-content: #ebebeb;
+  --color-stroke: rgb(235 235 235 / 0.07);
+  --color-selection: rgb(235 235 235 / 0.1);
+  --color-accent: hsl(211 92% 62%);
+  --color-accent-ink: #0b1220;
+  /* 状态色和电脑一样用 Tailwind 那套：amber-400 / emerald-400 / red-400 */
+  --color-amber: #fbbf24;
+  --color-green: #34d399;
+  --color-red: #f87171;
+  /* streamdown（Markdown 渲染）用的颜色名：不定义的话表格边框会退成白色 */
+  --color-border: rgb(235 235 235 / 0.08);
+  --color-muted: rgb(235 235 235 / 0.06);
+  --color-muted-foreground: rgb(235 235 235 / 0.55);
+  --color-foreground: #ebebeb;
+  --color-background: #171717;
+  --color-sidebar: #1f1f1f;
+  --color-primary: hsl(211 92% 62%);
+  --color-primary-foreground: #0b1220;
+  --font-sans: system-ui, -apple-system, "PingFang SC", "Noto Sans CJK SC", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  /* 底部面板、页面推入用的减速曲线：开头快、收尾很轻 */
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-background-base);
+  color: var(--color-content);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+/* 系统级的「减少动态效果」打开时，所有过渡都缩成瞬间完成 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+button {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 按下的反馈：轻微缩小 + 变暗，松手弹回 */
+.press {
+  transition: transform 160ms var(--ease-out-quint), background-color 160ms, opacity 160ms;
+}
+.press:active {
+  transform: scale(0.97);
+}
+.press-row:active {
+  background: var(--color-selection);
+}
+
+.scroll-y {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroll-y::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.rise-in {
+  animation: rise-in 360ms var(--ease-out-quint) both;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.fade-in {
+  animation: fade-in 220ms ease-out both;
+}
+
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+}
+.pulse {
+  animation: pulse-dot 1.3s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-raised) 0%, var(--color-raised-2) 50%, var(--color-raised) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 8px;
+}
+
+@keyframes dots {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+.typing i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: dots 1s ease-in-out infinite;
+}
+.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* agent 的 Markdown：和电脑上一样分层次——正文 80% 亮度，标题和加粗全亮，表格、代码块是浅色卡片 */
+.agent-md {
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.agent-md p,
+.agent-md li {
+  color: rgb(235 235 235 / 0.8);
+}
+.agent-md strong,
+.agent-md h1,
+.agent-md h2,
+.agent-md h3,
+.agent-md h4 {
+  color: var(--color-content);
+  font-weight: 600;
+}
+.agent-md h1 {
+  font-size: 1.25em;
+}
+.agent-md h2 {
+  font-size: 1.12em;
+}
+.agent-md h1,
+.agent-md h2,
+.agent-md h3,
+.agent-md h4 {
+  margin: 1em 0 0.35em;
+}
+.agent-md p + p {
+  margin-top: 0.6em;
+}
+.agent-md :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--color-content);
+  background: rgb(235 235 235 / 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+}
+.agent-md [data-streamdown="code-block"],
+.agent-md [data-streamdown="table-wrapper"] {
+  margin: 0.8em 0;
+  padding: 0;
+  gap: 0;
+  border: 1px solid rgb(235 235 235 / 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgb(235 235 235 / 0.04);
+}
+/* 代码块一行一个 span：streamdown 不开行号时不给它们 block，行会挤成一行（照电脑 index.css 补上），长行横着滚 */
+.agent-md [data-streamdown="code-block-body"] {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.agent-md [data-streamdown="code-block-body"] pre {
+  margin: 0;
+  white-space: pre;
+  width: max-content;
+  min-width: 100%;
+}
+.agent-md [data-streamdown="code-block-body"] code > span {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  white-space: pre;
+}
+.agent-md [data-streamdown="code-block-body"] code > span::before {
+  width: 28px;
+  margin-right: 10px;
+  color: rgb(235 235 235 / 0.3);
+  font-size: 10px;
+}
+.agent-md [data-streamdown="table-wrapper"] > div {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.agent-md [data-streamdown="table"] > :not(:last-child),
+.agent-md [data-streamdown="table-body"] > :not(:last-child) {
+  border-color: rgb(235 235 235 / 0.06);
+}
+.agent-md [data-streamdown="table-header-cell"],
+.agent-md [data-streamdown="table-cell"] {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  /* 窄屏上列太挤就横着滑，不把字挤成一列 */
+  min-width: 6.5rem;
+  vertical-align: top;
+  text-align: left;
+}
+.agent-md [data-streamdown="table-header-cell"] {
+  color: var(--color-content);
+  font-weight: 600;
+  background: rgb(235 235 235 / 0.04);
+}
+.agent-md [data-streamdown="table-cell"] {
+  color: rgb(235 235 235 / 0.78);
+}
+.agent-md [data-streamdown="horizontal-rule"] {
+  border: 0;
+  border-top: 1px solid rgb(235 235 235 / 0.1);
+  margin: 1em 0;
+}
+.agent-md pre {
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+.agent-md a {
+  color: #7dd3fc;
+}
+.agent-md ul,
+.agent-md ol {
+  padding-left: 1.3em;
+  margin: 0.4em 0;
+}
+.agent-md ul {
+  list-style: disc;
+}
+.agent-md ol {
+  list-style: decimal;
+}
+.agent-md li::marker {
+  color: rgb(235 235 235 / 0.4);
+}
+.agent-md blockquote {
+  border-left: 3px solid rgb(235 235 235 / 0.12);
+  padding-left: 0.8em;
+  color: rgb(235 235 235 / 0.65);
+}
+
+/* ---------- 和电脑一样的零件（SOL-96，抄自 src/styles/index.css） ---------- */
+/* 流光文字（Shimmer）：正在干活那一行 */
+.shimmer-text {
+  background-image:
+    linear-gradient(90deg, transparent calc(50% - var(--spread)), var(--color-content) calc(50%), transparent calc(50% + var(--spread))),
+    linear-gradient(rgb(235 235 235 / 0.4), rgb(235 235 235 / 0.4));
+  background-size: 250% 100%, auto;
+  background-repeat: no-repeat, padding-box;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: shimmer-text var(--shimmer-duration, 2s) steps(30) infinite;
+}
+@keyframes shimmer-text {
+  from {
+    background-position: 100% center;
+  }
+  to {
+    background-position: 0% center;
+  }
+}
+/* 项目小人跑起来 */
+.mascot-active {
+  animation: mascot-hop var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
+}
+.mascot-rest {
+  animation: mascot-rest var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
+}
+.mascot-talk {
+  animation: mascot-talk var(--mascot-beat, 460ms) steps(2, jump-none) infinite;
+}
+@keyframes mascot-hop {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1px);
+  }
+}
+@keyframes mascot-rest {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes mascot-talk {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* 工具在跑：虚线圈慢慢转 */
+.zen-tool-spin {
+  animation: spin 3.6s linear infinite;
+}
+/* 思考：整段灰色显示，加粗的稍亮 */
+.agent-reasoning .agent-md p,
+.agent-reasoning .agent-md li {
+  color: rgb(235 235 235 / 0.48);
+}
+.agent-reasoning .agent-md strong,
+.agent-reasoning .agent-md em {
+  color: rgb(235 235 235 / 0.62);
+}
+/* 用户消息气泡：电脑上开了强调色时的样子（强调色 24%） */
+.user-bubble {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+.agent-reasoning .agent-md {
+  font-size: 14px;
+}
+
+/* 电脑上 index.css 的文件类型图标（FileTypeIcon） */
+.material-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 对话里像文件路径的行内代码：点了打开文件（SOL-92） */
+.agent-md code.file-ref {
+  color: rgb(125 211 252 / 0.9);
+  text-decoration: underline;
+  text-decoration-color: rgb(125 211 252 / 0.35);
+  text-underline-offset: 3px;
+}

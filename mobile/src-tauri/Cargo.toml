@@ -1,0 +1,27 @@
+[package]
+name = "soloyard-mobile"
+version = "0.1.0"
+description = "Soloyard 手机端：连家里主机上的 agent 会话"
+edition = "2021"
+license = "MIT"
+
+# Soloyard：独立于仓库根目录的 workspace（桌面端在根 workspace 里），手机端单独编译、单独锁版本。
+[workspace]
+
+[lib]
+name = "soloyard_mobile_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2.12.1", default-features = false, features = ["json", "gzip"] }
+
+# 开发构建也不带调试符号：带上时原生库 100 多 MB，手机和模拟器都装得费劲
+[profile.dev]
+debug = false
+strip = "debuginfo"

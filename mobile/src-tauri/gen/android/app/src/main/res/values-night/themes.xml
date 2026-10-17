@@ -1,0 +1,8 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.soloyard_mobile" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your theme here. -->
+        <!-- Soloyard：系统栏和键盘让出来的那条边，跟界面同色 -->
+        <item name="android:windowBackground">#171717</item>
+    </style>
+</resources>
