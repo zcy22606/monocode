@@ -356,6 +356,7 @@
     "fix": "Settings",
     "connected": "Connected to the host",
     "connecting": "Connecting to the host…",
-    "disconnected": "Can't reach the host, so nothing will come through. Is Tailscale on? ({{reason}})"
+    "disconnected": "Can't reach the host, so nothing will come through. Is Tailscale on? ({{reason}})",
+    "stopped": "Android paused Soloyard for {{minutes}} min from {{time}}, so notifications in that window were missed (usually ColorOS freezing background apps once the screen locks). In App info → Battery, allow full background activity and auto-launch."
   }
 }

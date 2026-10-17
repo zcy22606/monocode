@@ -5,8 +5,8 @@
 import { useEffect, useState } from "react";
 import { androidCall } from "./files";
 
-/** lastOk = 常驻服务上次连上网关的时间（毫秒），lastError = 之后连不上的原因。 */
-export type NotifyStatus = { enabled: boolean; allowed: boolean; background: boolean; lastOk: number; lastError: string };
+/** lastOk = 常驻服务上次连上网关的时间（毫秒），lastError = 之后连不上的原因；stoppedAt / stoppedFor = 最近一次被系统停住（锁屏后冻结）的开始时间和时长。 */
+export type NotifyStatus = { enabled: boolean; allowed: boolean; background: boolean; lastOk: number; lastError: string; stoppedAt: number; stoppedFor: number };
 /** 网关发来的一条（gateway.ts 的 waitEvents）。 */
 export type NotifyEvent = {
   id: number;
@@ -28,6 +28,9 @@ export const openAppSettings = () => androidCall({ action: "appSettings" });
 
 /** 常驻服务每次等网关最多 25 秒，这么久内连上过就算连着。 */
 export const notifyConnected = (status: NotifyStatus) => Date.now() - status.lastOk < 70_000;
+
+/** 最近一天里被系统停住过：锁屏后这段时间的通知收不到。 */
+export const notifyStopped = (status: NotifyStatus) => status.stoppedAt > Date.now() - 86_400_000;
 
 /** 状态：打开时读，开着时每 5 秒再读（连没连上会变），回到 app 时也读（从系统设置回来可能变了）。不在安卓里是 null。 */
 export function useNotifyStatus(active: boolean) {

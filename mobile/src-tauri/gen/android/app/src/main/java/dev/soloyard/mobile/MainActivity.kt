@@ -104,10 +104,7 @@ class MainActivity : TauriActivity() {
   /** 通知开没开、系统允不允许弹、有没有被省电管住（ColorOS 上还要另外开「自启动」，系统查不到）、连没连上网关。 */
   private fun notifyStatus(): String {
     val power = getSystemService(PowerManager::class.java)
-    val (lastOk, lastError) = NotifyService.health(this)
-    return JSONObject()
-      .put("lastOk", lastOk)
-      .put("lastError", lastError)
+    return NotifyService.health(this)
       .put("enabled", NotifyService.enabled(this))
       .put("allowed", NotificationManagerCompat.from(this).areNotificationsEnabled())
       .put("background", power?.isIgnoringBatteryOptimizations(packageName) == true)

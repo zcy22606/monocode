@@ -40,8 +40,14 @@ class NotifyService : Service() {
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun enabled(context: Context) = prefs(context).getBoolean("enabled", false)
 
-    /** 上次连上网关的时间和之后连不上的原因，设置里显示连没连上。 */
-    fun health(context: Context) = prefs(context).let { it.getLong("lastOk", 0) to (it.getString("lastError", null) ?: "") }
+    /** 设置里显示：上次连上网关的时间、之后连不上的原因、最近一次被系统停住（开始时间、停了多久）。 */
+    fun health(context: Context): JSONObject = prefs(context).let {
+      JSONObject()
+        .put("lastOk", it.getLong("lastOk", 0))
+        .put("lastError", it.getString("lastError", null) ?: "")
+        .put("stoppedAt", it.getLong("stoppedAt", 0))
+        .put("stoppedFor", it.getLong("stoppedFor", 0))
+    }
 
     fun setEnabled(context: Context, on: Boolean) {
       prefs(context).edit().putBoolean("enabled", on).apply()
@@ -98,10 +104,17 @@ class NotifyService : Service() {
     val prefs = prefs(this)
     var after: Long? = if (prefs.contains("after")) prefs.getLong("after", 0) else null
     var wait = 5_000L
+    // 一次等待最多 25 秒（加上中继延迟、40 秒读超时），远超过 = 中间被系统停住了（锁屏后 ColorOS 冻结后台）
+    fun noteStop(started: Long) {
+      val took = System.currentTimeMillis() - started
+      if (took > 120_000) prefs.edit().putLong("stoppedAt", started).putLong("stoppedFor", took).apply()
+    }
     while (running) {
+      val started = System.currentTimeMillis()
       try {
         val connection = JSONObject(File(applicationInfo.dataDir, "connection.json").readText())
         val result = waitEvents(connection.getString("url"), connection.getString("token"), after)
+        noteStop(started)
         val events = result.getJSONArray("events")
         for (i in 0 until events.length()) show(events.getJSONObject(i))
         after = result.getLong("latest")
@@ -117,6 +130,7 @@ class NotifyService : Service() {
         } catch (_: InterruptedException) {
           return
         }
+        noteStop(started + wait)
         wait = minOf(wait * 2, 60_000L)
       }
     }
@@ -157,17 +171,28 @@ class NotifyService : Service() {
     val title = event.optString("title").replace(Regex("^[a-z]+\\s*·\\s*", RegexOption.IGNORE_CASE), "").ifEmpty { getString(R.string.notify_untitled) }
     val input = event.optString("kind") == "input"
     val body = event.optString("body").ifEmpty { getString(if (input) R.string.notify_input_body else R.string.notify_done_body) }
-    val where = if (event.optString("source") == "host") getString(R.string.notify_host) else event.optString("machine")
+    // 顶上一行照原型：哪台机器 · 哪个项目
+    val machine = if (event.optString("source") == "host") getString(R.string.notify_host) else event.optString("machine")
+    val where = listOf(machine, event.optString("cwd").trimEnd('/').substringAfterLast('/')).filter { it.isNotEmpty() }.joinToString(" · ")
+    val heading = getString(if (input) R.string.notify_input else R.string.notify_done, title)
     val open = Intent(this, MainActivity::class.java)
       .putExtra(EXTRA_OPEN, event.toString())
       .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
     val tap = PendingIntent.getActivity(this, event.optInt("id"), open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     val notification = NotificationCompat.Builder(this, CHANNEL_EVENTS)
       .setSmallIcon(R.drawable.ic_stat_soloyard)
-      .setContentTitle(getString(if (input) R.string.notify_input else R.string.notify_done, title))
+      .setContentTitle(heading)
       .setContentText(body)
       .setStyle(NotificationCompat.BigTextStyle().bigText(body))
       .setSubText(where)
+      // 锁屏设成隐藏内容时显示这一版：看得到哪个会话跑完了，看不到回复内容
+      .setPublicVersion(
+        NotificationCompat.Builder(this, CHANNEL_EVENTS)
+          .setSmallIcon(R.drawable.ic_stat_soloyard)
+          .setContentTitle(heading)
+          .setSubText(where)
+          .build(),
+      )
       .setContentIntent(tap)
       .setAutoCancel(true)
       .setCategory(Notification.CATEGORY_MESSAGE)

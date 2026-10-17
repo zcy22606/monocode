@@ -12,10 +12,10 @@ import { useActive, useNav } from "../ui/nav";
 import { HARNESS_NAME, ModelChip, ModelSheet, defaultChoice, modelName } from "./ModelSheet";
 import type { HarnessId } from "../../../src/features/sessions/model/session";
 import { Check, CircleAlert, GitBranch } from "../../../src/shared/ui/icons";
-import { HarnessIcon, ProjectMascot, TerminalSpinner, formatRelative, projectColor } from "../ui/desktop";
+import { HarnessIcon, ProjectMascot, TerminalSpinner, formatClockTime, formatRelative, projectColor } from "../ui/desktop";
 import { cleanTitle } from "./blocks";
 import { IssuesTab, QuickIssue, StatusIcon, useProjectIssues, type SessionState } from "./Issues";
-import { notifyConnected, openAppSettings, openBackgroundSettings, setNotify, useNotificationOpen, useNotifyStatus } from "../host/notify";
+import { notifyConnected, notifyStopped, openAppSettings, openBackgroundSettings, setNotify, useNotificationOpen, useNotifyStatus } from "../host/notify";
 import type { IssueBrief } from "../host/issues";
 
 type Section = "input" | "running" | "fresh" | "recent";
@@ -344,7 +344,7 @@ function CardState({ status, updatedAt }: { status: CardStatus; updatedAt: numbe
 function NotifyRow({ active }: { active: boolean }) {
   const [status, setStatus] = useNotifyStatus(active);
   if (!status) return null;
-  const problem = status.enabled ? (!status.allowed ? "blocked" : !status.background ? "background" : null) : null;
+  const problem = status.enabled ? (!status.allowed ? "blocked" : !status.background ? "background" : notifyStopped(status) ? "stopped" : null) : null;
   return (
     <div className="mb-3 border-b border-stroke pb-3">
       <div className="flex items-center gap-3">
@@ -374,10 +374,14 @@ function NotifyRow({ active }: { active: boolean }) {
       ) : null}
       {problem ? (
         <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-amber/10 px-3 py-2.5 text-[12px] leading-relaxed text-amber">
-          <span className="min-w-0 flex-1">{t(problem === "blocked" ? "notify.blocked" : "notify.background")}</span>
+          <span className="min-w-0 flex-1">
+            {problem === "stopped"
+              ? t("notify.stopped", { time: formatClockTime(status.stoppedAt), minutes: Math.max(1, Math.round(status.stoppedFor / 60_000)) })
+              : t(problem === "blocked" ? "notify.blocked" : "notify.background")}
+          </span>
           <button
             className="press shrink-0 rounded-full bg-amber/15 px-3 py-1 text-[12px]"
-            onClick={() => void (problem === "blocked" ? openAppSettings() : openBackgroundSettings()).catch((e: Error) => toast(e.message))}
+            onClick={() => void (problem === "background" ? openBackgroundSettings() : openAppSettings()).catch((e: Error) => toast(e.message))}
           >
             {t("notify.fix")}
           </button>

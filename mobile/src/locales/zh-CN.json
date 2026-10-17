@@ -339,6 +339,7 @@
     "fix": "去设置",
     "connected": "已连上主机",
     "connecting": "正在连主机…",
-    "disconnected": "连不上主机，通知收不到。Tailscale 开着吗？（{{reason}}）"
+    "disconnected": "连不上主机，通知收不到。Tailscale 开着吗？（{{reason}}）",
+    "stopped": "{{time}} 起被系统停了 {{minutes}} 分钟，这段时间的通知收不到（多半是锁屏后 ColorOS 冻结了后台）。到「应用信息 → 耗电管理」打开「允许完全后台行为」和「允许自动启动」。"
   }
 }
