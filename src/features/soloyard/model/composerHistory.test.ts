@@ -11,7 +11,9 @@ const field = (value: string, caret = value.length) => ({
   selectionEnd: caret,
   // hard line breaks stand in for the measured visual lines
   onEdgeLine: (up: boolean) => !(up ? value.slice(0, caret) : value.slice(caret)).includes("\n"),
+  draft: () => ({ text: value, attachments: [], borrowedIds: new Set<string>() }),
 });
+const texts = (prompts: { text: string }[]) => prompts.map((prompt) => prompt.text);
 
 describe("sent prompts", () => {
   it("keeps the user's own messages, drops internal ones, repeats and the @link context", () => {
@@ -22,21 +24,34 @@ describe("sent prompts", () => {
       user("hidden", { internal: true }),
       user("two\n\n<soloyard_context>\nstuff\n</soloyard_context>"),
     ];
-    expect(sentPrompts(blocks)).toEqual(["one", "two"]);
+    expect(texts(sentPrompts(blocks))).toEqual(["one", "two"]);
   });
 
   it("includes `!` commands, written the way they were typed", () => {
     const shell = { id: "c", role: "shell", text: "git status", shell: { cwd: "/repo", status: "done" } } as Block;
-    expect(sentPrompts([user("one"), shell, agent("ok"), user("two")])).toEqual(["one", "!git status", "two"]);
+    expect(texts(sentPrompts([user("one"), shell, agent("ok"), user("two")]))).toEqual(["one", "!git status", "two"]);
+  });
+
+  it("keeps the images a message was sent with", () => {
+    const attachments = [{ id: "img" }] as Block["attachments"];
+    expect(sentPrompts([user("look", { attachments }), user("look")])).toEqual([
+      { text: "look", attachments },
+      { text: "look", attachments: [] },
+    ]);
   });
 });
 
 describe("history step", () => {
-  const history = () => ["first", "second\nline"];
+  const shot = [{ id: "shot" }] as NonNullable<Block["attachments"]>;
+  const history = () => [
+    { text: "first", attachments: [] },
+    { text: "second\nline", attachments: shot },
+  ];
 
   it("walks up through history and back down to the draft", () => {
     const up1 = historyStep(key("ArrowUp"), field("draft"), IDLE_HISTORY_NAV, history)!;
-    expect(up1).toMatchObject({ text: "second\nline", caret: 11 });
+    expect(up1).toMatchObject({ text: "second\nline", attachments: shot, caret: 11 });
+    expect([...up1.borrowedIds]).toEqual(["shot"]);
     // caret on the last line of a multi-line entry: ↑ moves the caret first
     expect(historyStep(key("ArrowUp"), field(up1.text), up1.nav, history)).toBeNull();
     const up2 = historyStep(key("ArrowUp"), field(up1.text, 3), up1.nav, history)!;
@@ -45,13 +60,22 @@ describe("history step", () => {
     const down1 = historyStep(key("ArrowDown"), field("first"), up2.nav, history)!;
     expect(down1).toMatchObject({ text: "second\nline", caret: 11 });
     const down2 = historyStep(key("ArrowDown"), field(down1.text), down1.nav, history)!;
-    expect(down2).toMatchObject({ text: "draft", nav: IDLE_HISTORY_NAV });
+    expect(down2).toMatchObject({ text: "draft", attachments: [], nav: IDLE_HISTORY_NAV });
   });
 
   it("leaves the arrows alone inside multi-line text, with modifiers, or when not browsing", () => {
     expect(historyStep(key("ArrowUp"), field("a\nb"), IDLE_HISTORY_NAV, history)).toBeNull();
     expect(historyStep({ ...key("ArrowUp"), shiftKey: true }, field(""), IDLE_HISTORY_NAV, history)).toBeNull();
     expect(historyStep(key("ArrowDown"), field("x"), IDLE_HISTORY_NAV, history)).toBeNull();
+  });
+
+  it("brings the draft's own files back with it", () => {
+    const pasted = [{ id: "pasted" }] as NonNullable<Block["attachments"]>;
+    const draft = { ...field("mine"), draft: () => ({ text: "mine", attachments: pasted, borrowedIds: new Set<string>() }) };
+    const up = historyStep(key("ArrowUp"), draft, IDLE_HISTORY_NAV, history)!;
+    const back = historyStep(key("ArrowDown"), field(up.text), up.nav, history)!;
+    expect(back).toMatchObject({ text: "mine", attachments: pasted });
+    expect(back.borrowedIds.size).toBe(0);
   });
 
   it("treats an edited recalled message as the new draft", () => {
