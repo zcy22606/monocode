@@ -23,7 +23,7 @@ import java.net.URL
 
 /**
  * Soloyard（SOL-104）：常驻服务，长连家里主机的网关等「会话跑完了 / 等你处理」，来了弹系统通知，点了进那个会话。
- * app 在前台时不弹（界面自己看得到）。安卓要求常驻服务在通知栏挂一条「Soloyard 在线」。
+ * app 在前台、正开着那个会话时不弹（界面看得见），别的会话照弹。安卓要求常驻服务在通知栏挂一条「Soloyard 在线」。
  * 网关地址和设备凭据读原生层存的 connection.json（和 lib.rs 同一份），网页层碰不到凭据。
  */
 class NotifyService : Service() {
@@ -34,8 +34,14 @@ class NotifyService : Service() {
     private const val PREFS = "soloyard.notify"
     private const val ONLINE_ID = 1
 
+    /** 界面正开着的会话（MainActivity 的 viewing）。 */
+    @Volatile var viewing = ""
+
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun enabled(context: Context) = prefs(context).getBoolean("enabled", false)
+
+    /** 上次连上网关的时间和之后连不上的原因，设置里显示连没连上。 */
+    fun health(context: Context) = prefs(context).let { it.getLong("lastOk", 0) to (it.getString("lastError", null) ?: "") }
 
     fun setEnabled(context: Context, on: Boolean) {
       prefs(context).edit().putBoolean("enabled", on).apply()
@@ -99,12 +105,13 @@ class NotifyService : Service() {
         val events = result.getJSONArray("events")
         for (i in 0 until events.length()) show(events.getJSONObject(i))
         after = result.getLong("latest")
-        prefs.edit().putLong("after", after).apply()
+        prefs.edit().putLong("after", after).putLong("lastOk", System.currentTimeMillis()).remove("lastError").apply()
         wait = 5_000L
       } catch (e: InterruptedException) {
         return
       } catch (e: Exception) {
         // 没配对、连不上（Tailscale 断了、网关重启）：往后退，最长一分钟
+        prefs.edit().putString("lastError", e.message ?: e.javaClass.simpleName).apply()
         try {
           Thread.sleep(wait)
         } catch (_: InterruptedException) {
@@ -138,7 +145,6 @@ class NotifyService : Service() {
     }
   }
 
-  /** app 开在前台（界面看得见）时不弹。 */
   private fun foreground(): Boolean {
     val info = ActivityManager.RunningAppProcessInfo()
     ActivityManager.getMyMemoryState(info)
@@ -146,7 +152,7 @@ class NotifyService : Service() {
   }
 
   private fun show(event: JSONObject) {
-    if (foreground()) return
+    if (foreground() && event.optString("sessionId") == viewing) return
     // 主机起的标题带着「claude · 」前缀，和 app 里一样去掉
     val title = event.optString("title").replace(Regex("^[a-z]+\\s*·\\s*", RegexOption.IGNORE_CASE), "").ifEmpty { getString(R.string.notify_untitled) }
     val input = event.optString("kind") == "input"

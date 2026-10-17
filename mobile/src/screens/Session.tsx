@@ -27,6 +27,7 @@ import { CopyButton, DaySeparator, ImageBlock, ShellRow, WorkGroup, Markdown, Re
 import { toolLabel } from "../ui/desktop";
 import { groupWork } from "../ui/activity";
 import { FileSourceContext } from "../host/files";
+import { useViewing } from "../host/notify";
 import { sessionFiles } from "../../../soloyard/core/src/session-files";
 import { SessionFiles } from "./File";
 import { ModelChip, ModelSheet, modelName } from "./ModelSheet";
@@ -40,6 +41,7 @@ export function SessionScreen({ route }: { route: Extract<Route, { name: "sessio
   const nav = useNav();
   const { online } = useApp();
   const [sessionId, setSessionId] = useState(route.sessionId);
+  useViewing(sessionId, active);
   const [outbox, setOutbox] = useState<Outgoing[]>(() => (route.start ? [{ id: route.start.commandId, text: route.start.text, state: "sending" }] : []));
   const known = useRef<HostSession | undefined>(sessionId ? cached(`session:${sessionId}`) : undefined);
   const poll = usePoll(

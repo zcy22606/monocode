@@ -168,6 +168,7 @@
     "refresh": "Refresh",
     "loading": "Getting it from your computer…",
     "loadingHost": "Getting it from the host…",
+    "fetchingOriginal": "Getting the full-size file…",
     "retry": "Try again",
     "share": "Share",
     "openWith": "Open with",
@@ -352,6 +353,9 @@
     "hint": "When a session finishes or needs you",
     "blocked": "Android isn't letting Soloyard post notifications. Turn them on in settings.",
     "background": "On ColorOS, allow Soloyard to auto-launch and run in the background, or notifications stop once the screen locks.",
-    "fix": "Settings"
+    "fix": "Settings",
+    "connected": "Connected to the host",
+    "connecting": "Connecting to the host…",
+    "disconnected": "Can't reach the host, so nothing will come through. Is Tailscale on? ({{reason}})"
   }
 }

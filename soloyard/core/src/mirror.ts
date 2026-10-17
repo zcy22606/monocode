@@ -194,7 +194,7 @@ export async function takeHostSession(db: DB, sessionId: string) {
 // ---------- 手机要这台电脑做的事：看会话里的文件（SOL-92）、列 / 打开本地服务（SOL-97）----------
 // 长轮询网关，来了请求就做完交回去。
 type FileAsk = {
-  id: string; kind?: 'file' | 'services' | 'open' | 'data'; sessionId?: string; path?: string; mtime?: number; port?: number
+  id: string; kind?: 'file' | 'services' | 'open' | 'data'; sessionId?: string; path?: string; mtime?: number; port?: number; preview?: boolean
   /** kind = data：手机要的 issue 数据（SOL-100），交给数据进程的白名单（phone.ts）。 */
   method?: string; args?: unknown[]
 }
@@ -240,7 +240,7 @@ export async function answerFile(db: DatabaseSync, config: MirrorConfig, ask: Fi
   try {
     const row = sessionRow(db, ask.sessionId)
     // ponytail: 只认存盘的对话，正在跑的这一轮里新提到的项目外文件要等这一轮结束
-    const { data, ...meta } = readSharedFile(ask.path ?? '', { cwd: row.cwd, worktreeCwd: row.worktree_cwd, blocksJson: row.blocks_json ?? '' }, ask.mtime)
+    const { data, ...meta } = readSharedFile(ask.path ?? '', { cwd: row.cwd, worktreeCwd: row.worktree_cwd, blocksJson: row.blocks_json ?? '' }, ask.mtime, ask.preview === true)
     headers = { 'x-soloyard-file': encodeURIComponent(JSON.stringify(meta)), ...(data ? {} : { 'x-soloyard-unchanged': '1' }) }
     body = data
   } catch (e) {

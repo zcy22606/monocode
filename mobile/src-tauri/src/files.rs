@@ -17,8 +17,9 @@ use crate::{Connection, RpcError};
 
 pub const SCHEME: &str = "soloyardfile";
 const MAX_BYTES: u64 = 50 << 20;
-/// 刚取过的不再问（一个网页同时要几十个资源，图片显示时又取一次）。
-const FRESH: Duration = Duration::from_secs(5);
+/// 网页里的资源（样式、脚本、图片）取过以后这么久内直接用缓存，不再去问变没变：
+/// 走海外中继时问一次要几秒，一个页面几十个资源。页面本身每次打开都会在后台问一次（Check）。
+const FRESH: Duration = Duration::from_secs(10 * 60);
 /// 缓存里一周没打开过的文件，启动时删掉。
 const KEEP: Duration = Duration::from_secs(7 * 86_400);
 
@@ -47,6 +48,19 @@ pub struct FileInfo {
     local: String,
     #[serde(default)]
     fetched: u64,
+    /// 缩小过的图（原图大小在 original_size）。
+    #[serde(default)]
+    preview: bool,
+    #[serde(default)]
+    original_size: Option<u64>,
+}
+
+/// 怎么拿：Cached = 缓存里有就直接用，不连网（先给界面显示）；Check = 一定去问变没变；Serve = 网页资源，取过不久的直接用。
+#[derive(Clone, Copy, PartialEq)]
+pub enum Mode {
+    Cached,
+    Check,
+    Serve,
 }
 
 fn now_ms() -> u64 {
@@ -86,9 +100,9 @@ fn parse(uri_path: &str) -> Option<(&'static str, String, String)> {
     (!id.is_empty()).then_some((source, id, path))
 }
 
-fn cache_dir(root: &Path, source: &str, id: &str, path: &str) -> PathBuf {
+fn cache_dir(root: &Path, source: &str, id: &str, path: &str, preview: bool) -> PathBuf {
     let mut hasher = DefaultHasher::new();
-    (source, id, path).hash(&mut hasher);
+    (source, id, path, preview).hash(&mut hasher);
     root.join(format!("{:016x}", hasher.finish()))
 }
 
@@ -105,11 +119,19 @@ enum Remote {
     Same,
 }
 
-fn fetch_remote(agent: &ureq::Agent, connection: &Connection, source: &str, id: &str, path: &str, mtime: Option<u64>) -> Result<Remote, RpcError> {
+fn fetch_remote(agent: &ureq::Agent, connection: &Connection, source: &str, id: &str, path: &str, mtime: Option<u64>, preview: bool) -> Result<Remote, RpcError> {
+    // 走中继时偶尔一次连不上：网络错误自动再试一次
+    match fetch_once(agent, connection, source, id, path, mtime, preview) {
+        Err(e) if e.kind == "network" => fetch_once(agent, connection, source, id, path, mtime, preview),
+        other => other,
+    }
+}
+
+fn fetch_once(agent: &ureq::Agent, connection: &Connection, source: &str, id: &str, path: &str, mtime: Option<u64>, preview: bool) -> Result<Remote, RpcError> {
     let response = agent
         .post(&format!("{}/file", connection.url.trim_end_matches('/')))
         .set("Authorization", &format!("Bearer {}", connection.token))
-        .send_json(json!({ "source": source, "id": id, "path": path, "mtime": mtime }));
+        .send_json(json!({ "source": source, "id": id, "path": path, "mtime": mtime, "preview": preview }));
     let response = match response {
         Ok(r) => r,
         Err(ureq::Error::Status(code, r)) => {
@@ -138,16 +160,17 @@ fn fetch_remote(agent: &ureq::Agent, connection: &Connection, source: &str, id: 
     Ok(Remote::Fresh(info, body))
 }
 
-/// 拿到缓存里的文件（需要时去取）。连不上但缓存里有，就用缓存的。
-pub fn ensure(agent: &ureq::Agent, connection: &Connection, root: &Path, source: &str, id: &str, path: &str) -> Result<FileInfo, RpcError> {
-    let dir = cache_dir(root, source, id, path);
+/// 拿到缓存里的文件（需要时去取，见 Mode）。连不上但缓存里有，就用缓存的。
+pub fn ensure(agent: &ureq::Agent, connection: &Connection, root: &Path, source: &str, id: &str, path: &str, preview: bool, mode: Mode) -> Result<FileInfo, RpcError> {
+    let dir = cache_dir(root, source, id, path, preview);
     let cached = read_meta(&dir).filter(|m| dir.join(&m.name).is_file());
     if let Some(info) = &cached {
-        if now_ms().saturating_sub(info.fetched) < FRESH.as_millis() as u64 {
+        let fresh = now_ms().saturating_sub(info.fetched) < FRESH.as_millis() as u64;
+        if mode == Mode::Cached || (mode == Mode::Serve && fresh) {
             return Ok(info.clone());
         }
     }
-    let remote = fetch_remote(agent, connection, source, id, path, cached.as_ref().map(|c| c.mtime));
+    let remote = fetch_remote(agent, connection, source, id, path, cached.as_ref().map(|c| c.mtime), preview);
     let io = |e: std::io::Error| RpcError::new("host", e.to_string());
     let mut info = match (remote, cached) {
         (Ok(Remote::Fresh(info, body)), old) => {
@@ -172,7 +195,10 @@ pub fn ensure(agent: &ureq::Agent, connection: &Connection, root: &Path, source:
 }
 
 /// 协议的处理：网页里加载的图片、页面和它的资源、界面里 fetch 的文本都走这里。
-pub fn serve(agent: &ureq::Agent, connection: Option<Connection>, root: &Path, uri_path: &str) -> Response<Vec<u8>> {
+/// query 带 preview=1 时要缩小版（看图用），带 cached=1 时缓存里有就直接用（文件页已经先取过了）。
+pub fn serve(agent: &ureq::Agent, connection: Option<Connection>, root: &Path, uri_path: &str, query: Option<&str>) -> Response<Vec<u8>> {
+    let has = |flag: &str| query.is_some_and(|q| q.split('&').any(|p| p == flag));
+    let (preview, mode) = (has("preview=1"), if has("cached=1") { Mode::Cached } else { Mode::Serve });
     let fail = |code: StatusCode, message: &str| {
         Response::builder()
             .status(code)
@@ -187,7 +213,7 @@ pub fn serve(agent: &ureq::Agent, connection: Option<Connection>, root: &Path, u
     let Some(connection) = connection else {
         return fail(StatusCode::UNAUTHORIZED, "No host is paired");
     };
-    let info = match ensure(agent, &connection, root, source, &id, &path) {
+    let info = match ensure(agent, &connection, root, source, &id, &path, preview, mode) {
         Ok(info) => info,
         Err(e) => return fail(StatusCode::BAD_GATEWAY, &e.message),
     };

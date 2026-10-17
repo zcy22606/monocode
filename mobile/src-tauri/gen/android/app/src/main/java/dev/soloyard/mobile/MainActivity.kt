@@ -36,7 +36,6 @@ class MainActivity : TauriActivity() {
     super.onCreate(savedInstanceState)
     // 通知（SOL-104）：从通知点进来的先记着，网页起来后来取；开着通知就把常驻服务拉起来
     pendingOpen = intent?.getStringExtra(NotifyService.EXTRA_OPEN)
-    NotifyService.start(this)
 
     // 安卓 15 起强制全面屏，网页拿不到状态栏高度，也不会被键盘顶起来。
     // 这里按状态栏、导航条、键盘的实际高度给网页留边；键盘升降时逐帧跟着变，输入框贴着键盘走。
@@ -96,10 +95,19 @@ class MainActivity : TauriActivity() {
     }
   }
 
-  /** 通知开没开、系统允不允许弹、有没有被省电管住（ColorOS 上还要另外开「自启动」，系统查不到）。 */
+  /** 常驻服务被系统杀了的话，回到 app 时拉起来。 */
+  override fun onResume() {
+    super.onResume()
+    NotifyService.start(this)
+  }
+
+  /** 通知开没开、系统允不允许弹、有没有被省电管住（ColorOS 上还要另外开「自启动」，系统查不到）、连没连上网关。 */
   private fun notifyStatus(): String {
     val power = getSystemService(PowerManager::class.java)
+    val (lastOk, lastError) = NotifyService.health(this)
     return JSONObject()
+      .put("lastOk", lastOk)
+      .put("lastError", lastError)
       .put("enabled", NotifyService.enabled(this))
       .put("allowed", NotificationManagerCompat.from(this).areNotificationsEnabled())
       .put("background", power?.isIgnoringBatteryOptimizations(packageName) == true)
@@ -142,6 +150,10 @@ class MainActivity : TauriActivity() {
         return ""
       }
       "takeOpen" -> return (pendingOpen ?: "").also { pendingOpen = null }
+      "viewing" -> {
+        NotifyService.viewing = request.optString("session")
+        return ""
+      }
     }
     if (request.getString("action") == "browse") {
       val uri = Uri.parse(request.getString("url"))

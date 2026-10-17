@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, realpathSync, utimesSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -57,4 +59,28 @@ test('取文件：会话目录里的、会话里出现过的给；别处的、�
   assert.equal(same.data, undefined)
   assert.equal(same.size, 9)
   assert.equal(mimeOf('x.unknownext'), 'application/octet-stream')
+})
+
+test('看图给缩小版：大图缩成 JPEG，小图和非图片照常给原文件', { skip: process.platform !== 'darwin' }, () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'share-img-')))
+  // sips 能生成一张大 PNG：先用它把一张 1x1 的放大成 3000x3000（PNG 很大）
+  const tiny = join(root, 'tiny.png')
+  writeFileSync(tiny, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'))
+  const big = join(root, 'big.png')
+  execFileSync('/usr/bin/sips', ['-z', '3000', '3000', tiny, '--out', big], { stdio: 'ignore' })
+  writeFileSync(join(root, 'noise.png'), Buffer.concat([readFileSync(big), randomBytes(400_000)]))
+  const ctx = { cwd: root, blocksJson: '[]' }
+  const original = statSync(join(root, 'noise.png')).size
+  // 拼了随机字节的 PNG sips 也能读（只看前面的图），拿它当大图
+  const shrunk = readSharedFile('noise.png', ctx, undefined, true)
+  assert.equal(shrunk.mime, 'image/jpeg')
+  assert.equal(shrunk.preview, true)
+  assert.equal(shrunk.originalSize, original)
+  assert.ok(shrunk.size < original / 4)
+  assert.equal(readSharedFile('tiny.png', ctx, undefined, true).preview, undefined, '小图不缩')
+  assert.equal(readSharedFile('noise.png', ctx).preview, undefined, '不要缩略图就给原图')
+  // 没变：不带内容，但照样说是缩小版
+  const same = readSharedFile('noise.png', ctx, shrunk.mtime, true)
+  assert.equal(same.data, undefined)
+  assert.equal(same.preview, true)
 })

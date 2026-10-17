@@ -163,6 +163,7 @@
     "refresh": "刷新",
     "loading": "正在从电脑取…",
     "loadingHost": "正在从主机取…",
+    "fetchingOriginal": "正在取原图…",
     "retry": "重试",
     "share": "分享",
     "openWith": "用其他应用打开",
@@ -335,6 +336,9 @@
     "hint": "会话跑完、等你处理时提醒",
     "blocked": "系统没允许 Soloyard 发通知，去设置里打开。",
     "background": "ColorOS 上要允许 Soloyard「自启动」和「后台运行」，不然锁屏后就收不到。",
-    "fix": "去设置"
+    "fix": "去设置",
+    "connected": "已连上主机",
+    "connecting": "正在连主机…",
+    "disconnected": "连不上主机，通知收不到。Tailscale 开着吗？（{{reason}}）"
   }
 }

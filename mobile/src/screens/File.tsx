@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from "react";
 import { isNumericColumn, parseCsv } from "../../../src/features/soloyard/model/csv";
 import type { SessionFile } from "../../../soloyard/core/src/session-files";
-import { android, fileError, fileInfo, fileUrl, shortPath, type FileInfo, type FileSource } from "../host/files";
+import { android, fileError, fileInfo, fileUrl, isImagePath, shortPath, type FileInfo, type FileSource } from "../host/files";
+import { HostError } from "../host/rpc";
 import { listServices, openLocalService, type LocalService } from "../host/host";
 import { Globe } from "../../../src/shared/ui/icons";
 import { t, useTranslation } from "../i18n";
@@ -43,13 +44,20 @@ export function FileScreen({ route }: { route: Extract<Route, { name: "file" }> 
   const [info, setInfo] = useState<FileInfo>();
   const [error, setError] = useState<string>();
   const [round, setRound] = useState(0);
+  const preview = isImagePath(route.path);
   useEffect(() => {
     let live = true;
     setError(undefined);
-    fileInfo(source, route.path).then(
-      (next) => live && setInfo(next),
-      (e) => live && setError(fileError(e)),
-    );
+    const fail = (e: unknown) => live && setError(fileError(e));
+    const check = () => fileInfo(source, route.path, { preview }).then((next) => live && setInfo(next), fail);
+    if (round) void check();
+    else
+      fileInfo(source, route.path, { preview, cached: true }).then((next) => {
+        if (!live) return;
+        setInfo(next);
+        // 缓存里的：先显示，再去问变没变
+        if (Date.now() - next.fetched > 5000) void check();
+      }, fail);
     return () => {
       live = false;
     };
@@ -58,14 +66,19 @@ export function FileScreen({ route }: { route: Extract<Route, { name: "file" }> 
 
   const name = route.path.split("/").pop() || route.path;
   const view = info && viewOf(info);
-  const url = fileUrl(source, route.path);
-  const act = (action: "share" | "open" | "save") => {
+  // 上面已经取进缓存了，页面直接用缓存（网页里相对路径的资源不带这个参数，照常取）
+  const url = fileUrl(source, route.path, { preview, cached: true });
+  const act = async (action: "share" | "open" | "save") => {
     if (!info) return;
     haptic();
-    android(action, info).then(
-      () => action === "save" && toast(t("files.saved")),
-      (e: Error) => toast(e.message),
-    );
+    try {
+      // 看的是缩小版：分享、存的要原图
+      if (info.preview) toast(t("files.fetchingOriginal"));
+      await android(action, info.preview ? await fileInfo(source, route.path) : info);
+      if (action === "save") toast(t("files.saved"));
+    } catch (e) {
+      toast(e instanceof HostError ? fileError(e) : (e as Error).message);
+    }
   };
 
   return (
@@ -78,7 +91,7 @@ export function FileScreen({ route }: { route: Extract<Route, { name: "file" }> 
           <div className="truncate text-[16px] font-semibold">{name}</div>
           <div className="truncate text-xs text-content/45" dir="rtl">
             {/* 长路径从左边省略，留住文件夹名 */}
-            <bdi>{info ? `${shortPath(route.path.slice(0, -name.length - 1)) || "/"} · ${formatSize(info.size)}` : shortPath(route.path)}</bdi>
+            <bdi>{info ? `${shortPath(route.path.slice(0, -name.length - 1)) || "/"} · ${formatSize(info.originalSize ?? info.size)}` : shortPath(route.path)}</bdi>
           </div>
         </div>
         <button
@@ -101,7 +114,7 @@ export function FileScreen({ route }: { route: Extract<Route, { name: "file" }> 
           </div>
         ) : null}
         {error && !info ? <FileProblem message={error} onRetry={() => setRound((n) => n + 1)} /> : null}
-        {info && view ? <FileView key={`${info.mtime}:${round}`} view={view} info={info} url={url} onOpen={() => act("open")} /> : null}
+        {info && view ? <FileView key={`${info.mtime}:${info.preview}:${round}`} view={view} info={info} url={url} onOpen={() => act("open")} /> : null}
         {error && info ? <div className="absolute inset-x-3 top-2 rounded-lg bg-amber/12 px-3 py-2 text-[12px] text-amber">{error}</div> : null}
       </div>
 

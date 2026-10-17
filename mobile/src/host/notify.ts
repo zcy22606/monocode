@@ -5,7 +5,8 @@
 import { useEffect, useState } from "react";
 import { androidCall } from "./files";
 
-export type NotifyStatus = { enabled: boolean; allowed: boolean; background: boolean };
+/** lastOk = 常驻服务上次连上网关的时间（毫秒），lastError = 之后连不上的原因。 */
+export type NotifyStatus = { enabled: boolean; allowed: boolean; background: boolean; lastOk: number; lastError: string };
 /** 网关发来的一条（gateway.ts 的 waitEvents）。 */
 export type NotifyEvent = {
   id: number;
@@ -25,16 +26,23 @@ export const setNotify = (on: boolean) => androidCall({ action: on ? "notifyOn" 
 export const openBackgroundSettings = () => androidCall({ action: "notifyBackground" });
 export const openAppSettings = () => androidCall({ action: "appSettings" });
 
-/** 状态：打开时读一次，回到 app 时再读（从系统设置回来可能变了）。不在安卓里是 null。 */
+/** 常驻服务每次等网关最多 25 秒，这么久内连上过就算连着。 */
+export const notifyConnected = (status: NotifyStatus) => Date.now() - status.lastOk < 70_000;
+
+/** 状态：打开时读，开着时每 5 秒再读（连没连上会变），回到 app 时也读（从系统设置回来可能变了）。不在安卓里是 null。 */
 export function useNotifyStatus(active: boolean) {
   const [status, setStatus] = useState<NotifyStatus | null>(null);
   useEffect(() => {
     if (!active) return;
     const read = () => void notifyStatus().then(setStatus, () => setStatus(null));
     read();
+    const timer = setInterval(read, 5000);
     const onVisible = () => document.visibilityState === "visible" && read();
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [active]);
   return [status, setStatus] as const;
 }
@@ -51,4 +59,13 @@ export function useNotificationOpen(open: (event: NotifyEvent) => void) {
     return () => window.removeEventListener("soloyard:notification", listener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+}
+
+/** 正开着的会话：app 在前台时它的通知不弹（看得见），别的会话照弹。 */
+export function useViewing(sessionId: string | undefined, active: boolean) {
+  useEffect(() => {
+    if (!active || !sessionId) return;
+    void androidCall({ action: "viewing", session: sessionId }).catch(() => undefined);
+    return () => void androidCall({ action: "viewing", session: "" }).catch(() => undefined);
+  }, [sessionId, active]);
 }

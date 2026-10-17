@@ -172,12 +172,14 @@ async fn host_rpc(store: State<'_, Store>, method: String, params: Value) -> Res
 }
 
 /// 会话里的一个文件：取到手机缓存里（要时才去取），返回文件信息和缓存里的路径。source = mirror（电脑上的会话）/ host（主机上的）。
+/// preview = 图片要缩小版；cached = 缓存里有就直接给、不连网（界面先显示，再用 cached = false 问一次变没变）。
 #[tauri::command]
-async fn file_info(store: State<'_, Store>, source: String, id: String, path: String) -> Result<files::FileInfo, RpcError> {
+async fn file_info(store: State<'_, Store>, source: String, id: String, path: String, preview: Option<bool>, cached: Option<bool>) -> Result<files::FileInfo, RpcError> {
     let connection = store.connected()?;
     let (agent, root) = (store.agent.clone(), store.files.clone());
     let source = if source == "host" { "host" } else { "mirror" };
-    blocking(move || files::ensure(&agent, &connection, &root, source, &id, &path)).await
+    let mode = if cached.unwrap_or(false) { files::Mode::Cached } else { files::Mode::Check };
+    blocking(move || files::ensure(&agent, &connection, &root, source, &id, &path, preview.unwrap_or(false), mode)).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -186,7 +188,8 @@ pub fn run() {
         .setup(|app| {
             let path = app.path().app_data_dir()?.join("connection.json");
             let agent = ureq::AgentBuilder::new()
-                .timeout_connect(Duration::from_secs(6))
+                // 手机走 4G、Tailscale 走海外中继时，建连有时要十来秒
+                .timeout_connect(Duration::from_secs(15))
                 // 主机自己 20 秒超时；走 Tailscale 海外中继时一个大会话要传十几秒，多留一点
                 .timeout_read(Duration::from_secs(45))
                 .timeout_write(Duration::from_secs(10))
@@ -199,10 +202,11 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol(files::SCHEME, |ctx, request, responder| {
             let app = ctx.app_handle().clone();
             let path = request.uri().path().to_string();
+            let query = request.uri().query().map(str::to_string);
             tauri::async_runtime::spawn_blocking(move || {
                 let store = app.state::<Store>();
                 let connection = store.connection.lock().unwrap().clone();
-                responder.respond(files::serve(&store.agent, connection, &store.files, &path));
+                responder.respond(files::serve(&store.agent, connection, &store.files, &path, query.as_deref()));
             });
         })
         .invoke_handler(tauri::generate_handler![connection, pair, forget, host_rpc, file_info])

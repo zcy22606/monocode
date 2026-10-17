@@ -3,9 +3,11 @@
  * 只给两种文件：会话目录（项目根目录、工作树）里的，会话里出现过完整路径的；网页文件出现过的话，它所在的文件夹也给（页面要加载样式、脚本、图片）。
  * 凭据类文件一律不给，单个最大 50 MB。
  */
-import { readFileSync, realpathSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { basename, dirname, extname } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { readFileSync, realpathSync, rmSync, statSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { basename, dirname, extname, join } from 'node:path'
 import { absolutePath } from './session-files.ts'
 
 export const MAX_FILE = 50 << 20
@@ -42,7 +44,29 @@ export function mimeOf(path: string) {
 }
 
 export type ShareContext = { cwd: string; worktreeCwd?: string | null; blocksJson: string }
-export type SharedFile = { name: string; mime: string; size: number; mtime: number; path: string; data?: Buffer }
+/** preview = 缩小过的图（originalSize 是原图大小）。 */
+export type SharedFile = { name: string; mime: string; size: number; mtime: number; path: string; data?: Buffer; preview?: boolean; originalSize?: number }
+
+/** 小于这个的图不缩，直接给原图。 */
+const PREVIEW_OVER = 300 << 10
+
+/**
+ * 手机上看图用的缩小版（长边 1600、JPEG）：走海外中继时一张生成图 1–4 MB 要等一分钟，缩完只有几百 KB。
+ * macOS 用自带的 sips，Linux 有 ImageMagick 就用，都没有返回 undefined（给原图）。
+ */
+function shrinkImage(file: string): Buffer | undefined {
+  const out = join(tmpdir(), `soloyard-preview-${randomUUID()}.jpg`)
+  try {
+    if (process.platform === 'darwin')
+      execFileSync('/usr/bin/sips', ['-Z', '1600', '-s', 'format', 'jpeg', '-s', 'formatOptions', '75', file, '--out', out], { stdio: 'ignore', timeout: 20_000 })
+    else execFileSync('convert', [file, '-resize', '1600x1600>', '-quality', '75', out], { stdio: 'ignore', timeout: 20_000 })
+    return readFileSync(out)
+  } catch {
+    return undefined
+  } finally {
+    rmSync(out, { force: true })
+  }
+}
 
 const real = (path: string) => {
   try {
@@ -63,8 +87,8 @@ function pageRoots(blocksJson: string, home: string) {
   return roots
 }
 
-/** knownMtime 和文件一样（手机缓存的没变）就不带内容。 */
-export function readSharedFile(raw: string, ctx: ShareContext, knownMtime?: number): SharedFile {
+/** knownMtime 和文件一样（手机缓存的没变）就不带内容。preview = 图片给缩小版（不是图片或本来就小的照常给原文件）。 */
+export function readSharedFile(raw: string, ctx: ShareContext, knownMtime?: number, preview = false): SharedFile {
   const home = homedir()
   const asked = absolutePath(raw, ctx.worktreeCwd || ctx.cwd, home)
   const file = real(asked)
@@ -82,5 +106,10 @@ export function readSharedFile(raw: string, ctx: ShareContext, knownMtime?: numb
   if (!stat.isFile()) throw new Error('Not a file')
   if (stat.size > MAX_FILE) throw new Error('File is larger than 50 MB')
   const meta = { name: basename(file), mime: mimeOf(file), size: stat.size, mtime: Math.floor(stat.mtimeMs), path: asked }
-  return knownMtime === meta.mtime ? meta : { ...meta, data: readFileSync(file) }
+  const small = preview && meta.mime.startsWith('image/') && meta.mime !== 'image/svg+xml' && stat.size > PREVIEW_OVER
+  if (knownMtime === meta.mtime) return small ? { ...meta, mime: 'image/jpeg', preview: true, originalSize: stat.size } : meta
+  const shrunk = small ? shrinkImage(file) : undefined
+  return shrunk
+    ? { ...meta, mime: 'image/jpeg', size: shrunk.length, preview: true, originalSize: stat.size, data: shrunk }
+    : { ...meta, data: readFileSync(file) }
 }

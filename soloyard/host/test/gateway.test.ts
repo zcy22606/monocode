@@ -342,6 +342,10 @@ test('手机看会话里的文件（SOL-92）：电脑上的会话交给那台�
   const empty = await fetchFile({ id: 's1', path: 'empty.txt' })
   assert.equal(empty.status, 200)
   assert.equal(await empty.text(), '')
+  // 要缩小版：不是图片就照常给原文件，文件信息里不带 preview
+  const asPreview = await fetchFile({ id: 's1', path: 'src/a.txt', preview: true })
+  assert.equal(JSON.parse(decodeURIComponent(asPreview.headers.get('x-soloyard-file')!)).preview, undefined)
+  assert.equal((await asPreview.text()).length, 2400)
   // 凭据不给，原因带回来
   const secret = await fetchFile({ id: 's1', path: '.env' })
   assert.equal(secret.status, 404)
@@ -413,6 +417,7 @@ test('手机通知（SOL-104）：电脑上的这一轮跑完了、开始等你�
       call(gw.url, desktop.token, 'soloyard.mirror.live', { id: 'n', from: 'b1', blocks, busy, needsInput })
     const first = (await call(gw.url, phone.token, 'soloyard.events.wait', {})).body.result
     assert.deepEqual(first.events, [])
+    assert.ok(gw.store.db.prepare('SELECT 1 FROM presence WHERE device_id = ?').get(phone.id), '记下手机来等过')
     await live(true)
     await live(true, true, [{ id: 't', role: 'tool', text: 'rm -rf build', tool: { title: 'rm -rf build' }, approval: { requestId: 1 } }])
     await live(true, true) // 还在等：不重复

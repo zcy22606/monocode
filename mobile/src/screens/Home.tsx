@@ -15,7 +15,7 @@ import { Check, CircleAlert, GitBranch } from "../../../src/shared/ui/icons";
 import { HarnessIcon, ProjectMascot, TerminalSpinner, formatRelative, projectColor } from "../ui/desktop";
 import { cleanTitle } from "./blocks";
 import { IssuesTab, QuickIssue, StatusIcon, useProjectIssues, type SessionState } from "./Issues";
-import { openAppSettings, openBackgroundSettings, setNotify, useNotificationOpen, useNotifyStatus } from "../host/notify";
+import { notifyConnected, openAppSettings, openBackgroundSettings, setNotify, useNotificationOpen, useNotifyStatus } from "../host/notify";
 import type { IssueBrief } from "../host/issues";
 
 type Section = "input" | "running" | "fresh" | "recent";
@@ -366,6 +366,12 @@ function NotifyRow({ active }: { active: boolean }) {
           <span className={`absolute left-0 top-0.5 size-6 rounded-full bg-white shadow transition-transform duration-200 ${status.enabled ? "translate-x-[22px]" : "translate-x-0.5"}`} />
         </button>
       </div>
+      {status.enabled && !problem ? (
+        // 连没连上网关：没连上时通知就收不到，原因多半是 Tailscale 没开或被系统停了
+        <div className={`mt-2 pl-[30px] text-[11px] leading-relaxed ${notifyConnected(status) ? "text-green" : "text-amber"}`}>
+          {notifyConnected(status) ? t("notify.connected") : status.lastError ? t("notify.disconnected", { reason: status.lastError }) : t("notify.connecting")}
+        </div>
+      ) : null}
       {problem ? (
         <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-amber/10 px-3 py-2.5 text-[12px] leading-relaxed text-amber">
           <span className="min-w-0 flex-1">{t(problem === "blocked" ? "notify.blocked" : "notify.background")}</span>

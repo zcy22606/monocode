@@ -476,7 +476,7 @@ export async function takeFromHost(store: GatewayStore, sessionId: string, host:
 // 电脑上的会话交给那台电脑做，主机上的网关自己做。
 /** kind：file 取文件（path、mtime），services 列本地服务，open 打开一个端口（port）。 */
 export type FileAsk = {
-  id: string; kind: 'file' | 'services' | 'open' | 'data'; sessionId?: string; path?: string; mtime?: number; port?: number
+  id: string; kind: 'file' | 'services' | 'open' | 'data'; sessionId?: string; path?: string; mtime?: number; port?: number; preview?: boolean
   method?: string; args?: unknown[]
 }
 /** 交回来的：文件（有 data 是内容，没有是「没变」）、JSON 结果、或者做不了的原因。 */
@@ -547,9 +547,9 @@ export class FileRelay {
 type HostedSession = { session: { cwd: string; worktreeCwd?: string; blocks: unknown[] } }
 
 /** 主机上的会话：网关和它在同一台机器上，自己读。 */
-async function hostFile(sessionId: string, path: string, mtime: number | undefined, host: HostCall): Promise<FileAnswer> {
+async function hostFile(sessionId: string, path: string, mtime: number | undefined, preview: boolean, host: HostCall): Promise<FileAnswer> {
   const value = (await host('sessions.get', { sessionId })) as HostedSession
-  return readSharedFile(path, { cwd: value.session.cwd, worktreeCwd: value.session.worktreeCwd, blocksJson: JSON.stringify(value.session.blocks) }, mtime)
+  return readSharedFile(path, { cwd: value.session.cwd, worktreeCwd: value.session.worktreeCwd, blocksJson: JSON.stringify(value.session.blocks) }, mtime, preview)
 }
 
 /** 主机上的会话的本地服务：列出来 / 打开一个。 */
@@ -699,6 +699,9 @@ async function soloyard(store: GatewayStore, files: FileRelay, device: Device, m
     case 'soloyard.events.wait':
       if (device.kind !== 'phone') throw new Error('Only a phone can wait for events')
       phoneWaiting = Date.now()
+      // 手机最近一次来等通知（排查「收不到通知」用：presence 表里能看到手机连没连着）
+      store.db.prepare('INSERT INTO presence (device_id, seen_at) VALUES (?, ?) ON CONFLICT(device_id) DO UPDATE SET seen_at = excluded.seen_at')
+        .run(device.id, phoneWaiting)
       return store.waitEvents(params.after, typeof params.wait === 'number' ? Math.min(Math.max(params.wait, 0), 30_000) : undefined)
     case 'soloyard.mirror.list': {
       if (params.repoKey !== undefined) return store.list(text(params.repoKey, 'repoKey', 1000))
@@ -828,16 +831,18 @@ export async function startGateway({ dataDir, listen = '127.0.0.1:3775', hostUrl
       if (device.kind !== 'phone') return send(403, { error: 'Only a phone can fetch files' })
       let answer: FileAnswer
       try {
-        const ask = JSON.parse(await readBody(req, 64 << 10)) as { source?: string; id?: unknown; path?: unknown; mtime?: unknown }
+        const ask = JSON.parse(await readBody(req, 64 << 10)) as { source?: string; id?: unknown; path?: unknown; mtime?: unknown; preview?: unknown }
         const id = text(ask.id, 'session id', 200)
         const path = text(ask.path, 'path')
         const mtime = typeof ask.mtime === 'number' ? ask.mtime : undefined
-        if (ask.source === 'host') answer = await hostFile(id, path, mtime, host)
+        // 看图要缩小版（走中继时原图太大），分享、存到手机时要原图
+        const preview = ask.preview === true
+        if (ask.source === 'host') answer = await hostFile(id, path, mtime, preview, host)
         else {
           const owner = (store.db.prepare('SELECT device_id FROM mirror_sessions WHERE id = ?').get(id) as { device_id: string } | undefined)?.device_id
           if (!owner) throw new Error('Session not found')
           if (!files.alive(owner)) return send(409, { error: 'The computer is offline' })
-          answer = await files.ask(owner, { kind: 'file', sessionId: id, path, mtime })
+          answer = await files.ask(owner, { kind: 'file', sessionId: id, path, mtime, preview })
         }
       } catch (e) {
         return send(400, { error: (e as Error).message })

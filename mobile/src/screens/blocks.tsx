@@ -549,7 +549,7 @@ export function ImageBlock({ block }: { block: Block }) {
   if (!path || !source || !openFile || failed) return <div className="text-[13px] text-content/45">{block.image?.name ?? t("session.image")}</div>;
   return (
     <button className="press block max-w-[85%] overflow-hidden rounded-xl border border-stroke" onClick={() => openFile(path)}>
-      <img src={fileUrl(source, toAbsolute(path, source.cwd))} alt={block.image?.alt ?? block.image?.name ?? ""} loading="lazy" className="max-h-72 w-auto" onError={() => setFailed(true)} />
+      <img src={fileUrl(source, toAbsolute(path, source.cwd), { preview: true })} alt={block.image?.alt ?? block.image?.name ?? ""} loading="lazy" className="max-h-72 w-auto" onError={() => setFailed(true)} />
     </button>
   );
 }

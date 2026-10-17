@@ -5,6 +5,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { getMirror, mirrorFiles, relayMirror, stopMirrorJob, type HostModelCatalog, type MirrorSession } from "../host/host";
 import { FileSourceContext } from "../host/files";
+import { useViewing } from "../host/notify";
 import { cached, usePoll } from "../host/poll";
 import type { HostError } from "../host/rpc";
 import { ago, t, useTranslation } from "../i18n";
@@ -32,6 +33,7 @@ export function MirrorScreen({ route }: { route: Extract<Route, { name: "mirror"
   useTranslation();
   const active = useActive();
   const nav = useNav();
+  useViewing(route.id, active);
   const [tail, setTail] = useState(PAGE);
   const [pending, setPending] = useState<Pending[]>([]);
   const known = useRef<{ tail: number; value: MirrorSession } | null>(null);

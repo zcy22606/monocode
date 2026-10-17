@@ -13,7 +13,13 @@ import { toast } from "../ui/kit";
 
 /** mirror = 电脑上的会话，host = 主机上的会话；cwd 是相对路径的起点（有工作树就是工作树）。 */
 export type FileSource = { source: "mirror" | "host"; id: string; cwd: string };
-export type FileInfo = { name: string; mime: string; size: number; mtime: number; path: string; local: string };
+/** preview = 缩小过的图（电脑上超过 300 KB 的图缩到 1600 像素，见 file-share.ts），原图大小在 originalSize。fetched = 取到手机上的时间。 */
+export type FileInfo = { name: string; mime: string; size: number; mtime: number; path: string; local: string; fetched: number; preview?: boolean; originalSize?: number };
+/** preview = 要缩小版（看图用）；cached = 手机缓存里有就直接用，不连网。 */
+type FileOptions = { preview?: boolean; cached?: boolean };
+
+/** 看图时要缩小版的文件（4G 走海外中继时原图要几十秒）。 */
+export const isImagePath = (path: string) => /\.(png|jpe?g|gif|webp|heic|heif|bmp|tiff?)$/i.test(path);
 
 export const FileSourceContext = createContext<FileSource | null>(null);
 
@@ -23,9 +29,10 @@ export const shortPath = (path: string) => path.replace(/^\/(?:Users|home)\/[^/]
 export const toAbsolute = (path: string, cwd: string) => absolutePath(path.replace(/^file:\/\//, ""), cwd);
 
 /** 安卓上自定义协议是 http://<协议>.localhost；路径一段段编码，网页里的相对路径才解析得对。 */
-export function fileUrl(source: Omit<FileSource, "cwd">, path: string) {
+export function fileUrl(source: Omit<FileSource, "cwd">, path: string, options: FileOptions = {}) {
   const rest = path.replace(/^\//, "").split("/").map(encodeURIComponent).join("/");
-  return `http://soloyardfile.localhost/${source.source === "host" ? "h" : "m"}/${encodeURIComponent(source.id)}/${rest}`;
+  const query = [options.preview && "preview=1", options.cached && "cached=1"].filter(Boolean).join("&");
+  return `http://soloyardfile.localhost/${source.source === "host" ? "h" : "m"}/${encodeURIComponent(source.id)}/${rest}${query ? `?${query}` : ""}`;
 }
 
 /** 在会话页里：打开会话里的一个文件（相对路径按会话目录算）。不在会话页里是 undefined。 */
@@ -54,9 +61,9 @@ export function useOpenService() {
     );
 }
 
-export async function fileInfo(source: Omit<FileSource, "cwd">, path: string) {
+export async function fileInfo(source: Omit<FileSource, "cwd">, path: string, options: FileOptions = {}) {
   try {
-    return await invoke<FileInfo>("file_info", { source: source.source, id: source.id, path });
+    return await invoke<FileInfo>("file_info", { source: source.source, id: source.id, path, preview: !!options.preview, cached: !!options.cached });
   } catch (reason) {
     const e = reason as { kind?: string; message?: string };
     throw new HostError((e.kind as HostError["kind"]) ?? "host", e.message ?? String(reason));

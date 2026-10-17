@@ -68,11 +68,11 @@
 - **按下就切**（`model/pressToOpen.ts`）：会话行（「进行中」、最近会话、工作区会话列表）、项目栏的项目和仓库行，鼠标左键按下就打开，不等松开（松开要多等按住的约 100 毫秒）；按下已经打开过的那次点击跳过，⌘ / ⇧ / 右键 / 键盘回车照旧走点击。工作区会话卡片和项目可拖动，拖的时候会先切过去（上游原本特意等松开再切，就是为了拖动时不切）。上游挂载：`LiveAgentsPreview.tsx`、`Sidebar.tsx`（会话卡片的 `onPointerDown` / `onClick`）、`ProjectRail.tsx`（项目行）。
 - **手机端**（D-20 / D-22，方案 `docs/architecture/01-手机端和常驻主机技术方案.md`，交互按原型 `~/Playground/proof/prototypes/soloyard-mobile-v1/` 的 A）。手机只当遥控器，会话在哪台机器上就在哪台跑。
   - `mobile/`：Tauri 2 安卓 app。凭据只在 Rust 层（`src-tauri/src/lib.rs`）。
-    - 会话里的文件走 `soloyardfile` 协议（`src-tauri/src/files.rs`）。
+    - 会话里的文件走 `soloyardfile` 协议（`src-tauri/src/files.rs`）。打开过的先显示手机缓存、再问变没变；看图用缩小版（电脑上超过 300 KB 的图缩到 1600 像素，`file-share.ts`），分享 / 存的时候再取原图。
     - 分享、用其他应用打开、存到「下载」在 `MainActivity.kt`。
     - 界面尽量直接引电脑的源码（`src/ui/desktop.ts`）；连着电脑 i18n 的照抄一份，文案原样搬。
     - 打包用 `sh mobile/scripts/release-apk.sh`（每次版本号加一）。在模拟器里调试用 `sh mobile/scripts/webview.sh '<JS>'`。
-    - 通知（SOL-104）：`NotifyService.kt` 是常驻前台服务，长连网关的 `soloyard.events.wait`，会话跑完、等你处理时弹系统通知，点了进会话。不用 ntfy，也不用厂商推送；ColorOS 上要用户允许自启动和后台运行。
+    - 通知（SOL-104）：`NotifyService.kt` 是常驻前台服务，长连网关的 `soloyard.events.wait`，会话跑完、等你处理时弹系统通知，点了进会话；app 在前台时只不弹正开着的那个会话。设置里显示服务连没连上网关。不用 ntfy，也不用厂商推送；ColorOS 上要用户允许自启动和后台运行。
   - 网关 `soloyard/host/gateway.ts`（跑在常驻主机上，手机唯一的入口）：
     - 电脑推会话镜像（`soloyard/core/src/mirror.ts`，数据进程里每 5 秒一轮），正在跑的这一轮和后台任务由界面推（`model/liveMirror.ts`）。
     - 手机发的消息、停后台任务、从 issue 开工，交给那台电脑的界面（`model/relayInbox.ts`）。
