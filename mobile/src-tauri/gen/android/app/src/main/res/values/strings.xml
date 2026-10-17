@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">"Soloyard"</string>
     <string name="main_activity_title">"Soloyard"</string>
+    <string name="notify_channel_events">Sessions</string>
+    <string name="notify_channel_service">Stay connected</string>
+    <string name="notify_online">Soloyard is online</string>
+    <string name="notify_online_text">You\'ll be notified when a session finishes or needs you.</string>
+    <string name="notify_done">%1$s finished</string>
+    <string name="notify_input">%1$s needs you</string>
+    <string name="notify_done_body">The turn is done.</string>
+    <string name="notify_input_body">Waiting for your approval or answer.</string>
+    <string name="notify_host">Server</string>
+    <string name="notify_untitled">A session</string>
 </resources>

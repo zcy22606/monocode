@@ -4,7 +4,7 @@
  * 没配手机同步时数据进程直接丢掉，不出网。
  */
 import { useEffect, useRef } from "react";
-import type { BackgroundJob, Block, Session } from "../../sessions/model/session";
+import { sessionNeedsInput, type BackgroundJob, type Block, type Session } from "../../sessions/model/session";
 import { soloyardCall } from "../data/api";
 
 const EVERY = 1000;
@@ -13,18 +13,19 @@ const JOBS_EVERY = 30_000;
 // ponytail: 一轮超长时只推最后 120 块（和手机一页一样多），要看更早的等这一轮跑完存盘
 const MAX_BLOCKS = 120;
 
-type Live = { from?: string; blocks: Block[]; busy: boolean };
+/** needsInput = 等你批准或回答问题（手机据此弹通知，SOL-104）。 */
+type Live = { from?: string; blocks: Block[]; busy: boolean; needsInput: boolean };
 type Tracked = { sig: string; sentAt: number; pending?: Live; timer?: ReturnType<typeof setTimeout> };
 
 /** 这一轮：从最后一条用户消息起；附件里的图片数据不带（大，手机也不显示）。 */
-export function currentTurn(session: Pick<Session, "blocks" | "busy">): Live {
+export function currentTurn(session: Pick<Session, "blocks" | "busy" | "pendingQuestion" | "worktreeRemoved">): Live {
   const blocks = session.blocks;
   let start = blocks.length;
   while (start > 0 && !(blocks[start - 1].role === "user" && !blocks[start - 1].draft)) start--;
   const turn = (start > 0 ? blocks.slice(start - 1) : blocks).slice(-MAX_BLOCKS).map((block) =>
     block.attachments ? { ...block, attachments: block.attachments.map(({ data: _data, ...rest }) => rest) } : block,
   );
-  return { from: turn[0]?.id, blocks: turn, busy: !!session.busy };
+  return { from: turn[0]?.id, blocks: turn, busy: !!session.busy, needsInput: sessionNeedsInput(session as Session) };
 }
 
 /** 有没有变：块数、文字长度、工具状态、流式标记。比整份 JSON 便宜得多。 */
@@ -35,7 +36,7 @@ export function turnSignature(live: Live) {
     text += block.text.length;
     marks += `${block.tool?.status ?? ""}${block.streaming ? "~" : ""}${block.durationMs ? "d" : ""},`;
   }
-  return `${live.busy}|${live.blocks.length}|${live.blocks[live.blocks.length - 1]?.id}|${text}|${marks}`;
+  return `${live.busy}|${live.needsInput}|${live.blocks.length}|${live.blocks[live.blocks.length - 1]?.id}|${text}|${marks}`;
 }
 
 /** 后台任务列表有没有变：任务和它的名字、命令（命令常常晚一点才报上来）。 */

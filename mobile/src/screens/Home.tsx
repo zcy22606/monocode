@@ -15,6 +15,7 @@ import { Check, CircleAlert, GitBranch } from "../../../src/shared/ui/icons";
 import { HarnessIcon, ProjectMascot, TerminalSpinner, formatRelative, projectColor } from "../ui/desktop";
 import { cleanTitle } from "./blocks";
 import { IssuesTab, QuickIssue, StatusIcon, useProjectIssues, type SessionState } from "./Issues";
+import { openAppSettings, openBackgroundSettings, setNotify, useNotificationOpen, useNotifyStatus } from "../host/notify";
 import type { IssueBrief } from "../host/issues";
 
 type Section = "input" | "running" | "fresh" | "recent";
@@ -73,6 +74,14 @@ export function HomeScreen() {
     for (const m of mirror.data ?? []) if (m.busy) out[m.id] = "running";
     return out;
   }, [sessions.data, mirror.data]);
+  // 点了通知（SOL-104）：主机上的会话按它的项目打开；电脑上的按目录找主机上的同一个项目（找不到就用当前项目，只用来选模型）
+  useNotificationOpen((e) => {
+    if (e.source === "host" && e.projectId) nav.push({ name: "session", projectId: e.projectId, sessionId: e.sessionId, title: e.title });
+    else {
+      const match = projects.data?.find((p) => p.cwd === e.cwd)?.id ?? project?.id ?? lastProject.get();
+      if (match) nav.push({ name: "mirror", id: e.sessionId, projectId: match, title: e.title, machine: e.machine });
+    }
+  });
   const [choice, setChoice] = useState<ModelChoice | null>(lastModel.get());
   const effective = defaultChoice(catalog.data, choice) ?? choice;
 
@@ -328,6 +337,50 @@ function CardState({ status, updatedAt }: { status: CardStatus; updatedAt: numbe
   );
 }
 
+/**
+ * 通知开关（SOL-104）：开了以后常驻服务连着网关，会话跑完、等你处理时弹通知。
+ * 系统不让发、或者没放开后台（ColorOS 上锁屏后会被杀）时，下面一行说清楚并给去设置的入口。不在安卓里不显示。
+ */
+function NotifyRow({ active }: { active: boolean }) {
+  const [status, setStatus] = useNotifyStatus(active);
+  if (!status) return null;
+  const problem = status.enabled ? (!status.allowed ? "blocked" : !status.background ? "background" : null) : null;
+  return (
+    <div className="mb-3 border-b border-stroke pb-3">
+      <div className="flex items-center gap-3">
+        <Icon name="bell" size={18} className="text-content/40" />
+        <div className="min-w-0 flex-1">
+          <div className="text-[13px] text-content/80">{t("notify.title")}</div>
+          <div className="text-[11px] text-content/40">{t("notify.hint")}</div>
+        </div>
+        <button
+          role="switch"
+          aria-checked={status.enabled}
+          aria-label={t("notify.title")}
+          className={`press relative h-7 w-12 shrink-0 rounded-full transition-colors ${status.enabled ? "bg-accent" : "bg-content/15"}`}
+          onClick={() => {
+            haptic();
+            setNotify(!status.enabled).then(setStatus, (e: Error) => toast(e.message));
+          }}
+        >
+          <span className={`absolute left-0 top-0.5 size-6 rounded-full bg-white shadow transition-transform duration-200 ${status.enabled ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+        </button>
+      </div>
+      {problem ? (
+        <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-amber/10 px-3 py-2.5 text-[12px] leading-relaxed text-amber">
+          <span className="min-w-0 flex-1">{t(problem === "blocked" ? "notify.blocked" : "notify.background")}</span>
+          <button
+            className="press shrink-0 rounded-full bg-amber/15 px-3 py-1 text-[12px]"
+            onClick={() => void (problem === "blocked" ? openAppSettings() : openBackgroundSettings()).catch((e: Error) => toast(e.message))}
+          >
+            {t("notify.fix")}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** 原型 v1 A 的两栏：会话（角标 = 等你处理 + 刚跑完）、Issues（角标 = 待验收，没有就显示当前迭代没做完的数）。 */
 function Tabs({ tab, onTab, sessions, issues }: { tab: "sessions" | "issues"; onTab: (tab: "sessions" | "issues") => void; sessions: number; issues?: Parameters<typeof IssuesTab>[0]["data"] }) {
   const review = issues?.issues.filter((i) => i.status === "in_review").length ?? 0;
@@ -434,6 +487,8 @@ function ProjectSheet({
       onClose={onClose}
       title={t("projects.title")}
       footer={
+        <>
+        <NotifyRow active={open} />
         <div className="flex items-center gap-3">
           <Icon name="server" size={18} className="text-content/40" />
           <div className="min-w-0 flex-1">
@@ -448,6 +503,7 @@ function ProjectSheet({
             {confirm ? t("projects.disconnectConfirm") : t("projects.disconnect")}
           </button>
         </div>
+        </>
       }
     >
       {projects.map((p) => (

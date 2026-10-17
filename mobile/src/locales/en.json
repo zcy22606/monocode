@@ -346,5 +346,12 @@
     "createHintLink": ", linked to this session",
     "create": "Create issue",
     "created": "Issue created"
+  },
+  "notify": {
+    "title": "Notifications",
+    "hint": "When a session finishes or needs you",
+    "blocked": "Android isn't letting Soloyard post notifications. Turn them on in settings.",
+    "background": "On ColorOS, allow Soloyard to auto-launch and run in the background, or notifications stop once the screen locks.",
+    "fix": "Settings"
   }
 }

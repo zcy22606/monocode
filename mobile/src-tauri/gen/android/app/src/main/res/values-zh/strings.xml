@@ -1,0 +1,12 @@
+<resources>
+    <string name="notify_channel_events">会话</string>
+    <string name="notify_channel_service">保持连接</string>
+    <string name="notify_online">Soloyard 在线</string>
+    <string name="notify_online_text">会话跑完、等你处理时会通知你。</string>
+    <string name="notify_done">%1$s 跑完了</string>
+    <string name="notify_input">%1$s 等你处理</string>
+    <string name="notify_done_body">这一轮做完了。</string>
+    <string name="notify_input_body">等你批准或回答问题。</string>
+    <string name="notify_host">服务器</string>
+    <string name="notify_untitled">一个会话</string>
+</resources>

@@ -72,11 +72,13 @@
     - 分享、用其他应用打开、存到「下载」在 `MainActivity.kt`。
     - 界面尽量直接引电脑的源码（`src/ui/desktop.ts`）；连着电脑 i18n 的照抄一份，文案原样搬。
     - 打包用 `sh mobile/scripts/release-apk.sh`（每次版本号加一）。在模拟器里调试用 `sh mobile/scripts/webview.sh '<JS>'`。
+    - 通知（SOL-104）：`NotifyService.kt` 是常驻前台服务，长连网关的 `soloyard.events.wait`，会话跑完、等你处理时弹系统通知，点了进会话。不用 ntfy，也不用厂商推送；ColorOS 上要用户允许自启动和后台运行。
   - 网关 `soloyard/host/gateway.ts`（跑在常驻主机上，手机唯一的入口）：
     - 电脑推会话镜像（`soloyard/core/src/mirror.ts`，数据进程里每 5 秒一轮），正在跑的这一轮和后台任务由界面推（`model/liveMirror.ts`）。
     - 手机发的消息、停后台任务、从 issue 开工，交给那台电脑的界面（`model/relayInbox.ts`）。
     - 取文件、列 / 开本地服务、读写 issue，交给那台电脑的数据进程（`file-share.ts`、`services.ts`、`phone.ts`，手机只能调 `phone.ts` 白名单里的）。
     - 主机上的会话由网关自己处理。
+    - 通知事件：电脑上的会话看界面推的这一轮（在跑 → 停了、开始等你处理），主机上的会话由网关隔几秒问主机服务（`watchHost`，只在有手机连着时问）。
   - 上游挂载：`App.tsx`（`useRelayInbox` / `useLiveMirror`）、`Sidebar.tsx`（`HostSessions`）、`SettingsView.tsx`（手机同步配置）、`host/`（`create` 带 `import`，把电脑会话导进主机）、`claude.ts`（停掉的后台任务记成 stopped，给上游的修复）。
 - 请底座做事（开会话、切会话、发消息、开标签）一律用窗口事件（`model/appActions.ts`、`model/projectViews.ts`），App.tsx 里各只有一个监听。
 - 项目自己的待办就在应用里：`~/Playground/monocode` 对应项目 **Soloyard（SOL）**，开工前先看 SOL 的 issue。

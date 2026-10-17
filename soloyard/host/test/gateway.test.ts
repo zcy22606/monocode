@@ -4,7 +4,7 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { FileRelay, startGateway } from '../gateway.ts'
+import { FileRelay, GatewayStore, markPhoneWaiting, startGateway, watchHost } from '../gateway.ts'
 
 const HOST_TOKEN = 'h'.repeat(43)
 
@@ -399,4 +399,68 @@ test('数据请求只交给能答的电脑（桌面 Soloyard 的数据进程）�
   assert.equal(relay.alive('pusher'), true, '取文件照样算开着')
   assert.equal(relay.alive('pusher', true), false)
   assert.equal(relay.alive('desktop', true), true)
+})
+
+test('手机通知（SOL-104）：电脑上的这一轮跑完了、开始等你处理；头一次连上不补以前的', async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), 'soloyard-gateway-'))
+  writeFileSync(join(dataDir, 'host-device.json'), JSON.stringify({ token: HOST_TOKEN }))
+  const gw = await startGateway({ dataDir, listen: '127.0.0.1:0', hostUrl: 'http://127.0.0.1:9' })
+  try {
+    const phone = gw.store.pair('手机', 'phone')
+    const desktop = gw.store.pair('MacBook', 'desktop')
+    await call(gw.url, desktop.token, 'soloyard.mirror.push', { machine: 'MacBook', sessions: [session('n', 100, '修登录')] })
+    const live = (busy: boolean, needsInput = false, blocks: object[] = []) =>
+      call(gw.url, desktop.token, 'soloyard.mirror.live', { id: 'n', from: 'b1', blocks, busy, needsInput })
+    const first = (await call(gw.url, phone.token, 'soloyard.events.wait', {})).body.result
+    assert.deepEqual(first.events, [])
+    await live(true)
+    await live(true, true, [{ id: 't', role: 'tool', text: 'rm -rf build', tool: { title: 'rm -rf build' }, approval: { requestId: 1 } }])
+    await live(true, true) // 还在等：不重复
+    await live(true, false)
+    await live(false, false, [{ id: 'a', role: 'assistant', text: '修好了，\n跑了测试。' }])
+    await live(false) // 已经停了：不重复
+    const got = (await call(gw.url, phone.token, 'soloyard.events.wait', { after: first.latest })).body.result
+    assert.deepEqual(got.events.map((e: { kind: string; body: string; title: string; machine: string }) => [e.kind, e.title, e.body, e.machine]), [
+      ['input', '会话 n', 'rm -rf build', 'MacBook'],
+      ['done', '会话 n', '修好了， 跑了测试。', 'MacBook'],
+    ])
+    // 没有新的就等着，来了马上回
+    const waiting = call(gw.url, phone.token, 'soloyard.events.wait', { after: got.latest, wait: 5000 })
+    await new Promise((ok) => setTimeout(ok, 100))
+    await live(true)
+    await live(false)
+    const woke = (await waiting).body.result
+    assert.equal(woke.events.length, 1)
+    assert.equal((await call(gw.url, desktop.token, 'soloyard.events.wait', {})).status, 400, '只有手机能等')
+  } finally {
+    gw.server.close()
+  }
+})
+
+test('手机通知：主机上的会话从在跑变成停了、开始等你处理（只在有手机等着时去问主机）', async () => {
+  const store = new GatewayStore(join(mkdtempSync(join(tmpdir(), 'soloyard-gateway-')), 'g.db'))
+  let state = { status: 'running', needsInput: false }
+  const host = async (method: string) => {
+    if (method === 'projects.list') return [{ id: 'p1', cwd: '/repo' }]
+    if (method === 'sessions.list') return [{ id: 'h1', projectId: 'p1', title: '修登录', harness: 'claude', updatedAt: 1, ...state }]
+    if (method === 'sessions.get') return { session: { blocks: [{ role: 'assistant', text: '好了' }] } }
+    throw new Error(method)
+  }
+  markPhoneWaiting()
+  const stop = watchHost(store, host, 20)
+  const settle = () => new Promise((ok) => setTimeout(ok, 80))
+  try {
+    await settle()
+    state = { status: 'running', needsInput: true }
+    await settle()
+    state = { status: 'idle', needsInput: false }
+    await settle()
+    const { events } = await store.waitEvents(0, 0)
+    assert.deepEqual(events.map((e) => [e.kind, e.source, e.sessionId, e.projectId, e.body]), [
+      ['input', 'host', 'h1', 'p1', ''],
+      ['done', 'host', 'h1', 'p1', '好了'],
+    ])
+  } finally {
+    stop()
+  }
 })

@@ -83,16 +83,32 @@ export function fileError(e: unknown) {
 
 type Bridge = { postMessage(message: string): void; onmessage: ((event: { data: string }) => void) | null };
 
+/**
+ * 调安卓原生（MainActivity.kt）：回 "ok"、"ok:<数据>" 或 "error:<原因>"。桥只有一个 onmessage，一次只发一个，排着队来。
+ */
+let queue: Promise<unknown> = Promise.resolve();
+export function androidCall(message: Record<string, unknown>): Promise<string> {
+  const bridge = (window as unknown as { SoloyardAndroid?: Bridge }).SoloyardAndroid;
+  if (!bridge) return Promise.reject(new Error(t("files.error.unsupported")));
+  const run = () =>
+    new Promise<string>((ok, fail) => {
+      bridge.onmessage = (event) => {
+        bridge.onmessage = null;
+        if (event.data === "ok" || event.data.startsWith("ok:")) ok(event.data.slice(3));
+        else fail(new Error(event.data.replace(/^error:/, "")));
+      };
+      bridge.postMessage(JSON.stringify(message));
+    });
+  const next = queue.then(run, run);
+  queue = next.catch(() => undefined);
+  return next;
+}
+
 /** 交给安卓：share 分享、open 用其他应用打开、save 存到「下载」、browse 用浏览器打开网址。 */
 export function android(action: "share" | "open" | "save", file: FileInfo): Promise<void>;
 export function android(action: "browse", url: string): Promise<void>;
 export function android(action: string, target: FileInfo | string) {
-  const bridge = (window as unknown as { SoloyardAndroid?: Bridge }).SoloyardAndroid;
-  if (!bridge) return Promise.reject(new Error(t("files.error.unsupported")));
-  return new Promise<void>((ok, fail) => {
-    bridge.onmessage = (event) => (event.data === "ok" ? ok() : fail(new Error(event.data.replace(/^error:/, ""))));
-    bridge.postMessage(JSON.stringify(typeof target === "string" ? { action, url: target } : { action, path: target.local, mime: target.mime }));
-  });
+  return androidCall(typeof target === "string" ? { action, url: target } : { action, path: target.local, mime: target.mime }).then(() => undefined);
 }
 
 /** 看起来像文件路径的行内代码（照电脑 fileLinks.ts 的 inlinePath，只要文件，不要文件夹）。 */

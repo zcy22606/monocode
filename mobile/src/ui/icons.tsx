@@ -19,6 +19,7 @@ import Folder01Icon from "@hugeicons/core-free-icons/Folder01Icon";
 import FolderOpenIcon from "@hugeicons/core-free-icons/FolderOpenIcon";
 import HelpCircleIcon from "@hugeicons/core-free-icons/HelpCircleIcon";
 import LinkSquare02Icon from "@hugeicons/core-free-icons/LinkSquare02Icon";
+import Notification03Icon from "@hugeicons/core-free-icons/Notification03Icon";
 import Logout01Icon from "@hugeicons/core-free-icons/Logout01Icon";
 import PencilEdit02Icon from "@hugeicons/core-free-icons/PencilEdit02Icon";
 import RefreshIcon from "@hugeicons/core-free-icons/RefreshIcon";
@@ -47,6 +48,7 @@ const ICONS = {
   folder: Folder01Icon,
   folderOpen: FolderOpenIcon,
   logout: Logout01Icon,
+  bell: Notification03Icon,
   openWith: LinkSquare02Icon,
   offline: WifiDisconnected01Icon,
   question: HelpCircleIcon,

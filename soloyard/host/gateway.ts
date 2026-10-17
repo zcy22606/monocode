@@ -57,6 +57,19 @@ export function overlay<B extends { id?: string }>(blocks: B[], from: string | n
   const cut = from ? blocks.findIndex((b) => b.id === from) : -1
   return [...(cut >= 0 ? blocks.slice(0, cut) : blocks).filter((b) => !ids.has(b.id)), ...live]
 }
+export type GatewayEvent = {
+  kind: 'done' | 'input'; source: 'mirror' | 'host'; sessionId: string; title: string; body: string
+  machine?: string; cwd?: string; projectId?: string
+}
+type LiveBlock = { role?: string; text?: string; approval?: { decided?: string }; tool?: { title?: string } }
+const oneLine = (s: string) => s.replace(/\s+/g, ' ').trim().slice(0, 200)
+/** 这一轮最后一句回答（通知正文）。 */
+export const lastReply = (blocks: unknown) =>
+  oneLine([...((blocks as LiveBlock[]) ?? [])].reverse().find((b) => b.role === 'assistant' && b.text?.trim())?.text ?? '')
+/** 在等你批准的那一步（通知正文）；问问题的没有块，正文空着。 */
+export const pendingAsk = (blocks: unknown) =>
+  oneLine([...((blocks as LiveBlock[]) ?? [])].reverse().find((b) => b.approval && !b.approval.decided)?.tool?.title ?? '')
+
 const text = (v: unknown, name: string, max = 4096) => {
   if (typeof v !== 'string' || v.length > max) throw new Error(`Invalid ${name}`)
   return v
@@ -83,11 +96,14 @@ export class GatewayStore {
         created_at INTEGER NOT NULL, taken_at INTEGER);
       CREATE TABLE IF NOT EXISTS live (
         id TEXT PRIMARY KEY, device_id TEXT NOT NULL, from_id TEXT, blocks_json TEXT NOT NULL, busy INTEGER NOT NULL, at INTEGER NOT NULL);
-      CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, jobs_json TEXT NOT NULL, at INTEGER NOT NULL);`)
+      CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, jobs_json TEXT NOT NULL, at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, source TEXT NOT NULL, session_id TEXT NOT NULL, title TEXT NOT NULL,
+        body TEXT NOT NULL, machine TEXT, cwd TEXT, project_id TEXT, at INTEGER NOT NULL);`)
     // 转交给电脑的除了消息，还有「停掉某个后台任务」（SOL-99）；老库补上这一列
-    for (const column of ['job_id TEXT', 'action_json TEXT']) {
+    for (const [table, column] of [['relay', 'job_id TEXT'], ['relay', 'action_json TEXT'], ['live', 'needs_input INTEGER NOT NULL DEFAULT 0']]) {
       try {
-        this.db.exec(`ALTER TABLE relay ADD COLUMN ${column}`)
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column}`)
       } catch {
         // 已经有了
       }
@@ -235,13 +251,59 @@ export class GatewayStore {
     const owner = (this.db.prepare('SELECT device_id FROM mirror_sessions WHERE id = ?').get(id) as { device_id: string } | undefined)?.device_id
     if (owner && owner !== device.id) throw new Error('This session belongs to another computer')
     const now = Date.now()
-    this.db.prepare(`INSERT INTO live (id, device_id, from_id, blocks_json, busy, at) VALUES (?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET from_id = excluded.from_id, blocks_json = excluded.blocks_json, busy = excluded.busy, at = excluded.at`)
-      .run(id, device.id, params.from == null ? null : text(params.from, 'from', 200), JSON.stringify(params.blocks), params.busy ? 1 : 0, now)
+    const before = this.db.prepare('SELECT busy, needs_input FROM live WHERE id = ?').get(id) as { busy: number; needs_input: number } | undefined
+    this.db.prepare(`INSERT INTO live (id, device_id, from_id, blocks_json, busy, needs_input, at) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET from_id = excluded.from_id, blocks_json = excluded.blocks_json, busy = excluded.busy,
+        needs_input = excluded.needs_input, at = excluded.at`)
+      .run(id, device.id, params.from == null ? null : text(params.from, 'from', 200), JSON.stringify(params.blocks), params.busy ? 1 : 0, params.needsInput ? 1 : 0, now)
+    // 手机通知（SOL-104）：这一轮跑完了、开始等你处理
+    const session = this.db.prepare('SELECT title, machine, cwd FROM mirror_sessions WHERE id = ?').get(id) as Row | undefined
+    if (session) {
+      const base = { source: 'mirror' as const, sessionId: id, title: String(session.title), machine: String(session.machine), cwd: String(session.cwd) }
+      if (before?.busy && !params.busy) this.addEvent({ ...base, kind: 'done', body: lastReply(params.blocks) })
+      else if (!before?.needs_input && params.needsInput) this.addEvent({ ...base, kind: 'input', body: pendingAsk(params.blocks) })
+    }
     // 手机按 revision 判断有没有变化
     this.db.prepare('UPDATE mirror_sessions SET revision = revision + 1 WHERE id = ?').run(id)
     this.db.prepare('DELETE FROM live WHERE at < ?').run(now - 86_400_000)
     return { ok: true }
+  }
+
+  // ---------- 手机通知（SOL-104）：会话跑完了、等你处理；手机常驻的服务长连着来取 ----------
+  private wakeEvents = new Set<() => void>()
+
+  addEvent(e: GatewayEvent) {
+    const now = Date.now()
+    this.db.prepare('INSERT INTO events (kind, source, session_id, title, body, machine, cwd, project_id, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(e.kind, e.source, e.sessionId, e.title.slice(0, 300), e.body.slice(0, 300), e.machine ?? null, e.cwd ?? null, e.projectId ?? null, now)
+    // ponytail: 只留一天，手机离线一天以上的就不补了
+    this.db.prepare('DELETE FROM events WHERE at < ?').run(now - 86_400_000)
+    for (const wake of this.wakeEvents) wake()
+  }
+
+  /** after 之后的事件；没有就等（最多 wait 毫秒）。after 不给 = 头一次连上：只告诉最新的 id，不补以前的。 */
+  async waitEvents(after: unknown, wait = 25_000) {
+    const latest = () => Number((this.db.prepare('SELECT COALESCE(MAX(id), 0) AS n FROM events').get() as { n: number }).n)
+    if (typeof after !== 'number') return { events: [], latest: latest() }
+    const read = () =>
+      (this.db.prepare('SELECT * FROM events WHERE id > ? ORDER BY id LIMIT 20').all(after) as Row[]).map((r) => ({
+        id: r.id, kind: r.kind, source: r.source, sessionId: r.session_id, title: r.title, body: r.body,
+        machine: r.machine ?? undefined, cwd: r.cwd ?? undefined, projectId: r.project_id ?? undefined, at: r.at,
+      }))
+    let events = read()
+    if (!events.length) {
+      await new Promise<void>((ok) => {
+        const done = () => {
+          clearTimeout(timer)
+          this.wakeEvents.delete(done)
+          ok()
+        }
+        const timer = setTimeout(done, wait).unref()
+        this.wakeEvents.add(done)
+      })
+      events = read()
+    }
+    return { events, latest: Math.max(latest(), after) }
   }
 
   // ---------- 手机发给电脑会话的消息：电脑开着就交给电脑跑（它自己的会话、自己的「进行中」） ----------
@@ -558,6 +620,50 @@ async function services(store: GatewayStore, files: FileRelay, params: Record<st
   return 'result' in answer ? answer.result : null
 }
 
+/** 手机最近一次来等通知的时间：两分钟内来过才去问主机，没人等就不问。 */
+let phoneWaiting = 0
+
+/**
+ * 主机上的会话（手机上开的、服务器上跑的）：隔几秒问一次主机服务，在跑 → 停了、开始等你处理时记成通知事件（SOL-104）。
+ * 头一次看到的会话只记下状态，不算变化。返回停止函数。
+ */
+export function watchHost(store: GatewayStore, host: HostCall, every = 5000) {
+  const seen = new Map<string, { running: boolean; input: boolean }>()
+  let busy = false
+  const tick = async () => {
+    if (busy || Date.now() - phoneWaiting > 120_000) return
+    busy = true
+    try {
+      const projects = (await host('projects.list', {})) as { id: string; cwd: string }[]
+      for (const project of projects) {
+        const sessions = (await host('sessions.list', { projectId: project.id })) as HostSummary[]
+        for (const s of sessions) {
+          if (s.archived || s.draft) continue
+          const now = { running: s.status === 'running', input: !!s.needsInput }
+          const before = seen.get(s.id)
+          seen.set(s.id, now)
+          if (!before) continue
+          const base = { source: 'host' as const, sessionId: s.id, title: s.title, cwd: project.cwd, projectId: project.id }
+          if (before.running && !now.running) {
+            const full = (await host('sessions.get', { sessionId: s.id }).catch(() => null)) as { session?: { blocks?: unknown } } | null
+            store.addEvent({ ...base, kind: 'done', body: lastReply(full?.session?.blocks) })
+          } else if (!before.input && now.input) store.addEvent({ ...base, kind: 'input', body: '' })
+        }
+      }
+    } catch (e) {
+      console.error(`watch host: ${(e as Error).message}`)
+    } finally {
+      busy = false
+    }
+  }
+  const timer = setInterval(() => void tick(), every)
+  timer.unref()
+  return () => clearInterval(timer)
+}
+
+/** 测试用：当作手机刚来等过通知。 */
+export const markPhoneWaiting = () => (phoneWaiting = Date.now())
+
 function readRaw(req: IncomingMessage, limit: number): Promise<Buffer> {
   return new Promise((ok, fail) => {
     const chunks: Buffer[] = []
@@ -590,6 +696,10 @@ async function soloyard(store: GatewayStore, files: FileRelay, device: Device, m
     case 'soloyard.mirror.live':
       if (device.kind !== 'desktop') throw new Error('Only a paired desktop can push sessions')
       return store.live(device, params)
+    case 'soloyard.events.wait':
+      if (device.kind !== 'phone') throw new Error('Only a phone can wait for events')
+      phoneWaiting = Date.now()
+      return store.waitEvents(params.after, typeof params.wait === 'number' ? Math.min(Math.max(params.wait, 0), 30_000) : undefined)
     case 'soloyard.mirror.list': {
       if (params.repoKey !== undefined) return store.list(text(params.repoKey, 'repoKey', 1000))
       const cwd = text(params.cwd, 'cwd')
@@ -679,6 +789,7 @@ export async function startGateway({ dataDir, listen = '127.0.0.1:3775', hostUrl
     return call(method, params)
   }
 
+  const stopWatch = watchHost(store, host)
   const server: Server = createServer({ requestTimeout: 60_000, headersTimeout: 10_000, maxHeaderSize: 8192 }, async (req, res) => {
     res.setHeader('Content-Type', 'application/json')
     res.setHeader('Cache-Control', 'no-store')
@@ -781,6 +892,7 @@ export async function startGateway({ dataDir, listen = '127.0.0.1:3775', hostUrl
     server.once('error', fail)
     server.listen(Number(listen.slice(at + 1)), listen.slice(0, at), ok)
   })
+  server.on('close', stopWatch)
   const address = server.address()
   const url = typeof address === 'object' && address ? `http://${address.address}:${address.port}` : listen
   return { server, store, url }

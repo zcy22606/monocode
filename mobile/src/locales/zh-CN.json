@@ -329,5 +329,12 @@
     "createHintLink": "，并挂上这个会话",
     "create": "建 issue",
     "created": "已建 issue"
+  },
+  "notify": {
+    "title": "通知",
+    "hint": "会话跑完、等你处理时提醒",
+    "blocked": "系统没允许 Soloyard 发通知，去设置里打开。",
+    "background": "ColorOS 上要允许 Soloyard「自启动」和「后台运行」，不然锁屏后就收不到。",
+    "fix": "去设置"
   }
 }
