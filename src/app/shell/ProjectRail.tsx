@@ -459,7 +459,34 @@ export function ProjectRail({
               />
             ) : null}
 
-            {/* Soloyard: keep the Groups header (and its New group button) even with no groups left */}
+            <ProjectSection
+              label={t("projectRail.projects")}
+              items={groupedProjectSections.ungrouped}
+              muteStatuses={muteStatuses}
+              emptyLabel={
+                sections.projects.length === 0 && projectGroups.length === 0
+                  ? t("projectRail.noProjects")
+                  : undefined
+              }
+              onAdd={onOpenProject}
+              cwd={cwd}
+              busy={busy}
+              statsEnabled={visible}
+              sortable={projectSortable}
+              pinned={false}
+              searchActive={otherViewActive}
+              onSelect={onSelectProject}
+              onTogglePin={toggleProjectPin}
+              onContextMenu={onProjectContextMenu}
+              onOpenMenu={projectMenu.open}
+              groupLabels={groupLabels}
+              groupColors={groupColors}
+              groupCustomColors={groupCustomColors}
+              groupLogos={groupLogos}
+              groupMascots={groupMascots}
+            />
+
+            {/* Soloyard: Groups sit below Projects; keep the header (and its New group button) even with no groups left */}
             {(
               <div className="mb-2 shrink-0">
                 <ProjectSectionHeader
@@ -502,33 +529,6 @@ export function ProjectRail({
                 </div>
               </div>
             )}
-
-            <ProjectSection
-              label={t("projectRail.projects")}
-              items={groupedProjectSections.ungrouped}
-              muteStatuses={muteStatuses}
-              emptyLabel={
-                sections.projects.length === 0 && projectGroups.length === 0
-                  ? t("projectRail.noProjects")
-                  : undefined
-              }
-              onAdd={onOpenProject}
-              cwd={cwd}
-              busy={busy}
-              statsEnabled={visible}
-              sortable={projectSortable}
-              pinned={false}
-              searchActive={otherViewActive}
-              onSelect={onSelectProject}
-              onTogglePin={toggleProjectPin}
-              onContextMenu={onProjectContextMenu}
-              onOpenMenu={projectMenu.open}
-              groupLabels={groupLabels}
-              groupColors={groupColors}
-              groupCustomColors={groupCustomColors}
-              groupLogos={groupLogos}
-              groupMascots={groupMascots}
-            />
           </div>
           <LiveAgentsPreview
             agents={liveAgents}

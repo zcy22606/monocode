@@ -112,7 +112,8 @@ it("renders assigned projects in persistent collapsible groups", async () => {
 
   expect(button("personal")).toBeDefined();
   expect(button("client")).toBeDefined();
-  expect(sectionLabels()).toEqual(["Pinned", "Groups", "Projects"]);
+  // Soloyard: Groups sit below Projects in the rail.
+  expect(sectionLabels()).toEqual(["Pinned", "Projects", "Groups"]);
 
   const group = container.querySelector<HTMLElement>(
     '[data-project-group="clients"]',
@@ -166,8 +167,9 @@ it("renders assigned projects in persistent collapsible groups", async () => {
 
 it("creates, styles, assigns, and deletes a group from the rail", async () => {
   await renderRail();
-  // Soloyard: the Groups header (with New group) stays visible even with no groups.
-  expect(sectionLabels()).toEqual(["Groups", "Projects"]);
+  // Soloyard: the Groups header (with New group) stays visible even with no
+  // groups, and sits below Projects.
+  expect(sectionLabels()).toEqual(["Projects", "Groups"]);
   expect(
     document.querySelector('button[aria-label="New project group"]'),
   ).not.toBeNull();
@@ -221,8 +223,9 @@ it("creates, styles, assigns, and deletes a group from the rail", async () => {
   expect(loadProjectGroups()).toEqual([]);
   expect(loadProjectGroupAssignments()).toEqual({});
   expect(button("personal")).toBeDefined();
-  // Soloyard: deleting the last group keeps the Groups header, so a new one can still be made from here.
-  expect(sectionLabels()).toEqual(["Groups", "Projects"]);
+  // Soloyard: deleting the last group keeps the Groups header (below
+  // Projects), so a new one can still be made from here.
+  expect(sectionLabels()).toEqual(["Projects", "Groups"]);
   expect(
     document.querySelector('button[aria-label="New project group"]'),
   ).not.toBeNull();
